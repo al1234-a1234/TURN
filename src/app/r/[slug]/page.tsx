@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { BookingForm } from "./booking-form";
 
 export default async function RestaurantPublicPage({
   params,
@@ -23,10 +24,29 @@ export default async function RestaurantPublicPage({
 
   const { data: branches } = await supabase
     .from("branches")
-    .select("id, name, city, address, phone")
+    .select("id, name, city, address, phone, timezone")
     .eq("restaurant_id", restaurant.id)
     .eq("is_active", true)
     .order("created_at");
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // بيانات العميل لتعبئة النموذج مسبقًا
+  let defaultName = "";
+  let defaultPhone = "";
+  if (user) {
+    const { data: customer } = await supabase
+      .from("customers")
+      .select("full_name, phone")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    defaultName = customer?.full_name ?? "";
+    defaultPhone = customer?.phone ?? "";
+  }
+
+  const hasBranches = !!branches && branches.length > 0;
 
   return (
     <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-black">
@@ -39,10 +59,10 @@ export default async function RestaurantPublicPage({
             دور
           </Link>
           <Link
-            href="/login"
+            href={user ? "/dashboard" : `/login?redirect=/r/${slug}`}
             className="text-sm font-medium text-teal-600 hover:underline"
           >
-            حجوزاتي
+            {user ? "حسابي" : "تسجيل الدخول"}
           </Link>
         </div>
       </header>
@@ -62,34 +82,51 @@ export default async function RestaurantPublicPage({
           )}
         </div>
 
-        <h2 className="mb-4 text-lg font-semibold">الفروع</h2>
-        {branches && branches.length > 0 ? (
-          <ul className="space-y-3">
-            {branches.map((b) => (
-              <li
-                key={b.id}
-                className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
-              >
-                <div>
+        <h2 className="mb-4 text-lg font-semibold">احجز طاولتك</h2>
+
+        {!hasBranches ? (
+          <p className="rounded-2xl border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-400 dark:border-zinc-700">
+            لا توجد فروع متاحة للحجز حاليًا.
+          </p>
+        ) : user ? (
+          <BookingForm
+            slug={slug}
+            branches={branches!.map((b) => ({
+              id: b.id,
+              name: b.name,
+              timezone: b.timezone,
+            }))}
+            defaultName={defaultName}
+            defaultPhone={defaultPhone}
+          />
+        ) : (
+          <div className="space-y-4">
+            <ul className="space-y-3">
+              {branches!.map((b) => (
+                <li
+                  key={b.id}
+                  className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
+                >
                   <p className="font-semibold">{b.name}</p>
                   <p className="text-sm text-zinc-500">
                     {[b.city, b.address].filter(Boolean).join(" · ") ||
                       "بدون عنوان"}
                   </p>
-                </div>
-                <Link
-                  href={`/login?redirect=/r/${slug}`}
-                  className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-700"
-                >
-                  احجز الآن
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="rounded-2xl border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-400 dark:border-zinc-700">
-            لا توجد فروع متاحة حاليًا.
-          </p>
+                </li>
+              ))}
+            </ul>
+            <div className="rounded-2xl border border-teal-200 bg-teal-50 p-6 text-center dark:border-teal-900 dark:bg-teal-950/40">
+              <p className="font-medium text-teal-800 dark:text-teal-200">
+                سجّل الدخول لإتمام الحجز
+              </p>
+              <Link
+                href={`/login?redirect=/r/${slug}`}
+                className="mt-3 inline-block rounded-lg bg-teal-600 px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-700"
+              >
+                تسجيل الدخول / إنشاء حساب
+              </Link>
+            </div>
+          </div>
         )}
       </main>
     </div>
