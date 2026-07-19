@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/logout-button";
+import { CreateRestaurantForm } from "./create-restaurant-form";
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "قيد الانتظار",
@@ -57,12 +58,7 @@ export default async function DashboardPage() {
   if (!restaurant) {
     return (
       <Shell email={user.email}>
-        <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-950">
-          <p className="text-lg font-semibold">حسابك غير مرتبط بأي مطعم بعد</p>
-          <p className="mt-2 text-sm text-zinc-500">
-            تواصل مع مالك المطعم لإضافتك إلى فريق العمل، أو ابدأ بإنشاء مطعمك.
-          </p>
-        </div>
+        <CreateRestaurantForm />
       </Shell>
     );
   }

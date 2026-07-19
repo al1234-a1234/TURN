@@ -536,9 +536,23 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_restaurant_with_branch: {
+        Args: {
+          p_address?: string
+          p_branch_name: string
+          p_city?: string
+          p_name: string
+          p_name_en?: string
+          p_phone?: string
+          p_slug: string
+          p_timezone?: string
+        }
+        Returns: string
+      }
       is_manager_of: { Args: { rest_id: string }; Returns: boolean }
       is_staff_of: { Args: { rest_id: string }; Returns: boolean }
       restaurant_of_branch: { Args: { b_id: string }; Returns: string }
+      staff_can_read_customer: { Args: { cust_id: string }; Returns: boolean }
     }
     Enums: {
       notification_channel: "sms" | "whatsapp" | "push" | "email"
