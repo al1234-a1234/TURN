@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  /* الخط الأساسي للواجهة: Tajawal، وخط العناوين: Almarai */
+  --font-sans: var(--font-tajawal), "Tajawal", system-ui, sans-serif;
+  --font-display: var(--font-almarai), "Almarai", system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/* عناوين بخط Almarai */
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+}
