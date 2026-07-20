@@ -38,7 +38,7 @@ export async function updateSession(request: NextRequest) {
   // حماية مسارات لوحة التحكم: تحويل غير المسجّلين إلى /login
   if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = "/partners";
     url.searchParams.set("redirect", request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }

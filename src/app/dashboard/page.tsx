@@ -26,7 +26,7 @@ export default async function DashboardPage() {
       <Shell>
         <p className="text-[color:var(--muted)]">
           يجب تسجيل الدخول.{" "}
-          <Link href="/login" className="font-bold text-[color:var(--gold-1)]">تسجيل الدخول</Link>
+          <Link href="/partners" className="font-bold text-[color:var(--gold-1)]">تسجيل الدخول</Link>
         </p>
       </Shell>
     );

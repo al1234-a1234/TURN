@@ -40,7 +40,7 @@ export default async function Home() {
         <div className="absolute inset-0 bg-gradient-to-b from-[#0c1712]/55 via-[#0c1712]/72 to-[#0c1712]" />
 
         <div className="relative z-10 mx-auto w-full max-w-2xl px-5 pb-10 pt-6">
-          <nav className="flex items-center justify-between">
+          <nav className="flex items-center justify-center">
             <div className="flex items-center gap-3">
               <BrandMark size={44} />
               <span className="flex flex-col leading-none">
@@ -48,12 +48,6 @@ export default async function Home() {
                 <span className="text-xs font-bold text-[color:var(--gold-1)]/80">دور</span>
               </span>
             </div>
-            <Link href="/login" className="icon-btn h-10 w-10" aria-label="دخول أصحاب المطاعم">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <circle cx="12" cy="8" r="4" stroke="currentColor" strokeWidth="2" />
-                <path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-            </Link>
           </nav>
 
           <div className="mt-8 text-center">

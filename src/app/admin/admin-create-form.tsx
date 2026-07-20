@@ -16,14 +16,16 @@ export function AdminCreateForm() {
         <div className="soft-card p-5" style={{ borderColor: "rgba(201,169,97,0.5)" }}>
           <p className="font-serif text-lg font-bold text-[color:var(--gold-1)]">✅ تم إنشاء حساب المالك</p>
           <p className="mt-2 text-sm text-[color:var(--muted)]">
-            سلّم صاحب المطعم هذه البيانات ليدخل من صفحة الدخول:
+            سلّم صاحب المطعم هذه البيانات ليدخل من بوابة الشركاء <span dir="ltr">/partners</span>:
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
+            <Cred label="مُعرّف المطعم" value={state.ok.slug} />
             <Cred label="اسم المستخدم" value={state.ok.username} />
-            <Cred label="الرمز" value={state.ok.code} />
-            <Cred label="الجوال" value={state.ok.phone || "—"} />
+            <Cred label="كلمة المرور" value={state.ok.code} />
           </div>
-          <p className="mt-3 text-xs text-[color:var(--muted)]" dir="ltr">/r/{state.ok.slug}</p>
+          {state.ok.phone && (
+            <p className="mt-3 text-xs text-[color:var(--muted)]" dir="ltr">📱 {state.ok.phone}</p>
+          )}
         </div>
       )}
 

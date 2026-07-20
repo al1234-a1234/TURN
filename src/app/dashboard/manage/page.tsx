@@ -10,7 +10,7 @@ export default async function ManagePage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login?redirect=/dashboard/manage");
+  if (!user) redirect("/partners?redirect=/dashboard/manage");
 
   const { data: staffRows } = await supabase
     .from("staff")

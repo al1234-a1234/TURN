@@ -8,7 +8,7 @@ export default async function AdminPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login?redirect=/admin");
+  if (!user) redirect("/partners?redirect=/admin");
 
   const { data: isAdmin } = await supabase.rpc("is_platform_admin");
   if (!isAdmin) redirect("/dashboard");
