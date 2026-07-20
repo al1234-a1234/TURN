@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useState } from "react";
-import { joinWaitlist, type WaitlistState } from "./actions";
+import { joinWaitlistGuest, type WaitlistState } from "./actions";
 
 type Branch = {
   id: string;
@@ -10,12 +10,6 @@ type Branch = {
   inside: number;
   outside: number;
 };
-
-const ZONES: { value: string; label: string }[] = [
-  { value: "any", label: "أي مكان" },
-  { value: "inside", label: "الداخل" },
-  { value: "outside", label: "الخارج" },
-];
 
 export function WaitlistForm({
   slug,
@@ -29,14 +23,11 @@ export function WaitlistForm({
   defaultPhone: string;
 }) {
   const [state, formAction, pending] = useActionState<WaitlistState, FormData>(
-    joinWaitlist,
+    joinWaitlistGuest,
     { ok: false },
   );
 
   const [branchId, setBranchId] = useState(branches[0]?.id ?? "");
-  const [zone, setZone] = useState("any");
-  const [party, setParty] = useState(1);
-
   const branch = useMemo(
     () => branches.find((b) => b.id === branchId) ?? branches[0],
     [branchId, branches],
@@ -45,45 +36,40 @@ export function WaitlistForm({
   if (state.ok) {
     return (
       <div className="soft-card flex flex-col items-center gap-3 p-8 text-center">
-        <span className="flex h-20 w-20 items-center justify-center rounded-full bg-brand-600 text-3xl font-extrabold text-white shadow-[var(--shadow-lift)]">
+        <span className="flex h-24 w-24 items-center justify-center rounded-full bg-brand-600 text-4xl font-extrabold text-white shadow-[var(--shadow-lift)]">
           #{state.position ?? "—"}
         </span>
         <p className="text-xl font-extrabold text-brand-800 dark:text-cream-100">
-          انضممت إلى قائمة الانتظار!
+          تم تسجيلك في الطابور
         </p>
         <p className="text-sm text-[color:var(--muted)]">
-          دورك رقم {state.position ?? "—"}. سنُشعرك عند اقتراب دورك — تابع من صفحة حسابك.
+          رقم دورك {state.position ?? "—"}. احتفظ بالصفحة وتابع تقدّم الطابور.
         </p>
       </div>
     );
   }
 
   return (
-    <form action={formAction} className="space-y-5">
+    <form action={formAction} className="space-y-4">
       <input type="hidden" name="slug" value={slug} />
       <input type="hidden" name="branch_id" value={branchId} />
-      <input type="hidden" name="zone" value={zone} />
-      <input type="hidden" name="party_size" value={party} />
 
-      {/* عدّادات الطابور */}
-      <div className="soft-card grid grid-cols-2 divide-x divide-x-reverse divide-[var(--border)] p-6 text-center">
+      {/* عدّاد الطابور الحيّ */}
+      <div className="soft-card flex items-center justify-between p-6">
         <div>
-          <p className="text-sm text-[color:var(--muted)]">الداخل</p>
-          <p className="mt-1 text-4xl font-extrabold text-brand-700 dark:text-brand-300">
-            {branch?.inside ?? 0}
+          <p className="text-sm text-[color:var(--muted)]">في الطابور الآن</p>
+          <p className="text-4xl font-extrabold text-brand-700 dark:text-brand-300">
+            {branch?.total ?? 0}
           </p>
         </div>
-        <div>
-          <p className="text-sm text-[color:var(--muted)]">الخارج</p>
-          <p className="mt-1 text-4xl font-extrabold text-brand-700 dark:text-brand-300">
-            {branch?.outside ?? 0}
-          </p>
-        </div>
+        <span className="rounded-full bg-brand-50 px-4 py-2 text-sm font-bold text-brand-700 dark:bg-brand-900/40 dark:text-brand-200">
+          خذ دورك
+        </span>
       </div>
 
       {branches.length > 1 && (
         <div className="soft-card p-5">
-          <p className="field-label">الفرع</p>
+          <label className="field-label">الفرع</label>
           <select
             value={branchId}
             onChange={(e) => setBranchId(e.target.value)}
@@ -96,60 +82,21 @@ export function WaitlistForm({
         </div>
       )}
 
-      {/* اختيار المنطقة */}
-      <div className="soft-card p-5">
-        <p className="mb-3 font-bold text-brand-800 dark:text-cream-100">اختر المنطقة</p>
-        <div className="space-y-2">
-          {ZONES.map((z) => (
-            <button
-              type="button"
-              key={z.value}
-              onClick={() => setZone(z.value)}
-              className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-right transition ${
-                zone === z.value
-                  ? "border-brand-600 bg-brand-50 dark:bg-brand-900/40"
-                  : "border-[var(--border)]"
-              }`}
-            >
-              <span className="font-bold">{z.label}</span>
-              <span
-                className={`flex h-5 w-5 items-center justify-center rounded-full border-2 ${
-                  zone === z.value ? "border-brand-600" : "border-[var(--border)]"
-                }`}
-              >
-                {zone === z.value && <span className="h-2.5 w-2.5 rounded-full bg-brand-600" />}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* عدد الكراسي */}
-      <div className="soft-card p-5">
-        <p className="mb-3 font-bold text-brand-800 dark:text-cream-100">اختر عدد الكراسي</p>
-        <div className="flex flex-row-reverse flex-wrap gap-2">
-          {Array.from({ length: 8 }, (_, i) => i + 1).map((n) => (
-            <button
-              type="button"
-              key={n}
-              onClick={() => setParty(n)}
-              className={`chair ${party === n ? "chair-active" : ""}`}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* بيانات العميل */}
+      {/* اسم + رقم فقط */}
       <div className="soft-card space-y-4 p-5">
         <div>
           <label htmlFor="full_name" className="field-label">الاسم</label>
-          <input id="full_name" name="full_name" required defaultValue={defaultName} className="field-input" placeholder="اسمك الكامل" />
+          <input
+            id="full_name" name="full_name" required defaultValue={defaultName}
+            className="field-input" placeholder="اكتب اسمك"
+          />
         </div>
         <div>
           <label htmlFor="phone" className="field-label">رقم الجوّال</label>
-          <input id="phone" name="phone" required dir="ltr" inputMode="tel" defaultValue={defaultPhone} className="field-input text-left" placeholder="05xxxxxxxx" />
+          <input
+            id="phone" name="phone" required dir="ltr" inputMode="tel"
+            defaultValue={defaultPhone} className="field-input text-left" placeholder="05xxxxxxxx"
+          />
         </div>
       </div>
 
@@ -160,7 +107,7 @@ export function WaitlistForm({
       )}
 
       <button type="submit" disabled={pending} className="btn btn-primary w-full text-base">
-        {pending ? "جارٍ الانضمام…" : "انضم إلى قائمة الانتظار"}
+        {pending ? "جارٍ التسجيل…" : "خذ دورك الآن"}
       </button>
     </form>
   );

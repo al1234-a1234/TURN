@@ -29,10 +29,8 @@ export function BrandLink({
     <Link href={href} className={`flex items-center gap-2.5 ${className}`}>
       <BrandMark size={size} />
       <span className="flex flex-col leading-none">
-        <span className="text-lg font-extrabold">دور</span>
-        <span className="text-[10px] font-bold tracking-[0.35em] text-cream-200/80" dir="ltr">
-          TURN
-        </span>
+        <span className="text-lg font-extrabold tracking-[0.28em]" dir="ltr">TURN</span>
+        <span className="mt-0.5 text-xs font-bold text-cream-200/80">دور</span>
       </span>
     </Link>
   );

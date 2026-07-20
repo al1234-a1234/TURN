@@ -9,6 +9,41 @@ export type WaitlistState = {
   position?: number;
 };
 
+// انضمام الضيف: اسم + رقم فقط، بدون تسجيل دخول
+export async function joinWaitlistGuest(
+  _prev: WaitlistState,
+  formData: FormData,
+): Promise<WaitlistState> {
+  const supabase = await createClient();
+
+  const slug = String(formData.get("slug") ?? "");
+  const branchId = String(formData.get("branch_id") ?? "");
+  const fullName = String(formData.get("full_name") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
+
+  if (!branchId) return { ok: false, error: "اختر الفرع." };
+  if (!fullName) return { ok: false, error: "اكتب اسمك." };
+  if (!phone) return { ok: false, error: "اكتب رقم جوّالك." };
+
+  const { data, error } = await supabase.rpc("join_waitlist_guest", {
+    p_branch_id: branchId,
+    p_full_name: fullName,
+    p_phone: phone,
+    p_party_size: 1,
+  });
+
+  if (error) {
+    if (error.code === "P0001") {
+      return { ok: false, error: "هذا الفرع لا يستقبل قائمة انتظار حاليًا." };
+    }
+    if (error.code === "P0002") return { ok: false, error: "الفرع غير متاح." };
+    return { ok: false, error: "تعذّر الانضمام. حاول مرة أخرى." };
+  }
+
+  if (slug) revalidatePath(`/r/${slug}`);
+  return { ok: true, position: typeof data === "number" ? data : undefined };
+}
+
 const ZONES = ["any", "inside", "outside"];
 
 export async function joinWaitlist(

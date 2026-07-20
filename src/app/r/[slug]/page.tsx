@@ -4,12 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { WaitlistForm } from "./waitlist-form";
 import { RestaurantTabs } from "./restaurant-tabs";
 
-const ZONE_LABEL: Record<string, string> = {
-  any: "أي مكان",
-  inside: "الداخل",
-  outside: "الخارج",
-};
-
 export default async function RestaurantPublicPage({
   params,
 }: {
@@ -77,33 +71,14 @@ export default async function RestaurantPublicPage({
     </div>
   ) : activeEntry ? (
     <div className="soft-card flex flex-col items-center gap-3 p-8 text-center">
-      <span className="flex h-20 w-20 items-center justify-center rounded-full bg-brand-600 text-3xl font-extrabold text-white shadow-[var(--shadow-lift)]">
+      <span className="flex h-24 w-24 items-center justify-center rounded-full bg-brand-600 text-4xl font-extrabold text-white shadow-[var(--shadow-lift)]">
         #{activeEntry.position ?? "—"}
       </span>
-      <p className="text-xl font-extrabold text-brand-800 dark:text-cream-100">أنت في قائمة الانتظار</p>
-      <p className="text-sm text-[color:var(--muted)]">
-        دورك رقم {activeEntry.position ?? "—"} · {activeEntry.party_size} أشخاص · {ZONE_LABEL[activeEntry.zone] ?? activeEntry.zone}
-      </p>
+      <p className="text-xl font-extrabold text-brand-800 dark:text-cream-100">أنت في الطابور</p>
+      <p className="text-sm text-[color:var(--muted)]">رقم دورك {activeEntry.position ?? "—"}</p>
     </div>
-  ) : user ? (
-    <WaitlistForm slug={slug} branches={withCounts} defaultName={defaultName} defaultPhone={defaultPhone} />
   ) : (
-    <div className="space-y-4">
-      <div className="soft-card grid grid-cols-2 divide-x divide-x-reverse divide-[var(--border)] p-6 text-center">
-        <div>
-          <p className="text-sm text-[color:var(--muted)]">الداخل</p>
-          <p className="mt-1 text-4xl font-extrabold text-brand-700 dark:text-brand-300">{withCounts[0]?.inside ?? 0}</p>
-        </div>
-        <div>
-          <p className="text-sm text-[color:var(--muted)]">الخارج</p>
-          <p className="mt-1 text-4xl font-extrabold text-brand-700 dark:text-brand-300">{withCounts[0]?.outside ?? 0}</p>
-        </div>
-      </div>
-      <div className="soft-card flex flex-col items-center gap-4 bg-brand-700 p-8 text-center text-white">
-        <p className="text-lg font-bold">سجّل الدخول للانضمام إلى الطابور</p>
-        <Link href={`/login?redirect=/r/${slug}`} className="btn btn-cream px-8">تسجيل الدخول / إنشاء حساب</Link>
-      </div>
-    </div>
+    <WaitlistForm slug={slug} branches={withCounts} defaultName={defaultName} defaultPhone={defaultPhone} />
   );
 
   return (
