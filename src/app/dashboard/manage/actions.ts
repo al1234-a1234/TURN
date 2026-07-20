@@ -59,6 +59,44 @@ export async function updateBranchSettings(formData: FormData) {
   revalidatePath("/dashboard");
 }
 
+// ---------- الفروع والمواقع ----------
+export async function addBranch(formData: FormData) {
+  const { supabase, rid } = await myRestaurantId();
+  if (!rid) return;
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) return;
+  const city = String(formData.get("city") ?? "").trim() || null;
+  const address = String(formData.get("address") ?? "").trim() || null;
+  await supabase.from("branches").insert({ restaurant_id: rid, name, city, address });
+  revalidatePath("/dashboard/manage");
+  revalidatePath("/dashboard");
+}
+
+export async function deleteBranch(formData: FormData) {
+  const { supabase, rid } = await myRestaurantId();
+  if (!rid) return;
+  const id = String(formData.get("branch_id") ?? "");
+  if (!id) return;
+  // لا تحذف آخر فرع
+  const { count } = await supabase
+    .from("branches")
+    .select("id", { count: "exact", head: true })
+    .eq("restaurant_id", rid);
+  if ((count ?? 0) <= 1) return;
+  await supabase.from("branches").delete().eq("id", id).eq("restaurant_id", rid);
+  revalidatePath("/dashboard/manage");
+  revalidatePath("/dashboard");
+}
+
+export async function toggleMenuItem(formData: FormData) {
+  const { supabase } = await myRestaurantId();
+  const id = String(formData.get("item_id") ?? "");
+  const available = formData.get("available") === "true";
+  if (!id) return;
+  await supabase.from("menu_items").update({ is_available: available }).eq("id", id);
+  revalidatePath("/dashboard/manage");
+}
+
 export async function addMenuCategory(formData: FormData) {
   const { supabase, rid } = await myRestaurantId();
   if (!rid) return;

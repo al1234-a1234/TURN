@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ImageUploader } from "@/components/image-uploader";
-import { updateRestaurantInfo, updateBranchSettings } from "./actions";
+import { updateRestaurantInfo, updateBranchSettings, addBranch, deleteBranch } from "./actions";
 import { MenuManager } from "./menu-manager";
 
 export default async function ManagePage() {
@@ -22,11 +22,13 @@ export default async function ManagePage() {
   const restaurant = staffRows?.[0]?.restaurants;
   if (!restaurant) redirect("/dashboard");
 
-  const [{ data: categories }, { data: items }, { data: firstBranch }] = await Promise.all([
+  const [{ data: categories }, { data: items }, { data: branchList }] = await Promise.all([
     supabase.from("menu_categories").select("id, name").eq("restaurant_id", restaurant.id).order("sort_order").order("created_at"),
     supabase.from("menu_items").select("id, name, price, description, image_url, category_id").eq("restaurant_id", restaurant.id).order("created_at"),
-    supabase.from("branches").select("id").eq("restaurant_id", restaurant.id).order("created_at").limit(1).maybeSingle(),
+    supabase.from("branches").select("id, name, city, address").eq("restaurant_id", restaurant.id).order("created_at"),
   ]);
+
+  const firstBranch = branchList?.[0];
 
   const { data: settings } = firstBranch
     ? await supabase.from("branch_settings").select("accepts_waitlist, max_party_size, opening_hours").eq("branch_id", firstBranch.id).maybeSingle()
@@ -72,6 +74,36 @@ export default async function ManagePage() {
               <textarea name="description" rows={3} defaultValue={restaurant.description ?? ""} className="field-input" placeholder="نبذة عن المطعم…" />
             </div>
             <button className="btn btn-primary w-full">حفظ المعلومات</button>
+          </form>
+        </section>
+
+        {/* الفروع والمواقع */}
+        <section className="soft-card p-5">
+          <h2 className="mb-4 font-serif text-xl font-bold text-[color:var(--ink)]">الفروع والمواقع</h2>
+          <ul className="mb-4 space-y-2">
+            {(branchList ?? []).map((b) => (
+              <li key={b.id} className="flex items-center gap-3 rounded-2xl border border-[var(--hairline)] bg-[rgba(12,23,18,0.4)] p-3">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[rgba(201,169,97,0.15)] text-[color:var(--gold-1)]">📍</span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-bold text-[color:var(--ink)]">{b.name}</p>
+                  <p className="truncate text-xs text-[color:var(--muted)]">{[b.city, b.address].filter(Boolean).join(" · ") || "—"}</p>
+                </div>
+                {(branchList ?? []).length > 1 && (
+                  <form action={deleteBranch}>
+                    <input type="hidden" name="branch_id" value={b.id} />
+                    <button className="rounded-lg px-2 py-1 text-xs font-bold text-[color:var(--muted)] transition hover:text-red-300">حذف</button>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+          <form action={addBranch} className="space-y-3 rounded-2xl border border-[var(--hairline)] bg-[rgba(12,23,18,0.4)] p-4">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <input name="name" required placeholder="اسم الفرع" className="field-input" />
+              <input name="city" placeholder="المدينة" className="field-input" />
+              <input name="address" placeholder="العنوان" className="field-input" />
+            </div>
+            <button className="btn btn-secondary w-full">+ إضافة فرع</button>
           </form>
         </section>
 
