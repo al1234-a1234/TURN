@@ -15,6 +15,21 @@ const STATUS_LABELS: Record<string, string> = {
   expired: "منتهٍ",
 };
 
+const STATUS_STYLES: Record<string, string> = {
+  confirmed: "bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-200",
+  pending: "bg-gold-400/15 text-gold-600 dark:text-gold-300",
+  seated: "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
+  waiting: "bg-gold-400/15 text-gold-600 dark:text-gold-300",
+  notified: "bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-200",
+};
+
+const STATUS_ROLE: Record<string, string> = {
+  owner: "مالك",
+  manager: "مدير",
+  staff: "موظف",
+  host: "مضيف",
+};
+
 function formatDateTime(iso: string, timeZone: string) {
   return new Intl.DateTimeFormat("ar-SA", {
     dateStyle: "medium",
@@ -30,21 +45,17 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // الحماية الأساسية في middleware، وهذا احتياط إضافي.
   if (!user) {
     return (
       <Shell>
-        <p className="text-zinc-600 dark:text-zinc-300">
+        <p className="text-stone-600 dark:text-stone-300">
           يجب تسجيل الدخول.{" "}
-          <Link href="/login" className="font-semibold text-teal-600">
-            تسجيل الدخول
-          </Link>
+          <Link href="/login" className="font-bold text-brand-600">تسجيل الدخول</Link>
         </p>
       </Shell>
     );
   }
 
-  // إيجاد عضوية الطاقم والمطعم المرتبط بها
   const { data: staffRows } = await supabase
     .from("staff")
     .select("id, role, restaurants(id, name, slug)")
@@ -63,7 +74,6 @@ export default async function DashboardPage() {
     );
   }
 
-  // الفروع
   const { data: branches } = await supabase
     .from("branches")
     .select("id, name, city, timezone, is_active")
@@ -73,20 +83,16 @@ export default async function DashboardPage() {
   const branchIds = (branches ?? []).map((b) => b.id);
   const defaultTz = branches?.[0]?.timezone ?? "Asia/Riyadh";
 
-  // الحجوزات القادمة
   const { data: reservations } = branchIds.length
     ? await supabase
         .from("reservations")
-        .select(
-          "id, reserved_at, party_size, status, customers(full_name, phone), tables(label)",
-        )
+        .select("id, reserved_at, party_size, status, customers(full_name, phone), tables(label)")
         .in("branch_id", branchIds)
         .gte("reserved_at", new Date().toISOString())
         .order("reserved_at")
         .limit(20)
     : { data: [] };
 
-  // قائمة الانتظار النشطة
   const { data: waitlist } = branchIds.length
     ? await supabase
         .from("waitlist_entries")
@@ -99,37 +105,36 @@ export default async function DashboardPage() {
 
   return (
     <Shell email={user.email}>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">{restaurant.name}</h1>
-          <p className="text-sm text-zinc-500">
-            دورك: {STATUS_ROLE[membership.role] ?? membership.role} ·{" "}
-            {branches?.length ?? 0} فرع
-          </p>
+          <span className="eyebrow mb-3">{STATUS_ROLE[membership.role] ?? membership.role}</span>
+          <h1 className="text-3xl font-extrabold text-brand-900 dark:text-white">{restaurant.name}</h1>
         </div>
-        <Link
-          href={`/r/${restaurant.slug}`}
-          className="text-sm font-medium text-teal-600 hover:underline"
-        >
+        <Link href={`/r/${restaurant.slug}`} className="btn btn-ghost h-11 px-5">
           الصفحة العامة ↗
         </Link>
       </div>
 
+      <div className="mb-8 grid grid-cols-3 gap-4">
+        <StatCard label="حجوزات قادمة" value={reservations?.length ?? 0} icon="📅" />
+        <StatCard label="في الانتظار" value={waitlist?.length ?? 0} icon="⏱️" />
+        <StatCard label="الفروع" value={branches?.length ?? 0} icon="🏬" />
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* الحجوزات القادمة */}
-        <section className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-          <h2 className="mb-4 text-lg font-semibold">الحجوزات القادمة</h2>
+        <section className="card p-6">
+          <h2 className="mb-5 flex items-center gap-2 text-lg font-bold">
+            <span>📅</span> الحجوزات القادمة
+          </h2>
           {reservations && reservations.length > 0 ? (
-            <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <ul className="space-y-2">
               {reservations.map((r) => (
-                <li key={r.id} className="flex items-center justify-between py-3">
-                  <div>
-                    <p className="font-medium">
-                      {r.customers?.full_name ?? "عميل"}
-                    </p>
-                    <p className="text-sm text-zinc-500">
-                      {formatDateTime(r.reserved_at, defaultTz)} ·{" "}
-                      {r.party_size} أشخاص
+                <li key={r.id} className="flex items-center gap-3 rounded-2xl border border-[var(--border)] p-3 transition hover:bg-sand-100/70 dark:hover:bg-stone-800/40">
+                  <Avatar name={r.customers?.full_name} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-bold">{r.customers?.full_name ?? "عميل"}</p>
+                    <p className="text-sm text-stone-500">
+                      {formatDateTime(r.reserved_at, defaultTz)} · {r.party_size} أشخاص
                       {r.tables?.label ? ` · ${r.tables.label}` : ""}
                     </p>
                   </div>
@@ -138,30 +143,31 @@ export default async function DashboardPage() {
               ))}
             </ul>
           ) : (
-            <EmptyState text="لا توجد حجوزات قادمة" />
+            <EmptyState icon="🗓️" text="لا توجد حجوزات قادمة بعد" />
           )}
         </section>
 
-        {/* قائمة الانتظار */}
-        <section className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950">
-          <h2 className="mb-4 text-lg font-semibold">قائمة الانتظار</h2>
+        <section className="card p-6">
+          <h2 className="mb-5 flex items-center gap-2 text-lg font-bold">
+            <span>⏱️</span> قائمة الانتظار
+          </h2>
           {waitlist && waitlist.length > 0 ? (
-            <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <ul className="space-y-2">
               {waitlist.map((w) => (
-                <li key={w.id} className="flex items-center justify-between py-3">
-                  <div>
-                    <p className="font-medium">
-                      {w.position ? `#${w.position} · ` : ""}
-                      {w.customers?.full_name ?? "عميل"}
-                    </p>
-                    <p className="text-sm text-zinc-500">{w.party_size} أشخاص</p>
+                <li key={w.id} className="flex items-center gap-3 rounded-2xl border border-[var(--border)] p-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 font-extrabold text-white">
+                    {w.position ?? "•"}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-bold">{w.customers?.full_name ?? "عميل"}</p>
+                    <p className="text-sm text-stone-500">{w.party_size} أشخاص</p>
                   </div>
                   <StatusBadge status={w.status} />
                 </li>
               ))}
             </ul>
           ) : (
-            <EmptyState text="لا أحد في قائمة الانتظار حاليًا" />
+            <EmptyState icon="🎉" text="لا أحد في قائمة الانتظار حاليًا" />
           )}
         </section>
       </div>
@@ -169,55 +175,64 @@ export default async function DashboardPage() {
   );
 }
 
-const STATUS_ROLE: Record<string, string> = {
-  owner: "مالك",
-  manager: "مدير",
-  staff: "موظف",
-  host: "مضيف",
-};
-
-function Shell({
-  children,
-  email,
-}: {
-  children: React.ReactNode;
-  email?: string;
-}) {
+function Shell({ children, email }: { children: React.ReactNode; email?: string }) {
   return (
-    <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-black">
-      <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <Link
-            href="/dashboard"
-            className="text-xl font-extrabold text-teal-700 dark:text-teal-400"
-          >
-            دور · لوحة التحكم
+    <div className="flex flex-1 flex-col">
+      <header className="sticky top-0 z-30 border-b border-[var(--border)]/70 bg-[var(--background)]/80 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-5">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-600 to-brand-500 text-white shadow-[var(--shadow-lift)]">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M12 3a9 9 0 1 0 9 9" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+                <circle cx="12" cy="12" r="3" fill="currentColor" />
+              </svg>
+            </span>
+            <span className="text-lg font-extrabold text-brand-700 dark:text-brand-300">دور</span>
           </Link>
           <div className="flex items-center gap-3">
-            {email && (
-              <span className="hidden text-sm text-zinc-500 sm:inline" dir="ltr">
-                {email}
-              </span>
-            )}
+            {email && <span className="hidden text-sm text-stone-500 sm:inline" dir="ltr">{email}</span>}
             <LogoutButton />
           </div>
         </div>
       </header>
-      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-8">
-        {children}
-      </main>
+      <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-8">{children}</main>
     </div>
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatCard({ label, value, icon }: { label: string; value: number; icon: string }) {
   return (
-    <span className="rounded-full bg-teal-50 px-2.5 py-1 text-xs font-medium text-teal-700 dark:bg-teal-950/40 dark:text-teal-300">
-      {STATUS_LABELS[status] ?? status}
+    <div className="card flex items-center gap-3 p-4">
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-xl dark:bg-brand-900/40">
+        {icon}
+      </div>
+      <div>
+        <p className="text-2xl font-extrabold text-brand-800 dark:text-brand-200">{value}</p>
+        <p className="text-xs text-stone-500">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+function Avatar({ name }: { name?: string | null }) {
+  const letter = (name ?? "ع").trim().charAt(0) || "ع";
+  return (
+    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-100 to-sand-200 font-extrabold text-brand-700 dark:from-brand-900/60 dark:to-stone-800 dark:text-brand-200">
+      {letter}
     </span>
   );
 }
 
-function EmptyState({ text }: { text: string }) {
-  return <p className="py-6 text-center text-sm text-zinc-400">{text}</p>;
+function StatusBadge({ status }: { status: string }) {
+  const style = STATUS_STYLES[status] ?? "bg-sand-200 text-stone-600 dark:bg-stone-800 dark:text-stone-300";
+  return <span className={`badge ${style}`}>{STATUS_LABELS[status] ?? status}</span>;
+}
+
+function EmptyState({ icon, text }: { icon: string; text: string }) {
+  return (
+    <div className="flex flex-col items-center gap-2 py-10 text-center">
+      <span className="text-4xl">{icon}</span>
+      <p className="text-sm text-stone-400">{text}</p>
+    </div>
+  );
 }

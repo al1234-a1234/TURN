@@ -1,22 +1,48 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@theme {
+  /* الهوية اللونية — أخضر زمردي دافئ (ضيافة فاخرة) + لمسة ذهبية */
+  --color-brand-50: #eef7f4;
+  --color-brand-100: #d4ece4;
+  --color-brand-200: #abd9cc;
+  --color-brand-300: #79bfae;
+  --color-brand-400: #4ea38e;
+  --color-brand-500: #2f8874;
+  --color-brand-600: #1f7061;
+  --color-brand-700: #1a5a4e;
+  --color-brand-800: #174a40;
+  --color-brand-900: #133c34;
+  --color-gold-300: #edcd93;
+  --color-gold-400: #e2b56d;
+  --color-gold-500: #cf9a41;
+  --color-gold-600: #b3822f;
+  --color-sand: #faf7f1;
+  --color-sand-100: #f4eee2;
+  --color-sand-200: #ebe3d3;
+  --color-ink: #16211d;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  /* الخط الأساسي للواجهة: Tajawal، وخط العناوين: Almarai */
   --font-sans: var(--font-tajawal), "Tajawal", system-ui, sans-serif;
   --font-display: var(--font-almarai), "Almarai", system-ui, sans-serif;
+
+  --shadow-soft: 0 1px 2px rgba(19, 60, 52, 0.04), 0 8px 24px -12px rgba(19, 60, 52, 0.15);
+  --shadow-lift: 0 10px 30px -12px rgba(19, 60, 52, 0.28);
+}
+
+:root {
+  --background: #faf7f1;
+  --foreground: #16211d;
+  --surface: #ffffff;
+  --muted: #6c7b75;
+  --border: #e9e1d3;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0a0f0d;
+    --foreground: #e7efe9;
+    --surface: #111917;
+    --muted: #8ba39a;
+    --border: #23302b;
   }
 }
 
@@ -24,11 +50,49 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* عناوين بخط Almarai */
-h1,
-h2,
-h3 {
+h1, h2, h3, h4 {
   font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+/* خلفية دافئة بلمسات ضوئية للهيرو */
+.bg-hero {
+  background:
+    radial-gradient(60% 55% at 85% 0%, rgba(226, 181, 109, 0.18), transparent 60%),
+    radial-gradient(55% 60% at 5% 15%, rgba(31, 112, 97, 0.14), transparent 55%),
+    var(--background);
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex h-12 items-center justify-center gap-2 rounded-xl px-6 text-sm font-bold transition-all duration-200 disabled:opacity-60;
+  }
+  .btn-primary {
+    @apply bg-brand-600 text-white shadow-[var(--shadow-lift)] hover:bg-brand-700 hover:-translate-y-0.5;
+  }
+  .btn-ghost {
+    @apply border border-[var(--border)] bg-[var(--surface)]/70 text-stone-700 hover:bg-[var(--surface)] hover:-translate-y-0.5 dark:text-stone-200;
+  }
+  .btn-gold {
+    @apply bg-gold-400 text-brand-900 shadow-[var(--shadow-lift)] hover:bg-gold-300 hover:-translate-y-0.5;
+  }
+  .card {
+    @apply rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-soft)];
+  }
+  .field-label {
+    @apply mb-1.5 block text-sm font-semibold text-stone-700 dark:text-stone-300;
+  }
+  .field-input {
+    @apply w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[15px] outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
+  }
+  .eyebrow {
+    @apply inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-sm font-semibold text-brand-700 dark:border-brand-800 dark:bg-brand-900/40 dark:text-brand-200;
+  }
 }

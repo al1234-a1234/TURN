@@ -13,27 +13,25 @@ const TIMEZONES = [
 ];
 
 export function CreateRestaurantForm() {
-  const [state, formAction, pending] = useActionState<
-    CreateRestaurantState,
-    FormData
-  >(createRestaurant, {});
+  const [state, formAction, pending] = useActionState<CreateRestaurantState, FormData>(
+    createRestaurant,
+    {},
+  );
   const [slug, setSlug] = useState("");
 
   return (
     <div className="mx-auto max-w-xl">
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-bold">أنشئ مطعمك</h1>
-        <p className="mt-2 text-sm text-zinc-500">
-          ابدأ بإضافة مطعمك وفرعه الأول — ستصبح مالكًا له مباشرةً.
+      <div className="mb-8 text-center">
+        <span className="eyebrow mb-4">الخطوة الأخيرة</span>
+        <h1 className="text-3xl font-extrabold text-brand-900 dark:text-white">أنشئ مطعمك</h1>
+        <p className="mt-3 text-stone-500">
+          أضف مطعمك وفرعك الأول — ستصبح مالكًا له مباشرةً وتبدأ باستقبال الحجوزات.
         </p>
       </div>
 
-      <form
-        action={formAction}
-        className="space-y-5 rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950"
-      >
+      <form action={formAction} className="card space-y-6 p-7">
         <fieldset className="space-y-4">
-          <legend className="mb-2 text-sm font-semibold text-teal-700 dark:text-teal-400">
+          <legend className="mb-1 text-sm font-bold text-brand-700 dark:text-brand-300">
             بيانات المطعم
           </legend>
 
@@ -46,11 +44,7 @@ export function CreateRestaurantForm() {
             </Field>
           </div>
 
-          <Field
-            label="معرّف الرابط"
-            htmlFor="slug"
-            hint={`سيكون رابط مطعمك: /r/${slug || "my-cafe"}`}
-          >
+          <Field label="معرّف الرابط" htmlFor="slug" hint={`رابط مطعمك: /r/${slug || "my-cafe"}`}>
             <Input
               id="slug"
               name="slug"
@@ -60,12 +54,7 @@ export function CreateRestaurantForm() {
               title="أحرف إنجليزية صغيرة وأرقام وشُرَط فقط"
               value={slug}
               onChange={(e) =>
-                setSlug(
-                  e.target.value
-                    .toLowerCase()
-                    .replace(/[^a-z0-9-]/g, "-")
-                    .replace(/-+/g, "-"),
-                )
+                setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-"))
               }
               placeholder="my-cafe"
             />
@@ -76,19 +65,14 @@ export function CreateRestaurantForm() {
           </Field>
         </fieldset>
 
-        <fieldset className="space-y-4 border-t border-zinc-100 pt-5 dark:border-zinc-800">
-          <legend className="mb-2 text-sm font-semibold text-teal-700 dark:text-teal-400">
+        <fieldset className="space-y-4 border-t border-[var(--border)] pt-6">
+          <legend className="mb-1 text-sm font-bold text-brand-700 dark:text-brand-300">
             الفرع الأول
           </legend>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="اسم الفرع" htmlFor="branch_name">
-              <Input
-                id="branch_name"
-                name="branch_name"
-                required
-                defaultValue="الفرع الرئيسي"
-              />
+              <Input id="branch_name" name="branch_name" required defaultValue="الفرع الرئيسي" />
             </Field>
             <Field label="المدينة (اختياري)" htmlFor="city">
               <Input id="city" name="city" placeholder="الرياض" />
@@ -100,32 +84,21 @@ export function CreateRestaurantForm() {
           </Field>
 
           <Field label="المنطقة الزمنية" htmlFor="timezone">
-            <select
-              id="timezone"
-              name="timezone"
-              defaultValue="Asia/Riyadh"
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 dark:border-zinc-700 dark:bg-zinc-900"
-            >
+            <select id="timezone" name="timezone" defaultValue="Asia/Riyadh" className="field-input">
               {TIMEZONES.map((tz) => (
-                <option key={tz.value} value={tz.value}>
-                  {tz.label}
-                </option>
+                <option key={tz.value} value={tz.value}>{tz.label}</option>
               ))}
             </select>
           </Field>
         </fieldset>
 
         {state.error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+          <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">
             {state.error}
           </p>
         )}
 
-        <button
-          type="submit"
-          disabled={pending}
-          className="w-full rounded-lg bg-teal-600 px-4 py-2.5 font-semibold text-white transition-colors hover:bg-teal-700 disabled:opacity-60"
-        >
+        <button type="submit" disabled={pending} className="btn btn-primary w-full">
           {pending ? "جارٍ الإنشاء…" : "إنشاء المطعم والفرع"}
         </button>
       </form>
@@ -146,23 +119,13 @@ function Field({
 }) {
   return (
     <div>
-      <label
-        htmlFor={htmlFor}
-        className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-      >
-        {label}
-      </label>
+      <label htmlFor={htmlFor} className="field-label">{label}</label>
       {children}
-      {hint && <p className="mt-1 text-xs text-zinc-400" dir="ltr">{hint}</p>}
+      {hint && <p className="mt-1.5 text-xs text-stone-400" dir="ltr">{hint}</p>}
     </div>
   );
 }
 
 function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      {...props}
-      className="w-full rounded-lg border border-zinc-300 px-3 py-2 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 dark:border-zinc-700 dark:bg-zinc-900"
-    />
-  );
+  return <input {...props} className="field-input" />;
 }

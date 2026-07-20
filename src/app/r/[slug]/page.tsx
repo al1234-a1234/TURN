@@ -33,7 +33,6 @@ export default async function RestaurantPublicPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  // بيانات العميل لتعبئة النموذج مسبقًا
   let defaultName = "";
   let defaultPhone = "";
   if (user) {
@@ -47,82 +46,80 @@ export default async function RestaurantPublicPage({
   }
 
   const hasBranches = !!branches && branches.length > 0;
+  const initial = restaurant.name.trim().charAt(0) || "م";
 
   return (
-    <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-black">
-      <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
-          <Link
-            href="/"
-            className="text-xl font-extrabold text-teal-700 dark:text-teal-400"
-          >
-            دور
+    <div className="flex flex-1 flex-col">
+      <header className="sticky top-0 z-30 border-b border-[var(--border)]/70 bg-[var(--background)]/80 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-5">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-600 to-brand-500 text-white shadow-[var(--shadow-lift)]">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M12 3a9 9 0 1 0 9 9" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+                <circle cx="12" cy="12" r="3" fill="currentColor" />
+              </svg>
+            </span>
+            <span className="text-lg font-extrabold text-brand-700 dark:text-brand-300">دور</span>
           </Link>
           <Link
             href={user ? "/dashboard" : `/login?redirect=/r/${slug}`}
-            className="text-sm font-medium text-teal-600 hover:underline"
+            className="btn btn-ghost h-10 px-4"
           >
             {user ? "حسابي" : "تسجيل الدخول"}
           </Link>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
-        <div className="mb-8">
-          <h1 className="text-3xl font-extrabold">{restaurant.name}</h1>
-          {restaurant.name_en && (
-            <p className="mt-1 text-zinc-400" dir="ltr">
-              {restaurant.name_en}
-            </p>
-          )}
-          {restaurant.description && (
-            <p className="mt-3 max-w-prose leading-8 text-zinc-600 dark:text-zinc-300">
-              {restaurant.description}
-            </p>
-          )}
+      {/* هيرو المطعم */}
+      <div className="bg-hero border-b border-[var(--border)]">
+        <div className="mx-auto flex max-w-3xl items-center gap-5 px-5 py-10">
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-tr from-brand-600 to-brand-500 text-3xl font-extrabold text-white shadow-[var(--shadow-lift)]">
+            {initial}
+          </div>
+          <div>
+            <h1 className="text-3xl font-extrabold text-brand-900 dark:text-white">{restaurant.name}</h1>
+            {restaurant.name_en && (
+              <p className="mt-0.5 text-stone-400" dir="ltr">{restaurant.name_en}</p>
+            )}
+            {restaurant.description && (
+              <p className="mt-2 max-w-prose text-[15px] leading-7 text-stone-600 dark:text-stone-300">
+                {restaurant.description}
+              </p>
+            )}
+          </div>
         </div>
+      </div>
 
-        <h2 className="mb-4 text-lg font-semibold">احجز طاولتك</h2>
+      <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-10">
+        <h2 className="mb-5 text-xl font-extrabold text-brand-900 dark:text-white">احجز طاولتك</h2>
 
         {!hasBranches ? (
-          <p className="rounded-2xl border border-dashed border-zinc-300 p-8 text-center text-sm text-zinc-400 dark:border-zinc-700">
-            لا توجد فروع متاحة للحجز حاليًا.
-          </p>
+          <div className="card p-10 text-center text-stone-400">
+            <span className="text-4xl">🏝️</span>
+            <p className="mt-3 text-sm">لا توجد فروع متاحة للحجز حاليًا.</p>
+          </div>
         ) : user ? (
           <BookingForm
             slug={slug}
-            branches={branches!.map((b) => ({
-              id: b.id,
-              name: b.name,
-              timezone: b.timezone,
-            }))}
+            branches={branches!.map((b) => ({ id: b.id, name: b.name, timezone: b.timezone }))}
             defaultName={defaultName}
             defaultPhone={defaultPhone}
           />
         ) : (
           <div className="space-y-4">
-            <ul className="space-y-3">
+            <ul className="grid gap-3 sm:grid-cols-2">
               {branches!.map((b) => (
-                <li
-                  key={b.id}
-                  className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950"
-                >
-                  <p className="font-semibold">{b.name}</p>
-                  <p className="text-sm text-zinc-500">
-                    {[b.city, b.address].filter(Boolean).join(" · ") ||
-                      "بدون عنوان"}
+                <li key={b.id} className="card p-5">
+                  <p className="font-bold">{b.name}</p>
+                  <p className="mt-1 text-sm text-stone-500">
+                    {[b.city, b.address].filter(Boolean).join(" · ") || "بدون عنوان"}
                   </p>
                 </li>
               ))}
             </ul>
-            <div className="rounded-2xl border border-teal-200 bg-teal-50 p-6 text-center dark:border-teal-900 dark:bg-teal-950/40">
-              <p className="font-medium text-teal-800 dark:text-teal-200">
-                سجّل الدخول لإتمام الحجز
-              </p>
-              <Link
-                href={`/login?redirect=/r/${slug}`}
-                className="mt-3 inline-block rounded-lg bg-teal-600 px-6 py-2 text-sm font-semibold text-white transition-colors hover:bg-teal-700"
-              >
+            <div className="card flex flex-col items-center gap-4 bg-brand-700 p-8 text-center text-white dark:bg-brand-800">
+              <p className="text-lg font-bold">سجّل الدخول لإتمام حجزك</p>
+              <Link href={`/login?redirect=/r/${slug}`} className="btn btn-gold px-8">
                 تسجيل الدخول / إنشاء حساب
               </Link>
             </div>
