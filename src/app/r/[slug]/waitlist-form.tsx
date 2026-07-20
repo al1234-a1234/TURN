@@ -54,7 +54,7 @@ export function WaitlistForm({
       <div className="soft-card flex items-center justify-between p-6">
         <div>
           <p className="text-sm text-[color:var(--muted)]">في الطابور الآن</p>
-          <p className="text-4xl font-extrabold text-[color:var(--foreground)]">{branch?.total ?? 0}</p>
+          <p className="font-serif text-5xl font-bold text-gold leading-tight">{branch?.total ?? 0}</p>
         </div>
         <span className="chip">خذ دورك</span>
       </div>

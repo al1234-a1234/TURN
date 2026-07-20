@@ -1,25 +1,35 @@
 import type { Metadata, Viewport } from "next";
-import { Tajawal, Almarai } from "next/font/google";
+import { Cormorant_Garamond, Reem_Kufi, IBM_Plex_Sans_Arabic } from "next/font/google";
 import "./globals.css";
 
-const tajawal = Tajawal({
-  variable: "--font-tajawal",
-  subsets: ["arabic", "latin"],
-  weight: ["300", "400", "500", "700", "800"],
+// عناوين لاتينية فاخرة (TURN)
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
   display: "swap",
 });
 
-const almarai = Almarai({
-  variable: "--font-almarai",
-  subsets: ["arabic"],
-  weight: ["300", "400", "700", "800"],
+// عناوين عربية فخمة
+const reem = Reem_Kufi({
+  variable: "--font-reem",
+  subsets: ["arabic", "latin"],
+  weight: ["500", "600", "700"],
+  display: "swap",
+});
+
+// نصوص
+const plex = IBM_Plex_Sans_Arabic({
+  variable: "--font-plex",
+  subsets: ["arabic", "latin"],
+  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "دور | Turn — قوائم انتظار المطاعم",
+  title: "دور | Turn — تجربة انتظار راقية",
   description:
-    "دور (Turn): منصة قوائم انتظار ذكية للمطاعم — خذ دورك وتابع طابورك بسهولة.",
+    "دور (Turn): تجربة انتظار راقية لأفخم المطاعم — خذ دورك وتابع طابورك بأناقة.",
   icons: {
     icon: "/icon-32.png",
     apple: "/icon-180.png",
@@ -27,7 +37,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0e1c15",
+  themeColor: "#0c1712",
   width: "device-width",
   initialScale: 1,
 };
@@ -41,9 +51,15 @@ export default function RootLayout({
     <html
       lang="ar"
       dir="rtl"
-      className={`dark ${tajawal.variable} ${almarai.variable} h-full antialiased`}
+      className={`dark ${cormorant.variable} ${reem.variable} ${plex.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">
+        {children}
+        {/* طبقة تعتيم الأطراف (vignette) */}
+        <div className="vignette-layer" aria-hidden />
+        {/* طبقة حبيبات الفيلم */}
+        <div className="grain-layer" aria-hidden />
+      </body>
     </html>
   );
 }

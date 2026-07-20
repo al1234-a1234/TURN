@@ -26,8 +26,8 @@ export function RestaurantTabs({
 
   return (
     <div>
-      {/* حاوية تبويبات واحدة بزوايا 16px */}
-      <div className="mb-6 grid grid-cols-2 gap-1 rounded-2xl border border-[var(--border)] bg-[color:var(--surface)] p-1">
+      {/* حاوية تبويبات زجاجية */}
+      <div className="glass mb-6 grid grid-cols-2 gap-1 rounded-2xl p-1">
         <TabBtn active={tab === "waitlist"} onClick={() => setTab("waitlist")}>
           قائمة الانتظار
         </TabBtn>
@@ -104,9 +104,10 @@ function TabBtn({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`rounded-xl py-2.5 text-sm font-bold transition-all duration-200 disabled:opacity-40 ${
-        active ? "bg-[color:var(--brand)] text-white" : "text-[color:var(--muted)]"
+      className={`rounded-xl py-2.5 text-sm font-bold transition-all duration-[250ms] disabled:opacity-40 ${
+        active ? "text-[color:var(--bg)]" : "text-[color:var(--muted)]"
       }`}
+      style={active ? { background: "linear-gradient(135deg,#e7d8b5,#c9a961)" } : undefined}
     >
       {children}
     </button>

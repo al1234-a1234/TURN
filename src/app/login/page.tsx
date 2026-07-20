@@ -65,15 +65,16 @@ function LoginForm() {
   return (
     <div className="flex flex-1 flex-col">
       <header className="app-header px-5 pb-16 pt-10 text-center">
-        <span className="mx-auto block w-fit">
-          <BrandMark size={68} />
+        <span className="mx-auto block w-fit drop-shadow-[0_14px_30px_rgba(0,0,0,0.55)]">
+          <BrandMark size={72} />
         </span>
-        <h1 className="mt-4 text-2xl font-extrabold">
+        <h1 className="font-serif mt-5 text-3xl font-bold text-[color:var(--ink)]">
           {mode === "signin" ? "أهلاً بعودتك" : "أنشئ حسابك"}
         </h1>
-        <p className="mt-1 text-sm text-cream-200/85">
-          {mode === "signin" ? "سجّل الدخول لمتابعة دورك" : "ابدأ مع دور خلال ثوانٍ"}
+        <p className="mt-2 text-sm text-[color:var(--muted)]">
+          {mode === "signin" ? "سجّل الدخول لإدارة مطعمك" : "ابدأ مع دور خلال ثوانٍ"}
         </p>
+        <div className="gold-rule mx-auto mt-5 max-w-[160px]" />
       </header>
 
       <main className="mx-auto -mt-8 w-full max-w-md flex-1 px-5">

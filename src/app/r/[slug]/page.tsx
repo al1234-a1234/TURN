@@ -90,43 +90,45 @@ export default async function RestaurantPublicPage({
         <div className="h-11 w-11" />
       </header>
 
-      <main className="mx-auto w-full max-w-2xl flex-1 px-5 pb-12 pt-4">
-        {/* بطاقة المطعم: غلاف بعرض كامل + شعار متراكب على الحافّة */}
-        <div className="soft-card overflow-hidden">
-          <div className="relative">
-            <div className="h-[200px] w-full bg-gradient-to-tr from-brand-700 to-brand-500">
+      <main className="mx-auto w-full max-w-2xl flex-1 px-5 pb-12">
+        {/* غلاف بعرض كامل يذوب في الخلفية + شعار بحدّ ذهبي متراكب */}
+        <div className="reveal relative -mx-5" style={{ animationDelay: "0ms" }}>
+          <div className="relative h-[240px] w-full overflow-hidden">
+            <div className="h-full w-full bg-gradient-to-tr from-brand-800 to-brand-600">
               {restaurant.cover_url && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={restaurant.cover_url} alt="" className="h-full w-full object-cover" />
               )}
             </div>
-            <span className="absolute -bottom-9 right-5 flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full border-4 border-[var(--surface)] bg-brand-600 text-2xl font-extrabold text-white shadow-[var(--shadow-lift)]">
-              {restaurant.logo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={restaurant.logo_url} alt="" className="h-full w-full object-cover" />
-              ) : (
-                initial
-              )}
-            </span>
+            {/* إذابة الغلاف في الخلفية */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0c1712]" />
           </div>
-
-          <div className="px-5 pb-5 pt-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-xl font-extrabold text-[color:var(--foreground)]">{restaurant.name}</h1>
-              {city && <span className="chip">{city}</span>}
-            </div>
-            {restaurant.name_en && (
-              <p className="mt-0.5 text-sm text-[color:var(--muted)]" dir="ltr">{restaurant.name_en}</p>
+          <span className="absolute -bottom-8 right-5 flex h-[76px] w-[76px] items-center justify-center overflow-hidden rounded-full bg-[#0c1712] text-2xl font-extrabold text-[color:var(--gold-1)] shadow-[0_16px_36px_rgba(0,0,0,0.5)] ring-2 ring-[color:var(--gold-2)]">
+            {restaurant.logo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={restaurant.logo_url} alt="" className="h-full w-full object-cover" />
+            ) : (
+              initial
             )}
-            {restaurant.description && (
-              <p className="mt-3 line-clamp-2 text-[15px] leading-7 text-[color:var(--muted)]">
-                {restaurant.description}
-              </p>
-            )}
-          </div>
+          </span>
         </div>
 
-        <div className="mt-6">
+        <div className="reveal mt-12 px-1" style={{ animationDelay: "90ms" }}>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-serif text-3xl font-bold text-[color:var(--ink)]">{restaurant.name}</h1>
+            {city && <span className="chip">{city}</span>}
+          </div>
+          {restaurant.name_en && (
+            <p className="mt-1 font-serif text-lg text-[color:var(--muted)]" dir="ltr">{restaurant.name_en}</p>
+          )}
+          {restaurant.description && (
+            <p className="mt-3 line-clamp-2 text-[15px] leading-7 text-[color:var(--muted)]">
+              {restaurant.description}
+            </p>
+          )}
+        </div>
+
+        <div className="reveal mt-7" style={{ animationDelay: "170ms" }}>
           <RestaurantTabs categories={categories ?? []} items={items ?? []}>
             {waitlistPanel}
           </RestaurantTabs>
