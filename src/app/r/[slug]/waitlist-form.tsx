@@ -77,6 +77,10 @@ export function WaitlistForm({
       {/* اسم + رقم فقط */}
       <div className="soft-card space-y-4 p-5">
         <div>
+          <p className="font-serif text-lg font-bold text-[color:var(--ink)]">سجّل بياناتك وخذ دورك</p>
+          <p className="text-xs text-[color:var(--muted)]">اسمك ورقمك فقط — بلا حساب ولا كلمة مرور.</p>
+        </div>
+        <div>
           <label htmlFor="full_name" className="field-label">الاسم</label>
           <input
             id="full_name" name="full_name" required defaultValue={defaultName}

@@ -61,18 +61,14 @@ export default function Home() {
         {/* خط ذهبي فاصل */}
         <div className="reveal gold-rule my-8 max-w-[220px]" style={{ animationDelay: "320ms" }} />
 
-        {/* الأزرار داخل كرت زجاجي */}
-        <div
-          className="reveal glass w-full space-y-3 p-4"
+        {/* مدخل واحد للعميل */}
+        <Link
+          href="/restaurants"
+          className="reveal btn btn-primary w-full text-base"
           style={{ animationDelay: "390ms" }}
         >
-          <Link href="/restaurants" className="btn btn-primary w-full text-base">
-            تصفّح المطاعم وخذ دورك
-          </Link>
-          <Link href="/login" className="btn btn-secondary w-full text-base">
-            دخول أصحاب المطاعم
-          </Link>
-        </div>
+          تصفّح المطاعم
+        </Link>
       </main>
 
       <footer className="relative z-10 mx-auto w-full max-w-[420px] px-6 pb-6 text-center text-xs tracking-widest text-[color:var(--muted)]/70" dir="ltr">
