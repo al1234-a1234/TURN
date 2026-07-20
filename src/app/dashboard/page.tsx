@@ -54,12 +54,11 @@ export default async function DashboardPage() {
               لا يوجد مطعم مرتبط بحسابك
             </h1>
             <p className="max-w-sm text-sm text-[color:var(--muted)]">
-              المطاعم تُضاف من قِبل فريق دور. إذا زُوّدت برمز تسليم خاص بمطعمك،
-              أدخله لتصبح المالك وتدير كل شيء.
+              حسابات الملّاك تُنشأ من قِبل إدارة دور فقط. تواصل معنا لإضافة مطعمك
+              والحصول على اسم المستخدم والرمز الخاص بك.
             </p>
-            <Link href="/claim" className="btn btn-primary w-full max-w-xs">🔑 عندي رمز تسليم</Link>
-            <a href="mailto:albraalaan@gmail.com" className="text-sm font-bold text-[color:var(--gold-1)]">
-              أبي أضيف مطعمي — تواصل معنا
+            <a href="mailto:albraalaan@gmail.com" className="btn btn-primary w-full max-w-xs">
+              تواصل مع الإدارة
             </a>
             {isAdmin && (
               <Link href="/admin" className="btn btn-secondary mt-2 w-full max-w-xs">⚙️ لوحة الأدمِن</Link>

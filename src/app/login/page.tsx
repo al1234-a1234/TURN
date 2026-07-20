@@ -5,8 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { BrandMark } from "@/components/brand";
 
-type Mode = "signin" | "signup";
-
 export default function LoginPage() {
   return (
     <Suspense>
@@ -18,48 +16,31 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/restaurants";
+  const redirect = searchParams.get("redirect") || "/dashboard";
 
-  const [mode, setMode] = useState<Mode>("signin");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [identifier, setIdentifier] = useState("");
+  const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setInfo(null);
+
+    // اسم المستخدم يتحوّل لبريد داخلي، أو استخدم الإيميل مباشرة
+    const id = identifier.trim().toLowerCase();
+    const email = id.includes("@") ? id : `${id}@turn.app`;
 
     const supabase = createClient();
-
-    if (mode === "signin") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        setError("تعذّر تسجيل الدخول. تحقّق من البريد وكلمة المرور.");
-        setLoading(false);
-        return;
-      }
-      router.push(redirect);
-      router.refresh();
-    } else {
-      const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) {
-        setError("تعذّر إنشاء الحساب. حاول ببريد آخر أو كلمة مرور أقوى.");
-        setLoading(false);
-        return;
-      }
-      if (!data.session) {
-        setInfo("تم إنشاء الحساب. تحقّق من بريدك لتأكيد الحساب ثم سجّل الدخول.");
-        setMode("signin");
-        setLoading(false);
-        return;
-      }
-      router.push(redirect);
-      router.refresh();
+    const { error } = await supabase.auth.signInWithPassword({ email, password: code });
+    if (error) {
+      setError("بيانات الدخول غير صحيحة. تأكّد من اسم المستخدم والرمز.");
+      setLoading(false);
+      return;
     }
+    router.push(redirect);
+    router.refresh();
   }
 
   return (
@@ -68,56 +49,42 @@ function LoginForm() {
         <span className="mx-auto block w-fit drop-shadow-[0_14px_30px_rgba(0,0,0,0.55)]">
           <BrandMark size={72} />
         </span>
-        <h1 className="font-serif mt-5 text-3xl font-bold text-[color:var(--ink)]">
-          {mode === "signin" ? "أهلاً بعودتك" : "أنشئ حسابك"}
-        </h1>
-        <p className="mt-2 text-sm text-[color:var(--muted)]">
-          {mode === "signin" ? "سجّل الدخول لإدارة مطعمك" : "ابدأ مع دور خلال ثوانٍ"}
-        </p>
+        <h1 className="font-serif mt-5 text-3xl font-bold text-[color:var(--ink)]">دخول أصحاب المطاعم</h1>
+        <p className="mt-2 text-sm text-[color:var(--muted)]">ادخل باسم المستخدم والرمز اللذين زوّدك بهما فريق دور</p>
         <div className="gold-rule mx-auto mt-5 max-w-[160px]" />
       </header>
 
       <main className="mx-auto -mt-8 w-full max-w-md flex-1 px-5">
         <form onSubmit={handleSubmit} className="soft-card space-y-4 p-6">
           <div>
-            <label htmlFor="email" className="field-label">البريد الإلكتروني</label>
+            <label htmlFor="identifier" className="field-label">اسم المستخدم</label>
             <input
-              id="email" type="email" required autoComplete="email" dir="ltr"
-              value={email} onChange={(e) => setEmail(e.target.value)}
-              className="field-input text-left" placeholder="you@example.com"
+              id="identifier" required autoComplete="username" dir="ltr"
+              value={identifier} onChange={(e) => setIdentifier(e.target.value)}
+              className="field-input text-left" placeholder="aldeyafa"
             />
           </div>
           <div>
-            <label htmlFor="password" className="field-label">كلمة المرور</label>
+            <label htmlFor="code" className="field-label">الرمز</label>
             <input
-              id="password" type="password" required minLength={6}
-              autoComplete={mode === "signin" ? "current-password" : "new-password"}
-              dir="ltr" value={password} onChange={(e) => setPassword(e.target.value)}
+              id="code" type="password" required autoComplete="current-password" dir="ltr"
+              value={code} onChange={(e) => setCode(e.target.value)}
               className="field-input text-left" placeholder="••••••••"
             />
           </div>
 
           {error && (
-            <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</p>
-          )}
-          {info && (
-            <p className="rounded-2xl bg-brand-50 px-4 py-3 text-sm font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-200">{info}</p>
+            <p className="rounded-2xl border border-[rgba(220,90,90,0.35)] bg-[color:var(--surface)] px-4 py-3 text-sm font-medium text-red-300">{error}</p>
           )}
 
           <button type="submit" disabled={loading} className="btn btn-primary w-full">
-            {loading ? "جارٍ المعالجة…" : mode === "signin" ? "تسجيل الدخول" : "إنشاء حساب"}
+            {loading ? "جارٍ الدخول…" : "دخول"}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-[color:var(--muted)]">
-          {mode === "signin" ? "ليس لديك حساب؟" : "لديك حساب بالفعل؟"}{" "}
-          <button
-            type="button"
-            onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(null); setInfo(null); }}
-            className="font-bold text-brand-600 hover:underline"
-          >
-            {mode === "signin" ? "أنشئ حسابًا" : "سجّل الدخول"}
-          </button>
+          تبي تضيف مطعمك؟{" "}
+          <a href="mailto:albraalaan@gmail.com" className="font-bold text-[color:var(--gold-1)]">تواصل مع إدارة دور</a>
         </p>
       </main>
     </div>

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export type AdminCreateState = {
   error?: string;
-  ok?: { slug: string; claim_code: string | null; linked: boolean };
+  ok?: { username: string; code: string; phone: string; slug: string };
 };
 
 export async function adminCreateRestaurant(
@@ -15,43 +15,49 @@ export async function adminCreateRestaurant(
   const supabase = await createClient();
 
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "يجب تسجيل الدخول." };
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) return { error: "يجب تسجيل الدخول." };
 
   const name = String(formData.get("name") ?? "").trim();
-  const nameEn = String(formData.get("name_en") ?? "").trim() || undefined;
   const slug = String(formData.get("slug") ?? "").trim().toLowerCase();
+  const username = String(formData.get("username") ?? "").trim().toLowerCase();
+  const phone = String(formData.get("phone") ?? "").trim();
+  const city = String(formData.get("city") ?? "").trim();
   const branchName = String(formData.get("branch_name") ?? "").trim() || "الفرع الرئيسي";
-  const ownerEmail = String(formData.get("owner_email") ?? "").trim() || undefined;
-  const city = String(formData.get("city") ?? "").trim() || undefined;
 
   if (!name) return { error: "أدخل اسم المطعم." };
-  if (!slug) return { error: "أدخل معرّف الرابط." };
-  if (!/^[a-z0-9-]+$/.test(slug)) {
-    return { error: "المعرّف: أحرف إنجليزية صغيرة وأرقام وشُرَط فقط." };
+  if (!username || !/^[a-z0-9_.-]+$/.test(username))
+    return { error: "اسم مستخدم صالح (أحرف إنجليزية وأرقام فقط)." };
+  if (!slug || !/^[a-z0-9-]+$/.test(slug))
+    return { error: "معرّف رابط صالح (أحرف إنجليزية صغيرة وأرقام وشُرَط)." };
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+  let res: Response;
+  try {
+    res = await fetch(`${url}/functions/v1/provision-owner`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: anon,
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ name, slug, username, phone, city, branch_name: branchName }),
+    });
+  } catch {
+    return { error: "تعذّر الاتصال بالخادم. حاول مرة أخرى." };
   }
 
-  const { data, error } = await supabase.rpc("admin_create_restaurant", {
-    p_name: name,
-    p_slug: slug,
-    p_branch_name: branchName,
-    p_name_en: nameEn,
-    p_owner_email: ownerEmail,
-    p_city: city,
-  });
-
-  if (error) {
-    if (error.code === "23505") return { error: "معرّف الرابط مستخدم بالفعل." };
-    if (error.code === "42501") return { error: "غير مصرّح — الأدمِن فقط." };
-    return { error: "تعذّر إنشاء المطعم. حاول مرة أخرى." };
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    if (data.error === "username_taken") return { error: "اسم المستخدم مستخدم بالفعل." };
+    if (data.error === "slug_taken") return { error: "معرّف الرابط مستخدم بالفعل." };
+    if (data.error === "forbidden") return { error: "غير مصرّح — الأدمِن فقط." };
+    return { error: "تعذّر إنشاء الحساب. تحقّق من البيانات وحاول مجددًا." };
   }
-
-  const row = Array.isArray(data) ? data[0] : data;
-  const claimCode: string | null = row?.claim_code ?? null;
 
   revalidatePath("/admin");
-  return {
-    ok: { slug, claim_code: claimCode, linked: claimCode === null },
-  };
+  return { ok: { username: data.username, code: data.code, phone: data.phone ?? phone, slug: data.slug } };
 }
