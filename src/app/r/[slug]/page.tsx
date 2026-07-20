@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { BookingForm } from "./booking-form";
+import { WaitlistForm } from "./waitlist-form";
+
+const ZONE_LABEL: Record<string, string> = {
+  any: "أي مكان",
+  inside: "الداخل",
+  outside: "الخارج",
+};
 
 export default async function RestaurantPublicPage({
   params,
@@ -13,18 +19,16 @@ export default async function RestaurantPublicPage({
 
   const { data: restaurant } = await supabase
     .from("restaurants")
-    .select("id, name, name_en, description, logo_url, is_active")
+    .select("id, name, name_en, description, is_active")
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
 
-  if (!restaurant) {
-    notFound();
-  }
+  if (!restaurant) notFound();
 
   const { data: branches } = await supabase
     .from("branches")
-    .select("id, name, city, address, phone, timezone")
+    .select("id, name, city, address")
     .eq("restaurant_id", restaurant.id)
     .eq("is_active", true)
     .order("created_at");
@@ -33,93 +37,126 @@ export default async function RestaurantPublicPage({
     data: { user },
   } = await supabase.auth.getUser();
 
+  // عدّادات الطابور لكل فرع
+  const branchList = branches ?? [];
+  const withCounts = await Promise.all(
+    branchList.map(async (b) => {
+      const { data } = await supabase.rpc("waitlist_counts", { b_id: b.id });
+      const c = Array.isArray(data) ? data[0] : undefined;
+      return {
+        id: b.id,
+        name: b.name,
+        total: c?.total ?? 0,
+        inside: c?.inside ?? 0,
+        outside: c?.outside ?? 0,
+      };
+    }),
+  );
+
+  // بيانات العميل + طلب انتظار نشط
   let defaultName = "";
   let defaultPhone = "";
+  let activeEntry: { position: number | null; zone: string; party_size: number } | null = null;
   if (user) {
     const { data: customer } = await supabase
       .from("customers")
-      .select("full_name, phone")
+      .select("id, full_name, phone")
       .eq("user_id", user.id)
       .maybeSingle();
     defaultName = customer?.full_name ?? "";
     defaultPhone = customer?.phone ?? "";
+    if (customer && branchList.length) {
+      const { data: entry } = await supabase
+        .from("waitlist_entries")
+        .select("position, zone, party_size")
+        .eq("customer_id", customer.id)
+        .in("branch_id", branchList.map((b) => b.id))
+        .in("status", ["waiting", "notified"])
+        .order("joined_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      activeEntry = entry ?? null;
+    }
   }
 
-  const hasBranches = !!branches && branches.length > 0;
   const initial = restaurant.name.trim().charAt(0) || "م";
+  const hasBranches = branchList.length > 0;
 
   return (
     <div className="flex flex-1 flex-col">
-      <header className="sticky top-0 z-30 border-b border-[var(--border)]/70 bg-[var(--background)]/80 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-3xl items-center justify-between px-5">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-600 to-brand-500 text-white shadow-[var(--shadow-lift)]">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path d="M12 3a9 9 0 1 0 9 9" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-                <circle cx="12" cy="12" r="3" fill="currentColor" />
-              </svg>
-            </span>
-            <span className="text-lg font-extrabold text-brand-700 dark:text-brand-300">دور</span>
+      <header className="app-header px-5 pb-8 pt-4">
+        <div className="mx-auto flex max-w-2xl items-center justify-between">
+          <Link href="/restaurants" className="icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </Link>
-          <Link
-            href={user ? "/dashboard" : `/login?redirect=/r/${slug}`}
-            className="btn btn-ghost h-10 px-4"
-          >
-            {user ? "حسابي" : "تسجيل الدخول"}
-          </Link>
+          <span className="font-extrabold">قائمة الانتظار</span>
+          <div className="h-11 w-11" />
         </div>
-      </header>
 
-      {/* هيرو المطعم */}
-      <div className="bg-hero border-b border-[var(--border)]">
-        <div className="mx-auto flex max-w-3xl items-center gap-5 px-5 py-10">
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-tr from-brand-600 to-brand-500 text-3xl font-extrabold text-white shadow-[var(--shadow-lift)]">
+        <div className="mx-auto mt-6 flex max-w-2xl items-center gap-4">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white/15 text-2xl font-extrabold backdrop-blur">
             {initial}
           </div>
           <div>
-            <h1 className="text-3xl font-extrabold text-brand-900 dark:text-white">{restaurant.name}</h1>
+            <h1 className="text-2xl font-extrabold">{restaurant.name}</h1>
             {restaurant.name_en && (
-              <p className="mt-0.5 text-stone-400" dir="ltr">{restaurant.name_en}</p>
-            )}
-            {restaurant.description && (
-              <p className="mt-2 max-w-prose text-[15px] leading-7 text-stone-600 dark:text-stone-300">
-                {restaurant.description}
-              </p>
+              <p className="text-sm text-cream-200/80" dir="ltr">{restaurant.name_en}</p>
             )}
           </div>
         </div>
-      </div>
+      </header>
 
-      <main className="mx-auto w-full max-w-3xl flex-1 px-5 py-10">
-        <h2 className="mb-5 text-xl font-extrabold text-brand-900 dark:text-white">احجز طاولتك</h2>
+      <main className="mx-auto -mt-4 w-full max-w-2xl flex-1 px-5 pb-12">
+        {restaurant.description && (
+          <p className="mb-5 rounded-2xl bg-[var(--surface)] p-4 text-[15px] leading-7 text-[color:var(--muted)] shadow-[var(--shadow-soft)]">
+            {restaurant.description}
+          </p>
+        )}
 
         {!hasBranches ? (
-          <div className="card p-10 text-center text-stone-400">
+          <div className="soft-card p-10 text-center text-[color:var(--muted)]">
             <span className="text-4xl">🏝️</span>
-            <p className="mt-3 text-sm">لا توجد فروع متاحة للحجز حاليًا.</p>
+            <p className="mt-3 text-sm">لا توجد فروع متاحة حاليًا.</p>
+          </div>
+        ) : activeEntry ? (
+          <div className="soft-card flex flex-col items-center gap-3 p-8 text-center">
+            <span className="flex h-20 w-20 items-center justify-center rounded-full bg-brand-600 text-3xl font-extrabold text-white shadow-[var(--shadow-lift)]">
+              #{activeEntry.position ?? "—"}
+            </span>
+            <p className="text-xl font-extrabold text-brand-800 dark:text-cream-100">أنت في قائمة الانتظار</p>
+            <p className="text-sm text-[color:var(--muted)]">
+              دورك رقم {activeEntry.position ?? "—"} · {activeEntry.party_size} أشخاص ·{" "}
+              {ZONE_LABEL[activeEntry.zone] ?? activeEntry.zone}
+            </p>
           </div>
         ) : user ? (
-          <BookingForm
+          <WaitlistForm
             slug={slug}
-            branches={branches!.map((b) => ({ id: b.id, name: b.name, timezone: b.timezone }))}
+            branches={withCounts}
             defaultName={defaultName}
             defaultPhone={defaultPhone}
           />
         ) : (
           <div className="space-y-4">
-            <ul className="grid gap-3 sm:grid-cols-2">
-              {branches!.map((b) => (
-                <li key={b.id} className="card p-5">
-                  <p className="font-bold">{b.name}</p>
-                  <p className="mt-1 text-sm text-stone-500">
-                    {[b.city, b.address].filter(Boolean).join(" · ") || "بدون عنوان"}
-                  </p>
-                </li>
-              ))}
-            </ul>
-            <div className="card flex flex-col items-center gap-4 bg-brand-700 p-8 text-center text-white dark:bg-brand-800">
-              <p className="text-lg font-bold">سجّل الدخول لإتمام حجزك</p>
-              <Link href={`/login?redirect=/r/${slug}`} className="btn btn-gold px-8">
+            <div className="soft-card grid grid-cols-2 divide-x divide-x-reverse divide-[var(--border)] p-6 text-center">
+              <div>
+                <p className="text-sm text-[color:var(--muted)]">الداخل</p>
+                <p className="mt-1 text-4xl font-extrabold text-brand-700 dark:text-brand-300">
+                  {withCounts[0]?.inside ?? 0}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm text-[color:var(--muted)]">الخارج</p>
+                <p className="mt-1 text-4xl font-extrabold text-brand-700 dark:text-brand-300">
+                  {withCounts[0]?.outside ?? 0}
+                </p>
+              </div>
+            </div>
+            <div className="soft-card flex flex-col items-center gap-4 bg-brand-700 p-8 text-center text-white">
+              <p className="text-lg font-bold">سجّل الدخول للانضمام إلى الطابور</p>
+              <Link href={`/login?redirect=/r/${slug}`} className="btn btn-cream px-8">
                 تسجيل الدخول / إنشاء حساب
               </Link>
             </div>

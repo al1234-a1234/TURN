@@ -1,48 +1,47 @@
 @import "tailwindcss";
 
 @theme {
-  /* الهوية اللونية — أخضر زمردي دافئ (ضيافة فاخرة) + لمسة ذهبية */
-  --color-brand-50: #eef7f4;
-  --color-brand-100: #d4ece4;
-  --color-brand-200: #abd9cc;
-  --color-brand-300: #79bfae;
-  --color-brand-400: #4ea38e;
-  --color-brand-500: #2f8874;
-  --color-brand-600: #1f7061;
-  --color-brand-700: #1a5a4e;
-  --color-brand-800: #174a40;
-  --color-brand-900: #133c34;
-  --color-gold-300: #edcd93;
-  --color-gold-400: #e2b56d;
-  --color-gold-500: #cf9a41;
-  --color-gold-600: #b3822f;
-  --color-sand: #faf7f1;
-  --color-sand-100: #f4eee2;
-  --color-sand-200: #ebe3d3;
-  --color-ink: #16211d;
+  /* هوية افيكتو: أخضر زيتي غامق + كريمي */
+  --color-brand-50: #eef3ef;
+  --color-brand-100: #d9e4da;
+  --color-brand-200: #b3c9b5;
+  --color-brand-300: #86a889;
+  --color-brand-400: #578760;
+  --color-brand-500: #3d6b47;
+  --color-brand-600: #2f5738;
+  --color-brand-700: #26472f;
+  --color-brand-800: #1d3725;
+  --color-brand-900: #142619;
+
+  --color-cream-100: #f7f2e7;
+  --color-cream-200: #ece2cc;
+  --color-cream-300: #ddcda6;
+  --color-gold-400: #cba27a;
+  --color-gold-500: #b9973f;
 
   --font-sans: var(--font-tajawal), "Tajawal", system-ui, sans-serif;
   --font-display: var(--font-almarai), "Almarai", system-ui, sans-serif;
 
-  --shadow-soft: 0 1px 2px rgba(19, 60, 52, 0.04), 0 8px 24px -12px rgba(19, 60, 52, 0.15);
-  --shadow-lift: 0 10px 30px -12px rgba(19, 60, 52, 0.28);
+  --shadow-soft: 0 1px 2px rgba(20, 38, 25, 0.05), 0 12px 28px -14px rgba(20, 38, 25, 0.22);
+  --shadow-lift: 0 14px 34px -14px rgba(20, 38, 25, 0.4);
+  --shadow-neu: 8px 8px 20px rgba(20, 38, 25, 0.08), -8px -8px 20px rgba(255, 255, 255, 0.9);
 }
 
 :root {
-  --background: #faf7f1;
-  --foreground: #16211d;
+  --background: #f2efe8;
+  --foreground: #17231a;
   --surface: #ffffff;
-  --muted: #6c7b75;
-  --border: #e9e1d3;
+  --muted: #6f7b71;
+  --border: #e7e1d4;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0f0d;
-    --foreground: #e7efe9;
-    --surface: #111917;
-    --muted: #8ba39a;
-    --border: #23302b;
+    --background: #0e1611;
+    --foreground: #e8efe9;
+    --surface: #16211a;
+    --muted: #8ba393;
+    --border: #26332b;
   }
 }
 
@@ -59,40 +58,52 @@ h1, h2, h3, h4 {
   letter-spacing: -0.01em;
 }
 
-/* خلفية دافئة بلمسات ضوئية للهيرو */
-.bg-hero {
-  background:
-    radial-gradient(60% 55% at 85% 0%, rgba(226, 181, 109, 0.18), transparent 60%),
-    radial-gradient(55% 60% at 5% 15%, rgba(31, 112, 97, 0.14), transparent 55%),
-    var(--background);
+/* هيدر متدرّج بحواف سفلية دائرية (أسلوب ريكيو) */
+.app-header {
+  background: linear-gradient(160deg, var(--color-brand-600), var(--color-brand-800));
+  color: #fff;
+  border-end-start-radius: 2rem;
+  border-end-end-radius: 2rem;
 }
 
 @layer components {
   .btn {
-    @apply inline-flex h-12 items-center justify-center gap-2 rounded-xl px-6 text-sm font-bold transition-all duration-200 disabled:opacity-60;
+    @apply inline-flex h-13 items-center justify-center gap-2 rounded-2xl px-6 text-sm font-bold transition-all duration-200 disabled:opacity-60;
+    height: 3.25rem;
   }
   .btn-primary {
     @apply bg-brand-600 text-white shadow-[var(--shadow-lift)] hover:bg-brand-700 hover:-translate-y-0.5;
   }
+  .btn-cream {
+    @apply bg-cream-200 text-brand-800 hover:bg-cream-300 hover:-translate-y-0.5;
+  }
   .btn-ghost {
-    @apply border border-[var(--border)] bg-[var(--surface)]/70 text-stone-700 hover:bg-[var(--surface)] hover:-translate-y-0.5 dark:text-stone-200;
+    @apply border border-[var(--border)] bg-[var(--surface)] text-brand-800 hover:-translate-y-0.5 dark:text-cream-100;
   }
-  .btn-gold {
-    @apply bg-gold-400 text-brand-900 shadow-[var(--shadow-lift)] hover:bg-gold-300 hover:-translate-y-0.5;
+  /* بطاقة ناعمة بحواف كبيرة */
+  .soft-card {
+    @apply rounded-3xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-soft)];
   }
-  .card {
-    @apply rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-soft)];
+  .icon-btn {
+    @apply flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition hover:bg-white/25;
   }
   .field-label {
-    @apply mb-1.5 block text-sm font-semibold text-stone-700 dark:text-stone-300;
+    @apply mb-1.5 block text-sm font-bold text-brand-800 dark:text-cream-100;
   }
   .field-input {
-    @apply w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[15px] outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/15;
-  }
-  .badge {
-    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold;
+    @apply w-full rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3.5 text-[15px] outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-500/12;
   }
   .eyebrow {
-    @apply inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-sm font-semibold text-brand-700 dark:border-brand-800 dark:bg-brand-900/40 dark:text-brand-200;
+    @apply inline-flex items-center gap-2 rounded-full bg-brand-50 px-4 py-1.5 text-sm font-bold text-brand-700 dark:bg-brand-900/50 dark:text-brand-200;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold;
+  }
+  /* زر رقم الكراسي الدائري */
+  .chair {
+    @apply flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-lg font-extrabold text-brand-800 transition dark:text-cream-100;
+  }
+  .chair-active {
+    @apply border-brand-600 bg-brand-600 text-white shadow-[var(--shadow-lift)];
   }
 }

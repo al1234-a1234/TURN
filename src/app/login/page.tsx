@@ -18,7 +18,7 @@ export default function LoginPage() {
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") || "/dashboard";
+  const redirect = searchParams.get("redirect") || "/restaurants";
 
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
@@ -63,67 +63,47 @@ function LoginForm() {
   }
 
   return (
-    <div className="bg-hero flex flex-1 items-center justify-center px-5 py-16">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-500 text-white shadow-[var(--shadow-lift)]">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path d="M12 3a9 9 0 1 0 9 9" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-                <circle cx="12" cy="12" r="3" fill="currentColor" />
-              </svg>
-            </span>
-            <span className="text-2xl font-extrabold text-brand-700 dark:text-brand-300">دور</span>
-          </Link>
-          <h1 className="mt-5 text-2xl font-extrabold text-brand-900 dark:text-white">
-            {mode === "signin" ? "أهلاً بعودتك" : "أنشئ حسابك"}
-          </h1>
-          <p className="mt-2 text-sm text-stone-500">
-            {mode === "signin" ? "سجّل الدخول لمتابعة حجوزاتك" : "ابدأ رحلتك مع دور خلال ثوانٍ"}
-          </p>
-        </div>
+    <div className="flex flex-1 flex-col">
+      <header className="app-header px-5 pb-16 pt-10 text-center">
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path d="M12 3a9 9 0 1 0 9 9" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+            <circle cx="12" cy="12" r="3" fill="currentColor" />
+          </svg>
+        </span>
+        <h1 className="mt-4 text-2xl font-extrabold">
+          {mode === "signin" ? "أهلاً بعودتك" : "أنشئ حسابك"}
+        </h1>
+        <p className="mt-1 text-sm text-cream-200/85">
+          {mode === "signin" ? "سجّل الدخول لمتابعة دورك" : "ابدأ مع دور خلال ثوانٍ"}
+        </p>
+      </header>
 
-        <form onSubmit={handleSubmit} className="card space-y-4 p-7">
+      <main className="mx-auto -mt-8 w-full max-w-md flex-1 px-5">
+        <form onSubmit={handleSubmit} className="soft-card space-y-4 p-6">
           <div>
             <label htmlFor="email" className="field-label">البريد الإلكتروني</label>
             <input
-              id="email"
-              type="email"
-              required
-              autoComplete="email"
-              dir="ltr"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="field-input text-left"
-              placeholder="you@example.com"
+              id="email" type="email" required autoComplete="email" dir="ltr"
+              value={email} onChange={(e) => setEmail(e.target.value)}
+              className="field-input text-left" placeholder="you@example.com"
             />
           </div>
-
           <div>
             <label htmlFor="password" className="field-label">كلمة المرور</label>
             <input
-              id="password"
-              type="password"
-              required
-              minLength={6}
+              id="password" type="password" required minLength={6}
               autoComplete={mode === "signin" ? "current-password" : "new-password"}
-              dir="ltr"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="field-input text-left"
-              placeholder="••••••••"
+              dir="ltr" value={password} onChange={(e) => setPassword(e.target.value)}
+              className="field-input text-left" placeholder="••••••••"
             />
           </div>
 
           {error && (
-            <p className="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">
-              {error}
-            </p>
+            <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</p>
           )}
           {info && (
-            <p className="rounded-xl bg-brand-50 px-4 py-3 text-sm font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-200">
-              {info}
-            </p>
+            <p className="rounded-2xl bg-brand-50 px-4 py-3 text-sm font-medium text-brand-700 dark:bg-brand-900/40 dark:text-brand-200">{info}</p>
           )}
 
           <button type="submit" disabled={loading} className="btn btn-primary w-full">
@@ -131,21 +111,17 @@ function LoginForm() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-stone-500">
+        <p className="mt-6 text-center text-sm text-[color:var(--muted)]">
           {mode === "signin" ? "ليس لديك حساب؟" : "لديك حساب بالفعل؟"}{" "}
           <button
             type="button"
-            onClick={() => {
-              setMode(mode === "signin" ? "signup" : "signin");
-              setError(null);
-              setInfo(null);
-            }}
-            className="font-bold text-brand-600 hover:underline dark:text-brand-400"
+            onClick={() => { setMode(mode === "signin" ? "signup" : "signin"); setError(null); setInfo(null); }}
+            className="font-bold text-brand-600 hover:underline"
           >
             {mode === "signin" ? "أنشئ حسابًا" : "سجّل الدخول"}
           </button>
         </p>
-      </div>
+      </main>
     </div>
   );
 }

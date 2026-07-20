@@ -29,7 +29,7 @@ export function CreateRestaurantForm() {
         </p>
       </div>
 
-      <form action={formAction} className="card space-y-6 p-7">
+      <form action={formAction} className="soft-card space-y-6 p-7">
         <fieldset className="space-y-4">
           <legend className="mb-1 text-sm font-bold text-brand-700 dark:text-brand-300">
             بيانات المطعم

@@ -2,41 +2,13 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/logout-button";
 import { CreateRestaurantForm } from "./create-restaurant-form";
+import { QueueActions } from "./queue-actions";
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: "قيد الانتظار",
-  confirmed: "مؤكّد",
-  seated: "جالس",
-  completed: "مكتمل",
-  cancelled: "ملغى",
-  no_show: "لم يحضر",
-  waiting: "في الانتظار",
-  notified: "أُشعِر",
-  expired: "منتهٍ",
+const ZONE_LABEL: Record<string, string> = {
+  any: "أي مكان",
+  inside: "الداخل",
+  outside: "الخارج",
 };
-
-const STATUS_STYLES: Record<string, string> = {
-  confirmed: "bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-200",
-  pending: "bg-gold-400/15 text-gold-600 dark:text-gold-300",
-  seated: "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
-  waiting: "bg-gold-400/15 text-gold-600 dark:text-gold-300",
-  notified: "bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-200",
-};
-
-const STATUS_ROLE: Record<string, string> = {
-  owner: "مالك",
-  manager: "مدير",
-  staff: "موظف",
-  host: "مضيف",
-};
-
-function formatDateTime(iso: string, timeZone: string) {
-  return new Intl.DateTimeFormat("ar-SA", {
-    dateStyle: "medium",
-    timeStyle: "short",
-    timeZone,
-  }).format(new Date(iso));
-}
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -48,7 +20,7 @@ export default async function DashboardPage() {
   if (!user) {
     return (
       <Shell>
-        <p className="text-stone-600 dark:text-stone-300">
+        <p className="text-[color:var(--muted)]">
           يجب تسجيل الدخول.{" "}
           <Link href="/login" className="font-bold text-brand-600">تسجيل الدخول</Link>
         </p>
@@ -63,8 +35,7 @@ export default async function DashboardPage() {
     .eq("is_active", true)
     .limit(1);
 
-  const membership = staffRows?.[0];
-  const restaurant = membership?.restaurants;
+  const restaurant = staffRows?.[0]?.restaurants;
 
   if (!restaurant) {
     return (
@@ -76,163 +47,122 @@ export default async function DashboardPage() {
 
   const { data: branches } = await supabase
     .from("branches")
-    .select("id, name, city, timezone, is_active")
+    .select("id, name")
     .eq("restaurant_id", restaurant.id)
     .order("created_at");
 
   const branchIds = (branches ?? []).map((b) => b.id);
-  const defaultTz = branches?.[0]?.timezone ?? "Asia/Riyadh";
 
-  const { data: reservations } = branchIds.length
-    ? await supabase
-        .from("reservations")
-        .select("id, reserved_at, party_size, status, customers(full_name, phone), tables(label)")
-        .in("branch_id", branchIds)
-        .gte("reserved_at", new Date().toISOString())
-        .order("reserved_at")
-        .limit(20)
-    : { data: [] };
-
-  const { data: waitlist } = branchIds.length
+  const { data: queue } = branchIds.length
     ? await supabase
         .from("waitlist_entries")
-        .select("id, party_size, status, position, customers(full_name)")
+        .select("id, position, party_size, zone, status, customers(full_name, phone)")
         .in("branch_id", branchIds)
         .in("status", ["waiting", "notified"])
         .order("position", { nullsFirst: false })
-        .limit(20)
     : { data: [] };
 
+  const list = queue ?? [];
+  const inside = list.filter((q) => q.zone === "inside").length;
+  const outside = list.filter((q) => q.zone === "outside").length;
+
   return (
-    <Shell email={user.email}>
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <span className="eyebrow mb-3">{STATUS_ROLE[membership.role] ?? membership.role}</span>
-          <h1 className="text-3xl font-extrabold text-brand-900 dark:text-white">{restaurant.name}</h1>
-        </div>
-        <Link href={`/r/${restaurant.slug}`} className="btn btn-ghost h-11 px-5">
-          الصفحة العامة ↗
-        </Link>
+    <Shell email={user.email} title={restaurant.name} slug={restaurant.slug}>
+      {/* عدّادات */}
+      <div className="mx-auto -mt-8 grid max-w-3xl grid-cols-3 gap-3 px-5">
+        <Stat label="في الطابور" value={list.length} />
+        <Stat label="الداخل" value={inside} />
+        <Stat label="الخارج" value={outside} />
       </div>
 
-      <div className="mb-8 grid grid-cols-3 gap-4">
-        <StatCard label="حجوزات قادمة" value={reservations?.length ?? 0} icon="📅" />
-        <StatCard label="في الانتظار" value={waitlist?.length ?? 0} icon="⏱️" />
-        <StatCard label="الفروع" value={branches?.length ?? 0} icon="🏬" />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className="card p-6">
-          <h2 className="mb-5 flex items-center gap-2 text-lg font-bold">
-            <span>📅</span> الحجوزات القادمة
-          </h2>
-          {reservations && reservations.length > 0 ? (
-            <ul className="space-y-2">
-              {reservations.map((r) => (
-                <li key={r.id} className="flex items-center gap-3 rounded-2xl border border-[var(--border)] p-3 transition hover:bg-sand-100/70 dark:hover:bg-stone-800/40">
-                  <Avatar name={r.customers?.full_name} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-bold">{r.customers?.full_name ?? "عميل"}</p>
-                    <p className="text-sm text-stone-500">
-                      {formatDateTime(r.reserved_at, defaultTz)} · {r.party_size} أشخاص
-                      {r.tables?.label ? ` · ${r.tables.label}` : ""}
-                    </p>
-                  </div>
-                  <StatusBadge status={r.status} />
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <EmptyState icon="🗓️" text="لا توجد حجوزات قادمة بعد" />
-          )}
-        </section>
-
-        <section className="card p-6">
-          <h2 className="mb-5 flex items-center gap-2 text-lg font-bold">
-            <span>⏱️</span> قائمة الانتظار
-          </h2>
-          {waitlist && waitlist.length > 0 ? (
-            <ul className="space-y-2">
-              {waitlist.map((w) => (
-                <li key={w.id} className="flex items-center gap-3 rounded-2xl border border-[var(--border)] p-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 font-extrabold text-white">
-                    {w.position ?? "•"}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-bold">{w.customers?.full_name ?? "عميل"}</p>
-                    <p className="text-sm text-stone-500">{w.party_size} أشخاص</p>
-                  </div>
-                  <StatusBadge status={w.status} />
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <EmptyState icon="🎉" text="لا أحد في قائمة الانتظار حاليًا" />
-          )}
-        </section>
+      <div className="mx-auto max-w-3xl px-5 py-6">
+        <h2 className="mb-4 text-lg font-extrabold text-brand-800 dark:text-cream-100">
+          قائمة الانتظار الآن
+        </h2>
+        {list.length > 0 ? (
+          <ul className="space-y-2">
+            {list.map((q) => (
+              <li key={q.id} className="soft-card flex items-center gap-3 p-3">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-600 text-lg font-extrabold text-white">
+                  {q.position ?? "•"}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-bold">{q.customers?.full_name ?? "عميل"}</p>
+                  <p className="text-sm text-[color:var(--muted)]">
+                    {q.party_size} أشخاص · {ZONE_LABEL[q.zone] ?? q.zone}
+                    {q.status === "notified" ? " · أُشعِر" : ""}
+                  </p>
+                </div>
+                <QueueActions id={q.id} />
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <div className="soft-card flex flex-col items-center gap-2 py-12 text-center">
+            <span className="text-4xl">🎉</span>
+            <p className="text-sm text-[color:var(--muted)]">لا أحد في قائمة الانتظار حاليًا</p>
+          </div>
+        )}
       </div>
     </Shell>
   );
 }
 
-function Shell({ children, email }: { children: React.ReactNode; email?: string }) {
+function Shell({
+  children,
+  email,
+  title,
+  slug,
+}: {
+  children: React.ReactNode;
+  email?: string;
+  title?: string;
+  slug?: string;
+}) {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="sticky top-0 z-30 border-b border-[var(--border)]/70 bg-[var(--background)]/80 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-5">
+      <header className="app-header px-5 pb-12 pt-4">
+        <div className="mx-auto flex max-w-3xl items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-600 to-brand-500 text-white shadow-[var(--shadow-lift)]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
                 <path d="M12 3a9 9 0 1 0 9 9" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
                 <circle cx="12" cy="12" r="3" fill="currentColor" />
               </svg>
             </span>
-            <span className="text-lg font-extrabold text-brand-700 dark:text-brand-300">دور</span>
+            <span className="text-lg font-extrabold">دور</span>
           </Link>
-          <div className="flex items-center gap-3">
-            {email && <span className="hidden text-sm text-stone-500 sm:inline" dir="ltr">{email}</span>}
+          <div className="flex items-center gap-2">
+            {slug && (
+              <Link href={`/r/${slug}`} className="icon-btn" title="الصفحة العامة">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+                  <path d="M14 3h7v7M21 3l-9 9M10 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Link>
+            )}
             <LogoutButton />
           </div>
         </div>
+        {title && (
+          <div className="mx-auto mt-6 max-w-3xl">
+            <p className="text-sm text-cream-200/80">لوحة التحكم</p>
+            <h1 className="text-2xl font-extrabold">{title}</h1>
+          </div>
+        )}
+        {!title && email && (
+          <p className="mx-auto mt-4 max-w-3xl text-sm text-cream-200/80" dir="ltr">{email}</p>
+        )}
       </header>
-      <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-8">{children}</main>
+      <main className="flex-1">{children}</main>
     </div>
   );
 }
 
-function StatCard({ label, value, icon }: { label: string; value: number; icon: string }) {
+function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="card flex items-center gap-3 p-4">
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-50 text-xl dark:bg-brand-900/40">
-        {icon}
-      </div>
-      <div>
-        <p className="text-2xl font-extrabold text-brand-800 dark:text-brand-200">{value}</p>
-        <p className="text-xs text-stone-500">{label}</p>
-      </div>
-    </div>
-  );
-}
-
-function Avatar({ name }: { name?: string | null }) {
-  const letter = (name ?? "ع").trim().charAt(0) || "ع";
-  return (
-    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-brand-100 to-sand-200 font-extrabold text-brand-700 dark:from-brand-900/60 dark:to-stone-800 dark:text-brand-200">
-      {letter}
-    </span>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const style = STATUS_STYLES[status] ?? "bg-sand-200 text-stone-600 dark:bg-stone-800 dark:text-stone-300";
-  return <span className={`badge ${style}`}>{STATUS_LABELS[status] ?? status}</span>;
-}
-
-function EmptyState({ icon, text }: { icon: string; text: string }) {
-  return (
-    <div className="flex flex-col items-center gap-2 py-10 text-center">
-      <span className="text-4xl">{icon}</span>
-      <p className="text-sm text-stone-400">{text}</p>
+    <div className="soft-card p-4 text-center">
+      <p className="text-3xl font-extrabold text-brand-700 dark:text-brand-300">{value}</p>
+      <p className="text-xs text-[color:var(--muted)]">{label}</p>
     </div>
   );
 }
