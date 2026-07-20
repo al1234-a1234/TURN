@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/logout-button";
-import { CreateRestaurantForm } from "./create-restaurant-form";
 import { QueueActions } from "./queue-actions";
 
 const ZONE_LABEL: Record<string, string> = {
@@ -38,9 +37,37 @@ export default async function DashboardPage() {
   const restaurant = staffRows?.[0]?.restaurants;
 
   if (!restaurant) {
+    const { data: isAdmin } = await supabase.rpc("is_platform_admin");
     return (
       <Shell email={user.email}>
-        <CreateRestaurantForm />
+        <div className="mx-auto max-w-xl px-5 py-10">
+          <div className="soft-card flex flex-col items-center gap-4 p-8 text-center">
+            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-600 text-3xl text-white shadow-[var(--shadow-lift)]">
+              🍽️
+            </span>
+            <h1 className="text-2xl font-extrabold text-brand-800 dark:text-cream-100">
+              لا يوجد مطعم مرتبط بحسابك
+            </h1>
+            <p className="max-w-sm text-sm text-[color:var(--muted)]">
+              المطاعم تُضاف من قِبل فريق دور. إذا زُوّدت برمز تسليم خاص بمطعمك،
+              أدخله لتصبح المالك وتدير المنيو والصور والطابور.
+            </p>
+            <Link href="/claim" className="btn btn-primary w-full max-w-xs">
+              🔑 عندي رمز تسليم
+            </Link>
+            <a
+              href="mailto:albraalaan@gmail.com"
+              className="text-sm font-bold text-brand-600 dark:text-brand-300"
+            >
+              أبي أضيف مطعمي — تواصل معنا
+            </a>
+            {isAdmin && (
+              <Link href="/admin" className="btn btn-cream mt-2 w-full max-w-xs">
+                ⚙️ لوحة الأدمِن
+              </Link>
+            )}
+          </div>
+        </div>
       </Shell>
     );
   }
@@ -66,6 +93,8 @@ export default async function DashboardPage() {
   const inside = list.filter((q) => q.zone === "inside").length;
   const outside = list.filter((q) => q.zone === "outside").length;
 
+  const { data: isAdmin } = await supabase.rpc("is_platform_admin");
+
   return (
     <Shell email={user.email} title={restaurant.name} slug={restaurant.slug}>
       {/* عدّادات */}
@@ -75,10 +104,15 @@ export default async function DashboardPage() {
         <Stat label="الخارج" value={outside} />
       </div>
 
-      <div className="mx-auto max-w-3xl px-5 pt-5">
-        <Link href="/dashboard/manage" className="btn btn-cream w-full">
+      <div className="mx-auto flex max-w-3xl flex-col gap-2 px-5 pt-5 sm:flex-row">
+        <Link href="/dashboard/manage" className="btn btn-cream flex-1">
           ✏️ إدارة المطعم والمنيو والصور
         </Link>
+        {isAdmin && (
+          <Link href="/admin" className="btn btn-ghost flex-1">
+            ⚙️ لوحة الأدمِن
+          </Link>
+        )}
       </div>
 
       <div className="mx-auto max-w-3xl px-5 py-6">
