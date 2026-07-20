@@ -81,7 +81,7 @@ export default async function RestaurantPublicPage({
     <div className="flex flex-1 flex-col bg-[color:var(--bg)]">
       {/* شريط علوي نظيف ثابت */}
       <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-[var(--border)] bg-[color:var(--bg)]/90 px-5 py-3 backdrop-blur">
-        <Link href="/restaurants" className="icon-btn">
+        <Link href="/" className="icon-btn">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
             <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
