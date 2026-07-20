@@ -75,6 +75,12 @@ export default async function DashboardPage() {
         <Stat label="الخارج" value={outside} />
       </div>
 
+      <div className="mx-auto max-w-3xl px-5 pt-5">
+        <Link href="/dashboard/manage" className="btn btn-cream w-full">
+          ✏️ إدارة المطعم والمنيو والصور
+        </Link>
+      </div>
+
       <div className="mx-auto max-w-3xl px-5 py-6">
         <h2 className="mb-4 text-lg font-extrabold text-brand-800 dark:text-cream-100">
           قائمة الانتظار الآن
