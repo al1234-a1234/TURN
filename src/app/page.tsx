@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandLink, BrandMark } from "@/components/brand";
 
 export default function Home() {
   return (
@@ -6,21 +7,16 @@ export default function Home() {
       {/* هيرو بهيدر متدرّج */}
       <header className="app-header px-5 pb-14 pt-5">
         <nav className="mx-auto flex max-w-3xl items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path d="M12 3a9 9 0 1 0 9 9" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-                <circle cx="12" cy="12" r="3" fill="currentColor" />
-              </svg>
-            </span>
-            <span className="text-xl font-extrabold">دور</span>
-          </div>
+          <BrandLink href="/" size={40} />
           <Link href="/login" className="icon-btn w-auto gap-1 px-4 text-sm font-bold">
             دخول
           </Link>
         </nav>
 
         <div className="mx-auto mt-10 max-w-3xl text-center">
+          <span className="mx-auto mb-6 block w-fit">
+            <BrandMark size={92} />
+          </span>
           <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-sm font-bold backdrop-blur">
             🍽️ قوائم انتظار المطاعم
           </span>
@@ -34,7 +30,7 @@ export default function Home() {
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link href="/restaurants" className="btn btn-cream px-8 text-base">تصفّح المطاعم</Link>
-            <Link href="/dashboard" className="btn btn-ghost px-8 text-base">أنا صاحب مطعم</Link>
+            <Link href="/login" className="btn btn-ghost px-8 text-base">دخول أصحاب المطاعم</Link>
           </div>
         </div>
       </header>
@@ -62,15 +58,15 @@ export default function Home() {
         <div className="soft-card mt-6 flex flex-col items-center gap-4 bg-brand-700 p-8 text-center text-white">
           <h2 className="text-2xl font-extrabold">مطعمك يستقبل زحامًا؟</h2>
           <p className="max-w-md text-cream-200/90">
-            أدر قائمة انتظارك بذكاء من لوحة واحدة. الإعداد دقائق، والتجربة مجانية لعملائك.
+            أدر قائمة انتظارك بذكاء من لوحة واحدة. نضيف مطعمك ونسلّمك رمزك الخاص لتبدأ فورًا.
           </p>
-          <Link href="/dashboard" className="btn btn-cream px-8">أنشئ مطعمك مجانًا</Link>
+          <a href="mailto:albraalaan@gmail.com" className="btn btn-cream px-8">سجّل مطعمك معنا</a>
         </div>
       </main>
 
       <footer className="border-t border-[var(--border)]">
         <div className="mx-auto max-w-3xl px-5 py-6 text-center text-sm text-[color:var(--muted)]">
-          © 2026 دور — جميع الحقوق محفوظة
+          © 2026 دور · TURN — جميع الحقوق محفوظة
         </div>
       </footer>
     </div>

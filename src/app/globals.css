@@ -1,23 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  /* هوية افيكتو: أخضر زيتي غامق + كريمي */
-  --color-brand-50: #eef3ef;
-  --color-brand-100: #d9e4da;
-  --color-brand-200: #b3c9b5;
-  --color-brand-300: #86a889;
-  --color-brand-400: #578760;
-  --color-brand-500: #3d6b47;
-  --color-brand-600: #2f5738;
-  --color-brand-700: #26472f;
-  --color-brand-800: #1d3725;
-  --color-brand-900: #142619;
+  /* هوية TURN الرسمية: أخضر زمرّدي #07623B + ذهبي كريمي #E8C7A0 */
+  --color-brand-50: #e8f2ec;
+  --color-brand-100: #cbe4d5;
+  --color-brand-200: #98cbac;
+  --color-brand-300: #5faf7f;
+  --color-brand-400: #2b8f58;
+  --color-brand-500: #0d7546;
+  --color-brand-600: #07623b;
+  --color-brand-700: #054e2f;
+  --color-brand-800: #043c24;
+  --color-brand-900: #032a1a;
 
-  --color-cream-100: #f7f2e7;
-  --color-cream-200: #ece2cc;
-  --color-cream-300: #ddcda6;
-  --color-gold-400: #cba27a;
-  --color-gold-500: #b9973f;
+  --color-cream-100: #faf4ea;
+  --color-cream-200: #f2e6d2;
+  --color-cream-300: #e8d2b3;
+  --color-gold-400: #e8c7a0;
+  --color-gold-500: #d3a878;
 
   --font-sans: var(--font-tajawal), "Tajawal", system-ui, sans-serif;
   --font-display: var(--font-almarai), "Almarai", system-ui, sans-serif;

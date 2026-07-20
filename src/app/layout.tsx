@@ -17,13 +17,17 @@ const almarai = Almarai({
 });
 
 export const metadata: Metadata = {
-  title: "دور | Turn — حجوزات وقوائم انتظار المطاعم",
+  title: "دور | Turn — قوائم انتظار المطاعم",
   description:
-    "دور (Turn): منصة حجوزات وقوائم انتظار ذكية للمطاعم — احجز طاولتك وتابع دورك بسهولة.",
+    "دور (Turn): منصة قوائم انتظار ذكية للمطاعم — خذ دورك وتابع طابورك بسهولة.",
+  icons: {
+    icon: "/icon-32.png",
+    apple: "/icon-180.png",
+  },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#2f5738",
+  themeColor: "#07623b",
   width: "device-width",
   initialScale: 1,
 };

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/logout-button";
+import { BrandLink } from "@/components/brand";
 import { QueueActions } from "./queue-actions";
 
 const ZONE_LABEL: Record<string, string> = {
@@ -163,15 +164,7 @@ function Shell({
     <div className="flex flex-1 flex-col">
       <header className="app-header px-5 pb-12 pt-4">
         <div className="mx-auto flex max-w-3xl items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path d="M12 3a9 9 0 1 0 9 9" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-                <circle cx="12" cy="12" r="3" fill="currentColor" />
-              </svg>
-            </span>
-            <span className="text-lg font-extrabold">دور</span>
-          </Link>
+          <BrandLink href="/dashboard" size={38} />
           <div className="flex items-center gap-2">
             {slug && (
               <Link href={`/r/${slug}`} className="icon-btn" title="الصفحة العامة">

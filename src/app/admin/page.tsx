@@ -89,7 +89,11 @@ export default async function AdminPage() {
                       /r/{r.slug}{r.email ? ` · ${r.email}` : ""}
                     </p>
                   </div>
-                  <Link href={`/r/${r.slug}`} className="shrink-0 icon-btn" title="الصفحة العامة">
+                  <Link
+                    href={`/r/${r.slug}`}
+                    title="الصفحة العامة"
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700 transition hover:bg-brand-100 dark:bg-brand-900/40 dark:text-brand-200"
+                  >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
                       <path d="M14 3h7v7M21 3l-9 9M10 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>

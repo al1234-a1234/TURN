@@ -2,8 +2,8 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { BrandMark } from "@/components/brand";
 
 type Mode = "signin" | "signup";
 
@@ -65,11 +65,8 @@ function LoginForm() {
   return (
     <div className="flex flex-1 flex-col">
       <header className="app-header px-5 pb-16 pt-10 text-center">
-        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 backdrop-blur">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path d="M12 3a9 9 0 1 0 9 9" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-            <circle cx="12" cy="12" r="3" fill="currentColor" />
-          </svg>
+        <span className="mx-auto block w-fit">
+          <BrandMark size={68} />
         </span>
         <h1 className="mt-4 text-2xl font-extrabold">
           {mode === "signin" ? "أهلاً بعودتك" : "أنشئ حسابك"}
