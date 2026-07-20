@@ -32,6 +32,33 @@ export async function updateRestaurantInfo(formData: FormData) {
   revalidatePath("/dashboard/manage");
 }
 
+export async function updateBranchSettings(formData: FormData) {
+  const { supabase, rid } = await myRestaurantId();
+  if (!rid) return;
+
+  const acceptsWaitlist = formData.get("accepts_waitlist") === "on";
+  const maxPartyRaw = String(formData.get("max_party_size") ?? "").trim();
+  const maxParty = maxPartyRaw ? Math.max(1, Number(maxPartyRaw)) : 20;
+  const open = String(formData.get("open_time") ?? "").trim() || null;
+  const close = String(formData.get("close_time") ?? "").trim() || null;
+
+  const { data: branches } = await supabase.from("branches").select("id").eq("restaurant_id", rid);
+  const ids = (branches ?? []).map((b) => b.id);
+  if (!ids.length) return;
+
+  await supabase
+    .from("branch_settings")
+    .update({
+      accepts_waitlist: acceptsWaitlist,
+      max_party_size: Number.isFinite(maxParty) ? maxParty : 20,
+      opening_hours: { open, close },
+    })
+    .in("branch_id", ids);
+
+  revalidatePath("/dashboard/manage");
+  revalidatePath("/dashboard");
+}
+
 export async function addMenuCategory(formData: FormData) {
   const { supabase, rid } = await myRestaurantId();
   if (!rid) return;

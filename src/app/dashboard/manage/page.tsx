@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ImageUploader } from "@/components/image-uploader";
-import { updateRestaurantInfo } from "./actions";
+import { updateRestaurantInfo, updateBranchSettings } from "./actions";
 import { MenuManager } from "./menu-manager";
 
 export default async function ManagePage() {
@@ -22,10 +22,16 @@ export default async function ManagePage() {
   const restaurant = staffRows?.[0]?.restaurants;
   if (!restaurant) redirect("/dashboard");
 
-  const [{ data: categories }, { data: items }] = await Promise.all([
+  const [{ data: categories }, { data: items }, { data: firstBranch }] = await Promise.all([
     supabase.from("menu_categories").select("id, name").eq("restaurant_id", restaurant.id).order("sort_order").order("created_at"),
     supabase.from("menu_items").select("id, name, price, description, image_url, category_id").eq("restaurant_id", restaurant.id).order("created_at"),
+    supabase.from("branches").select("id").eq("restaurant_id", restaurant.id).order("created_at").limit(1).maybeSingle(),
   ]);
+
+  const { data: settings } = firstBranch
+    ? await supabase.from("branch_settings").select("accepts_waitlist, max_party_size, opening_hours").eq("branch_id", firstBranch.id).maybeSingle()
+    : { data: null };
+  const hours = (settings?.opening_hours ?? {}) as { open?: string; close?: string };
 
   return (
     <div className="flex flex-1 flex-col">
@@ -69,9 +75,38 @@ export default async function ManagePage() {
           </form>
         </section>
 
+        {/* الإعدادات وأوقات العمل */}
+        <section className="soft-card p-5">
+          <h2 className="mb-4 font-serif text-xl font-bold text-[color:var(--ink)]">الإعدادات وأوقات العمل</h2>
+          <form action={updateBranchSettings} className="space-y-4">
+            <label className="flex items-center justify-between rounded-2xl border border-[var(--hairline)] bg-[rgba(12,23,18,0.4)] p-4">
+              <span>
+                <span className="block font-bold text-[color:var(--ink)]">استقبال قائمة الانتظار</span>
+                <span className="text-xs text-[color:var(--muted)]">أوقفها لإغلاق الطابور مؤقتًا أمام العملاء</span>
+              </span>
+              <input type="checkbox" name="accepts_waitlist" defaultChecked={settings?.accepts_waitlist ?? true} className="h-6 w-6 accent-[#c9a961]" />
+            </label>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div>
+                <label className="field-label">فتح</label>
+                <input type="time" name="open_time" defaultValue={hours.open ?? ""} className="field-input" />
+              </div>
+              <div>
+                <label className="field-label">إغلاق</label>
+                <input type="time" name="close_time" defaultValue={hours.close ?? ""} className="field-input" />
+              </div>
+              <div>
+                <label className="field-label">أقصى عدد للمجموعة</label>
+                <input name="max_party_size" inputMode="numeric" defaultValue={settings?.max_party_size ?? 20} className="field-input" />
+              </div>
+            </div>
+            <button className="btn btn-primary w-full">حفظ الإعدادات</button>
+          </form>
+        </section>
+
         {/* المنيو */}
         <section>
-          <h2 className="mb-4 text-lg font-extrabold text-brand-800 dark:text-cream-100">المنيو</h2>
+          <h2 className="mb-4 font-serif text-xl font-bold text-[color:var(--ink)]">المنيو</h2>
           <MenuManager restaurantId={restaurant.id} categories={categories ?? []} items={items ?? []} />
         </section>
       </main>
