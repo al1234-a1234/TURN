@@ -7,6 +7,9 @@ export type WaitlistState = {
   ok: boolean;
   error?: string;
   position?: number;
+  total?: number;
+  entryId?: string;
+  phone?: string;
 };
 
 // انضمام الضيف: اسم + رقم فقط، بدون تسجيل دخول
@@ -40,8 +43,29 @@ export async function joinWaitlistGuest(
     return { ok: false, error: "تعذّر الانضمام. حاول مرة أخرى." };
   }
 
+  const row = Array.isArray(data) ? data[0] : data;
+
+  // العدد الحالي في الطابور (لحساب حلقة التقدّم)
+  const { data: counts } = await supabase.rpc("waitlist_counts", { b_id: branchId });
+  const c = Array.isArray(counts) ? counts[0] : counts;
+
   if (slug) revalidatePath(`/r/${slug}`);
-  return { ok: true, position: typeof data === "number" ? data : undefined };
+  return {
+    ok: true,
+    position: row?.queue_pos ?? undefined,
+    total: c?.total ?? undefined,
+    entryId: row?.entry_id ?? undefined,
+    phone,
+  };
+}
+
+export async function cancelWaitlistGuest(entryId: string, phone: string): Promise<boolean> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("cancel_waitlist_guest", {
+    p_entry_id: entryId,
+    p_phone: phone,
+  });
+  return !error && data === true;
 }
 
 const ZONES = ["any", "inside", "outside"];

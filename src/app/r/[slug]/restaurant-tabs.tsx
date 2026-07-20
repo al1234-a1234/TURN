@@ -26,7 +26,8 @@ export function RestaurantTabs({
 
   return (
     <div>
-      <div className="mb-5 grid grid-cols-2 gap-2 rounded-2xl bg-sand-100 p-1.5 dark:bg-stone-800/50">
+      {/* حاوية تبويبات واحدة بزوايا 16px */}
+      <div className="mb-6 grid grid-cols-2 gap-1 rounded-2xl border border-[var(--border)] bg-[color:var(--surface)] p-1">
         <TabBtn active={tab === "waitlist"} onClick={() => setTab("waitlist")}>
           قائمة الانتظار
         </TabBtn>
@@ -49,32 +50,32 @@ export function RestaurantTabs({
               if (list.length === 0) return null;
               return (
                 <div key={cat.id}>
-                  <h3 className="mb-3 text-lg font-extrabold text-brand-800 dark:text-cream-100">
+                  <h3 className="mb-3 text-lg font-extrabold text-[color:var(--foreground)]">
                     {cat.name}
                   </h3>
                   <ul className="space-y-3">
                     {list.map((it) => (
-                      <li key={it.id} className="soft-card flex items-center gap-4 p-3">
-                        <span className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-sand-100 dark:bg-stone-800">
+                      <li key={it.id} className="soft-card flex items-stretch gap-4 p-3">
+                        <span className="h-[88px] w-[88px] shrink-0 overflow-hidden rounded-xl bg-[color:var(--surface-2)]">
                           {it.image_url && (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img src={it.image_url} alt="" className="h-full w-full object-cover" />
                           )}
                         </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-bold">{it.name}</p>
+                        <div className="flex min-w-0 flex-1 flex-col">
+                          <p className="font-bold text-[color:var(--foreground)]">{it.name}</p>
                           {it.description && (
-                            <p className="mt-0.5 line-clamp-2 text-sm text-[color:var(--muted)]">
+                            <p className="mt-1 line-clamp-2 text-sm leading-6 text-[color:var(--muted)]">
                               {it.description}
                             </p>
                           )}
+                          {it.price != null && (
+                            <span className="mt-auto self-start pt-2 text-base font-extrabold text-[color:var(--cream)]">
+                              {it.price}
+                              <span className="mr-1 text-xs font-bold text-[color:var(--muted)]">ر.س</span>
+                            </span>
+                          )}
                         </div>
-                        {it.price != null && (
-                          <span className="shrink-0 font-extrabold text-brand-700 dark:text-brand-300">
-                            {it.price}
-                            <span className="mr-1 text-xs font-normal text-[color:var(--muted)]">ر.س</span>
-                          </span>
-                        )}
                       </li>
                     ))}
                   </ul>
@@ -103,10 +104,8 @@ function TabBtn({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`rounded-xl py-2.5 text-sm font-bold transition disabled:opacity-40 ${
-        active
-          ? "bg-[var(--surface)] text-brand-700 shadow-[var(--shadow-soft)] dark:text-brand-300"
-          : "text-[color:var(--muted)]"
+      className={`rounded-xl py-2.5 text-sm font-bold transition-all duration-200 disabled:opacity-40 ${
+        active ? "bg-[color:var(--brand)] text-white" : "text-[color:var(--muted)]"
       }`}
     >
       {children}

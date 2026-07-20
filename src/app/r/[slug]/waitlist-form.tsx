@@ -2,6 +2,7 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { joinWaitlistGuest, type WaitlistState } from "./actions";
+import { QueueTicket } from "./queue-ticket";
 
 type Branch = {
   id: string;
@@ -35,17 +36,12 @@ export function WaitlistForm({
 
   if (state.ok) {
     return (
-      <div className="soft-card flex flex-col items-center gap-3 p-8 text-center">
-        <span className="flex h-24 w-24 items-center justify-center rounded-full bg-brand-600 text-4xl font-extrabold text-white shadow-[var(--shadow-lift)]">
-          #{state.position ?? "—"}
-        </span>
-        <p className="text-xl font-extrabold text-brand-800 dark:text-cream-100">
-          تم تسجيلك في الطابور
-        </p>
-        <p className="text-sm text-[color:var(--muted)]">
-          رقم دورك {state.position ?? "—"}. احتفظ بالصفحة وتابع تقدّم الطابور.
-        </p>
-      </div>
+      <QueueTicket
+        position={state.position ?? 0}
+        total={state.total ?? 0}
+        entryId={state.entryId}
+        phone={state.phone}
+      />
     );
   }
 
@@ -58,13 +54,9 @@ export function WaitlistForm({
       <div className="soft-card flex items-center justify-between p-6">
         <div>
           <p className="text-sm text-[color:var(--muted)]">في الطابور الآن</p>
-          <p className="text-4xl font-extrabold text-brand-700 dark:text-brand-300">
-            {branch?.total ?? 0}
-          </p>
+          <p className="text-4xl font-extrabold text-[color:var(--foreground)]">{branch?.total ?? 0}</p>
         </div>
-        <span className="rounded-full bg-brand-50 px-4 py-2 text-sm font-bold text-brand-700 dark:bg-brand-900/40 dark:text-brand-200">
-          خذ دورك
-        </span>
+        <span className="chip">خذ دورك</span>
       </div>
 
       {branches.length > 1 && (
@@ -101,7 +93,7 @@ export function WaitlistForm({
       </div>
 
       {state.error && (
-        <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700 dark:bg-red-950/40 dark:text-red-300">
+        <p className="rounded-2xl border border-[rgba(220,90,90,0.35)] bg-[color:var(--surface)] px-4 py-3 text-sm font-medium text-red-300">
           {state.error}
         </p>
       )}

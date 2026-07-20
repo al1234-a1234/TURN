@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { WaitlistForm } from "./waitlist-form";
 import { RestaurantTabs } from "./restaurant-tabs";
+import { QueueTicket } from "./queue-ticket";
 
 export default async function RestaurantPublicPage({
   params,
@@ -42,7 +43,7 @@ export default async function RestaurantPublicPage({
 
   let defaultName = "";
   let defaultPhone = "";
-  let activeEntry: { position: number | null; zone: string; party_size: number } | null = null;
+  let activeEntry: { position: number | null } | null = null;
   if (user) {
     const { data: customer } = await supabase.from("customers").select("id, full_name, phone").eq("user_id", user.id).maybeSingle();
     defaultName = customer?.full_name ?? "";
@@ -50,7 +51,7 @@ export default async function RestaurantPublicPage({
     if (customer && branchList.length) {
       const { data: entry } = await supabase
         .from("waitlist_entries")
-        .select("position, zone, party_size")
+        .select("position")
         .eq("customer_id", customer.id)
         .in("branch_id", branchList.map((b) => b.id))
         .in("status", ["waiting", "notified"])
@@ -63,6 +64,7 @@ export default async function RestaurantPublicPage({
 
   const initial = restaurant.name.trim().charAt(0) || "م";
   const hasBranches = branchList.length > 0;
+  const city = branchList[0]?.city;
 
   const waitlistPanel = !hasBranches ? (
     <div className="soft-card p-10 text-center text-[color:var(--muted)]">
@@ -70,42 +72,35 @@ export default async function RestaurantPublicPage({
       <p className="mt-3 text-sm">لا توجد فروع متاحة حاليًا.</p>
     </div>
   ) : activeEntry ? (
-    <div className="soft-card flex flex-col items-center gap-3 p-8 text-center">
-      <span className="flex h-24 w-24 items-center justify-center rounded-full bg-brand-600 text-4xl font-extrabold text-white shadow-[var(--shadow-lift)]">
-        #{activeEntry.position ?? "—"}
-      </span>
-      <p className="text-xl font-extrabold text-brand-800 dark:text-cream-100">أنت في الطابور</p>
-      <p className="text-sm text-[color:var(--muted)]">رقم دورك {activeEntry.position ?? "—"}</p>
-    </div>
+    <QueueTicket position={activeEntry.position ?? 0} total={withCounts[0]?.total ?? 0} />
   ) : (
     <WaitlistForm slug={slug} branches={withCounts} defaultName={defaultName} defaultPhone={defaultPhone} />
   );
 
   return (
-    <div className="flex flex-1 flex-col">
-      <header className="app-header px-5 pb-16 pt-4">
-        <div className="mx-auto flex max-w-2xl items-center justify-between">
-          <Link href="/restaurants" className="icon-btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </Link>
-          <span className="font-extrabold">{restaurant.name}</span>
-          <div className="h-11 w-11" />
-        </div>
+    <div className="flex flex-1 flex-col bg-[color:var(--bg)]">
+      {/* شريط علوي نظيف ثابت */}
+      <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-[var(--border)] bg-[color:var(--bg)]/90 px-5 py-3 backdrop-blur">
+        <Link href="/restaurants" className="icon-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Link>
+        <span className="truncate font-extrabold text-[color:var(--foreground)]">{restaurant.name}</span>
+        <div className="h-11 w-11" />
       </header>
 
-      <main className="mx-auto -mt-12 w-full max-w-2xl flex-1 px-5 pb-12">
-        {/* بطاقة المطعم بصورة الغلاف والشعار */}
+      <main className="mx-auto w-full max-w-2xl flex-1 px-5 pb-12 pt-4">
+        {/* بطاقة المطعم: غلاف بعرض كامل + شعار متراكب على الحافّة */}
         <div className="soft-card overflow-hidden">
-          <div className="h-40 w-full bg-gradient-to-tr from-brand-600 to-brand-500">
-            {restaurant.cover_url && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={restaurant.cover_url} alt="" className="h-full w-full object-cover" />
-            )}
-          </div>
-          <div className="flex items-center gap-4 p-4">
-            <span className="-mt-12 flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border-4 border-[var(--surface)] bg-brand-600 text-2xl font-extrabold text-white shadow-[var(--shadow-lift)]">
+          <div className="relative">
+            <div className="h-[200px] w-full bg-gradient-to-tr from-brand-700 to-brand-500">
+              {restaurant.cover_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={restaurant.cover_url} alt="" className="h-full w-full object-cover" />
+              )}
+            </div>
+            <span className="absolute -bottom-9 right-5 flex h-[72px] w-[72px] items-center justify-center overflow-hidden rounded-full border-4 border-[var(--surface)] bg-brand-600 text-2xl font-extrabold text-white shadow-[var(--shadow-lift)]">
               {restaurant.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={restaurant.logo_url} alt="" className="h-full w-full object-cover" />
@@ -113,17 +108,25 @@ export default async function RestaurantPublicPage({
                 initial
               )}
             </span>
-            <div className="min-w-0">
-              <h1 className="truncate text-xl font-extrabold text-brand-800 dark:text-cream-100">{restaurant.name}</h1>
-              {restaurant.name_en && <p className="text-sm text-[color:var(--muted)]" dir="ltr">{restaurant.name_en}</p>}
-            </div>
           </div>
-          {restaurant.description && (
-            <p className="px-4 pb-4 text-[15px] leading-7 text-[color:var(--muted)]">{restaurant.description}</p>
-          )}
+
+          <div className="px-5 pb-5 pt-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="text-xl font-extrabold text-[color:var(--foreground)]">{restaurant.name}</h1>
+              {city && <span className="chip">{city}</span>}
+            </div>
+            {restaurant.name_en && (
+              <p className="mt-0.5 text-sm text-[color:var(--muted)]" dir="ltr">{restaurant.name_en}</p>
+            )}
+            {restaurant.description && (
+              <p className="mt-3 line-clamp-2 text-[15px] leading-7 text-[color:var(--muted)]">
+                {restaurant.description}
+              </p>
+            )}
+          </div>
         </div>
 
-        <div className="mt-5">
+        <div className="mt-6">
           <RestaurantTabs categories={categories ?? []} items={items ?? []}>
             {waitlistPanel}
           </RestaurantTabs>
