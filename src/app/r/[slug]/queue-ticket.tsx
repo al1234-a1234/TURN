@@ -31,7 +31,7 @@ export function QueueTicket({
 
   if (cancelled) {
     return (
-      <div className="soft-card flex flex-col items-center gap-3 p-8 text-center">
+      <div className="rq-card flex flex-col items-center gap-3 p-8 text-center">
         <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--sage)] text-3xl text-brand-700">
           ✓
         </span>
@@ -42,7 +42,7 @@ export function QueueTicket({
   }
 
   return (
-    <div className="soft-card flex flex-col items-center gap-5 p-8 text-center">
+    <div className="rq-card flex flex-col items-center gap-5 p-8 text-center">
       {/* دائرة الرقم مع حلقة تقدّم خضراء ونبض حيّ */}
       <div className="relative flex h-44 w-44 items-center justify-center">
         <span
@@ -92,7 +92,7 @@ export function QueueTicket({
         <button
           onClick={() => start(async () => { if (await cancelWaitlistGuest(entryId, phone)) setCancelled(true); })}
           disabled={pending}
-          className="btn btn-secondary mt-1 h-11 w-full text-sm text-[color:var(--muted)] hover:text-red-600"
+          className="mt-1 h-11 w-full rounded-2xl border text-sm font-bold text-[color:var(--muted)] transition hover:text-red-600"
           style={{ borderColor: "rgba(200,70,70,0.28)" }}
         >
           {pending ? "جارٍ الإلغاء…" : "إلغاء دوري"}
