@@ -23,6 +23,8 @@ export async function joinWaitlistGuest(
   const branchId = String(formData.get("branch_id") ?? "");
   const fullName = String(formData.get("full_name") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
+  const zoneRaw = String(formData.get("zone") ?? "inside");
+  const zone = zoneRaw === "outside" ? "outside" : "inside";
 
   if (!branchId) return { ok: false, error: "اختر الفرع." };
   if (!fullName) return { ok: false, error: "اكتب اسمك." };
@@ -33,6 +35,7 @@ export async function joinWaitlistGuest(
     p_full_name: fullName,
     p_phone: phone,
     p_party_size: 1,
+    p_zone: zone,
   });
 
   if (error) {

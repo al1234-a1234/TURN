@@ -1,13 +1,33 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { CustomerShell } from "@/components/customer-shell";
-import { toAr, waitMinutes } from "@/lib/format";
+import { toAr } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 const RATING: Record<string, string> = { eficto: "٤٫٩", "bait-almounah": "٤٫٧", noo: "٤٫٦", rudy: "٤٫٨" };
 const CUISINE: Record<string, string> = { eficto: "إيطالي", "bait-almounah": "شعبي", noo: "بحري", rudy: "بيتزا" };
 const DIST: Record<string, string> = { eficto: "٣٫٣", "bait-almounah": "٥٫٢", noo: "٨٫٩", rudy: "٧٫١" };
+
+function ZonePill({ label, count }: { label: string; count: number }) {
+  const busy = count > 0;
+  return (
+    <span
+      className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
+      style={{ background: "var(--surface-2)" }}
+    >
+      <span className="flex items-center gap-1.5 text-[13px] font-bold text-[color:var(--ink)]">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className={busy ? "" : "opacity-50"} style={{ color: busy ? "var(--st-full)" : "var(--st-open)" }}>
+          <path d="M4 10h16M6 10V7a2 2 0 012-2h8a2 2 0 012 2v3M7 14v4M17 14v4M4 14h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+        {label}
+      </span>
+      <span className="text-sm font-extrabold" style={{ color: busy ? "var(--st-full)" : "var(--st-open)" }}>
+        {busy ? `${toAr(count)} بالطابور` : "متاح"}
+      </span>
+    </span>
+  );
+}
 
 export default async function Home() {
   const supabase = await createClient();
@@ -25,15 +45,17 @@ export default async function Home() {
       const b = (r.branches ?? [])[0] as
         | { id: string; city: string | null; branch_settings: { accepts_waitlist: boolean } | { accepts_waitlist: boolean }[] | null }
         | undefined;
-      let waiting = 0;
+      let waiting = 0, inside = 0, outside = 0;
       if (b?.id) {
         const { data } = await supabase.rpc("waitlist_counts", { b_id: b.id });
         const c = Array.isArray(data) ? data[0] : undefined;
         waiting = c?.total ?? 0;
+        inside = c?.inside ?? 0;
+        outside = c?.outside ?? 0;
       }
       const settings = Array.isArray(b?.branch_settings) ? b?.branch_settings[0] : b?.branch_settings;
       const accepts = settings?.accepts_waitlist ?? true;
-      return { ...r, city: b?.city ?? "", waiting, accepts };
+      return { ...r, city: b?.city ?? "", waiting, inside, outside, accepts };
     }),
   );
 
@@ -48,7 +70,6 @@ export default async function Home() {
         <div className="space-y-4">
           {withStatus.map((r, i) => {
             const initial = r.name.trim().charAt(0) || "م";
-            const eta = waitMinutes(r.waiting);
             return (
               <Link
                 key={r.id}
@@ -86,26 +107,29 @@ export default async function Home() {
                   </span>
                 </div>
 
-                {/* شريط الحالة — سبب وجود التطبيق */}
-                <div className="mt-3 flex items-center justify-between rounded-2xl px-4 py-2.5" style={{ background: "var(--surface-2)" }}>
-                  {!r.accepts ? (
+                {/* شريط الحالة — طابور داخلي/خارجي */}
+                {!r.accepts ? (
+                  <div className="mt-3 flex items-center justify-between rounded-2xl px-4 py-2.5" style={{ background: "var(--surface-2)" }}>
                     <span className="flex items-center gap-2 text-sm font-bold" style={{ color: "var(--st-closed)" }}>
                       <span className="h-2 w-2 rounded-full" style={{ background: "var(--st-closed)" }} />
                       لا يستقبل الآن
                     </span>
-                  ) : r.waiting > 0 ? (
-                    <span className="flex items-center gap-2 text-sm font-bold" style={{ color: "var(--st-full)" }}>
-                      <span className="h-2 w-2 rounded-full" style={{ background: "var(--st-full)" }} />
-                      {toAr(r.waiting)} بالطابور · ~{toAr(eta)} دقيقة
-                    </span>
-                  ) : (
+                    <span className="text-xs font-bold text-brand-700">التفاصيل ←</span>
+                  </div>
+                ) : r.waiting > 0 ? (
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <ZonePill label="داخلي" count={r.inside} />
+                    <ZonePill label="خارجي" count={r.outside} />
+                  </div>
+                ) : (
+                  <div className="mt-3 flex items-center justify-between rounded-2xl px-4 py-2.5" style={{ background: "var(--surface-2)" }}>
                     <span className="flex items-center gap-2 text-sm font-bold" style={{ color: "var(--st-open)" }}>
                       <span className="h-2 w-2 rounded-full" style={{ background: "var(--st-open)" }} />
                       متاح الآن · بدون انتظار
                     </span>
-                  )}
-                  <span className="text-xs font-bold text-brand-700">خذ دورك ←</span>
-                </div>
+                    <span className="text-xs font-bold text-brand-700">خذ دورك ←</span>
+                  </div>
+                )}
               </Link>
             );
           })}

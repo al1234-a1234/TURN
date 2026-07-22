@@ -3,9 +3,24 @@
 import { useActionState, useMemo, useState } from "react";
 import { joinWaitlistGuest, type WaitlistState } from "./actions";
 import { QueueTicket } from "./queue-ticket";
-import { toAr, waitMinutes } from "@/lib/format";
+import { toAr } from "@/lib/format";
 
 type Branch = { id: string; name: string; total: number; inside: number; outside: number };
+
+function ZoneStat({ label, count }: { label: string; count: number }) {
+  const busy = count > 0;
+  return (
+    <div className="rq-card p-4 text-center">
+      <p className="font-display text-3xl font-bold" style={{ color: busy ? "var(--st-full)" : "var(--st-open)" }}>
+        {busy ? toAr(count) : "٠"}
+      </p>
+      <p className="mt-1 text-xs font-bold text-[color:var(--muted)]">{label}</p>
+      <p className="mt-0.5 text-[11px] font-bold" style={{ color: busy ? "var(--st-full)" : "var(--st-open)" }}>
+        {busy ? "بالطابور" : "متاح الآن"}
+      </p>
+    </div>
+  );
+}
 
 export function WaitlistForm({
   slug,
@@ -26,6 +41,7 @@ export function WaitlistForm({
   );
 
   const [branchId, setBranchId] = useState(branches[0]?.id ?? "");
+  const [zone, setZone] = useState<"inside" | "outside">("inside");
   const branch = useMemo(
     () => branches.find((b) => b.id === branchId) ?? branches[0],
     [branchId, branches],
@@ -56,28 +72,38 @@ export function WaitlistForm({
     );
   }
 
-  const total = branch?.total ?? 0;
-  const eta = waitMinutes(total);
+  const inside = branch?.inside ?? 0;
+  const outside = branch?.outside ?? 0;
 
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="slug" value={slug} />
       <input type="hidden" name="branch_id" value={branchId} />
+      <input type="hidden" name="zone" value={zone} />
 
-      {/* حالة الطابور بصياغة نفسية واضحة */}
-      <div className="rq-card p-6 text-center">
-        {total > 0 ? (
-          <>
-            <p className="font-display text-5xl font-bold text-brand-700 leading-none">{toAr(total)}</p>
-            <p className="mt-2 text-sm font-bold text-[color:var(--ink)]">في الطابور الآن</p>
-            <p className="mt-1 text-sm text-[color:var(--muted)]">تقدير دخولك بعد ~{toAr(eta)} دقيقة</p>
-          </>
-        ) : (
-          <>
-            <p className="font-display text-2xl font-bold" style={{ color: "var(--st-open)" }}>متاح الآن</p>
-            <p className="mt-1 text-sm text-[color:var(--muted)]">لا يوجد انتظار — سجّل وكن أول الطابور</p>
-          </>
-        )}
+      {/* طابور كل قسم */}
+      <div className="grid grid-cols-2 gap-3">
+        <ZoneStat label="طاولات داخلية" count={inside} />
+        <ZoneStat label="طاولات خارجية" count={outside} />
+      </div>
+
+      {/* اختيار القسم */}
+      <div className="rq-card p-4">
+        <p className="field-label mb-2">اختر مكانك</p>
+        <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[color:var(--surface-2)] p-1">
+          {(["inside", "outside"] as const).map((z) => (
+            <button
+              key={z}
+              type="button"
+              onClick={() => setZone(z)}
+              data-active={zone === z}
+              className="rq-seg-btn"
+              style={zone === z ? undefined : { background: "transparent" }}
+            >
+              {z === "inside" ? "طاولة داخلية" : "طاولة خارجية"}
+            </button>
+          ))}
+        </div>
       </div>
 
       {branches.length > 1 && (

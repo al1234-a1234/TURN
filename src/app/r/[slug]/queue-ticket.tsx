@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { cancelWaitlistGuest } from "./actions";
-import { toAr, waitMinutes, peopleAhead } from "@/lib/format";
+import { toAr, peopleAhead } from "@/lib/format";
 
 export function QueueTicket({
   position,
@@ -19,7 +19,6 @@ export function QueueTicket({
   const [cancelled, setCancelled] = useState(false);
 
   const ahead = Math.max(position - 1, 0);
-  const eta = waitMinutes(ahead);
   const denom = Math.max(total, position, 1);
   const progress = Math.min(Math.max((denom - ahead) / denom, 0.08), 1);
 
@@ -72,7 +71,7 @@ export function QueueTicket({
       <div>
         <p className="font-display text-2xl font-bold text-[color:var(--ink)]">{peopleAhead(ahead)}</p>
         <p className="mt-1 text-sm text-[color:var(--muted)]">
-          {ahead === 0 ? "استعد — جاي دورك" : `دورك بعد ~${toAr(eta)} دقيقة`}
+          {ahead === 0 ? "استعد — جاي دورك" : "راقب رقمك، وننبّهك قبل دورك"}
         </p>
       </div>
 
@@ -80,11 +79,11 @@ export function QueueTicket({
       <div className="grid w-full grid-cols-2 gap-3">
         <div className="rounded-2xl border border-[var(--border)] bg-[color:var(--surface-2)] p-4">
           <p className="text-2xl font-extrabold text-brand-700">{ahead === 0 ? "التالي" : toAr(ahead)}</p>
-          <p className="mt-1 text-xs text-[color:var(--muted)]">{ahead === 0 ? "أنت" : "أمامك"}</p>
+          <p className="mt-1 text-xs text-[color:var(--muted)]">{ahead === 0 ? "أنت" : "أمامك بالطابور"}</p>
         </div>
         <div className="rounded-2xl border border-[var(--border)] bg-[color:var(--surface-2)] p-4">
-          <p className="text-2xl font-extrabold text-brand-700">{eta === 0 ? "~الآن" : `~${toAr(eta)}`}</p>
-          <p className="mt-1 text-xs text-[color:var(--muted)]">دقيقة</p>
+          <p className="text-2xl font-extrabold text-brand-700">{toAr(total)}</p>
+          <p className="mt-1 text-xs text-[color:var(--muted)]">إجمالي الطابور</p>
         </div>
       </div>
 
