@@ -2,8 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { cancelWaitlistGuest } from "./actions";
-
-const MIN_PER_PARTY = 7; // تقدير تقريبي للوقت لكل مجموعة أمامك
+import { toAr, waitMinutes, peopleAhead } from "@/lib/format";
 
 export function QueueTicket({
   position,
@@ -20,7 +19,7 @@ export function QueueTicket({
   const [cancelled, setCancelled] = useState(false);
 
   const ahead = Math.max(position - 1, 0);
-  const eta = ahead * MIN_PER_PARTY;
+  const eta = waitMinutes(ahead);
   const denom = Math.max(total, position, 1);
   const progress = Math.min(Math.max((denom - ahead) / denom, 0.08), 1);
 
@@ -65,26 +64,27 @@ export function QueueTicket({
           />
         </svg>
         <div className="flex flex-col items-center">
-          <span className="font-display text-6xl font-bold text-brand-700 leading-none">{position || "—"}</span>
+          <span className="font-display text-6xl font-bold text-brand-700 leading-none">{position ? toAr(position) : "—"}</span>
           <span className="mt-1 text-xs font-bold tracking-widest text-[color:var(--muted)]">رقم دورك</span>
         </div>
       </div>
 
-      <p className="font-display text-2xl font-bold text-[color:var(--ink)]">أنت في الطابور</p>
+      <div>
+        <p className="font-display text-2xl font-bold text-[color:var(--ink)]">{peopleAhead(ahead)}</p>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">
+          {ahead === 0 ? "استعد — جاي دورك" : `دورك بعد ~${toAr(eta)} دقيقة`}
+        </p>
+      </div>
 
       {/* أهم معلومتين للعميل الواقف */}
       <div className="grid w-full grid-cols-2 gap-3">
         <div className="rounded-2xl border border-[var(--border)] bg-[color:var(--surface-2)] p-4">
-          <p className="text-2xl font-extrabold text-brand-700">
-            {ahead === 0 ? "أنت التالي" : ahead}
-          </p>
-          <p className="mt-1 text-xs text-[color:var(--muted)]">{ahead === 0 ? "استعد" : "أمامك (أشخاص)"}</p>
+          <p className="text-2xl font-extrabold text-brand-700">{ahead === 0 ? "التالي" : toAr(ahead)}</p>
+          <p className="mt-1 text-xs text-[color:var(--muted)]">{ahead === 0 ? "أنت" : "أمامك"}</p>
         </div>
         <div className="rounded-2xl border border-[var(--border)] bg-[color:var(--surface-2)] p-4">
-          <p className="text-2xl font-extrabold text-brand-700">
-            {eta === 0 ? "~الآن" : `~${eta}`}
-          </p>
-          <p className="mt-1 text-xs text-[color:var(--muted)]">الوقت التقديري (دقيقة)</p>
+          <p className="text-2xl font-extrabold text-brand-700">{eta === 0 ? "~الآن" : `~${toAr(eta)}`}</p>
+          <p className="mt-1 text-xs text-[color:var(--muted)]">دقيقة</p>
         </div>
       </div>
 

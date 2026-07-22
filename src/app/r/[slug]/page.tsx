@@ -1,16 +1,14 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { WaitlistForm } from "./waitlist-form";
 import { RestaurantTabs } from "./restaurant-tabs";
 import { QueueTicket } from "./queue-ticket";
+import { toAr } from "@/lib/format";
 
-const AR = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
-const toAr = (s: string | number) => String(s).replace(/[0-9]/g, (d) => AR[+d]);
 const RATING: Record<string, string> = { eficto: "٤٫٩", "bait-almounah": "٤٫٧", noo: "٤٫٦", rudy: "٤٫٨" };
 const REVIEWS: Record<string, string> = { eficto: "١٧١", "bait-almounah": "٩٨", noo: "٦٤", rudy: "٢١٣" };
 const LIKES: Record<string, string> = { eficto: "٢٨٦", "bait-almounah": "١٤٢", noo: "٩٧", rudy: "٢٢٩" };
-const DIST: Record<string, string> = { eficto: "٣٣", "bait-almounah": "٥٫٢", noo: "٨٩٤", rudy: "٧٫١" };
+const DIST: Record<string, string> = { eficto: "٣٫٣", "bait-almounah": "٥٫٢", noo: "٨٫٩", rudy: "٧٫١" };
 const CUISINE: Record<string, string> = { eficto: "إيطالي", "bait-almounah": "شعبي", noo: "بحري", rudy: "بيتزا" };
 
 export default async function RestaurantPublicPage({
@@ -31,7 +29,7 @@ export default async function RestaurantPublicPage({
   if (!restaurant) notFound();
 
   const [{ data: branches }, { data: categories }, { data: items }] = await Promise.all([
-    supabase.from("branches").select("id, name, city, address").eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at"),
+    supabase.from("branches").select("id, name, city, address, branch_settings(accepts_waitlist)").eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at"),
     supabase.from("menu_categories").select("id, name").eq("restaurant_id", restaurant.id).order("sort_order").order("created_at"),
     supabase.from("menu_items").select("id, name, price, description, image_url, category_id").eq("restaurant_id", restaurant.id).eq("is_available", true).order("created_at"),
   ]);
@@ -74,6 +72,9 @@ export default async function RestaurantPublicPage({
   const hasBranches = branchList.length > 0;
   const city = branchList[0]?.city ?? "";
   const total = withCounts[0]?.total ?? 0;
+  const s0 = branchList[0] as { branch_settings?: { accepts_waitlist: boolean } | { accepts_waitlist: boolean }[] | null } | undefined;
+  const settings0 = Array.isArray(s0?.branch_settings) ? s0?.branch_settings[0] : s0?.branch_settings;
+  const accepts = settings0?.accepts_waitlist ?? true;
 
   const waitlistPanel = !hasBranches ? (
     <div className="rq-card p-10 text-center text-[color:var(--muted)]">
@@ -83,7 +84,7 @@ export default async function RestaurantPublicPage({
   ) : activeEntry ? (
     <QueueTicket position={activeEntry.position ?? 0} total={total} />
   ) : (
-    <WaitlistForm slug={slug} branches={withCounts} defaultName={defaultName} defaultPhone={defaultPhone} />
+    <WaitlistForm slug={slug} branches={withCounts} accepts={accepts} defaultName={defaultName} defaultPhone={defaultPhone} />
   );
 
   return (

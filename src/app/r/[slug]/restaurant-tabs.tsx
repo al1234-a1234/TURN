@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { money } from "@/lib/format";
 
 type Item = {
   id: string;
@@ -11,16 +12,26 @@ type Item = {
   category_id: string;
 };
 type Category = { id: string; name: string };
-type Review = { name: string; stars: string; when: string; city: string };
+type Review = { name: string; stars: number; when: string; city: string; text: string };
 
 const DEMO_REVIEWS: Review[] = [
-  { name: "نورة الجلال", stars: "٤٫٥", when: "٠٦ يونيو ٢٠٢٦", city: "الرياض" },
-  { name: "ديما", stars: "٥٫٠", when: "٣٠ مايو ٢٠٢٦", city: "الرياض" },
-  { name: "ريم", stars: "٥٫٠", when: "٠١ مايو ٢٠٢٦", city: "الرياض" },
-  { name: "روان", stars: "٥٫٠", when: "١٢ يناير ٢٠٢٦", city: "الرياض" },
-  { name: "ندى", stars: "٥٫٠", when: "٠٣ يناير ٢٠٢٦", city: "الرياض" },
-  { name: "عبدالله بهلول", stars: "٥٫٠", when: "٢٨ ديسمبر ٢٠٢٥", city: "بريدة" },
+  { name: "نورة الجلال", stars: 5, when: "٠٦ يونيو ٢٠٢٦", city: "الرياض", text: "الأكل ممتاز والمكان أنيق، وأخذ الدور بالتطبيق وفّر علي وقفة طويلة. رجعت أكثر من مرة." },
+  { name: "ديما", stars: 5, when: "٣٠ مايو ٢٠٢٦", city: "الرياض", text: "تجربة راقية والخدمة سريعة. الإشعار وصلني قبل دوري بدقايق فوصلت بالضبط." },
+  { name: "خالد", stars: 4, when: "٠١ مايو ٢٠٢٦", city: "الرياض", text: "الطعم حلو والانتظار كان أقل من المتوقع، بس أتمنى الطاولات الخارجية تزيد." },
+  { name: "روان", stars: 5, when: "١٢ يناير ٢٠٢٦", city: "الرياض", text: "من أنظف وأرتب المطاعم اللي جربتها، والأجواء هادية ومريحة." },
+  { name: "ندى", stars: 4, when: "٠٣ يناير ٢٠٢٦", city: "الرياض", text: "المكان جميل والأسعار معقولة. زحمة يوم الخميس بس الطابور كان منظّم." },
+  { name: "عبدالله بهلول", stars: 3, when: "٢٨ ديسمبر ٢٠٢٥", city: "بريدة", text: "الأكل كويس عمومًا، بس الطلب تأخر شوي في وقت الذروة." },
 ];
+// توزيع النجوم (٥ ← ١)
+const DIST_BARS: { s: number; pct: number }[] = [
+  { s: 5, pct: 74 }, { s: 4, pct: 18 }, { s: 3, pct: 6 }, { s: 2, pct: 1 }, { s: 1, pct: 1 },
+];
+const Stars = ({ n }: { n: number }) => (
+  <span style={{ color: "var(--star)" }}>
+    {"★".repeat(n)}
+    <span style={{ color: "var(--border)" }}>{"★".repeat(5 - n)}</span>
+  </span>
+);
 
 type Tab = "waitlist" | "menu" | "reviews" | "media";
 
@@ -210,8 +221,8 @@ export function RestaurantTabs({
                             )}
                           </div>
                           {it.price != null && (
-                            <span className="shrink-0 text-sm font-extrabold text-brand-700" dir="ltr">
-                              SAR {Number(it.price).toFixed(1)}
+                            <span className="shrink-0 whitespace-nowrap text-sm font-extrabold text-brand-700">
+                              {money(it.price)}
                             </span>
                           )}
                         </li>
@@ -226,32 +237,44 @@ export function RestaurantTabs({
       </div>
 
       {/* ===== التقييمات ===== */}
-      <div className={tab === "reviews" ? "" : "hidden"}>
-        <div className="rq-card p-5">
-          <div className="mb-4 border-b border-[color:var(--border)] pb-4 text-right">
-            <h3 className="font-display text-xl font-bold text-[color:var(--ink)]">التقييمات</h3>
-            <p className="mt-1 text-sm text-[color:var(--muted)]">بالاعتماد على {reviewCount} تقييم</p>
-            <p className="mt-1 flex items-center justify-end gap-2 text-lg font-extrabold text-[color:var(--ink)]">
-              <span style={{ color: "var(--star)" }}>★★★★★</span> {rating}
-            </p>
+      <div className={tab === "reviews" ? "space-y-4" : "hidden"}>
+        {/* ملخّص + توزيع النجوم */}
+        <div className="rq-card flex items-center gap-5 p-5">
+          <div className="shrink-0 text-center">
+            <p className="font-display text-5xl font-bold text-[color:var(--ink)] leading-none">{rating}</p>
+            <p className="mt-1 text-sm"><Stars n={5} /></p>
+            <p className="mt-1 text-xs text-[color:var(--muted)]">{reviewCount} تقييم</p>
           </div>
-          <ul className="divide-y divide-[color:var(--border)]">
-            {DEMO_REVIEWS.map((rv, i) => (
-              <li key={i} className="flex items-center gap-3 py-3.5">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[color:var(--sage)] font-display text-base font-bold text-brand-800">
+          <div className="min-w-0 flex-1 space-y-1.5">
+            {DIST_BARS.map((d) => (
+              <div key={d.s} className="flex items-center gap-2">
+                <span className="w-3 text-xs font-bold text-[color:var(--muted)]">{d.s}</span>
+                <span className="h-2 flex-1 overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
+                  <span className="block h-full rounded-full" style={{ width: `${d.pct}%`, background: "var(--star)" }} />
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* التعليقات */}
+        <ul className="space-y-3">
+          {DEMO_REVIEWS.map((rv, i) => (
+            <li key={i} className="rq-card p-5">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[color:var(--sage)] font-display text-base font-bold text-brand-800">
                   {rv.name.charAt(0)}
                 </span>
                 <div className="min-w-0 flex-1 text-right">
                   <p className="font-bold text-[color:var(--ink)]">{rv.name}</p>
                   <p className="mt-0.5 text-xs text-[color:var(--muted)]">{rv.city} • {rv.when}</p>
                 </div>
-                <span className="flex shrink-0 items-center gap-1 text-sm font-extrabold text-[color:var(--ink)]">
-                  {rv.stars} <span style={{ color: "var(--star)" }}>★</span>
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
+                <span className="shrink-0 text-sm"><Stars n={rv.stars} /></span>
+              </div>
+              <p className="mt-3 text-[14px] leading-7 text-[color:var(--muted)]">{rv.text}</p>
+            </li>
+          ))}
+        </ul>
       </div>
 
       {/* ===== ميديا ===== */}
@@ -271,7 +294,13 @@ export function RestaurantTabs({
         {nameEn && (
           <p className="text-center text-sm text-[color:var(--muted)]" dir="ltr">{nameEn}</p>
         )}
-        <p className="py-6 text-center text-sm text-[color:var(--muted)]">لا توجد منشورات بعد</p>
+        <div className="rq-card p-8 text-center">
+          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[color:var(--sage)] text-2xl">🔔</span>
+          <p className="font-bold text-[color:var(--ink)]">تابع المطعم</p>
+          <p className="mt-1 text-sm leading-6 text-[color:var(--muted)]">
+            يوصلك جديد العروض والأصناف والأوقات الأقل زحمة أول بأول.
+          </p>
+        </div>
       </div>
     </div>
   );
