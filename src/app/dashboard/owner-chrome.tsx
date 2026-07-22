@@ -47,7 +47,7 @@ export function OwnerTabs({ active }: { active: "reception" | "manage" }) {
         href="/dashboard"
         data-active={active === "reception"}
         className="rounded-xl py-3 text-center text-sm font-bold text-[color:var(--muted)] data-[active=true]:text-white"
-        style={active === "reception" ? { background: "linear-gradient(165deg,#3a825e,#1d4733)" } : undefined}
+        style={active === "reception" ? { background: "linear-gradient(160deg,#b1503a,#722f1d)" } : undefined}
       >
         الاستقبال
       </Link>
@@ -55,7 +55,7 @@ export function OwnerTabs({ active }: { active: "reception" | "manage" }) {
         href="/dashboard/manage"
         data-active={active === "manage"}
         className="rounded-xl py-3 text-center text-sm font-bold text-[color:var(--muted)] data-[active=true]:text-white"
-        style={active === "manage" ? { background: "linear-gradient(165deg,#3a825e,#1d4733)" } : undefined}
+        style={active === "manage" ? { background: "linear-gradient(160deg,#b1503a,#722f1d)" } : undefined}
       >
         الإدارة والتحليلات
       </Link>

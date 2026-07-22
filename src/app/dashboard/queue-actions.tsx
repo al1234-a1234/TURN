@@ -53,7 +53,7 @@ export function QueueActions({
         disabled={pending}
         onClick={() => start(() => updateWaitlistStatus(id, "seated"))}
         className="rounded-xl px-3 py-2 text-xs font-bold text-[color:var(--bg)] transition disabled:opacity-60"
-        style={{ background: "linear-gradient(160deg,#357a57,#1d4733)" }}
+        style={{ background: "linear-gradient(160deg,#b1503a,#722f1d)" }}
       >
         جلوس
       </button>

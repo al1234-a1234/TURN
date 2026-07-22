@@ -45,16 +45,16 @@ export function QueueTicket({
       <div className="relative flex h-44 w-44 items-center justify-center">
         <span
           className="absolute inset-4 rounded-full"
-          style={{ background: "radial-gradient(circle, rgba(46,107,75,0.22), transparent 70%)", animation: "turn-pulse 2.6s ease-out infinite" }}
+          style={{ background: "radial-gradient(circle, rgba(160,70,45,0.20), transparent 70%)", animation: "turn-pulse 2.6s ease-out infinite" }}
         />
         <svg width="176" height="176" viewBox="0 0 128 128" className="absolute inset-0 -rotate-90">
           <defs>
             <linearGradient id="greenring" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#3f8560" />
-              <stop offset="100%" stopColor="#1d4733" />
+              <stop offset="0%" stopColor="#b1503a" />
+              <stop offset="100%" stopColor="#722f1d" />
             </linearGradient>
           </defs>
-          <circle cx="64" cy="64" r={R} fill="none" stroke="rgba(46,107,75,0.12)" strokeWidth="7" />
+          <circle cx="64" cy="64" r={R} fill="none" stroke="rgba(160,70,45,0.14)" strokeWidth="7" />
           <circle
             cx="64" cy="64" r={R} fill="none"
             stroke="url(#greenring)" strokeWidth="7" strokeLinecap="round"
