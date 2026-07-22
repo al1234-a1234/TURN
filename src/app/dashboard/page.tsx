@@ -46,7 +46,7 @@ export default async function DashboardPage() {
         <OwnerHeader email={user.email} />
         <main className="mx-auto max-w-xl px-5 py-10">
           <div className="soft-card flex flex-col items-center gap-4 p-8 text-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-2xl text-3xl" style={{ background: "linear-gradient(160deg,#b1503a,#722f1d)" }}>🍽️</span>
+            <span className="flex h-16 w-16 items-center justify-center rounded-2xl text-3xl" style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}>🍽️</span>
             <h1 className="font-display text-2xl font-bold text-[color:var(--ink)]">لا يوجد مطعم مرتبط بحسابك</h1>
             <p className="max-w-sm text-sm text-[color:var(--muted)]">حسابات الملّاك تُنشأ من قِبل إدارة دور فقط. تواصل معنا لإضافة مطعمك.</p>
             <a href="mailto:albraalaan@gmail.com" className="btn btn-primary w-full max-w-xs">تواصل مع الإدارة</a>
@@ -89,7 +89,7 @@ export default async function DashboardPage() {
     const waited = minutesSince(q.joined_at);
     return (
       <li className="soft-card flex items-center gap-3 p-3.5">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-xl font-bold text-white" style={{ background: "linear-gradient(160deg,#b1503a,#722f1d)" }}>
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-xl font-bold text-white" style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}>
           {q.position ? toAr(q.position) : "•"}
         </span>
         <div className="min-w-0 flex-1">

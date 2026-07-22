@@ -180,7 +180,7 @@ export default async function ManagePage() {
                 <span className="block font-bold text-[color:var(--ink)]">استقبال قائمة الانتظار</span>
                 <span className="text-xs text-[color:var(--muted)]">أوقفها لإغلاق الطابور مؤقتًا أمام العملاء</span>
               </span>
-              <input type="checkbox" name="accepts_waitlist" defaultChecked={settings?.accepts_waitlist ?? true} className="h-6 w-6 accent-[#2e6b4b]" />
+              <input type="checkbox" name="accepts_waitlist" defaultChecked={settings?.accepts_waitlist ?? true} className="h-6 w-6 accent-[#a3341a]" />
             </label>
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
