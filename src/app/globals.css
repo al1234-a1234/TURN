@@ -167,6 +167,35 @@ h1, h2, h3, h4 {
     background: var(--sage); color: var(--brand-d);
   }
 
+  /* ===== توافق مع صفحات المالك/الأدمن/الشركاء القديمة ===== */
+  .app-header {
+    background: linear-gradient(165deg, #3a825e 0%, #23593d 55%, #1d4733 100%);
+    color: #fff;
+    border-end-start-radius: 34px; border-end-end-radius: 34px;
+  }
+  .soft-card {
+    background: linear-gradient(180deg, #ffffff, #fbfaf6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: 0 18px 40px -24px rgba(20, 45, 32, 0.34);
+  }
+  .icon-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 2.75rem; width: 2.75rem; border-radius: 999px;
+    background: rgba(255,255,255,0.16); color: #fff;
+    border: 1px solid rgba(255,255,255,0.22); transition: background .2s;
+  }
+  .icon-btn:hover { background: rgba(255,255,255,0.26); }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 text-center text-sm font-bold transition-all duration-200 disabled:opacity-55;
+    min-height: 3.2rem; padding: 0.6rem 1.25rem; border-radius: var(--radius-btn);
+  }
+  .btn-primary { background: linear-gradient(165deg, #3a825e, #1d4733); color: #fff; box-shadow: 0 16px 30px -18px rgba(29,71,51,0.6); }
+  .btn-primary:hover { transform: translateY(-1px); }
+  .btn-secondary, .btn-ghost, .btn-cream { background: #fff; color: var(--brand-d); border: 1px solid var(--border); }
+  .eyebrow { @apply inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold; background: var(--sage); color: var(--brand-d); }
+  .badge { @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold; }
+
   /* شريط سفلي عائم */
   .rq-nav {
     @apply mx-auto flex max-w-2xl items-end justify-around;

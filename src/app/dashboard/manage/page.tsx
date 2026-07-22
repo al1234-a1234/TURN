@@ -1,9 +1,13 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ImageUploader } from "@/components/image-uploader";
 import { updateRestaurantInfo, updateBranchSettings, addBranch, deleteBranch } from "./actions";
 import { MenuManager } from "./menu-manager";
+import { OwnerHeader, OwnerTabs } from "../owner-chrome";
+import { ColumnChart, SplitBars, ChartCard } from "./charts";
+import { toAr } from "@/lib/format";
+
+const AR_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
 export default async function ManagePage() {
   const supabase = await createClient();
@@ -19,7 +23,9 @@ export default async function ManagePage() {
     .eq("is_active", true)
     .limit(1);
 
-  const restaurant = staffRows?.[0]?.restaurants;
+  const restaurant = staffRows?.[0]?.restaurants as
+    | { id: string; name: string; slug: string; description: string | null; logo_url: string | null; cover_url: string | null }
+    | undefined;
   if (!restaurant) redirect("/dashboard");
 
   const [{ data: categories }, { data: items }, { data: branchList }] = await Promise.all([
@@ -29,35 +35,93 @@ export default async function ManagePage() {
   ]);
 
   const firstBranch = branchList?.[0];
+  const branchIds = (branchList ?? []).map((b) => b.id);
 
   const { data: settings } = firstBranch
     ? await supabase.from("branch_settings").select("accepts_waitlist, max_party_size, opening_hours").eq("branch_id", firstBranch.id).maybeSingle()
     : { data: null };
   const hours = (settings?.opening_hours ?? {}) as { open?: string; close?: string };
 
+  // ===== تحليلات (آخر ٣٠ يوم) =====
+  const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
+  const { data: analytics } = branchIds.length
+    ? await supabase.from("waitlist_entries").select("joined_at, seated_at, zone, status").in("branch_id", branchIds).gte("joined_at", since30)
+    : { data: [] };
+  const rows = analytics ?? [];
+
+  // مخدومون آخر ٧ أيام
+  const now = new Date();
+  const dayBuckets = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (6 - i));
+    return { key: `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`, label: AR_DAYS[d.getDay()], value: 0 };
+  });
+  const bucketByKey = new Map(dayBuckets.map((b) => [b.key, b]));
+  const seated = rows.filter((r) => r.status === "seated" && r.seated_at);
+  for (const r of seated) {
+    const d = new Date(r.seated_at as string);
+    const k = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    const b = bucketByKey.get(k);
+    if (b) b.value += 1;
+  }
+
+  // ساعات الذروة (نوافذ ساعتين ١٢م→١٢ص)
+  const hourWindows = [12, 14, 16, 18, 20, 22];
+  const hourLabels = ["١٢", "٢", "٤", "٦", "٨", "١٠"];
+  const peak = hourWindows.map((h, i) => ({ label: hourLabels[i], value: 0 }));
+  for (const r of rows) {
+    const hr = new Date(r.joined_at).getHours();
+    const idx = hourWindows.findIndex((w) => hr >= w && hr < w + 2);
+    if (idx >= 0) peak[idx].value += 1;
+  }
+
+  // توزيع الطابور الحالي داخلي/خارجي
+  const waiting = rows.filter((r) => r.status === "waiting" || r.status === "notified");
+  const insideNow = waiting.filter((r) => r.zone === "inside").length;
+  const outsideNow = waiting.filter((r) => r.zone === "outside").length;
+
+  // مؤشرات
+  const served30 = seated.length;
+  const waits = seated
+    .map((r) => (r.seated_at ? (new Date(r.seated_at).getTime() - new Date(r.joined_at).getTime()) / 60000 : null))
+    .filter((n): n is number => n != null && n >= 0);
+  const avgWait = waits.length ? Math.round(waits.reduce((a, b) => a + b, 0) / waits.length) : 0;
+
+  const inputDark = "rounded-2xl border p-3";
+
   return (
     <div className="flex flex-1 flex-col">
-      <header className="app-header px-5 pb-10 pt-4">
-        <div className="mx-auto flex max-w-3xl items-center justify-between">
-          <Link href="/dashboard" className="icon-btn">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </Link>
-          <span className="text-lg font-extrabold">إدارة المطعم</span>
-          <Link href={`/r/${restaurant.slug}`} className="icon-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path d="M14 3h7v7M21 3l-9 9M10 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </Link>
-        </div>
-        <h1 className="mx-auto mt-4 max-w-3xl text-2xl font-extrabold">{restaurant.name}</h1>
-      </header>
+      <OwnerHeader title={restaurant.name} slug={restaurant.slug} />
+      <main className="mx-auto -mt-8 w-full max-w-3xl flex-1 space-y-6 px-5 pb-16">
+        <OwnerTabs active="manage" />
 
-      <main className="mx-auto -mt-4 w-full max-w-3xl flex-1 space-y-6 px-5 pb-12">
-        {/* معلومات وصور المطعم */}
+        {/* ===== التحليلات ===== */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Kpi label="خدمناهم (٣٠ يوم)" value={toAr(served30)} tone="var(--st-open)" />
+          <Kpi label="متوسط الانتظار" value={`${toAr(avgWait)} د`} tone="var(--brand-d)" />
+          <Kpi label="بالطابور الآن" value={toAr(waiting.length)} tone="var(--st-full)" />
+          <Kpi label="التقييم" value="٤٫٩" tone="var(--star)" />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <ChartCard title="المخدومون آخر ٧ أيام" hint="عدد">
+            <ColumnChart data={dayBuckets} color="var(--brand)" />
+          </ChartCard>
+          <ChartCard title="ساعات الذروة" hint="مساءً">
+            <ColumnChart data={peak} color="var(--st-full)" />
+          </ChartCard>
+        </div>
+        <ChartCard title="توزيع الطابور الآن" hint="داخلي مقابل خارجي">
+          <SplitBars
+            rows={[
+              { label: "طاولات داخلية", value: insideNow, color: "var(--st-full)" },
+              { label: "طاولات خارجية", value: outsideNow, color: "var(--brand)" },
+            ]}
+          />
+        </ChartCard>
+
+        {/* ===== معلومات وصور المطعم ===== */}
         <section className="soft-card p-5">
-          <h2 className="mb-4 text-lg font-extrabold text-brand-800 dark:text-cream-100">معلومات المطعم</h2>
+          <h2 className="mb-4 font-display text-lg font-bold text-[color:var(--ink)]">معلومات المطعم والصور</h2>
           <form action={updateRestaurantInfo} className="space-y-4">
             <div className="flex flex-wrap gap-6">
               <ImageUploader restaurantId={restaurant.id} name="logo_url" label="الشعار" defaultUrl={restaurant.logo_url} shape="circle" />
@@ -77,13 +141,13 @@ export default async function ManagePage() {
           </form>
         </section>
 
-        {/* الفروع والمواقع */}
+        {/* ===== الفروع والمواقع ===== */}
         <section className="soft-card p-5">
-          <h2 className="mb-4 font-serif text-xl font-bold text-[color:var(--ink)]">الفروع والمواقع</h2>
+          <h2 className="mb-4 font-display text-lg font-bold text-[color:var(--ink)]">الفروع والمواقع</h2>
           <ul className="mb-4 space-y-2">
             {(branchList ?? []).map((b) => (
-              <li key={b.id} className="flex items-center gap-3 rounded-2xl border border-[var(--hairline)] bg-[rgba(12,23,18,0.4)] p-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[rgba(201,169,97,0.15)] text-[color:var(--gold-1)]">📍</span>
+              <li key={b.id} className={`${inputDark} flex items-center gap-3`} style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[color:var(--sage)] text-brand-700">📍</span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-bold text-[color:var(--ink)]">{b.name}</p>
                   <p className="truncate text-xs text-[color:var(--muted)]">{[b.city, b.address].filter(Boolean).join(" · ") || "—"}</p>
@@ -97,7 +161,7 @@ export default async function ManagePage() {
               </li>
             ))}
           </ul>
-          <form action={addBranch} className="space-y-3 rounded-2xl border border-[var(--hairline)] bg-[rgba(12,23,18,0.4)] p-4">
+          <form action={addBranch} className="space-y-3 rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
             <div className="grid gap-3 sm:grid-cols-3">
               <input name="name" required placeholder="اسم الفرع" className="field-input" />
               <input name="city" placeholder="المدينة" className="field-input" />
@@ -107,11 +171,11 @@ export default async function ManagePage() {
           </form>
         </section>
 
-        {/* الإعدادات وأوقات العمل */}
+        {/* ===== الإعدادات وأوقات العمل ===== */}
         <section className="soft-card p-5">
-          <h2 className="mb-4 font-serif text-xl font-bold text-[color:var(--ink)]">الإعدادات وأوقات العمل</h2>
+          <h2 className="mb-4 font-display text-lg font-bold text-[color:var(--ink)]">الإعدادات وأوقات العمل</h2>
           <form action={updateBranchSettings} className="space-y-4">
-            <label className="flex items-center justify-between rounded-2xl border border-[var(--hairline)] bg-[rgba(12,23,18,0.4)] p-4">
+            <label className="flex items-center justify-between rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
               <span>
                 <span className="block font-bold text-[color:var(--ink)]">استقبال قائمة الانتظار</span>
                 <span className="text-xs text-[color:var(--muted)]">أوقفها لإغلاق الطابور مؤقتًا أمام العملاء</span>
@@ -136,12 +200,21 @@ export default async function ManagePage() {
           </form>
         </section>
 
-        {/* المنيو */}
+        {/* ===== المنيو ===== */}
         <section>
-          <h2 className="mb-4 font-serif text-xl font-bold text-[color:var(--ink)]">المنيو</h2>
+          <h2 className="mb-4 font-display text-lg font-bold text-[color:var(--ink)]">المنيو والأسعار</h2>
           <MenuManager restaurantId={restaurant.id} categories={categories ?? []} items={items ?? []} />
         </section>
       </main>
+    </div>
+  );
+}
+
+function Kpi({ label, value, tone }: { label: string; value: string; tone: string }) {
+  return (
+    <div className="soft-card p-4 text-center">
+      <p className="font-display text-2xl font-bold leading-none" style={{ color: tone }}>{value}</p>
+      <p className="mt-1.5 text-[11px] font-bold text-[color:var(--muted)]">{label}</p>
     </div>
   );
 }
