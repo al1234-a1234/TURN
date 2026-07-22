@@ -1,6 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { El_Messiri, Almarai, Playfair_Display } from "next/font/google";
+import { El_Messiri, Almarai, Playfair_Display, Libre_Baskerville } from "next/font/google";
 import "./globals.css";
+
+const baskerville = Libre_Baskerville({
+  variable: "--font-baskerville",
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  display: "swap",
+});
 
 const elmessiri = El_Messiri({
   variable: "--font-elmessiri",
@@ -48,7 +55,7 @@ export default function RootLayout({
     <html
       lang="ar"
       dir="rtl"
-      className={`${elmessiri.variable} ${almarai.variable} ${playfair.variable} h-full antialiased`}
+      className={`${elmessiri.variable} ${almarai.variable} ${playfair.variable} ${baskerville.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">{children}</body>
     </html>

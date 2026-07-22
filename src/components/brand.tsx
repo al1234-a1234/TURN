@@ -1,17 +1,16 @@
 import Link from "next/link";
 
 /**
- * شعار TURN الرسمي (الأيقونة الحقيقية) + الاسم العربي.
- * يُستخدم في الهيدر وصفحات الدخول لهوية موحّدة.
+ * شعار TURN الحرفي — حرف T + TURN بخط Baskerville على خلفية برتقالي محروق #661C0A.
+ * متجه وحاد بأي مقاس (بلا صورة نقطية).
  */
 export function BrandMark({ size = 40 }: { size?: number }) {
   return (
-    <span
-      className="inline-flex shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white/10 shadow-[0_6px_18px_-8px_rgba(0,0,0,0.5)] ring-1 ring-white/20"
-      style={{ width: size, height: size }}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/turn-logo.png" alt="TURN" className="h-full w-full object-cover" />
+    <span className="turn-badge" style={{ width: size, height: size, fontSize: size }} aria-label="TURN">
+      <span>
+        <span className="tb-t">T</span>
+        <span className="tb-w">TURN</span>
+      </span>
     </span>
   );
 }
@@ -28,10 +27,7 @@ export function BrandLink({
   return (
     <Link href={href} className={`flex items-center gap-2.5 ${className}`}>
       <BrandMark size={size} />
-      <span className="flex flex-col leading-none">
-        <span className="text-lg font-extrabold tracking-[0.28em]" dir="ltr">TURN</span>
-        <span className="mt-0.5 text-xs font-bold text-cream-200/80">دور</span>
-      </span>
+      <span className="font-display text-lg font-bold text-cream-100/95">دور</span>
     </Link>
   );
 }

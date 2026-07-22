@@ -69,6 +69,24 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* ===== شعار TURN الحرفي (بديل الصورة) ===== */
+.turn-badge {
+  display: grid; place-items: center; position: relative; overflow: hidden; flex: none;
+  border-radius: 23%;
+  background: linear-gradient(155deg, #85240d 0%, #661c0a 55%, #2f0d05 100%);
+  font-family: var(--font-baskerville), Baskerville, Georgia, serif;
+  color: #f6efe2;
+  box-shadow: 0 0.10em 0.28em -0.12em rgba(40, 12, 4, 0.55);
+}
+.turn-badge::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(150deg, rgba(255,255,255,0.15), transparent 44%);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+}
+.turn-badge > span { direction: ltr; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
+.turn-badge .tb-t { font-weight: 700; font-size: 0.44em; line-height: 0.8; }
+.turn-badge .tb-w { font-weight: 700; font-size: 0.132em; letter-spacing: 0.3em; margin-inline-end: -0.3em; }
+
 h1, h2, h3, h4 {
   font-family: var(--font-display);
   letter-spacing: -0.005em;
