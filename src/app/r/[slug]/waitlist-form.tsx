@@ -54,9 +54,12 @@ export function WaitlistForm({
       <div className="soft-card flex items-center justify-between p-6">
         <div>
           <p className="text-sm text-[color:var(--muted)]">في الطابور الآن</p>
-          <p className="font-serif text-5xl font-bold text-gold leading-tight">{branch?.total ?? 0}</p>
+          <p className="font-display text-5xl font-bold text-brand-700 leading-tight">{branch?.total ?? 0}</p>
         </div>
-        <span className="chip">خذ دورك</span>
+        <span className="chip">
+          <span className="h-1.5 w-1.5 rounded-full bg-brand-600" />
+          خذ دورك
+        </span>
       </div>
 
       {branches.length > 1 && (
@@ -77,7 +80,7 @@ export function WaitlistForm({
       {/* اسم + رقم فقط */}
       <div className="soft-card space-y-4 p-5">
         <div>
-          <p className="font-serif text-lg font-bold text-[color:var(--ink)]">سجّل بياناتك وخذ دورك</p>
+          <p className="font-display text-lg font-bold text-[color:var(--ink)]">سجّل بياناتك وخذ دورك</p>
           <p className="text-xs text-[color:var(--muted)]">اسمك ورقمك فقط — بلا حساب ولا كلمة مرور.</p>
         </div>
         <div>
@@ -97,7 +100,7 @@ export function WaitlistForm({
       </div>
 
       {state.error && (
-        <p className="rounded-2xl border border-[rgba(220,90,90,0.35)] bg-[color:var(--surface)] px-4 py-3 text-sm font-medium text-red-300">
+        <p className="rounded-2xl border border-[rgba(200,70,70,0.3)] bg-[rgba(200,70,70,0.06)] px-4 py-3 text-sm font-medium text-red-600">
           {state.error}
         </p>
       )}

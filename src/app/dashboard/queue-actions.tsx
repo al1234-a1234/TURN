@@ -53,14 +53,14 @@ export function QueueActions({
         disabled={pending}
         onClick={() => start(() => updateWaitlistStatus(id, "seated"))}
         className="rounded-xl px-3 py-2 text-xs font-bold text-[color:var(--bg)] transition disabled:opacity-60"
-        style={{ background: "linear-gradient(135deg,#e7d8b5,#c9a961)" }}
+        style={{ background: "linear-gradient(160deg,#357a57,#1d4733)" }}
       >
         جلوس
       </button>
       <button
         disabled={pending}
         onClick={() => start(() => updateWaitlistStatus(id, "cancelled"))}
-        className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-xs font-bold text-[color:var(--muted)] transition hover:text-red-300 disabled:opacity-60"
+        className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-xs font-bold text-[color:var(--muted)] transition hover:text-red-600 disabled:opacity-60"
       >
         إزالة
       </button>

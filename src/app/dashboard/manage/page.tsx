@@ -91,7 +91,7 @@ export default async function ManagePage() {
                 {(branchList ?? []).length > 1 && (
                   <form action={deleteBranch}>
                     <input type="hidden" name="branch_id" value={b.id} />
-                    <button className="rounded-lg px-2 py-1 text-xs font-bold text-[color:var(--muted)] transition hover:text-red-300">حذف</button>
+                    <button className="rounded-lg px-2 py-1 text-xs font-bold text-[color:var(--muted)] transition hover:text-red-600">حذف</button>
                   </form>
                 )}
               </li>
@@ -116,7 +116,7 @@ export default async function ManagePage() {
                 <span className="block font-bold text-[color:var(--ink)]">استقبال قائمة الانتظار</span>
                 <span className="text-xs text-[color:var(--muted)]">أوقفها لإغلاق الطابور مؤقتًا أمام العملاء</span>
               </span>
-              <input type="checkbox" name="accepts_waitlist" defaultChecked={settings?.accepts_waitlist ?? true} className="h-6 w-6 accent-[#c9a961]" />
+              <input type="checkbox" name="accepts_waitlist" defaultChecked={settings?.accepts_waitlist ?? true} className="h-6 w-6 accent-[#2e6b4b]" />
             </label>
             <div className="grid gap-4 sm:grid-cols-3">
               <div>

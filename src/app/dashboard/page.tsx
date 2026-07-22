@@ -47,7 +47,7 @@ export default async function DashboardPage() {
       <Shell email={user.email}>
         <div className="mx-auto max-w-xl px-5 py-10">
           <div className="soft-card flex flex-col items-center gap-4 p-8 text-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-2xl text-3xl" style={{ background: "linear-gradient(135deg,#e7d8b5,#c9a961)" }}>
+            <span className="flex h-16 w-16 items-center justify-center rounded-2xl text-3xl" style={{ background: "linear-gradient(160deg,#357a57,#1d4733)" }}>
               🍽️
             </span>
             <h1 className="font-serif text-3xl font-bold text-[color:var(--ink)]">
@@ -139,7 +139,7 @@ export default async function DashboardPage() {
                 <li key={q.id} className="soft-card flex items-center gap-3 p-3.5">
                   <span
                     className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-serif text-xl font-bold text-[color:var(--bg)]"
-                    style={{ background: "linear-gradient(135deg,#e7d8b5,#c9a961)" }}
+                    style={{ background: "linear-gradient(160deg,#357a57,#1d4733)" }}
                   >
                     {q.position ?? "•"}
                   </span>
@@ -220,7 +220,7 @@ function Shell({
 function Stat({ label, value, suffix, gold }: { label: string; value: number; suffix?: string; gold?: boolean }) {
   return (
     <div className="soft-card p-4 text-center">
-      <p className={`font-serif text-4xl font-bold leading-none ${gold ? "text-gold" : "text-[color:var(--ink)]"}`}>
+      <p className={`font-serif text-4xl font-bold leading-none ${gold ? "text-brand-700" : "text-[color:var(--ink)]"}`}>
         {value}
         {suffix && <span className="mr-1 text-base font-normal text-[color:var(--muted)]">{suffix}</span>}
       </p>

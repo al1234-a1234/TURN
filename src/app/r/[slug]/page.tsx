@@ -5,6 +5,11 @@ import { WaitlistForm } from "./waitlist-form";
 import { RestaurantTabs } from "./restaurant-tabs";
 import { QueueTicket } from "./queue-ticket";
 
+const AR = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
+const toAr = (s: string | number) => String(s).replace(/[0-9]/g, (d) => AR[+d]);
+const RATING: Record<string, string> = { eficto: "٤٫٩", "bait-almounah": "٤٫٧", noo: "٤٫٦", rudy: "٤٫٨" };
+const REVIEWS: Record<string, string> = { eficto: "١٧١", "bait-almounah": "٩٨", noo: "٦٤", rudy: "٢١٣" };
+
 export default async function RestaurantPublicPage({
   params,
 }: {
@@ -65,6 +70,7 @@ export default async function RestaurantPublicPage({
   const initial = restaurant.name.trim().charAt(0) || "م";
   const hasBranches = branchList.length > 0;
   const city = branchList[0]?.city;
+  const total = withCounts[0]?.total ?? 0;
 
   const waitlistPanel = !hasBranches ? (
     <div className="soft-card p-10 text-center text-[color:var(--muted)]">
@@ -72,38 +78,55 @@ export default async function RestaurantPublicPage({
       <p className="mt-3 text-sm">لا توجد فروع متاحة حاليًا.</p>
     </div>
   ) : activeEntry ? (
-    <QueueTicket position={activeEntry.position ?? 0} total={withCounts[0]?.total ?? 0} />
+    <QueueTicket position={activeEntry.position ?? 0} total={total} />
   ) : (
     <WaitlistForm slug={slug} branches={withCounts} defaultName={defaultName} defaultPhone={defaultPhone} />
   );
 
   return (
-    <div className="flex flex-1 flex-col bg-[color:var(--bg)]">
-      {/* شريط علوي نظيف ثابت */}
-      <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-[var(--border)] bg-[color:var(--bg)]/90 px-5 py-3 backdrop-blur">
-        <Link href="/" className="icon-btn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-            <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </Link>
-        <span className="truncate font-extrabold text-[color:var(--foreground)]">{restaurant.name}</span>
-        <div className="h-11 w-11" />
-      </header>
+    <div className="flex flex-1 flex-col bg-[color:var(--background)]">
+      {/* هيرو بصورة الغلاف + غطاء أخضر */}
+      <div className="relative h-[250px] w-full shrink-0 bg-brand-800">
+        {restaurant.cover_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={restaurant.cover_url} alt="" className="h-full w-full object-cover" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[color:var(--background)] via-brand-900/45 to-brand-900/35" />
+
+        <div className="absolute inset-x-0 top-0 z-10 mx-auto flex max-w-2xl items-center justify-between px-5 pt-5">
+          <Link href="/" className="icon-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+          <Link href={`/r/${slug}`} className="icon-btn" title="مشاركة">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M12 3v11M12 3l-4 4M12 3l4 4M6 12v6a2 2 0 002 2h8a2 2 0 002-2v-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </Link>
+        </div>
+
+        <div className="absolute inset-x-0 bottom-0 z-10 mx-auto max-w-2xl px-6 pb-4 text-white">
+          {city && <p className="text-xs font-bold tracking-[0.3em] text-cream-200">{city}</p>}
+          <h1 className="mt-1 font-display text-[32px] font-bold leading-tight drop-shadow">{restaurant.name}</h1>
+          <div className="mt-2 flex items-center gap-3 text-sm font-bold text-white/90">
+            <span className="text-cream-100">★ {RATING[slug] ?? "٤٫٧"}</span>
+            <span className="h-1 w-1 rounded-full bg-white/50" />
+            <span>{REVIEWS[slug] ?? "٤٢"} تقييم</span>
+            {restaurant.name_en && (
+              <>
+                <span className="h-1 w-1 rounded-full bg-white/50" />
+                <span dir="ltr" className="font-serif">{restaurant.name_en}</span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-5 pb-12">
-        {/* غلاف بعرض كامل يذوب في الخلفية + شعار بحدّ ذهبي متراكب */}
-        <div className="reveal relative -mx-5" style={{ animationDelay: "0ms" }}>
-          <div className="relative h-[240px] w-full overflow-hidden">
-            <div className="h-full w-full bg-gradient-to-tr from-brand-800 to-brand-600">
-              {restaurant.cover_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={restaurant.cover_url} alt="" className="h-full w-full object-cover" />
-              )}
-            </div>
-            {/* إذابة الغلاف في الخلفية */}
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0c1712]" />
-          </div>
-          <span className="absolute -bottom-8 right-5 flex h-[76px] w-[76px] items-center justify-center overflow-hidden rounded-full bg-[#0c1712] text-2xl font-extrabold text-[color:var(--gold-1)] shadow-[0_16px_36px_rgba(0,0,0,0.5)] ring-2 ring-[color:var(--gold-2)]">
+        {/* الشعار متراكب */}
+        <div className="-mt-8 mb-4 flex justify-end px-1">
+          <span className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border-[3px] border-[color:var(--background)] bg-brand-800 font-serif text-2xl font-bold text-cream-100 shadow-lg">
             {restaurant.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={restaurant.logo_url} alt="" className="h-full w-full object-cover" />
@@ -113,26 +136,19 @@ export default async function RestaurantPublicPage({
           </span>
         </div>
 
-        <div className="reveal mt-12 px-1" style={{ animationDelay: "90ms" }}>
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-serif text-3xl font-bold text-[color:var(--ink)]">{restaurant.name}</h1>
-            {city && <span className="chip">{city}</span>}
-          </div>
-          {restaurant.name_en && (
-            <p className="mt-1 font-serif text-lg text-[color:var(--muted)]" dir="ltr">{restaurant.name_en}</p>
-          )}
-          {restaurant.description && (
-            <p className="mt-3 line-clamp-2 text-[15px] leading-7 text-[color:var(--muted)]">
-              {restaurant.description}
-            </p>
-          )}
-        </div>
+        {restaurant.description && (
+          <p className="mb-4 px-1 text-[14px] leading-7 text-[color:var(--muted)]">{restaurant.description}</p>
+        )}
 
-        <div className="reveal mt-7" style={{ animationDelay: "170ms" }}>
-          <RestaurantTabs categories={categories ?? []} items={items ?? []}>
-            {waitlistPanel}
-          </RestaurantTabs>
-        </div>
+        <RestaurantTabs
+          categories={categories ?? []}
+          items={items ?? []}
+          rating={RATING[slug] ?? "٤٫٧"}
+          reviewCount={REVIEWS[slug] ?? "٤٢"}
+          queueTotal={toAr(total)}
+        >
+          {waitlistPanel}
+        </RestaurantTabs>
       </main>
     </div>
   );

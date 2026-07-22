@@ -112,7 +112,7 @@ function PartnersLogin() {
           </div>
 
           {error && (
-            <p className="rounded-2xl border border-[rgba(220,90,90,0.35)] bg-[color:var(--surface)] px-4 py-3 text-sm font-medium text-red-300">
+            <p className="rounded-2xl border border-[rgba(200,70,70,0.3)] bg-[rgba(200,70,70,0.06)] px-4 py-3 text-sm font-medium text-red-600">
               {error}
             </p>
           )}
