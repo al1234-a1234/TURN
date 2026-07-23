@@ -40,7 +40,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     );
   }
 
-  const { supabase, restaurant, modules, role, permissions } = load.ctx;
+  const { supabase, restaurant, modules, role, permissions, isAdminView } = load.ctx;
 
   // عدّادات القائمة (تُحسب مرة مع القائمة الثابتة)
   const { data: branches } = await supabase.from("branches").select("id").eq("restaurant_id", restaurant.id);
@@ -67,7 +67,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   };
 
   return (
-    <OwnerShell restaurant={restaurant} modules={modules} role={role} permissions={permissions} counts={counts}>
+    <OwnerShell restaurant={restaurant} modules={modules} role={role} permissions={permissions} counts={counts} adminView={isAdminView}>
       {children}
     </OwnerShell>
   );

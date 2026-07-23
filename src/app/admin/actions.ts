@@ -1,7 +1,35 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { ADMIN_RID_COOKIE } from "../dashboard/owner-context";
+
+/** المشرف يفتح لوحة مطعم كاملة: نخزّن اختياره في كوكي ونحوّله للوحة. */
+export async function openRestaurantDashboard(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/partners?redirect=/admin");
+  const { data: isAdmin } = await supabase.rpc("is_platform_admin");
+  if (!isAdmin) redirect("/dashboard");
+
+  const rid = String(formData.get("restaurant_id") ?? "").trim();
+  if (!rid) redirect("/admin");
+
+  const store = await cookies();
+  store.set(ADMIN_RID_COOKIE, rid, { httpOnly: true, sameSite: "lax", path: "/" });
+  redirect("/dashboard");
+}
+
+/** الخروج من وضع عرض المشرف (يمسح الكوكي ويرجع للأدمن). */
+export async function exitAdminView() {
+  const store = await cookies();
+  store.delete(ADMIN_RID_COOKIE);
+  redirect("/admin");
+}
 
 export type AdminCreateState = {
   error?: string;

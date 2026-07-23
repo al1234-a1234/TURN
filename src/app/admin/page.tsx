@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AdminCreateForm } from "./admin-create-form";
+import { openRestaurantDashboard } from "./actions";
 import { LangToggle } from "@/components/lang-toggle";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
@@ -64,10 +65,19 @@ export default async function AdminPage() {
                       {r.owner_phone ? ` · ${r.owner_phone}` : ""}
                     </p>
                   </div>
+                  <form action={openRestaurantDashboard} className="shrink-0">
+                    <input type="hidden" name="restaurant_id" value={r.id} />
+                    <button
+                      type="submit"
+                      className="rounded-full px-3 py-2 text-xs font-bold text-white"
+                      style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}
+                    >
+                      {tr(lang, "لوحة المطعم", "Dashboard")}
+                    </button>
+                  </form>
                   <Link
                     href={`/admin/${r.id}`}
-                    className="shrink-0 rounded-full px-3 py-2 text-xs font-bold text-white"
-                    style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}
+                    className="shrink-0 rounded-full border border-[var(--hairline)] px-3 py-2 text-xs font-bold text-[color:var(--gold-1)]"
                   >
                     {tr(lang, "الباقة", "Plan")}
                   </Link>

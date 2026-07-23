@@ -1,6 +1,8 @@
 import "server-only";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { staffHasPermission, type StaffPermission, type StaffPermissionMap } from "@/lib/features";
+import { ADMIN_RID_COOKIE } from "./owner-context";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -40,15 +42,26 @@ export async function resolveCaller(): Promise<Caller | null> {
     .limit(1)
     .maybeSingle();
 
-  if (!data?.restaurant_id) return null;
+  if (data?.restaurant_id) {
+    return {
+      supabase,
+      userId: user.id,
+      restaurantId: data.restaurant_id,
+      role: data.role,
+      permissions: (data.permissions ?? {}) as StaffPermissionMap,
+    };
+  }
 
-  return {
-    supabase,
-    userId: user.id,
-    restaurantId: data.restaurant_id,
-    role: data.role,
-    permissions: (data.permissions ?? {}) as StaffPermissionMap,
-  };
+  // مشرف المنصّة يتصرّف كمالك على المطعم المختار (كوكي) — يقدر يدير أي مطعم
+  const { data: isAdmin } = await supabase.rpc("is_platform_admin");
+  if (isAdmin) {
+    const store = await cookies();
+    const rid = store.get(ADMIN_RID_COOKIE)?.value;
+    if (rid) {
+      return { supabase, userId: user.id, restaurantId: rid, role: "owner", permissions: {} };
+    }
+  }
+  return null;
 }
 
 /** يحمّل المتصل ويشترط صلاحية معيّنة. يعيد null إن لم يكن مخوّلًا (فشل صامت آمن). */

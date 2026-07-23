@@ -4,6 +4,7 @@ import { BrandLink } from "@/components/brand";
 import { LogoutButton } from "@/components/logout-button";
 import { LangToggle } from "@/components/lang-toggle";
 import { OwnerNavSidebar, OwnerNavTabs, type NavItem } from "./owner-nav";
+import { exitAdminView } from "../admin/actions";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
 import {
@@ -61,6 +62,7 @@ export async function OwnerShell({
   role,
   permissions,
   counts,
+  adminView = false,
   children,
 }: {
   restaurant: { id: string; name: string; slug: string };
@@ -68,6 +70,7 @@ export async function OwnerShell({
   role: Database["public"]["Enums"]["user_role"];
   permissions: StaffPermissionMap;
   counts?: Partial<Record<OwnerNavKey, number>>;
+  adminView?: boolean;
   children: React.ReactNode;
 }) {
   const lang = await getLang();
@@ -94,6 +97,25 @@ export async function OwnerShell({
   const countsRec = (counts ?? {}) as Record<string, number>;
 
   return (
+   <div className="flex flex-1 flex-col">
+    {adminView && (
+      <div className="flex items-center justify-between gap-3 px-4 py-2 text-white" style={{ background: "linear-gradient(90deg,#661c0a,#a8371a)" }}>
+        <span className="flex items-center gap-2 text-xs font-bold sm:text-sm">
+          <span>🛡️</span>
+          {tr(lang, `وضع المشرف — تعرض «${restaurant.name}»`, `Admin view — showing “${restaurant.name}”`)}
+        </span>
+        <div className="flex items-center gap-2">
+          <Link href="/admin" className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold ring-1 ring-white/25 transition hover:bg-white/25">
+            {tr(lang, "كل المطاعم", "All restaurants")}
+          </Link>
+          <form action={exitAdminView}>
+            <button type="submit" className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold ring-1 ring-white/25 transition hover:bg-white/25">
+              {tr(lang, "خروج", "Exit")}
+            </button>
+          </form>
+        </div>
+      </div>
+    )}
     <div className="flex flex-1 flex-col lg:flex-row">
       {/* ===== قائمة جانبية ثابتة (ديسكتوب/تابلت) ===== */}
       <aside className="hidden w-64 shrink-0 flex-col border-e bg-white lg:flex" style={{ borderColor: "var(--border)" }}>
@@ -143,5 +165,6 @@ export async function OwnerShell({
         <main className="mx-auto w-full max-w-4xl flex-1 px-5 pb-16 pt-6 lg:pt-8">{children}</main>
       </div>
     </div>
+   </div>
   );
 }

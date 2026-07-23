@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import {
   getEnabledModules,
@@ -9,6 +10,9 @@ import type { Database } from "@/lib/supabase/database.types";
 
 export type OwnerRestaurant = { id: string; name: string; slug: string };
 
+/** كوكي اختيار المطعم لمشرف المنصّة (يعرض لوحة أي مطعم كاملة). */
+export const ADMIN_RID_COOKIE = "admin_rid";
+
 export type OwnerContext = {
   supabase: SupabaseClient<Database>;
   userId: string;
@@ -17,6 +21,8 @@ export type OwnerContext = {
   role: Database["public"]["Enums"]["user_role"];
   permissions: StaffPermissionMap;
   modules: Set<ModuleKey>;
+  /** true إذا كان الداخل مشرف منصّة يعرض هذا المطعم (لا مالكه الفعلي). */
+  isAdminView: boolean;
 };
 
 export type OwnerLoad =
@@ -49,6 +55,34 @@ export async function loadOwner(): Promise<OwnerLoad> {
 
   if (!staff || !restaurant) {
     const { data: isAdmin } = await supabase.rpc("is_platform_admin");
+    // مشرف المنصّة اختار مطعمًا ليعرض لوحته الكاملة (كوكي) → نبنيه كمالك
+    if (isAdmin) {
+      const store = await cookies();
+      const rid = store.get(ADMIN_RID_COOKIE)?.value;
+      if (rid) {
+        const { data: rest } = await supabase
+          .from("restaurants")
+          .select("id, name, slug")
+          .eq("id", rid)
+          .maybeSingle();
+        if (rest) {
+          const modules = await getEnabledModules(supabase, rest.id);
+          return {
+            state: "ok",
+            ctx: {
+              supabase,
+              userId: user.id,
+              email: user.email ?? null,
+              restaurant: rest as OwnerRestaurant,
+              role: "owner",
+              permissions: {},
+              modules,
+              isAdminView: true,
+            },
+          };
+        }
+      }
+    }
     return { state: "no_restaurant", email: user.email ?? null, isAdmin: !!isAdmin, supabase };
   }
 
@@ -64,6 +98,7 @@ export async function loadOwner(): Promise<OwnerLoad> {
       role: staff.role,
       permissions: (staff.permissions ?? {}) as StaffPermissionMap,
       modules,
+      isAdminView: false,
     },
   };
 }
