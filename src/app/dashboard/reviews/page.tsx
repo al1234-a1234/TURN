@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { OwnerHeader, OwnerTabs } from "../owner-chrome";
+import { OwnerShell } from "../owner-shell";
 import { loadOwner } from "../owner-context";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { ReviewPublishToggle } from "./review-toggle";
@@ -45,11 +45,8 @@ export default async function ReviewsPage() {
   const routingOn = isModuleOn(modules, "review_routing");
 
   return (
-    <div className="flex flex-1 flex-col">
-      <OwnerHeader title={restaurant.name} slug={restaurant.slug} />
-      <main className="mx-auto -mt-8 w-full max-w-3xl flex-1 space-y-6 px-5 pb-16">
-        <OwnerTabs active="reviews" modules={modules} role={role} permissions={permissions} />
-
+    <OwnerShell active="reviews" restaurant={restaurant} modules={modules} role={role} permissions={permissions} counts={{ reviews: count }}>
+      <div className="space-y-6">
         {/* ملخّص التقييم */}
         <section className="soft-card p-5">
           <div className="flex items-center gap-5">
@@ -117,7 +114,7 @@ export default async function ReviewsPage() {
             </ul>
           )}
         </section>
-      </main>
-    </div>
+      </div>
+    </OwnerShell>
   );
 }

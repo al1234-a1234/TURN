@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { ImageUploader } from "@/components/image-uploader";
 import { updateRestaurantInfo, updateBranchSettings, addBranch, deleteBranch } from "./actions";
 import { MenuManager } from "./menu-manager";
-import { OwnerHeader, OwnerTabs } from "../owner-chrome";
+import { OwnerShell } from "../owner-shell";
 import { loadOwner } from "../owner-context";
 import { ColumnChart, SplitBars, ChartCard } from "./charts";
 import { toAr } from "@/lib/format";
@@ -82,11 +82,8 @@ export default async function ManagePage() {
   const inputDark = "rounded-2xl border p-3";
 
   return (
-    <div className="flex flex-1 flex-col">
-      <OwnerHeader title={restaurant.name} slug={restaurant.slug} />
-      <main className="mx-auto -mt-8 w-full max-w-3xl flex-1 space-y-6 px-5 pb-16">
-        <OwnerTabs active="manage" modules={modules} role={role} permissions={permissions} />
-
+    <OwnerShell active="manage" restaurant={restaurant} modules={modules} role={role} permissions={permissions}>
+      <div className="space-y-6">
         {/* ===== التحليلات ===== */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Kpi label="خدمناهم (٣٠ يوم)" value={toAr(served30)} tone="var(--st-open)" />
@@ -198,8 +195,8 @@ export default async function ManagePage() {
           <h2 className="mb-4 font-display text-lg font-bold text-[color:var(--ink)]">المنيو والأسعار</h2>
           <MenuManager restaurantId={restaurant.id} categories={categories ?? []} items={items ?? []} />
         </section>
-      </main>
-    </div>
+      </div>
+    </OwnerShell>
   );
 }
 

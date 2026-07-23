@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { OwnerHeader, OwnerTabs } from "../owner-chrome";
+import { OwnerShell } from "../owner-shell";
 import { loadOwner } from "../owner-context";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { createOffer, deleteOffer } from "./actions";
@@ -56,11 +56,8 @@ export default async function OffersPage() {
   const field = "field-input";
 
   return (
-    <div className="flex flex-1 flex-col">
-      <OwnerHeader title={restaurant.name} slug={restaurant.slug} />
-      <main className="mx-auto -mt-8 w-full max-w-3xl flex-1 space-y-6 px-5 pb-16">
-        <OwnerTabs active="offers" modules={modules} role={role} permissions={permissions} />
-
+    <OwnerShell active="offers" restaurant={restaurant} modules={modules} role={role} permissions={permissions}>
+      <div className="space-y-6">
         {/* مؤشرات */}
         <div className="grid grid-cols-3 gap-3">
           <Kpi label="عروض نشطة" value={toAr(activeCount)} tone="var(--st-open)" />
@@ -177,8 +174,8 @@ export default async function OffersPage() {
             </ul>
           )}
         </section>
-      </main>
-    </div>
+      </div>
+    </OwnerShell>
   );
 }
 

@@ -1,15 +1,17 @@
 import Link from "next/link";
-import { LogoutButton } from "@/components/logout-button";
-import { QueueActions } from "./queue-actions";
-import { OwnerHeader, OwnerTabs } from "./owner-chrome";
+import { OwnerShell } from "./owner-shell";
+import { OwnerHeader } from "./owner-chrome";
 import { loadOwner } from "./owner-context";
 import { toAr } from "@/lib/format";
 
-function minutesSince(iso: string): number {
-  return Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+const HOURS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
+function hourLabel(h: number): string {
+  if (h === 12) return "١٢ م";
+  if (h < 12) return `${toAr(h)} ص`;
+  return `${toAr(h - 12)} م`;
 }
 
-export default async function DashboardPage() {
+export default async function OverviewPage() {
   const load = await loadOwner();
 
   if (load.state === "no_user") {
@@ -45,102 +47,111 @@ export default async function DashboardPage() {
 
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
 
-  const { data: branches } = await supabase
-    .from("branches").select("id, name").eq("restaurant_id", restaurant.id).order("created_at");
+  const { data: branches } = await supabase.from("branches").select("id").eq("restaurant_id", restaurant.id);
   const branchIds = (branches ?? []).map((b) => b.id);
 
-  const now = new Date();
-  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+  const startToday = new Date();
+  startToday.setHours(0, 0, 0, 0);
+  const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
 
-  const [{ data: queue }, todayRes] = branchIds.length
-    ? await Promise.all([
-        supabase
-          .from("waitlist_entries")
-          .select("id, position, party_size, zone, status, joined_at, customers(full_name, phone)")
-          .in("branch_id", branchIds)
-          .in("status", ["waiting", "notified"])
-          .order("position", { nullsFirst: false }),
-        supabase.from("waitlist_entries").select("id", { count: "exact", head: true })
-          .in("branch_id", branchIds).eq("status", "seated").gte("seated_at", startToday),
-      ])
-    : [{ data: [] }, { count: 0 }];
+  const [rev, custCount, queueNow, analytics] = await Promise.all([
+    supabase.from("reviews").select("rating").eq("restaurant_id", restaurant.id),
+    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id),
+    branchIds.length
+      ? supabase.from("waitlist_entries").select("id", { count: "exact", head: true }).in("branch_id", branchIds).in("status", ["waiting", "notified"])
+      : Promise.resolve({ count: 0 }),
+    branchIds.length
+      ? supabase.from("waitlist_entries").select("joined_at, seated_at, status").in("branch_id", branchIds).gte("joined_at", since30)
+      : Promise.resolve({ data: [] }),
+  ]);
 
-  const list = queue ?? [];
-  const inside = list.filter((q) => q.zone === "inside");
-  const outside = list.filter((q) => q.zone === "outside");
-  const other = list.filter((q) => q.zone !== "inside" && q.zone !== "outside");
-  const servedToday = todayRes?.count ?? 0;
+  const ratings = (rev.data ?? []).map((r) => r.rating);
+  const avgRating = ratings.length ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10 : 0;
+  const totalCustomers = custCount.count ?? 0;
+  const queueCount = queueNow.count ?? 0;
 
-  type Row = (typeof list)[number];
-  const Card = ({ q }: { q: Row }) => {
-    const cust = Array.isArray(q.customers) ? q.customers[0] : q.customers;
-    const waited = minutesSince(q.joined_at);
-    return (
-      <li className="soft-card flex items-center gap-3 p-3.5">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-xl font-bold text-white" style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}>
-          {q.position ? toAr(q.position) : "•"}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-bold text-[color:var(--ink)]">{cust?.full_name ?? "عميل"}</p>
-          <p className="text-sm text-[color:var(--muted)]" dir="ltr">{cust?.phone ?? "—"}</p>
-          <p className="mt-0.5 text-xs text-[color:var(--muted)]">
-            {toAr(q.party_size)} أشخاص · ⏱ {toAr(waited)} دقيقة{q.status === "notified" ? " · أُشعِر ✓" : ""}
-          </p>
-        </div>
-        <QueueActions id={q.id} name={cust?.full_name ?? "عميلنا"} phone={cust?.phone ?? ""} restaurant={restaurant.name} position={q.position} />
-      </li>
-    );
-  };
+  const rows = (analytics.data ?? []) as { joined_at: string; seated_at: string | null; status: string }[];
+  const seated = rows.filter((r) => r.status === "seated" && r.seated_at);
+  const seatedToday = seated.filter((r) => new Date(r.seated_at as string) >= startToday).length;
 
-  const ZoneColumn = ({ title, rows, tone }: { title: string; rows: Row[]; tone: string }) => (
-    <div>
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="flex items-center gap-2 font-display text-lg font-bold text-[color:var(--ink)]">
-          <span className="h-4 w-1.5 rounded-full" style={{ background: tone }} />
-          {title}
-        </h3>
-        <span className="rounded-full px-2.5 py-0.5 text-sm font-extrabold" style={{ background: "var(--surface-2)", color: tone }}>{toAr(rows.length)}</span>
-      </div>
-      {rows.length ? (
-        <ul className="space-y-2.5">{rows.map((q) => <Card key={q.id} q={q} />)}</ul>
-      ) : (
-        <div className="soft-card py-8 text-center text-sm text-[color:var(--muted)]">لا أحد بالانتظار</div>
-      )}
-    </div>
-  );
+  const waits = seated
+    .map((r) => (new Date(r.seated_at as string).getTime() - new Date(r.joined_at).getTime()) / 60000)
+    .filter((n) => n >= 0 && n < 600);
+  const avgWait = waits.length ? Math.round(waits.reduce((a, b) => a + b, 0) / waits.length) : 0;
+
+  // ساعات الذروة (نسبة كل ساعة من أعلى ساعة)
+  const byHour = new Map<number, number>();
+  for (const r of rows) byHour.set(new Date(r.joined_at).getHours(), (byHour.get(new Date(r.joined_at).getHours()) ?? 0) + 1);
+  const maxHour = Math.max(1, ...HOURS.map((h) => byHour.get(h) ?? 0));
 
   return (
-    <div className="flex flex-1 flex-col">
-      <OwnerHeader title={restaurant.name} slug={restaurant.slug} actions={<LogoutButton />} />
-      <main className="mx-auto -mt-8 w-full max-w-3xl flex-1 px-5 pb-16">
-        <OwnerTabs active="reception" modules={modules} role={role} permissions={permissions} />
+    <OwnerShell
+      active="overview"
+      restaurant={restaurant}
+      modules={modules}
+      role={role}
+      permissions={permissions}
+      counts={{ reception: queueCount, customers: totalCustomers, reviews: ratings.length }}
+    >
+      <div className="mb-6 hidden lg:block">
+        <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">لوحة التحكم</h1>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">نظرة عامة على أداء {restaurant.name}</p>
+      </div>
 
-        {/* الأرقام */}
-        <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Stat label="في الطابور الآن" value={toAr(list.length)} tone="var(--brand-d)" />
-          <Stat label="طابور داخلي" value={toAr(inside.length)} tone="var(--st-full)" />
-          <Stat label="طابور خارجي" value={toAr(outside.length)} tone="var(--st-full)" />
-          <Stat label="خدمناهم اليوم" value={toAr(servedToday)} tone="var(--st-open)" />
-        </div>
+      {/* المؤشرات الأربعة */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Kpi label="متوسط التقييم" value={ratings.length ? `★ ${toAr(avgRating)}` : "—"} tone="var(--star)" tint="#fbf1e6" />
+        <Kpi label="متوسط الانتظار" value={`${toAr(avgWait)} د`} tone="var(--st-full)" tint="#fdf5e6" />
+        <Kpi label="جالسون اليوم" value={toAr(seatedToday)} tone="var(--st-open)" tint="#e9f4ee" />
+        <Kpi label="إجمالي العملاء" value={toAr(totalCustomers)} tone="var(--brand-d)" tint="#eef3fb" />
+      </div>
 
-        {/* الطابور مقسّم داخلي/خارجي */}
-        <div className="grid gap-6 sm:grid-cols-2">
-          <ZoneColumn title="طاولات داخلية" rows={inside} tone="var(--st-full)" />
-          <ZoneColumn title="طاولات خارجية" rows={outside} tone="var(--st-full)" />
-        </div>
-        {other.length > 0 && (
-          <div className="mt-6"><ZoneColumn title="غير محدّد" rows={other} tone="var(--muted)" /></div>
+      {/* ساعات الذروة */}
+      <section className="soft-card mt-6 p-5">
+        <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold text-[color:var(--ink)]">
+          <span className="h-4 w-1.5 rounded-full" style={{ background: "var(--brand)" }} /> ساعات الذروة
+        </h2>
+        {rows.length === 0 ? (
+          <p className="py-6 text-center text-sm text-[color:var(--muted)]">لا توجد بيانات كافية بعد.</p>
+        ) : (
+          <div className="space-y-2">
+            {HOURS.map((h) => {
+              const n = byHour.get(h) ?? 0;
+              const pct = Math.round((n / maxHour) * 100);
+              return (
+                <div key={h} className="flex items-center gap-3">
+                  <span className="w-12 shrink-0 text-xs font-bold text-[color:var(--muted)]">{hourLabel(h)}</span>
+                  <div className="h-3 flex-1 overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
+                    <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(pct, 2)}%`, background: "linear-gradient(90deg,#b23c1d,#661c0a)" }} />
+                  </div>
+                  <span className="w-10 shrink-0 text-left text-xs font-bold" style={{ color: "var(--brand-d)" }}>٪{toAr(pct)}</span>
+                </div>
+              );
+            })}
+          </div>
         )}
-      </main>
-    </div>
+      </section>
+
+      {/* اختصار الطابور الحالي */}
+      <Link href="/dashboard/reception" className="soft-card mt-6 flex items-center justify-between p-5 transition hover:brightness-[0.99]">
+        <div>
+          <p className="font-display text-lg font-bold text-[color:var(--ink)]">الطابور الآن</p>
+          <p className="text-sm text-[color:var(--muted)]">افتح شاشة الاستقبال لإدارة الطابور</p>
+        </div>
+        <span className="flex items-center gap-2">
+          <span className="font-display text-3xl font-bold text-brand-700">{toAr(queueCount)}</span>
+          <span className="text-[color:var(--muted)]">←</span>
+        </span>
+      </Link>
+    </OwnerShell>
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: string; tone: string }) {
+function Kpi({ label, value, tone, tint }: { label: string; value: string; tone: string; tint: string }) {
   return (
-    <div className="soft-card p-4 text-center">
-      <p className="font-display text-3xl font-bold leading-none" style={{ color: tone }}>{value}</p>
-      <p className="mt-1.5 text-xs font-bold text-[color:var(--muted)]">{label}</p>
+    <div className="rounded-2xl p-4 text-center" style={{ background: tint, border: "1px solid var(--border)" }}>
+      <p className="font-display text-2xl font-bold leading-none lg:text-3xl" style={{ color: tone }}>{value}</p>
+      <p className="mt-1.5 text-[11px] font-bold text-[color:var(--muted)]">{label}</p>
     </div>
   );
 }

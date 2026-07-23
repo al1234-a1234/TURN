@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { OwnerHeader, OwnerTabs } from "../owner-chrome";
+import { OwnerShell } from "../owner-shell";
 import { loadOwner } from "../owner-context";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { CustomerControls } from "./customer-controls";
@@ -45,11 +45,8 @@ export default async function CustomersPage() {
   const avgVisits = list.length ? Math.round((totalVisits / list.length) * 10) / 10 : 0;
 
   return (
-    <div className="flex flex-1 flex-col">
-      <OwnerHeader title={restaurant.name} slug={restaurant.slug} />
-      <main className="mx-auto -mt-8 w-full max-w-3xl flex-1 space-y-6 px-5 pb-16">
-        <OwnerTabs active="customers" modules={modules} role={role} permissions={permissions} />
-
+    <OwnerShell active="customers" restaurant={restaurant} modules={modules} role={role} permissions={permissions} counts={{ customers: list.length }}>
+      <div className="space-y-6">
         <div className="grid grid-cols-3 gap-3">
           <Kpi label="عملاؤك" value={toAr(list.length)} tone="var(--brand-d)" />
           <Kpi label="مميّزون (VIP)" value={toAr(vips)} tone="var(--st-open)" />
@@ -116,8 +113,8 @@ export default async function CustomersPage() {
             })}
           </ul>
         )}
-      </main>
-    </div>
+      </div>
+    </OwnerShell>
   );
 }
 
