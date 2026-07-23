@@ -7,6 +7,7 @@ import { tr } from "@/lib/i18n";
 export const metadata = { title: "حسابي · دور" };
 
 const ITEMS = [
+  { href: "/me/rewards", ar: "هداياي وخصوماتي", en: "My rewards & discounts", icon: "🎁" },
   { href: "/me/waitlist", ar: "اشتراكاتي في الطوابير", en: "My queue subscriptions", icon: "⏱️" },
   { href: "/me/favorites", ar: "المفضّلة", en: "Favorites", icon: "❤️" },
   { href: "/diaries", ar: "يومياتي", en: "My diary", icon: "📔" },

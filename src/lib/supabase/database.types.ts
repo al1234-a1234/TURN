@@ -190,6 +190,57 @@ export type Database = {
           },
         ]
       }
+      customer_rewards: {
+        Row: {
+          code: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          description: string | null
+          expires_at: string | null
+          id: string
+          kind: string
+          redeemed_at: string | null
+          restaurant_id: string
+          status: string
+          title: string
+          value: number | null
+          value_kind: string
+        }
+        Insert: {
+          code?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          kind?: string
+          redeemed_at?: string | null
+          restaurant_id: string
+          status?: string
+          title: string
+          value?: number | null
+          value_kind?: string
+        }
+        Update: {
+          code?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          kind?: string
+          redeemed_at?: string | null
+          restaurant_id?: string
+          status?: string
+          title?: string
+          value?: number | null
+          value_kind?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           created_at: string
@@ -1169,6 +1220,23 @@ export type Database = {
         Returns: string
       }
       gen_claim_code: { Args: never; Returns: string }
+      get_customer_rewards: {
+        Args: { p_phone: string }
+        Returns: {
+          code: string
+          created_at: string
+          description: string
+          expires_at: string
+          id: string
+          kind: string
+          restaurant: string
+          restaurant_slug: string
+          status: string
+          title: string
+          value: number
+          value_kind: string
+        }[]
+      }
       has_feature: {
         Args: { p_module: string; rest_id: string }
         Returns: boolean

@@ -1,7 +1,8 @@
-import { redirect } from "next/navigation";
+import Link from "next/link";
 import { QueueActions } from "../queue-actions";
 import { WalkInForm } from "./walkin-form";
 import { loadOwner } from "../owner-context";
+import { staffHasPermission } from "@/lib/features";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
@@ -14,7 +15,8 @@ export default async function ReceptionPage() {
   const lang = await getLang();
   const load = await loadOwner();
   if (load.state !== "ok") return null;
-  const { supabase, restaurant, modules, role, permissions } = load.ctx;
+  const { supabase, restaurant, role, permissions } = load.ctx;
+  const canViewCustomers = staffHasPermission(role, permissions, "customers");
 
   const { data: branches } = await supabase
     .from("branches").select("id, name").eq("restaurant_id", restaurant.id).order("created_at");
@@ -27,7 +29,7 @@ export default async function ReceptionPage() {
     ? await Promise.all([
         supabase
           .from("waitlist_entries")
-          .select("id, position, party_size, zone, status, joined_at, customers(full_name, phone)")
+          .select("id, customer_id, position, party_size, zone, status, joined_at, customers(full_name, phone)")
           .in("branch_id", branchIds)
           .in("status", ["waiting", "notified"])
           .order("position", { nullsFirst: false }),
@@ -52,7 +54,13 @@ export default async function ReceptionPage() {
           {q.position ? toAr(q.position) : "•"}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-bold text-[color:var(--ink)]">{cust?.full_name ?? tr(lang, "عميل", "Customer")}</p>
+          {canViewCustomers ? (
+            <Link href={`/dashboard/customers/${q.customer_id}`} className="truncate font-bold text-brand-700 underline-offset-2 hover:underline">
+              {cust?.full_name ?? tr(lang, "عميل", "Customer")}
+            </Link>
+          ) : (
+            <p className="truncate font-bold text-[color:var(--ink)]">{cust?.full_name ?? tr(lang, "عميل", "Customer")}</p>
+          )}
           <p className="text-sm text-[color:var(--muted)]" dir="ltr">{cust?.phone ?? "—"}</p>
           <p className="mt-0.5 text-xs text-[color:var(--muted)]">
             {toAr(q.party_size)} {tr(lang, "أشخاص", "guests")} · ⏱ {toAr(waited)} {tr(lang, "دقيقة", "min")}{q.status === "notified" ? tr(lang, " · أُشعِر ✓", " · Notified ✓") : ""}

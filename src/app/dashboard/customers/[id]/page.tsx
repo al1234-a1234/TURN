@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { loadOwner } from "../../owner-context";
+import { RewardForm } from "./reward-form";
+import { revokeReward } from "../actions";
 import { staffHasPermission } from "@/lib/features";
-import { toAr } from "@/lib/format";
+import { toAr, money } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 
@@ -44,6 +46,19 @@ type ReservationRow = {
   notes: string | null;
 };
 
+type RewardRow = {
+  id: string;
+  kind: string;
+  title: string;
+  value: number | null;
+  value_kind: string;
+  description: string | null;
+  code: string | null;
+  status: string;
+  expires_at: string | null;
+  created_at: string;
+};
+
 const TIER_META: Record<string, { label: string; labelEn: string; color: string; bg: string }> = {
   vip: { label: "VIP", labelEn: "VIP", color: "#661c0a", bg: "#f8e9e3" },
   gold: { label: "ذهبي", labelEn: "Gold", color: "#8a6a12", bg: "#faf1d8" },
@@ -70,6 +85,19 @@ function fmtDate(iso: string | null, lang: "ar" | "en"): string {
     month: "short",
     year: "numeric",
   });
+}
+
+function fmtTime(iso: string | null, lang: "ar" | "en"): string {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleTimeString(lang === "en" ? "en-US" : "ar-SA-u-nu-latn", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function rewardValueLabel(r: RewardRow): string {
+  if (r.kind !== "discount" || r.value == null) return "";
+  return r.value_kind === "amount" ? money(r.value) : `${toAr(r.value)}%`;
 }
 
 function zoneLabel(zone: string, lang: "ar" | "en"): string {
@@ -124,7 +152,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   const { data: branchRows } = await supabase.from("branches").select("id").eq("restaurant_id", restaurant.id);
   const branchIds = (branchRows ?? []).map((b) => b.id);
 
-  const [customerRes, profileRes, visitsRes, reservationsRes] = await Promise.all([
+  const [customerRes, profileRes, visitsRes, reservationsRes, rewardsRes] = await Promise.all([
     supabase.from("customers").select("id, full_name, phone, email, created_at").eq("id", id).maybeSingle(),
     supabase
       .from("customer_restaurant")
@@ -146,6 +174,13 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
       .in("branch_id", branchIds)
       .order("reserved_at", { ascending: false })
       .limit(100),
+    supabase
+      .from("customer_rewards")
+      .select("id, kind, title, value, value_kind, description, code, status, expires_at, created_at")
+      .eq("restaurant_id", restaurant.id)
+      .eq("customer_id", id)
+      .order("created_at", { ascending: false })
+      .limit(50),
   ]);
 
   const customer = customerRes.data as CustomerRow | null;
@@ -154,6 +189,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   const profile = profileRes.data as ProfileRow | null;
   const visits = (visitsRes.data ?? []) as VisitRow[];
   const reservations = (reservationsRes.data ?? []) as ReservationRow[];
+  const rewards = (rewardsRes.data ?? []) as RewardRow[];
 
   const tm = TIER_META[profile?.tier ?? "regular"] ?? TIER_META.regular;
   const name = customer.full_name?.trim() || tr(lang, "عميل", "Customer");
@@ -242,6 +278,46 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
           )}
         </div>
 
+        {/* ===== المكافآت والهدايا (تسويق وجذب) ===== */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-lg font-bold text-[color:var(--ink)]">
+              {tr(lang, "المكافآت والهدايا", "Rewards & gifts")}
+            </h2>
+            <span className="text-xs text-[color:var(--muted)]">{tr(lang, "يصل العميل عبر رقمه", "Reaches the customer via their phone")}</span>
+          </div>
+
+          {rewards.filter((r) => r.status === "active").length > 0 && (
+            <ul className="space-y-2">
+              {rewards.filter((r) => r.status === "active").map((r) => (
+                <li key={r.id} className="soft-card flex items-center gap-3 p-3.5">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xl text-white" style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}>
+                    {r.kind === "discount" ? "٪" : "🎁"}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-bold text-[color:var(--ink)]">
+                      {r.title}
+                      {r.kind === "discount" && r.value != null ? ` · ${rewardValueLabel(r)}` : ""}
+                    </p>
+                    <p className="mt-0.5 text-xs text-[color:var(--muted)]">
+                      {r.code ? <span dir="ltr" className="font-bold">{r.code}</span> : null}
+                      {r.code && r.expires_at ? " · " : ""}
+                      {r.expires_at ? tr(lang, `ينتهي ${fmtDate(r.expires_at, lang)}`, `Expires ${fmtDate(r.expires_at, lang)}`) : (!r.code ? tr(lang, "بلا انتهاء", "No expiry") : "")}
+                    </p>
+                  </div>
+                  <form action={revokeReward}>
+                    <input type="hidden" name="reward_id" value={r.id} />
+                    <input type="hidden" name="customer_id" value={customer.id} />
+                    <button className="shrink-0 rounded-lg px-2 py-1 text-xs font-bold text-[color:var(--muted)] transition hover:text-red-600">{tr(lang, "إلغاء", "Revoke")}</button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <RewardForm customerId={customer.id} />
+        </section>
+
         {/* ===== سجل الزيارات ===== */}
         <section className="space-y-3">
           <h2 className="font-display text-lg font-bold text-[color:var(--ink)]">
@@ -265,6 +341,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                       <p className="mt-0.5 text-xs text-[color:var(--muted)]">
                         {zoneLabel(v.zone, lang)} ·{" "}
                         {tr(lang, `${toAr(v.party_size)} أشخاص`, `${toAr(v.party_size)} guests`)}
+                        {v.seated_at ? tr(lang, ` · جلس ${fmtTime(v.seated_at, lang)}`, ` · Seated ${fmtTime(v.seated_at, lang)}`) : ""}
                       </p>
                     </div>
                     <span

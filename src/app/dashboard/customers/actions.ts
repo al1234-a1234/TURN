@@ -29,3 +29,53 @@ export async function updateCustomerProfile(
 
   revalidatePath("/dashboard/customers");
 }
+
+/** منح العميل هديّة أو خصم (أداة تسويق/جذب) — يظهر للعميل عبر رقمه. */
+export async function grantReward(formData: FormData) {
+  const caller = await requirePerm("customers");
+  if (!caller) return;
+
+  const customerId = String(formData.get("customer_id") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  if (!customerId || !title) return;
+
+  const kind = String(formData.get("kind") ?? "gift") === "discount" ? "discount" : "gift";
+  const valueRaw = String(formData.get("value") ?? "").trim();
+  const value = valueRaw ? Number(valueRaw) : null;
+  const valueKind = String(formData.get("value_kind") ?? "percent") === "amount" ? "amount" : "percent";
+  const description = String(formData.get("description") ?? "").trim() || null;
+  const code = String(formData.get("code") ?? "").trim().toUpperCase() || null;
+  const daysRaw = String(formData.get("expires_days") ?? "").trim();
+  const days = daysRaw ? Math.max(1, Number(daysRaw)) : null;
+  const expires_at = days ? new Date(Date.now() + days * 864e5).toISOString() : null;
+
+  await caller.supabase.from("customer_rewards").insert({
+    restaurant_id: caller.restaurantId,
+    customer_id: customerId,
+    kind,
+    title,
+    value: kind === "discount" && Number.isFinite(value as number) ? value : null,
+    value_kind: valueKind,
+    description,
+    code,
+    created_by: caller.userId,
+    expires_at,
+  });
+
+  revalidatePath(`/dashboard/customers/${customerId}`);
+}
+
+/** إلغاء مكافأة (تعليمها منتهية). */
+export async function revokeReward(formData: FormData) {
+  const caller = await requirePerm("customers");
+  if (!caller) return;
+  const rewardId = String(formData.get("reward_id") ?? "");
+  const customerId = String(formData.get("customer_id") ?? "");
+  if (!rewardId) return;
+  await caller.supabase
+    .from("customer_rewards")
+    .update({ status: "expired" })
+    .eq("id", rewardId)
+    .eq("restaurant_id", caller.restaurantId);
+  revalidatePath(`/dashboard/customers/${customerId}`);
+}
