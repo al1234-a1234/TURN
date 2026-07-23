@@ -120,23 +120,22 @@ export function CustomerShell({
       {/* المحتوى */}
       <main className="mx-auto w-full max-w-2xl flex-1 px-5 pb-28 pt-4">{children}</main>
 
-      {/* الشريط السفلي */}
+      {/* الشريط السفلي — التبويب النشط يرتفع بدائرة بلون الهوية */}
       <nav className="fixed inset-x-0 bottom-0 z-30 px-4 pb-4">
         <div className="rq-nav">
-          <Link href="/diaries" className="rq-nav-item" data-active={active === "diaries"}>
-            <IcDiary />
-            {tr(lang, "اليوميات", "Diaries")}
-          </Link>
-          <Link href="/me" className="rq-nav-item" data-active={active === "other"}>
-            <IcList />
-            {tr(lang, "أخرى", "Other")}
-          </Link>
-          <Link href="/" className="rq-nav-item" data-active={active === "restaurants"}>
-            <span className={active === "restaurants" ? "rq-nav-fab -mt-6" : ""}>
-              <IcRestaurants />
-            </span>
-            <span className={active === "restaurants" ? "text-brand-800" : ""}>{tr(lang, "المطاعم", "Restaurants")}</span>
-          </Link>
+          {[
+            { key: "diaries", href: "/diaries", icon: <IcDiary />, label: tr(lang, "اليوميات", "Diaries") },
+            { key: "other", href: "/me", icon: <IcList />, label: tr(lang, "أخرى", "Other") },
+            { key: "restaurants", href: "/", icon: <IcRestaurants />, label: tr(lang, "المطاعم", "Restaurants") },
+          ].map((item) => {
+            const isActive = active === item.key;
+            return (
+              <Link key={item.key} href={item.href} className="rq-nav-item" data-active={isActive}>
+                <span className={isActive ? "rq-nav-fab -mt-6" : ""}>{item.icon}</span>
+                <span className={isActive ? "text-brand-800" : ""}>{item.label}</span>
+              </Link>
+            );
+          })}
         </div>
       </nav>
 
