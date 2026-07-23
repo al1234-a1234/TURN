@@ -11,8 +11,8 @@ export default async function Home() {
   const lang = await getLang();
   const supabase = await createClient();
 
-  // قائمة الاكتشاف + التقييمات مكاشة (٣٠ث) — لا تضرب القاعدة في كل زيارة
-  const { list, ratings } = await getDiscovery();
+  // قائمة الاكتشاف + التقييمات + العروض الحيّة — مكاشة (٣٠ث) لا تضرب القاعدة في كل زيارة
+  const { list, ratings, offers } = await getDiscovery();
   const ratingAgg = new Map(Object.entries(ratings));
 
   // عدّاد الطوابير حيّ (خارج الكاش) ومحصور بفروع الصفحة فقط
@@ -52,7 +52,7 @@ export default async function Home() {
           <p className="mt-3 text-sm">{tr(lang, "لا توجد مطاعم متاحة بعد.", "No restaurants available yet.")}</p>
         </div>
       ) : (
-        <DiscoveryList items={withStatus} lang={lang} />
+        <DiscoveryList items={withStatus} offers={offers} lang={lang} />
       )}
     </CustomerShell>
   );

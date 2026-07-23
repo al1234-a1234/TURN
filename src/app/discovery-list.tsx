@@ -4,6 +4,68 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { toAr } from "@/lib/format";
 import { tr, type Lang } from "@/lib/i18n";
+import type { DiscoveryOffer } from "@/lib/supabase/public-cache";
+
+function offerBadge(o: DiscoveryOffer, lang: Lang): string {
+  if (o.kind === "percent" && o.value != null) return `${toAr(o.value)}${lang === "en" ? "%" : "٪"}`;
+  if (o.kind === "fixed" && o.value != null) return `${toAr(Math.round(o.value))} ${tr(lang, "ر.س", "SAR")}`;
+  if (o.kind === "points" && o.value != null) return `×${toAr(o.value)}`;
+  if (o.kind === "free_item") return tr(lang, "مجاني", "Free");
+  if (o.kind === "bogo") return "1+1";
+  return "★";
+}
+
+function OffersRail({ offers, lang }: { offers: DiscoveryOffer[]; lang: Lang }) {
+  if (offers.length === 0) return null;
+  return (
+    <section>
+      <div className="mb-2 mt-1 flex items-center gap-2 px-1">
+        <span className="h-4 w-1 rounded-full" style={{ background: "var(--brand-d)" }} />
+        <h2 className="font-display text-[15px] font-bold text-[color:var(--brand-d)]">{tr(lang, "عروض حيّة", "Live offers")}</h2>
+        <span className="text-[12px] font-bold text-[color:var(--muted)]">{toAr(offers.length)}</span>
+      </div>
+      <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {offers.map((o) => {
+          const initial = (o.restaurant.name ?? "").trim().charAt(0) || "م";
+          return (
+            <Link
+              key={o.id}
+              href={`/r/${o.restaurant.slug}`}
+              className="relative flex w-[248px] shrink-0 flex-col justify-between overflow-hidden rounded-3xl p-4 text-cream-100"
+              style={{ background: "linear-gradient(150deg,#b23c1d,#7c230f 62%,#4c1406)", boxShadow: "0 16px 30px -20px rgba(102,28,10,0.8)" }}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-display text-3xl font-extrabold leading-none">{offerBadge(o, lang)}</span>
+                {o.code && (
+                  <span dir="ltr" className="rounded-lg bg-white/20 px-2 py-0.5 text-[11px] font-extrabold tracking-wide ring-1 ring-white/25">{o.code}</span>
+                )}
+              </div>
+              <div className="mt-4">
+                <p className="line-clamp-2 text-[14px] font-bold leading-snug">{o.title}</p>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15 font-serif text-xs font-bold ring-1 ring-white/25">
+                    {o.restaurant.logo_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={o.restaurant.logo_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      initial
+                    )}
+                  </span>
+                  <span className="truncate text-[12px] font-bold text-cream-100/85">{o.restaurant.name}</span>
+                </div>
+                {o.ends_at && (
+                  <p className="mt-1.5 text-[10px] font-bold text-cream-100/70">
+                    {tr(lang, "ينتهي", "Ends")} {new Date(o.ends_at).toLocaleDateString(lang === "en" ? "en-GB" : "ar-SA-u-nu-latn", { day: "2-digit", month: "short" })}
+                  </p>
+                )}
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 
 export type DiscoveryItem = {
   id: string;
@@ -130,7 +192,7 @@ function SectionHeading({ label, count }: { label: string; count: number }) {
   );
 }
 
-export function DiscoveryList({ items, lang }: { items: DiscoveryItem[]; lang: Lang }) {
+export function DiscoveryList({ items, offers = [], lang }: { items: DiscoveryItem[]; offers?: DiscoveryOffer[]; lang: Lang }) {
   const [cuisine, setCuisine] = useState<string>("");
 
   // شرائح المطابخ — مشتقّة من المطاعم المعروضة (بلا تكرار)
@@ -171,6 +233,9 @@ export function DiscoveryList({ items, lang }: { items: DiscoveryItem[]; lang: L
 
   return (
     <div className="space-y-4">
+      {/* شريط العروض الحيّة — بارز أعلى الشاشة */}
+      <OffersRail offers={offers} lang={lang} />
+
       {/* شرائح المطابخ */}
       {cuisines.length > 0 && (
         <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
