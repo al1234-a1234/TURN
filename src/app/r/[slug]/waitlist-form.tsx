@@ -13,12 +13,19 @@ function ZoneStat({ label, count }: { label: string; count: number }) {
   const lang = useLang();
   const busy = count > 0;
   return (
-    <div className="rq-card p-4 text-center">
-      <p className="font-display text-3xl font-bold" style={{ color: busy ? "var(--st-full)" : "var(--st-open)" }}>
+    <div
+      className="rounded-3xl p-4 text-center"
+      style={
+        busy
+          ? { background: "linear-gradient(155deg,#b23c1d,#661c0a)", boxShadow: "0 14px 26px -16px rgba(102,28,10,0.72)" }
+          : { background: "linear-gradient(160deg,#faefe8,#f4ddd0)", border: "1px solid rgba(102,28,10,0.14)" }
+      }
+    >
+      <p className="font-display text-3xl font-bold" style={{ color: busy ? "#fff" : "var(--brand-d)" }}>
         {busy ? toAr(count) : "0"}
       </p>
-      <p className="mt-1 text-xs font-bold text-[color:var(--muted)]">{label}</p>
-      <p className="mt-0.5 text-[11px] font-bold" style={{ color: busy ? "var(--st-full)" : "var(--st-open)" }}>
+      <p className="mt-1 text-xs font-bold" style={{ color: busy ? "rgba(255,255,255,0.9)" : "var(--muted)" }}>{label}</p>
+      <p className="mt-0.5 text-[11px] font-bold" style={{ color: busy ? "#fff" : "var(--st-open)" }}>
         {busy ? tr(lang, "بالطابور", "In queue") : tr(lang, "متاح الآن", "Available now")}
       </p>
     </div>
