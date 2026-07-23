@@ -123,13 +123,13 @@ export default async function Home() {
                 {!r.accepts ? (
                   <div
                     className="mt-3 flex items-center justify-between rounded-2xl px-4 py-3"
-                    style={{ background: "linear-gradient(150deg,#661c0a,#2f0d05)", boxShadow: "0 12px 24px -16px rgba(47,13,5,0.7)" }}
+                    style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)", boxShadow: "0 12px 24px -16px rgba(102,28,10,0.72)" }}
                   >
-                    <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "#f3e4dc" }}>
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#f0a892" }} />
+                    <span className="flex items-center gap-2 text-sm font-extrabold text-white">
+                      <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
                       {tr(lang, "لا يستقبل الآن", "Not accepting now")}
                     </span>
-                    <span className="text-xs font-extrabold" style={{ color: "rgba(243,228,220,0.8)" }}>{tr(lang, "التفاصيل ←", "Details ←")}</span>
+                    <span className="text-xs font-extrabold text-white/85">{tr(lang, "التفاصيل ←", "Details ←")}</span>
                   </div>
                 ) : r.waiting > 0 ? (
                   <div className="mt-3 grid grid-cols-2 gap-2">
