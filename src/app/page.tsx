@@ -17,15 +17,19 @@ function ZonePill({ label, count, lang }: { label: string; count: number; lang: 
   return (
     <span
       className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-      style={{ background: "linear-gradient(160deg,#faefe8,#f4ddd0)", border: "1px solid rgba(102,28,10,0.14)" }}
+      style={
+        busy
+          ? { background: "linear-gradient(155deg,#b23c1d,#661c0a)", boxShadow: "0 10px 20px -14px rgba(102,28,10,0.7)" }
+          : { background: "linear-gradient(160deg,#faefe8,#f4ddd0)", border: "1px solid rgba(102,28,10,0.14)" }
+      }
     >
-      <span className="flex items-center gap-1.5 text-[13px] font-bold text-[color:var(--brand-d)]">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ color: busy ? "var(--brand-d)" : "var(--st-open)" }}>
+      <span className="flex items-center gap-1.5 text-[13px] font-bold" style={{ color: busy ? "#fff" : "var(--brand-d)" }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ color: busy ? "#fff" : "var(--st-open)" }}>
           <path d="M4 10h16M6 10V7a2 2 0 012-2h8a2 2 0 012 2v3M7 14v4M17 14v4M4 14h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
         {label}
       </span>
-      <span className="text-sm font-extrabold" style={{ color: busy ? "var(--brand-d)" : "var(--st-open)" }}>
+      <span className="text-sm font-extrabold" style={{ color: busy ? "#fff" : "var(--st-open)" }}>
         {busy ? tr(lang, `${toAr(count)} بالطابور`, `${toAr(count)} in queue`) : tr(lang, "متاح", "Available")}
       </span>
     </span>
@@ -119,13 +123,13 @@ export default async function Home() {
                 {!r.accepts ? (
                   <div
                     className="mt-3 flex items-center justify-between rounded-2xl px-4 py-3"
-                    style={{ background: "linear-gradient(150deg,#2a3550,#17243f)", boxShadow: "0 12px 24px -16px rgba(23,36,63,0.7)" }}
+                    style={{ background: "linear-gradient(150deg,#7a5346,#3f251b)", boxShadow: "0 12px 24px -16px rgba(63,37,27,0.7)" }}
                   >
-                    <span className="flex items-center gap-2 text-sm font-extrabold text-white">
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#e08a8a" }} />
+                    <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "#f3e4dc" }}>
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#f0b9a8" }} />
                       {tr(lang, "لا يستقبل الآن", "Not accepting now")}
                     </span>
-                    <span className="text-xs font-extrabold text-white/85">{tr(lang, "التفاصيل ←", "Details ←")}</span>
+                    <span className="text-xs font-extrabold" style={{ color: "rgba(243,228,220,0.85)" }}>{tr(lang, "التفاصيل ←", "Details ←")}</span>
                   </div>
                 ) : r.waiting > 0 ? (
                   <div className="mt-3 grid grid-cols-2 gap-2">
