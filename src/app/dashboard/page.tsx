@@ -60,7 +60,7 @@ export default async function OverviewPage() {
   const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
 
-  const [rev, profiles, analytics] = await Promise.all([
+  const [rev, profiles, analytics, insightsRes] = await Promise.all([
     supabase.from("reviews").select("rating").eq("restaurant_id", restaurant.id),
     supabase
       .from("customer_restaurant")
@@ -70,7 +70,11 @@ export default async function OverviewPage() {
     branchIds.length
       ? supabase.from("waitlist_entries").select("joined_at, seated_at, status, zone, party_size").in("branch_id", branchIds).gte("joined_at", since30)
       : Promise.resolve({ data: [] as { joined_at: string; seated_at: string | null; status: string; zone: string; party_size: number }[] }),
+    supabase.from("owner_insights").select("id, kind, title, body, created_at").eq("restaurant_id", restaurant.id).order("created_at", { ascending: false }).limit(4),
   ]);
+
+  const insights = (insightsRes.data ?? []) as { id: string; kind: string; title: string; body: string | null; created_at: string }[];
+  const INSIGHT_ICON: Record<string, string> = { daily_digest: "📋", walkaway: "🏃", slow_hours: "🌙", smart_alert: "🔔" };
 
   // ===== التقييم =====
   const ratings = (rev.data ?? []).map((r) => r.rating);
@@ -154,6 +158,24 @@ export default async function OverviewPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* رؤى تلقائية (ملخّص يومي / منصرفون / عروض ركود) */}
+      {insights.length > 0 && (
+        <section className="soft-card mb-5 p-5">
+          <h2 className="mb-3 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "رؤى وتنبيهات", "Insights & alerts")}</h2>
+          <ul className="space-y-2.5">
+            {insights.map((it) => (
+              <li key={it.id} className="flex items-start gap-3">
+                <span className="text-lg">{INSIGHT_ICON[it.kind] ?? "💡"}</span>
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-[color:var(--ink)]">{it.title}</p>
+                  {it.body && <p className="text-sm text-[color:var(--muted)]">{it.body}</p>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {/* المؤشرات (8) */}
