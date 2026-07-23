@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getModuleCatalog } from "@/lib/features";
 import { ModuleToggles, type ModuleRow } from "./module-toggles";
+import { tr } from "@/lib/i18n";
+import { getLang } from "@/lib/i18n-server";
 
 export default async function RestaurantFeaturesPage({
   params,
@@ -10,6 +12,7 @@ export default async function RestaurantFeaturesPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const lang = await getLang();
   const supabase = await createClient();
 
   const {
@@ -51,11 +54,11 @@ export default async function RestaurantFeaturesPage({
               <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </Link>
-          <span className="text-lg font-extrabold">الباقة</span>
+          <span className="text-lg font-extrabold">{tr(lang, "الباقة", "Plan")}</span>
           <div className="h-11 w-11" />
         </div>
         <div className="mx-auto mt-6 max-w-3xl">
-          <p className="text-xs font-bold tracking-[0.3em] text-cream-200/85">موديولات المطعم</p>
+          <p className="text-xs font-bold tracking-[0.3em] text-cream-200/85">{tr(lang, "موديولات المطعم", "Restaurant modules")}</p>
           <h1 className="mt-1 font-display text-3xl font-bold">{restaurant.name}</h1>
         </div>
       </header>
@@ -63,8 +66,8 @@ export default async function RestaurantFeaturesPage({
       <main className="mx-auto -mt-6 w-full max-w-3xl flex-1 space-y-6 px-5 pb-12">
         <div className="soft-card flex items-center justify-between p-4">
           <div>
-            <p className="font-bold text-[color:var(--ink)]">الموديولات المُفعّلة</p>
-            <p className="text-xs text-[color:var(--muted)]">المالك يشوف فقط ما تفعّله هنا</p>
+            <p className="font-bold text-[color:var(--ink)]">{tr(lang, "الموديولات المُفعّلة", "Enabled modules")}</p>
+            <p className="text-xs text-[color:var(--muted)]">{tr(lang, "المالك يشوف فقط ما تفعّله هنا", "The owner only sees what you enable here")}</p>
           </div>
           <span className="font-display text-2xl font-bold text-brand-700">{activeCount}/{modules.length}</span>
         </div>

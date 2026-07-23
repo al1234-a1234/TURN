@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { setRestaurantFeature } from "./actions";
+import { tr } from "@/lib/i18n";
+import { useLang } from "@/components/lang-provider";
 
 export type ModuleRow = {
   key: string;
@@ -18,6 +20,12 @@ const CATEGORY_LABEL: Record<string, string> = {
   marketing: "التسويق",
   customer_tools: "أدوات العملاء",
 };
+const CATEGORY_LABEL_EN: Record<string, string> = {
+  core: "Core (always on)",
+  operations: "Operations",
+  marketing: "Marketing",
+  customer_tools: "Customer tools",
+};
 const CATEGORY_ORDER = ["core", "operations", "marketing", "customer_tools"];
 
 function Toggle({
@@ -27,6 +35,7 @@ function Toggle({
   restaurantId: string;
   row: ModuleRow;
 }) {
+  const lang = useLang();
   const [on, setOn] = useState(row.enabled);
   const [pending, start] = useTransition();
   const locked = row.is_core;
@@ -51,7 +60,7 @@ function Toggle({
         }
         className="relative h-7 w-12 shrink-0 rounded-full transition disabled:cursor-not-allowed disabled:opacity-70"
         style={{ background: on ? "linear-gradient(160deg,#a8371a,#661c0a)" : "var(--surface-2)", border: "1px solid var(--border)" }}
-        title={locked ? "أساسي — لا يُطفأ" : on ? "مُفعّل" : "متوقّف"}
+        title={locked ? tr(lang, "أساسي — لا يُطفأ", "Core — can't be turned off") : on ? tr(lang, "مُفعّل", "On") : tr(lang, "متوقّف", "Off")}
       >
         <span className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white shadow transition-all" style={{ insetInlineStart: on ? "1.55rem" : "0.2rem" }} />
       </button>
@@ -66,6 +75,7 @@ export function ModuleToggles({
   restaurantId: string;
   modules: ModuleRow[];
 }) {
+  const lang = useLang();
   const groups = CATEGORY_ORDER.map((cat) => ({
     cat,
     rows: modules.filter((m) => m.category === cat),

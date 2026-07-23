@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { tr } from "@/lib/i18n";
+import { useLang } from "@/components/lang-provider";
 
 /**
  * يرفع صورة إلى Supabase Storage (bucket: media) تحت مجلّد المطعم،
@@ -20,6 +22,7 @@ export function ImageUploader({
   defaultUrl?: string | null;
   shape?: "square" | "wide" | "circle";
 }) {
+  const lang = useLang();
   const [url, setUrl] = useState(defaultUrl ?? "");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -28,7 +31,7 @@ export function ImageUploader({
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      setErr("الحد الأقصى 5MB");
+      setErr(tr(lang, "الحد الأقصى 5MB", "Max size 5MB"));
       return;
     }
     setBusy(true);
@@ -40,7 +43,7 @@ export function ImageUploader({
       .from("media")
       .upload(path, file, { upsert: true, cacheControl: "3600" });
     if (error) {
-      setErr("تعذّر رفع الصورة");
+      setErr(tr(lang, "تعذّر رفع الصورة", "Failed to upload image"));
       setBusy(false);
       return;
     }
@@ -72,7 +75,7 @@ export function ImageUploader({
           )}
         </span>
         <span className="rounded-xl border border-[var(--hairline)] px-4 py-2 text-sm font-bold text-[color:var(--gold-1)]">
-          {busy ? "جارٍ الرفع…" : url ? "تغيير الصورة" : "اختر صورة"}
+          {busy ? tr(lang, "جارٍ الرفع…", "Uploading…") : url ? tr(lang, "تغيير الصورة", "Change image") : tr(lang, "اختر صورة", "Choose image")}
         </span>
         <input type="file" accept="image/*" onChange={onFile} className="hidden" />
       </label>
@@ -82,7 +85,7 @@ export function ImageUploader({
           onClick={() => setUrl("")}
           className="mt-2 text-xs font-bold text-[color:var(--muted)] transition hover:text-red-300"
         >
-          🗑 إزالة الصورة
+          {tr(lang, "🗑 إزالة الصورة", "🗑 Remove image")}
         </button>
       )}
       {err && <p className="mt-1 text-xs text-red-300">{err}</p>}

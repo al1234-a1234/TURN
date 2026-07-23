@@ -2,8 +2,11 @@
 
 import { useActionState, useState } from "react";
 import { adminCreateRestaurant, type AdminCreateState } from "./actions";
+import { tr } from "@/lib/i18n";
+import { useLang } from "@/components/lang-provider";
 
 export function AdminCreateForm() {
+  const lang = useLang();
   const [state, formAction, pending] = useActionState<AdminCreateState, FormData>(
     adminCreateRestaurant,
     {},
@@ -14,14 +17,14 @@ export function AdminCreateForm() {
     <div className="space-y-4">
       {state.ok && (
         <div className="soft-card p-5" style={{ borderColor: "rgba(201,169,97,0.5)" }}>
-          <p className="font-serif text-lg font-bold text-[color:var(--gold-1)]">✅ تم إنشاء حساب المالك</p>
+          <p className="font-serif text-lg font-bold text-[color:var(--gold-1)]">{tr(lang, "✅ تم إنشاء حساب المالك", "✅ Owner account created")}</p>
           <p className="mt-2 text-sm text-[color:var(--muted)]">
-            سلّم صاحب المطعم هذه البيانات ليدخل من بوابة الشركاء <span dir="ltr">/partners</span>:
+            {tr(lang, "سلّم صاحب المطعم هذه البيانات ليدخل من بوابة الشركاء ", "Give the restaurant owner these credentials to sign in from the partners portal ")}<span dir="ltr">/partners</span>:
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
-            <Cred label="مُعرّف المطعم" value={state.ok.slug} />
-            <Cred label="اسم المستخدم" value={state.ok.username} />
-            <Cred label="كلمة المرور" value={state.ok.code} />
+            <Cred label={tr(lang, "مُعرّف المطعم", "Restaurant ID")} value={state.ok.slug} />
+            <Cred label={tr(lang, "اسم المستخدم", "Username")} value={state.ok.username} />
+            <Cred label={tr(lang, "كلمة المرور", "Password")} value={state.ok.code} />
           </div>
           {state.ok.phone && (
             <p className="mt-3 text-xs text-[color:var(--muted)]" dir="ltr">📱 {state.ok.phone}</p>
@@ -32,11 +35,11 @@ export function AdminCreateForm() {
       <form action={formAction} className="soft-card space-y-4 p-6">
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="name" className="field-label">اسم المطعم</label>
-            <input id="name" name="name" required placeholder="مطعم الضيافة" className="field-input" />
+            <label htmlFor="name" className="field-label">{tr(lang, "اسم المطعم", "Restaurant name")}</label>
+            <input id="name" name="name" required placeholder={tr(lang, "مطعم الضيافة", "Hospitality Restaurant")} className="field-input" />
           </div>
           <div>
-            <label htmlFor="slug" className="field-label">معرّف الرابط</label>
+            <label htmlFor="slug" className="field-label">{tr(lang, "معرّف الرابط", "URL slug")}</label>
             <input
               id="slug" name="slug" required dir="ltr" value={slug}
               onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-"))}
@@ -49,27 +52,27 @@ export function AdminCreateForm() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="username" className="field-label">اسم مستخدم المالك</label>
+            <label htmlFor="username" className="field-label">{tr(lang, "اسم مستخدم المالك", "Owner username")}</label>
             <input id="username" name="username" required dir="ltr" placeholder="aldeyafa" className="field-input" />
           </div>
           <div>
-            <label htmlFor="phone" className="field-label">جوال المالك</label>
+            <label htmlFor="phone" className="field-label">{tr(lang, "جوال المالك", "Owner phone")}</label>
             <input id="phone" name="phone" dir="ltr" inputMode="tel" placeholder="05xxxxxxxx" className="field-input" />
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="city" className="field-label">المدينة (اختياري)</label>
-            <input id="city" name="city" placeholder="الرياض" className="field-input" />
+            <label htmlFor="city" className="field-label">{tr(lang, "المدينة (اختياري)", "City (optional)")}</label>
+            <input id="city" name="city" placeholder={tr(lang, "الرياض", "Riyadh")} className="field-input" />
           </div>
           <div>
-            <label htmlFor="branch_name" className="field-label">اسم الفرع</label>
-            <input id="branch_name" name="branch_name" defaultValue="الفرع الرئيسي" className="field-input" />
+            <label htmlFor="branch_name" className="field-label">{tr(lang, "اسم الفرع", "Branch name")}</label>
+            <input id="branch_name" name="branch_name" defaultValue={tr(lang, "الفرع الرئيسي", "Main branch")} className="field-input" />
           </div>
         </div>
 
         <p className="text-xs text-[color:var(--muted)]">
-          يُنشأ للمالك حساب خاص ورمز دخول تلقائيًا — لا يستطيع أحد التسجيل بنفسه.
+          {tr(lang, "يُنشأ للمالك حساب خاص ورمز دخول تلقائيًا — لا يستطيع أحد التسجيل بنفسه.", "A private account and login code are created for the owner automatically — no one can register on their own.")}
         </p>
 
         {state.error && (
@@ -79,7 +82,7 @@ export function AdminCreateForm() {
         )}
 
         <button type="submit" disabled={pending} className="btn btn-primary w-full">
-          {pending ? "جارٍ الإنشاء…" : "إنشاء مطعم + حساب مالك"}
+          {pending ? tr(lang, "جارٍ الإنشاء…", "Creating…") : tr(lang, "إنشاء مطعم + حساب مالك", "Create restaurant + owner account")}
         </button>
       </form>
     </div>

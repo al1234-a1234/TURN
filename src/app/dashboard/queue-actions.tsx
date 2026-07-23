@@ -2,6 +2,8 @@
 
 import { useTransition } from "react";
 import { updateWaitlistStatus } from "./waitlist-actions";
+import { tr } from "@/lib/i18n";
+import { useLang } from "@/components/lang-provider";
 
 // تحويل رقم سعودي إلى صيغة واتساب الدولية
 function waNumber(phone: string): string {
@@ -25,11 +27,16 @@ export function QueueActions({
   restaurant: string;
   position: number | null;
 }) {
+  const lang = useLang();
   const [pending, start] = useTransition();
 
   function remind() {
     const num = waNumber(phone);
-    const msg = `مرحبًا ${name} 👋\nدورك رقم ${position ?? ""} في ${restaurant} أوشك أن يحين. نتشرّف بك — تفضّل للحضور 🌿`;
+    const msg = tr(
+      lang,
+      `مرحبًا ${name} 👋\nدورك رقم ${position ?? ""} في ${restaurant} أوشك أن يحين. نتشرّف بك — تفضّل للحضور 🌿`,
+      `Hi ${name} 👋\nYour turn (No. ${position ?? ""}) at ${restaurant} is almost here. We'd be honored to have you — please come in 🌿`,
+    );
     const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
     start(async () => {
       await updateWaitlistStatus(id, "notified");
@@ -42,7 +49,7 @@ export function QueueActions({
       <button
         onClick={remind}
         disabled={pending || !phone}
-        title="تذكير واتساب"
+        title={tr(lang, "تذكير واتساب", "WhatsApp reminder")}
         className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--hairline)] bg-[rgba(37,211,102,0.12)] text-[#25D366] transition hover:bg-[rgba(37,211,102,0.2)] disabled:opacity-40"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -55,14 +62,14 @@ export function QueueActions({
         className="rounded-xl px-3 py-2 text-xs font-bold text-[color:var(--bg)] transition disabled:opacity-60"
         style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}
       >
-        جلوس
+        {tr(lang, "جلوس", "Seat")}
       </button>
       <button
         disabled={pending}
         onClick={() => start(() => updateWaitlistStatus(id, "cancelled"))}
         className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-xs font-bold text-[color:var(--muted)] transition hover:text-red-600 disabled:opacity-60"
       >
-        إزالة
+        {tr(lang, "إزالة", "Remove")}
       </button>
     </div>
   );

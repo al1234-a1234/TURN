@@ -4,7 +4,7 @@ import { OwnerHeader } from "./owner-chrome";
 import { loadOwner } from "./owner-context";
 import { ColumnChart, SplitBars, ChartCard } from "./manage/charts";
 import { toAr } from "@/lib/format";
-import { tr, type Lang } from "@/lib/i18n";
+import { tr, pct, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 
 const AR_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
@@ -129,7 +129,7 @@ export default async function OverviewPage() {
   const alerts: { icon: string; text: string; tone: string }[] = [];
   if (queueCount >= 8) alerts.push({ icon: "🔥", text: tr(lang, `الطابور مزدحم الآن (${toAr(queueCount)} بالانتظار)`, `The queue is busy now (${toAr(queueCount)} waiting)`), tone: "var(--st-full)" });
   if (ratings.length >= 3 && avgRating < 4) alerts.push({ icon: "⚠️", text: tr(lang, `متوسط التقييم منخفض (${toAr(avgRating)}) — راجع التقييمات`, `Average rating is low (${toAr(avgRating)}) — review your ratings`), tone: "var(--st-closed)" });
-  if (noShowRate >= 20) alerts.push({ icon: "📉", text: tr(lang, `نسبة التغيّب مرتفعة (٪${toAr(noShowRate)})`, `No-show rate is high (٪${toAr(noShowRate)})`), tone: "var(--st-closed)" });
+  if (noShowRate >= 20) alerts.push({ icon: "📉", text: tr(lang, `نسبة التغيّب مرتفعة (٪${toAr(noShowRate)})`, `No-show rate is high (${toAr(noShowRate)}%)`), tone: "var(--st-closed)" });
 
   return (
     <OwnerShell
@@ -163,9 +163,9 @@ export default async function OverviewPage() {
         <Kpi label={tr(lang, "جالسون اليوم", "Seated Today")} value={toAr(seatedToday)} tone="var(--st-open)" tint="#e9f4ee" />
         <Kpi label={tr(lang, "إجمالي العملاء", "Total Customers")} value={toAr(totalCustomers)} tone="var(--brand-d)" tint="#eef3fb" />
         <Kpi label={tr(lang, "خدمناهم (30 يوم)", "Served (30 days)")} value={toAr(served30)} tone="var(--brand)" tint="#f8ece7" />
-        <Kpi label={tr(lang, "عملاء عائدون", "Returning Customers")} value={`٪${toAr(returningPct)}`} tone="var(--st-open)" tint="#e9f4ee" />
+        <Kpi label={tr(lang, "عملاء عائدون", "Returning Customers")} value={pct(toAr(returningPct), lang)} tone="var(--st-open)" tint="#e9f4ee" />
         <Kpi label={tr(lang, "عملاء مميّزون", "VIP Customers")} value={toAr(vips)} tone="var(--brand-d)" tint="#f8e9e3" />
-        <Kpi label={tr(lang, "نسبة التغيّب", "No-show Rate")} value={`٪${toAr(noShowRate)}`} tone={noShowRate >= 20 ? "var(--st-closed)" : "var(--muted)"} tint="#f4eee6" />
+        <Kpi label={tr(lang, "نسبة التغيّب", "No-show Rate")} value={pct(toAr(noShowRate), lang)} tone={noShowRate >= 20 ? "var(--st-closed)" : "var(--muted)"} tint="#f4eee6" />
       </div>
 
       {/* رسوم */}
@@ -194,14 +194,14 @@ export default async function OverviewPage() {
           <div className="space-y-2">
             {HOURS.map((h) => {
               const n = byHour.get(h) ?? 0;
-              const pct = Math.round((n / maxHour) * 100);
+              const barPct = Math.round((n / maxHour) * 100);
               return (
                 <div key={h} className="flex items-center gap-3">
                   <span className="w-12 shrink-0 text-xs font-bold text-[color:var(--muted)]">{hourLabel(h, lang)}</span>
                   <div className="h-3 flex-1 overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
-                    <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(pct, 2)}%`, background: "linear-gradient(90deg,#b23c1d,#661c0a)" }} />
+                    <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(barPct, 2)}%`, background: "linear-gradient(90deg,#b23c1d,#661c0a)" }} />
                   </div>
-                  <span className="w-10 shrink-0 text-left text-xs font-bold" style={{ color: "var(--brand-d)" }}>٪{toAr(pct)}</span>
+                  <span className="w-10 shrink-0 text-left text-xs font-bold" style={{ color: "var(--brand-d)" }}>{pct(toAr(barPct), lang)}</span>
                 </div>
               );
             })}

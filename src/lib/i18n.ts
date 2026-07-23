@@ -19,3 +19,7 @@ export const dirOf = (lang: Lang): "rtl" | "ltr" => (lang === "en" ? "ltr" : "rt
 
 export const LANG_LABEL: Record<Lang, string> = { ar: "العربية", en: "English" };
 export const LANG_SHORT: Record<Lang, string> = { ar: "ع", en: "EN" };
+
+/** نسبة مئوية بصيغة اللغة: 50% (إنجليزي) / ٪50 (عربي). */
+export const pct = (n: number | string, lang: Lang): string =>
+  lang === "en" ? `${n}%` : `٪${n}`;

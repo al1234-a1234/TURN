@@ -167,36 +167,36 @@ export default async function ManagePage() {
 
         {/* ===== الإعدادات وأوقات العمل ===== */}
         <section className="soft-card p-5">
-          <h2 className="mb-4 font-display text-lg font-bold text-[color:var(--ink)]">الإعدادات وأوقات العمل</h2>
+          <h2 className="mb-4 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "الإعدادات وأوقات العمل", "Settings & hours")}</h2>
           <form action={updateBranchSettings} className="space-y-4">
             <label className="flex items-center justify-between rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
               <span>
-                <span className="block font-bold text-[color:var(--ink)]">استقبال قائمة الانتظار</span>
-                <span className="text-xs text-[color:var(--muted)]">أوقفها لإغلاق الطابور مؤقتًا أمام العملاء</span>
+                <span className="block font-bold text-[color:var(--ink)]">{tr(lang, "استقبال قائمة الانتظار", "Accept waitlist")}</span>
+                <span className="text-xs text-[color:var(--muted)]">{tr(lang, "أوقفها لإغلاق الطابور مؤقتًا أمام العملاء", "Turn off to temporarily close the queue to customers")}</span>
               </span>
               <input type="checkbox" name="accepts_waitlist" defaultChecked={settings?.accepts_waitlist ?? true} className="h-6 w-6 accent-[#a3341a]" />
             </label>
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
-                <label className="field-label">فتح</label>
+                <label className="field-label">{tr(lang, "فتح", "Open")}</label>
                 <input type="time" name="open_time" defaultValue={hours.open ?? ""} className="field-input" />
               </div>
               <div>
-                <label className="field-label">إغلاق</label>
+                <label className="field-label">{tr(lang, "إغلاق", "Close")}</label>
                 <input type="time" name="close_time" defaultValue={hours.close ?? ""} className="field-input" />
               </div>
               <div>
-                <label className="field-label">أقصى عدد للمجموعة</label>
+                <label className="field-label">{tr(lang, "أقصى عدد للمجموعة", "Max party size")}</label>
                 <input name="max_party_size" inputMode="numeric" defaultValue={settings?.max_party_size ?? 20} className="field-input" />
               </div>
             </div>
-            <button className="btn btn-primary w-full">حفظ الإعدادات</button>
+            <button className="btn btn-primary w-full">{tr(lang, "حفظ الإعدادات", "Save settings")}</button>
           </form>
         </section>
 
         {/* ===== المنيو ===== */}
         <section>
-          <h2 className="mb-4 font-display text-lg font-bold text-[color:var(--ink)]">المنيو والأسعار</h2>
+          <h2 className="mb-4 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "المنيو والأسعار", "Menu & prices")}</h2>
           <MenuManager restaurantId={restaurant.id} categories={categories ?? []} items={items ?? []} />
         </section>
       </div>

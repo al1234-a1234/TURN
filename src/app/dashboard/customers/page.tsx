@@ -25,9 +25,10 @@ const TIER_LABEL_EN: Record<string, string> = {
   regular: "Regular",
 };
 
-function fmtDate(iso: string | null): string {
+function fmtDate(iso: string | null, lang: "ar" | "en"): string {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("ar-SA", { day: "numeric", month: "short" });
+  // أرقام لاتينية دائمًا؛ أسماء شهور عربية في الوضع العربي
+  return new Date(iso).toLocaleDateString(lang === "en" ? "en-US" : "ar-SA-u-nu-latn", { day: "numeric", month: "short" });
 }
 
 export default async function CustomersPage() {
@@ -97,7 +98,7 @@ export default async function CustomersPage() {
                       <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-[color:var(--muted)]">
                         <span className="rounded-full px-2 py-0.5 font-bold" style={{ background: tm.bg, color: tm.color }}>{tr(lang, tm.label, TIER_LABEL_EN[p.tier] ?? tm.label)}</span>
                         <span>{tr(lang, `${toAr(p.visits)} زيارة`, `${toAr(p.visits)} visits`)}</span>
-                        <span>· {tr(lang, `آخر زيارة ${fmtDate(p.last_visit)}`, `Last visit ${fmtDate(p.last_visit)}`)}</span>
+                        <span>· {tr(lang, `آخر زيارة ${fmtDate(p.last_visit, "ar")}`, `Last visit ${fmtDate(p.last_visit, "en")}`)}</span>
                         {p.no_shows > 0 && <span className="text-[color:var(--st-closed)]">· {tr(lang, `${toAr(p.no_shows)} تغيّب`, `${toAr(p.no_shows)} no-shows`)}</span>}
                       </div>
                       {p.tags && p.tags.length > 0 && (

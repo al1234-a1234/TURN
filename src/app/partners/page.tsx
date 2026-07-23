@@ -43,7 +43,7 @@ function PartnersLogin() {
       password: code,
     });
     if (signErr || !auth.user) {
-      setError("بيانات الدخول غير صحيحة. تأكّد من اسم المستخدم وكلمة المرور.");
+      setError(tr(lang, "بيانات الدخول غير صحيحة. تأكّد من اسم المستخدم وكلمة المرور.", "Invalid login. Check your username and password."));
       setLoading(false);
       return;
     }
@@ -64,7 +64,7 @@ function PartnersLogin() {
         .filter(Boolean) as string[];
       if (rid && !slugs.includes(rid)) {
         await supabase.auth.signOut();
-        setError("مُعرّف المطعم لا يطابق حسابك.");
+        setError(tr(lang, "مُعرّف المطعم لا يطابق حسابك.", "The restaurant ID doesn't match your account."));
         setLoading(false);
         return;
       }
@@ -77,21 +77,24 @@ function PartnersLogin() {
   return (
     <div className="flex flex-1 flex-col">
       <header className="app-header px-5 pb-16 pt-10 text-center">
+        <div className="mx-auto mb-4 flex max-w-md justify-end">
+          <LangToggle variant="plain" />
+        </div>
         <span className="mx-auto block w-fit drop-shadow-[0_14px_30px_rgba(0,0,0,0.55)]">
           <BrandMark size={72} />
         </span>
         <p className="mt-4 text-xs font-bold tracking-[0.35em] text-[color:var(--gold-1)]/80" dir="ltr">
           TURN PARTNERS
         </p>
-        <h1 className="font-serif mt-1 text-3xl font-bold text-[color:var(--ink)]">بوابة الشركاء</h1>
-        <p className="mt-2 text-sm text-[color:var(--muted)]">دخول أصحاب المطاعم ببيانات الإدارة</p>
+        <h1 className="font-serif mt-1 text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "بوابة الشركاء", "Partners Portal")}</h1>
+        <p className="mt-2 text-sm text-[color:var(--muted)]">{tr(lang, "دخول أصحاب المطاعم ببيانات الإدارة", "Restaurant owners sign in with their admin credentials")}</p>
         <div className="gold-rule mx-auto mt-5 max-w-[160px]" />
       </header>
 
       <main className="mx-auto -mt-8 w-full max-w-md flex-1 px-5">
         <form onSubmit={handleSubmit} className="soft-card space-y-4 p-6">
           <div>
-            <label htmlFor="rid" className="field-label">مُعرّف المطعم (Restaurant ID)</label>
+            <label htmlFor="rid" className="field-label">{tr(lang, "مُعرّف المطعم (Restaurant ID)", "Restaurant ID")}</label>
             <input
               id="rid" required dir="ltr" autoComplete="off"
               value={restaurantId} onChange={(e) => setRestaurantId(e.target.value)}
@@ -99,7 +102,7 @@ function PartnersLogin() {
             />
           </div>
           <div>
-            <label htmlFor="username" className="field-label">اسم المستخدم</label>
+            <label htmlFor="username" className="field-label">{tr(lang, "اسم المستخدم", "Username")}</label>
             <input
               id="username" required dir="ltr" autoComplete="username"
               value={username} onChange={(e) => setUsername(e.target.value)}
@@ -107,7 +110,7 @@ function PartnersLogin() {
             />
           </div>
           <div>
-            <label htmlFor="code" className="field-label">كلمة المرور</label>
+            <label htmlFor="code" className="field-label">{tr(lang, "كلمة المرور", "Password")}</label>
             <input
               id="code" type="password" required dir="ltr" autoComplete="current-password"
               value={code} onChange={(e) => setCode(e.target.value)}
@@ -122,13 +125,13 @@ function PartnersLogin() {
           )}
 
           <button type="submit" disabled={loading} className="btn btn-primary w-full">
-            {loading ? "جارٍ الدخول…" : "دخول"}
+            {loading ? tr(lang, "جارٍ الدخول…", "Signing in…") : tr(lang, "دخول", "Sign in")}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-[color:var(--muted)]">
-          تبي تضيف مطعمك؟{" "}
-          <a href="mailto:albraalaan@gmail.com" className="font-bold text-[color:var(--gold-1)]">تواصل مع إدارة دور</a>
+          {tr(lang, "تبي تضيف مطعمك؟", "Want to add your restaurant?")}{" "}
+          <a href="mailto:albraalaan@gmail.com" className="font-bold text-[color:var(--gold-1)]">{tr(lang, "تواصل مع إدارة دور", "Contact the Turn team")}</a>
         </p>
       </main>
     </div>

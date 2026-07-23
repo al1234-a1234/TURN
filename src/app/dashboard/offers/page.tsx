@@ -41,7 +41,7 @@ const AUDIENCE_LABEL_EN: Record<string, string> = {
 };
 
 function offerValueText(o: Offer, lang: Lang): string {
-  if (o.kind === "percent" && o.value != null) return `${toAr(o.value)}٪`;
+  if (o.kind === "percent" && o.value != null) return `${toAr(o.value)}${lang === "en" ? "%" : "٪"}`;
   if (o.kind === "fixed" && o.value != null) return money(o.value);
   if (o.kind === "points" && o.value != null) return `×${toAr(o.value)}`;
   if (o.kind === "free_item") return tr(lang, "مجاني", "Free");
@@ -180,7 +180,7 @@ export default async function OffersPage() {
                   <div className="mt-3 flex items-center justify-between border-t pt-3" style={{ borderColor: "var(--border)" }}>
                     <span className="text-xs text-[color:var(--muted)]">
                       {o.ends_at
-                        ? tr(lang, `ينتهي ${new Date(o.ends_at).toLocaleDateString("ar-SA")}`, `Ends ${new Date(o.ends_at).toLocaleDateString("en-US")}`)
+                        ? tr(lang, `ينتهي ${new Date(o.ends_at).toLocaleDateString("ar-SA-u-nu-latn")}`, `Ends ${new Date(o.ends_at).toLocaleDateString("en-US")}`)
                         : tr(lang, "بلا تاريخ انتهاء", "No end date")}
                     </span>
                     <form action={deleteOffer}>

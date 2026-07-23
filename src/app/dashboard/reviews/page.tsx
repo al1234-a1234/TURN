@@ -15,8 +15,8 @@ type Review = Database["public"]["Tables"]["reviews"]["Row"] & {
 function stars(n: number): string {
   return "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n);
 }
-function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("ar-SA", { day: "numeric", month: "short" });
+function fmtDate(iso: string, lang: "ar" | "en"): string {
+  return new Date(iso).toLocaleDateString(lang === "en" ? "en-US" : "ar-SA-u-nu-latn", { day: "numeric", month: "short" });
 }
 
 export default async function ReviewsPage() {
@@ -107,7 +107,7 @@ export default async function ReviewsPage() {
                           {r.routed_to_google && <span className="text-[10px] font-bold text-[color:var(--st-open)]">↗ Google</span>}
                         </div>
                         <p className="mt-1.5 text-sm text-[color:var(--ink)]">{r.comment ?? "—"}</p>
-                        <p className="mt-1.5 text-xs text-[color:var(--muted)]">{c?.full_name ?? tr(lang, "عميل", "Customer")} · {fmtDate(r.created_at)}</p>
+                        <p className="mt-1.5 text-xs text-[color:var(--muted)]">{c?.full_name ?? tr(lang, "عميل", "Customer")} · {fmtDate(r.created_at, lang)}</p>
                       </div>
                       <ReviewPublishToggle id={r.id} published={r.is_published} />
                     </div>

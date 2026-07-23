@@ -2,8 +2,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AdminCreateForm } from "./admin-create-form";
+import { LangToggle } from "@/components/lang-toggle";
+import { tr } from "@/lib/i18n";
+import { getLang } from "@/lib/i18n-server";
 
 export default async function AdminPage() {
+  const lang = await getLang();
   const supabase = await createClient();
   const {
     data: { user },
@@ -29,25 +33,25 @@ export default async function AdminPage() {
               <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </Link>
-          <span className="text-lg font-extrabold">لوحة الأدمِن</span>
-          <div className="h-11 w-11" />
+          <span className="text-lg font-extrabold">{tr(lang, "لوحة الأدمِن", "Admin panel")}</span>
+          <LangToggle />
         </div>
         <div className="mx-auto mt-6 max-w-3xl">
-          <p className="text-sm tracking-widest text-[color:var(--gold-1)]/80">إدارة المنصّة</p>
-          <h1 className="font-serif text-3xl font-bold text-[color:var(--ink)]">المطاعم</h1>
+          <p className="text-sm tracking-widest text-[color:var(--gold-1)]/80">{tr(lang, "إدارة المنصّة", "Platform management")}</p>
+          <h1 className="font-serif text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "المطاعم", "Restaurants")}</h1>
         </div>
       </header>
 
       <main className="mx-auto -mt-4 w-full max-w-3xl flex-1 space-y-8 px-5 pb-12">
         <section>
-          <h2 className="mb-3 font-serif text-xl font-bold text-[color:var(--ink)]">إضافة مطعم + حساب مالك</h2>
+          <h2 className="mb-3 font-serif text-xl font-bold text-[color:var(--ink)]">{tr(lang, "إضافة مطعم + حساب مالك", "Add restaurant + owner account")}</h2>
           <AdminCreateForm />
         </section>
 
         <section>
-          <h2 className="mb-3 font-serif text-xl font-bold text-[color:var(--ink)]">المطاعم ({list.length})</h2>
+          <h2 className="mb-3 font-serif text-xl font-bold text-[color:var(--ink)]">{tr(lang, "المطاعم", "Restaurants")} ({list.length})</h2>
           {list.length === 0 ? (
-            <div className="soft-card p-6 text-center text-sm text-[color:var(--muted)]">لا توجد مطاعم بعد.</div>
+            <div className="soft-card p-6 text-center text-sm text-[color:var(--muted)]">{tr(lang, "لا توجد مطاعم بعد.", "No restaurants yet.")}</div>
           ) : (
             <ul className="space-y-2">
               {list.map((r) => (
@@ -65,11 +69,11 @@ export default async function AdminPage() {
                     className="shrink-0 rounded-full px-3 py-2 text-xs font-bold text-white"
                     style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}
                   >
-                    الباقة
+                    {tr(lang, "الباقة", "Plan")}
                   </Link>
                   <Link
                     href={`/r/${r.slug}`}
-                    title="الصفحة العامة"
+                    title={tr(lang, "الصفحة العامة", "Public page")}
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--hairline)] bg-[rgba(201,169,97,0.12)] text-[color:var(--gold-1)] transition"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
