@@ -82,36 +82,31 @@ export function CustomerShell({
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      {/* الهيدر */}
-      <header className="rq-header px-5 pb-6 pt-5">
+      {/* الهيدر — همبرغر + بحث + شعار التطبيق (بلا عنوان) */}
+      <header className="rq-header px-5 pb-5 pt-5">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
-          {/* يمين: عنوان + همبرغر + علم */}
+          <button onClick={() => setOpen(true)} className="rq-circle" aria-label={tr(lang, "القائمة", "Menu")}>
+            <IcMenuBars />
+          </button>
           <div className="flex items-center gap-3">
-            <button onClick={() => setOpen(true)} className="rq-circle" aria-label={tr(lang, "القائمة", "Menu")}>
-              <IcMenuBars />
-            </button>
-            <span className="relative">
-              <span className="absolute -top-1 -left-1 h-3.5 w-3.5 rounded-full border-2 border-white bg-brand-500" />
-            </span>
-            <h1 className="font-display text-2xl font-bold">{title}</h1>
-          </div>
-          {/* يسار: بحث + الطابور */}
-          <div className="flex items-center gap-3">
-            <LangToggle />
             {search && (
               <Link href="/search" className="rq-circle" aria-label={tr(lang, "بحث", "Search")}>
                 <IcSearch />
               </Link>
             )}
-            <Link href="/me/waitlist" className="rq-circle" aria-label={tr(lang, "قوائمي", "My lists")}>
-              <IcPeople />
+            <Link
+              href="/"
+              aria-label={tr(lang, "دور", "Turn")}
+              className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-white/15 ring-1 ring-white/25"
+            >
+              <BrandMark size={30} />
             </Link>
           </div>
         </div>
       </header>
 
       {/* المحتوى */}
-      <main className="mx-auto w-full max-w-2xl flex-1 px-5 pb-28 pt-5">{children}</main>
+      <main className="mx-auto w-full max-w-2xl flex-1 px-5 pb-28 pt-4">{children}</main>
 
       {/* الشريط السفلي */}
       <nav className="fixed inset-x-0 bottom-0 z-30 px-4 pb-4">
@@ -163,6 +158,10 @@ export function CustomerShell({
                 </li>
               ))}
             </ul>
+            <div className="flex items-center justify-between px-6 pb-8 pt-2">
+              <span className="text-[15px] font-bold text-[color:var(--ink)]">{tr(lang, "اللغة", "Language")}</span>
+              <LangToggle variant="plain" />
+            </div>
           </aside>
         </div>
       )}

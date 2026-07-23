@@ -79,19 +79,19 @@ export default async function Home() {
           <p className="mt-3 text-sm">{tr(lang, "لا توجد مطاعم متاحة بعد.", "No restaurants available yet.")}</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-2.5">
           {withStatus.map((r, i) => {
             const initial = r.name.trim().charAt(0) || "م";
             return (
               <Link
                 key={r.id}
                 href={`/r/${r.slug}`}
-                className="reveal rq-card block overflow-hidden p-4 transition active:scale-[0.985]"
-                style={{ animationDelay: `${i * 60}ms` }}
+                className="reveal rq-card block overflow-hidden p-3 transition active:scale-[0.985]"
+                style={{ animationDelay: `${i * 45}ms` }}
               >
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   {/* صورة/شعار المطعم */}
-                  <span className="flex h-[104px] w-[104px] shrink-0 items-center justify-center overflow-hidden rounded-[20px] bg-brand-800 font-serif text-3xl font-bold text-cream-100">
+                  <span className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-800 font-serif text-2xl font-bold text-cream-100">
                     {r.logo_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={r.logo_url} alt="" className="h-full w-full object-cover" />
@@ -102,11 +102,11 @@ export default async function Home() {
 
                   {/* الاسم + المطبخ + المسافة */}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-display text-xl font-bold text-[color:var(--ink)]">{r.name}</p>
-                    <p className="mt-0.5 truncate text-sm font-medium text-[color:var(--muted)]">
+                    <p className="truncate font-display text-[17px] font-bold text-[color:var(--ink)]">{r.name}</p>
+                    <p className="mt-0.5 truncate text-[13px] font-medium text-[color:var(--muted)]">
                       {tr(lang, CUISINE[r.slug] ?? "مطعم", CUISINE_EN[r.slug] ?? "Restaurant")}{r.city ? ` · ${r.city}` : ""}
                     </p>
-                    <p className="mt-1 flex items-center gap-1 text-[13px] font-bold text-[color:var(--muted)]">
+                    <p className="mt-0.5 flex items-center gap-1 text-[12px] font-bold text-[color:var(--muted)]">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" className="text-brand-600"><path d="M12 21s7-6 7-11a7 7 0 10-14 0c0 5 7 11 7 11z" stroke="currentColor" strokeWidth="2" /><circle cx="12" cy="10" r="2.4" stroke="currentColor" strokeWidth="2" /></svg>
                       {DIST[r.slug] ?? "—"} {tr(lang, "كم", "km")}
                     </p>
@@ -122,7 +122,7 @@ export default async function Home() {
                 {/* شريط الحالة — طابور داخلي/خارجي */}
                 {!r.accepts ? (
                   <div
-                    className="mt-3 flex items-center justify-between rounded-2xl px-4 py-3"
+                    className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
                     style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)", boxShadow: "0 12px 24px -16px rgba(102,28,10,0.72)" }}
                   >
                     <span className="flex items-center gap-2 text-sm font-extrabold text-white">
@@ -132,13 +132,13 @@ export default async function Home() {
                     <span className="text-xs font-extrabold text-white/85">{tr(lang, "التفاصيل ←", "Details ←")}</span>
                   </div>
                 ) : r.waiting > 0 ? (
-                  <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="mt-2.5 grid grid-cols-2 gap-2">
                     <ZonePill label={tr(lang, "داخلي", "Indoor")} count={r.inside} lang={lang} />
                     <ZonePill label={tr(lang, "خارجي", "Outdoor")} count={r.outside} lang={lang} />
                   </div>
                 ) : (
                   <div
-                    className="mt-3 flex items-center justify-between rounded-2xl px-4 py-3"
+                    className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
                     style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)", boxShadow: "0 12px 24px -14px rgba(102,28,10,0.75)" }}
                   >
                     <span className="flex items-center gap-2 text-sm font-extrabold text-white">
