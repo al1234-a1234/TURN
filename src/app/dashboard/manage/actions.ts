@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import type { TablesUpdate } from "@/lib/supabase/database.types";
 
 async function myRestaurantId() {
   const supabase = await createClient();
@@ -26,7 +27,7 @@ export async function updateRestaurantInfo(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim() || null;
   const logo_url = String(formData.get("logo_url") ?? "").trim() || null;
   const cover_url = String(formData.get("cover_url") ?? "").trim() || null;
-  const patch: Record<string, unknown> = { logo_url, cover_url, description };
+  const patch: TablesUpdate<"restaurants"> = { logo_url, cover_url, description };
   if (name) patch.name = name;
   await supabase.from("restaurants").update(patch).eq("id", rid);
   revalidatePath("/dashboard/manage");
