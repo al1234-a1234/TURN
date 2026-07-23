@@ -17,11 +17,15 @@ import type { Database } from "@/lib/supabase/database.types";
 export type OwnerNavKey =
   | "overview"
   | "reception"
+  | "reservations"
   | "offers"
   | "loyalty"
   | "customers"
   | "reviews"
   | "staff"
+  | "tables"
+  | "content"
+  | "reports"
   | "manage";
 
 type NavDef = {
@@ -36,22 +40,30 @@ type NavDef = {
 const NAV: NavDef[] = [
   { key: "overview", label: "لوحة التحكم", href: "/dashboard", icon: "📊" },
   { key: "reception", label: "الاستقبال", href: "/dashboard/reception", icon: "🪑" },
+  { key: "reservations", label: "الحجوزات", href: "/dashboard/reservations", icon: "📅", perm: "reservations" },
   { key: "offers", label: "العروض", href: "/dashboard/offers", icon: "🎁", module: "offers", perm: "offers" },
   { key: "loyalty", label: "الولاء", href: "/dashboard/loyalty", icon: "⭐", module: "loyalty", perm: "loyalty" },
   { key: "customers", label: "العملاء", href: "/dashboard/customers", icon: "👥", module: "crm", perm: "customers" },
   { key: "reviews", label: "التقييمات", href: "/dashboard/reviews", icon: "🌟", module: "reviews", perm: "reviews" },
   { key: "staff", label: "الموظفون والصلاحيات", href: "/dashboard/staff", icon: "🔐", perm: "team" },
+  { key: "tables", label: "الطاولات", href: "/dashboard/tables", icon: "🍽️", perm: "settings" },
+  { key: "content", label: "المحتوى والروابط", href: "/dashboard/content", icon: "🔗", perm: "settings" },
+  { key: "reports", label: "التقارير", href: "/dashboard/reports", icon: "📈", perm: "analytics" },
   { key: "manage", label: "الإدارة والتحليلات", href: "/dashboard/manage", icon: "⚙️", perm: "settings" },
 ];
 
 const NAV_EN: Record<OwnerNavKey, string> = {
   overview: "Dashboard",
   reception: "Reception",
+  reservations: "Reservations",
   offers: "Offers",
   loyalty: "Loyalty",
   customers: "Customers",
   reviews: "Reviews",
   staff: "Staff & Permissions",
+  tables: "Tables",
+  content: "Content & Links",
+  reports: "Reports",
   manage: "Management & Analytics",
 };
 

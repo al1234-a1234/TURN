@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { QueueActions } from "../queue-actions";
 import { OwnerShell } from "../owner-shell";
+import { WalkInForm } from "./walkin-form";
 import { loadOwner } from "../owner-context";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
@@ -100,6 +101,8 @@ export default async function ReceptionPage() {
         <Stat label={tr(lang, "طابور خارجي", "Outdoor queue")} value={toAr(outside.length)} tone="var(--st-full)" />
         <Stat label={tr(lang, "خدمناهم اليوم", "Served today")} value={toAr(servedToday)} tone="var(--st-open)" />
       </div>
+
+      <WalkInForm />
 
       <div className="grid gap-6 sm:grid-cols-2">
         <ZoneColumn title={tr(lang, "طاولات داخلية", "Indoor tables")} rows={inside} tone="var(--st-full)" />

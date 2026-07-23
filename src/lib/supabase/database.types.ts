@@ -742,6 +742,7 @@ export type Database = {
           email: string | null
           id: string
           is_active: boolean
+          links: Json
           logo_url: string | null
           name: string
           name_en: string | null
@@ -761,6 +762,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_active?: boolean
+          links?: Json
           logo_url?: string | null
           name: string
           name_en?: string | null
@@ -780,6 +782,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_active?: boolean
+          links?: Json
           logo_url?: string | null
           name?: string
           name_en?: string | null
@@ -1065,6 +1068,17 @@ export type Database = {
         Returns: boolean
       }
       claim_restaurant: { Args: { p_code: string }; Returns: string }
+      create_reservation_guest: {
+        Args: {
+          p_branch_id: string
+          p_full_name: string
+          p_phone: string
+          p_reserved_at: string
+          p_party_size: number
+          p_notes?: string
+        }
+        Returns: string
+      }
       create_restaurant_with_branch: {
         Args: {
           p_address?: string
