@@ -82,7 +82,7 @@ export function CustomerShell({
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      {/* الهيدر — يمين: الشعار (يفتح القائمة) · يسار: بحث */}
+      {/* الهيدر — يمين: الشعار (يفتح القائمة) · وسط: TURN · يسار: بحث */}
       <header className="rq-header px-5 pb-5 pt-5">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
           <button
@@ -92,10 +92,27 @@ export function CustomerShell({
           >
             <BrandMark size={30} />
           </button>
-          {search && (
+
+          <span
+            dir="ltr"
+            className="select-none text-white"
+            style={{
+              fontFamily: "var(--font-baskerville), Baskerville, Georgia, serif",
+              fontWeight: 700,
+              fontSize: "1.4rem",
+              letterSpacing: "0.34em",
+              paddingInlineStart: "0.34em",
+            }}
+          >
+            TURN
+          </span>
+
+          {search ? (
             <Link href="/search" className="rq-circle" aria-label={tr(lang, "بحث", "Search")}>
               <IcSearch />
             </Link>
+          ) : (
+            <span className="h-11 w-11" />
           )}
         </div>
       </header>
