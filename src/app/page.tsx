@@ -36,19 +36,24 @@ export default async function Home() {
   const lang = await getLang();
   const supabase = await createClient();
 
+  // اكتشاف محدود (مب كل المطاعم) — للتوسّع؛ البقية عبر البحث
   const { data: restaurants } = await supabase
     .from("restaurants")
     .select("id, name, slug, logo_url, cover_url, cuisine, cuisine_en, branches(id, city, is_active, branch_settings(accepts_waitlist))")
     .eq("is_active", true)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(60);
 
   // نعرض فقط المطاعم التي لديها فرع فعّال واحد على الأقل (يطابق صفحة المطعم)
   const list = (restaurants ?? [])
     .map((r) => ({ ...r, branches: (r.branches ?? []).filter((b) => b.is_active) }))
     .filter((r) => r.branches.length > 0);
 
-  // استعلام واحد لعدّادات كل الفروع النشطة (بدل استعلام لكل مطعم — يمنع N+1)
-  const { data: countsData } = await supabase.rpc("active_waitlist_counts");
+  // عدّاد الطوابير محصور بفروع الصفحة فقط (بدل مسح كل المنصّة)
+  const pageBranchIds = list.flatMap((r) => r.branches.map((b) => b.id));
+  const { data: countsData } = pageBranchIds.length
+    ? await supabase.rpc("waitlist_counts_for", { p_branch_ids: pageBranchIds })
+    : { data: [] as { branch_id: string; total: number; inside: number; outside: number }[] };
   const counts = new Map(
     (countsData ?? []).map((c) => [c.branch_id, { total: c.total, inside: c.inside, outside: c.outside }]),
   );

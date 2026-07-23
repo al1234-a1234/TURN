@@ -10,11 +10,13 @@ export default async function SearchPage() {
   const lang = await getLang();
   const supabase = await createClient();
 
+  // مجموعة أوّلية محدودة للتصفّح؛ الكتابة تبحث في القاعدة مباشرة (للتوسّع)
   const { data: restaurants } = await supabase
     .from("restaurants")
     .select("id, name, slug, logo_url, cuisine, cuisine_en, branches(id, city, is_active)")
     .eq("is_active", true)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(30);
 
   const items: SearchItem[] = (restaurants ?? []).flatMap((r) => {
     const branch = (r.branches ?? []).find((b) => b.is_active);

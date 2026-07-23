@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useLang } from "@/components/lang-provider";
+import { tr } from "@/lib/i18n";
 
 export type SearchItem = { slug: string; name: string; logo?: string | null; city: string; cuisine: string };
 
@@ -15,18 +18,49 @@ export function SearchList({
   emptyLabel: string;
   cityLabel?: string;
 }) {
+  const lang = useLang();
   const [q, setQ] = useState("");
+  const [results, setResults] = useState<SearchItem[]>(items);
+  const [loading, setLoading] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const results = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    if (!term) return items;
-    return items.filter(
-      (it) =>
-        it.name.toLowerCase().includes(term) ||
-        it.city.toLowerCase().includes(term) ||
-        it.cuisine.toLowerCase().includes(term),
-    );
-  }, [q, items]);
+  useEffect(() => {
+    const term = q.trim();
+    if (timer.current) clearTimeout(timer.current);
+    if (!term) {
+      setResults(items);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    // بحث خادمي مع مهلة ارتداد — لا نحمّل كل المطاعم في المتصفّح
+    timer.current = setTimeout(async () => {
+      const supabase = createClient();
+      const like = `%${term}%`;
+      const { data } = await supabase
+        .from("restaurants")
+        .select("id, name, slug, logo_url, cuisine, cuisine_en, branches(city, is_active)")
+        .eq("is_active", true)
+        .or(`name.ilike.${like},cuisine.ilike.${like},cuisine_en.ilike.${like}`)
+        .limit(30);
+      const mapped: SearchItem[] = (data ?? []).flatMap((r) => {
+        const branch = (r.branches ?? []).find((b) => b.is_active);
+        if (!branch) return [];
+        return [{
+          slug: r.slug,
+          name: r.name ?? "",
+          logo: r.logo_url,
+          city: branch.city ?? "",
+          cuisine: tr(lang, r.cuisine ?? "مطعم", r.cuisine_en ?? "Restaurant"),
+        }];
+      });
+      setResults(mapped);
+      setLoading(false);
+    }, 260);
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, [q, items, lang]);
 
   return (
     <div className="space-y-4">
@@ -47,7 +81,9 @@ export function SearchList({
         )}
       </div>
 
-      {results.length === 0 ? (
+      {loading ? (
+        <div className="rq-card p-10 text-center text-sm text-[color:var(--muted)]">…</div>
+      ) : results.length === 0 ? (
         <div className="rq-card p-10 text-center text-[color:var(--muted)]">
           <span className="text-3xl">🔍</span>
           <p className="mt-3 text-sm">{emptyLabel}</p>

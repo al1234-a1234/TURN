@@ -1301,6 +1301,15 @@ export type Database = {
           total: number
         }[]
       }
+      waitlist_counts_for: {
+        Args: { p_branch_ids: string[] }
+        Returns: {
+          branch_id: string
+          inside: number
+          outside: number
+          total: number
+        }[]
+      }
     }
     Enums: {
       notification_channel: "sms" | "whatsapp" | "push" | "email"
