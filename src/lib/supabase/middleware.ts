@@ -35,11 +35,12 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // حماية مسارات لوحة التحكم: تحويل غير المسجّلين إلى /login
-  if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
+  // حماية المسارات المحمية: تحويل غير المسجّلين إلى بوابة الشركاء
+  const path = request.nextUrl.pathname;
+  if (!user && (path.startsWith("/dashboard") || path.startsWith("/admin"))) {
     const url = request.nextUrl.clone();
     url.pathname = "/partners";
-    url.searchParams.set("redirect", request.nextUrl.pathname);
+    url.searchParams.set("redirect", path);
     return NextResponse.redirect(url);
   }
 

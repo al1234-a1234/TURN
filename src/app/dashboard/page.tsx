@@ -28,7 +28,7 @@ export default async function OverviewPage() {
   const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
 
-  const [rev, profiles, analytics, insightsRes] = await Promise.all([
+  const [rev, profiles, analytics, insightsRes, liveRes] = await Promise.all([
     supabase.from("reviews").select("rating").eq("restaurant_id", restaurant.id),
     supabase
       .from("customer_restaurant")
@@ -39,6 +39,10 @@ export default async function OverviewPage() {
       ? supabase.from("waitlist_entries").select("joined_at, seated_at, status, zone, party_size").in("branch_id", branchIds).gte("joined_at", since30)
       : Promise.resolve({ data: [] as { joined_at: string; seated_at: string | null; status: string; zone: string; party_size: number }[] }),
     supabase.from("owner_insights").select("id, kind, title, body, created_at").eq("restaurant_id", restaurant.id).order("created_at", { ascending: false }).limit(4),
+    // الطابور الحيّ = بلا حدّ زمني (يطابق الاستقبال) — لئلّا يُهمَل من انتظر أكثر من 30 يومًا
+    branchIds.length
+      ? supabase.from("waitlist_entries").select("zone").in("branch_id", branchIds).in("status", ["waiting", "notified"])
+      : Promise.resolve({ data: [] as { zone: string }[] }),
   ]);
 
   const insights = (insightsRes.data ?? []) as { id: string; kind: string; title: string; body: string | null; created_at: string }[];
@@ -74,11 +78,11 @@ export default async function OverviewPage() {
   const partySizes = seated.map((r) => r.party_size).filter((n) => n > 0);
   const avgParty = partySizes.length ? Math.round((partySizes.reduce((a, b) => a + b, 0) / partySizes.length) * 10) / 10 : 0;
 
-  // الطابور الآن
-  const waitingNow = rows.filter((r) => r.status === "waiting" || r.status === "notified");
-  const insideNow = waitingNow.filter((r) => r.zone === "inside").length;
-  const outsideNow = waitingNow.filter((r) => r.zone === "outside").length;
-  const queueCount = waitingNow.length;
+  // الطابور الآن — من استعلام حيّ بلا حدّ زمني (متطابق مع صفحة الاستقبال)
+  const liveRows = (liveRes.data ?? []) as { zone: string }[];
+  const insideNow = liveRows.filter((r) => r.zone === "inside").length;
+  const outsideNow = liveRows.filter((r) => r.zone === "outside").length;
+  const queueCount = liveRows.length;
 
   // مخدومون آخر 7 أيام
   const dayBuckets = Array.from({ length: 7 }, (_, i) => {

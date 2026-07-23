@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { money } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
+import { isFavorite, toggleFavorite } from "@/lib/local-store";
 
 type Item = {
   id: string;
@@ -75,6 +76,7 @@ function IcMedia() {
 }
 
 export function RestaurantTabs({
+  slug,
   name,
   nameEn,
   cuisine,
@@ -92,6 +94,7 @@ export function RestaurantTabs({
   items,
   children,
 }: {
+  slug: string;
   name: string;
   nameEn: string | null;
   cuisine: string;
@@ -113,6 +116,11 @@ export function RestaurantTabs({
   const [tab, setTab] = useState<Tab>("waitlist");
   const [openCat, setOpenCat] = useState<string | null>(categories[0]?.id ?? null);
   const hasMenu = categories.length > 0;
+
+  // متابعة = إضافة للمفضّلة (تخزين محلّي للضيف)
+  const [fav, setFav] = useState(false);
+  useEffect(() => setFav(isFavorite(slug)), [slug]);
+  const onFollow = () => setFav(toggleFavorite({ slug, name, logo }));
 
   const LogoBox = ({ size }: { size: string }) => (
     <span className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-800 font-serif text-2xl font-bold text-cream-100`}>
@@ -290,7 +298,14 @@ export function RestaurantTabs({
             <p className="mt-1 text-sm font-bold text-brand-700">{tr(lang, "المتابعون", "Followers")} {reviewCount}</p>
           </div>
         </div>
-        <button className="rq-btn">{tr(lang, "متابعة", "Follow")}</button>
+        <button
+          type="button"
+          onClick={onFollow}
+          className={fav ? "rq-btn-soft" : "rq-btn"}
+          aria-pressed={fav}
+        >
+          {fav ? tr(lang, "❤️ في المفضّلة — إلغاء المتابعة", "❤️ Following — Unfollow") : tr(lang, "متابعة", "Follow")}
+        </button>
         {description && (
           <div className="rq-card p-5 text-right text-[14px] leading-7 text-[color:var(--muted)]">{description}</div>
         )}

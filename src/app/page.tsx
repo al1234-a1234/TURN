@@ -42,11 +42,14 @@ export default async function Home() {
 
   const { data: restaurants } = await supabase
     .from("restaurants")
-    .select("id, name, slug, logo_url, cover_url, branches(id, city, branch_settings(accepts_waitlist))")
+    .select("id, name, slug, logo_url, cover_url, branches(id, city, is_active, branch_settings(accepts_waitlist))")
     .eq("is_active", true)
     .order("created_at", { ascending: false });
 
-  const list = (restaurants ?? []).filter((r) => (r.branches ?? []).length > 0);
+  // نعرض فقط المطاعم التي لديها فرع فعّال واحد على الأقل (يطابق صفحة المطعم)
+  const list = (restaurants ?? [])
+    .map((r) => ({ ...r, branches: (r.branches ?? []).filter((b) => b.is_active) }))
+    .filter((r) => r.branches.length > 0);
 
   // استعلام واحد لعدّادات كل الفروع النشطة (بدل استعلام لكل مطعم — يمنع N+1)
   const { data: countsData } = await supabase.rpc("active_waitlist_counts");
@@ -56,7 +59,7 @@ export default async function Home() {
 
   const withStatus = list.map((r) => {
     const b = (r.branches ?? [])[0] as
-      | { id: string; city: string | null; branch_settings: { accepts_waitlist: boolean } | { accepts_waitlist: boolean }[] | null }
+      | { id: string; city: string | null; is_active: boolean; branch_settings: { accepts_waitlist: boolean } | { accepts_waitlist: boolean }[] | null }
       | undefined;
     const c = b?.id ? counts.get(b.id) : undefined;
     const settings = Array.isArray(b?.branch_settings) ? b?.branch_settings[0] : b?.branch_settings;
@@ -81,7 +84,7 @@ export default async function Home() {
       ) : (
         <div className="space-y-2.5">
           {withStatus.map((r, i) => {
-            const initial = r.name.trim().charAt(0) || "م";
+            const initial = (r.name ?? "").trim().charAt(0) || "م";
             return (
               <Link
                 key={r.id}
@@ -131,10 +134,21 @@ export default async function Home() {
                     </span>
                     <span className="text-xs font-extrabold text-white/85">{tr(lang, "التفاصيل ←", "Details ←")}</span>
                   </div>
-                ) : r.waiting > 0 ? (
+                ) : r.waiting > 0 && r.inside + r.outside > 0 ? (
                   <div className="mt-2.5 grid grid-cols-2 gap-2">
                     <ZonePill label={tr(lang, "داخلي", "Indoor")} count={r.inside} lang={lang} />
                     <ZonePill label={tr(lang, "خارجي", "Outdoor")} count={r.outside} lang={lang} />
+                  </div>
+                ) : r.waiting > 0 ? (
+                  <div
+                    className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
+                    style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)", boxShadow: "0 12px 24px -16px rgba(102,28,10,0.72)" }}
+                  >
+                    <span className="flex items-center gap-2 text-sm font-extrabold text-white">
+                      <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
+                      {tr(lang, `${toAr(r.waiting)} بالطابور الآن`, `${toAr(r.waiting)} in queue now`)}
+                    </span>
+                    <span className="text-xs font-extrabold text-white/85">{tr(lang, "التفاصيل ←", "Details ←")}</span>
                   </div>
                 ) : (
                   <div

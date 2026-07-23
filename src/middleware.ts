@@ -8,5 +8,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   // نشغّل الmiddleware فقط على المسارات التي تحتاج جلسة/حماية.
   // صفحات العميل العامة (/ و /r/*) لا تمرّ به إطلاقًا → صفر اتصال مصادقة، ضغط أسرع بكثير.
-  matcher: ["/dashboard/:path*"],
+  // /admin و /dashboard يحتاجان تحديث الجلسة (كلٌّ منهما يعيد فحص الصلاحية داخليًا أيضًا).
+  matcher: ["/dashboard/:path*", "/admin/:path*"],
 };

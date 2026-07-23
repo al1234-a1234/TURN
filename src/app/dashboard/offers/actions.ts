@@ -1,29 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { requirePerm } from "../guard";
 import type { TablesInsert, Database } from "@/lib/supabase/database.types";
 
 type OfferKind = Database["public"]["Enums"]["offer_kind"];
 const KINDS: OfferKind[] = ["percent", "fixed", "free_item", "bogo", "points"];
 const AUDIENCES = ["all", "new", "loyalty", "walkaway", "slow_hours"];
-
-/** يتحقق أن المستخدم موظف في هذا المطعم؛ RLS يفرض صلاحية العروض عند الكتابة. */
-async function resolveRestaurant() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { supabase, rid: null as string | null };
-  const { data } = await supabase
-    .from("staff")
-    .select("restaurant_id")
-    .eq("user_id", user.id)
-    .eq("is_active", true)
-    .limit(1)
-    .maybeSingle();
-  return { supabase, rid: data?.restaurant_id ?? null };
-}
 
 function toNumberOrNull(raw: FormDataEntryValue | null): number | null {
   const s = String(raw ?? "").trim();
@@ -33,8 +16,8 @@ function toNumberOrNull(raw: FormDataEntryValue | null): number | null {
 }
 
 export async function createOffer(formData: FormData) {
-  const { supabase, rid } = await resolveRestaurant();
-  if (!rid) return;
+  const caller = await requirePerm("offers");
+  if (!caller) return;
 
   const title = String(formData.get("title") ?? "").trim();
   if (!title) return;
@@ -47,7 +30,7 @@ export async function createOffer(formData: FormData) {
   const startRaw = String(formData.get("ends_at") ?? "").trim();
 
   const offer: TablesInsert<"offers"> = {
-    restaurant_id: rid,
+    restaurant_id: caller.restaurantId,
     title,
     description: String(formData.get("description") ?? "").trim() || null,
     kind,
@@ -60,20 +43,30 @@ export async function createOffer(formData: FormData) {
     is_active: true,
   };
 
-  await supabase.from("offers").insert(offer);
+  await caller.supabase.from("offers").insert(offer);
   revalidatePath("/dashboard/offers");
 }
 
 export async function toggleOffer(id: string, next: boolean) {
-  const supabase = await createClient();
-  await supabase.from("offers").update({ is_active: next }).eq("id", id);
+  const caller = await requirePerm("offers");
+  if (!caller) return;
+  await caller.supabase
+    .from("offers")
+    .update({ is_active: next })
+    .eq("id", id)
+    .eq("restaurant_id", caller.restaurantId);
   revalidatePath("/dashboard/offers");
 }
 
 export async function deleteOffer(formData: FormData) {
   const id = String(formData.get("offer_id") ?? "");
   if (!id) return;
-  const supabase = await createClient();
-  await supabase.from("offers").delete().eq("id", id);
+  const caller = await requirePerm("offers");
+  if (!caller) return;
+  await caller.supabase
+    .from("offers")
+    .delete()
+    .eq("id", id)
+    .eq("restaurant_id", caller.restaurantId);
   revalidatePath("/dashboard/offers");
 }

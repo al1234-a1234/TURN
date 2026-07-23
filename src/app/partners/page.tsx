@@ -20,7 +20,9 @@ function PartnersLogin() {
   const lang = useLang();
   const router = useRouter();
   const params = useSearchParams();
-  const redirect = params.get("redirect") || "/dashboard";
+  // مسار داخلي فقط (يبدأ بـ "/" وليس "//") — لمنع إعادة التوجيه لموقع خارجي
+  const redirectRaw = params.get("redirect") ?? "";
+  const redirect = /^\/(?!\/)/.test(redirectRaw) ? redirectRaw : "/dashboard";
 
   const [restaurantId, setRestaurantId] = useState("");
   const [username, setUsername] = useState("");

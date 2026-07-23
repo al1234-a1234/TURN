@@ -7,6 +7,7 @@ import { ColumnChart, SplitBars, ChartCard } from "./charts";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
+import { staffHasPermission } from "@/lib/features";
 
 const AR_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 const EN_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -15,7 +16,9 @@ export default async function ManagePage() {
   const lang = await getLang();
   const load = await loadOwner();
   if (load.state !== "ok") return null;
-  const { supabase, restaurant: base, modules, role, permissions } = load.ctx;
+  const { supabase, restaurant: base, role, permissions } = load.ctx;
+  // بوابة الصلاحية: صفحة الإدارة تعدّل إعدادات المطعم والمنيو → تتطلب صلاحية «الإعدادات»
+  if (!staffHasPermission(role, permissions, "settings")) redirect("/dashboard");
 
   const { data: full } = await supabase
     .from("restaurants")
@@ -24,11 +27,16 @@ export default async function ManagePage() {
     .maybeSingle();
   const restaurant = full ?? { ...base, description: null, logo_url: null, cover_url: null };
 
-  const [{ data: categories }, { data: items }, { data: branchList }] = await Promise.all([
+  const [{ data: categories }, { data: items }, { data: branchList }, { data: reviewRows }] = await Promise.all([
     supabase.from("menu_categories").select("id, name").eq("restaurant_id", restaurant.id).order("sort_order").order("created_at"),
     supabase.from("menu_items").select("id, name, price, description, image_url, category_id").eq("restaurant_id", restaurant.id).order("created_at"),
     supabase.from("branches").select("id, name, city, address").eq("restaurant_id", restaurant.id).order("created_at"),
+    supabase.from("reviews").select("rating").eq("restaurant_id", restaurant.id),
   ]);
+
+  // متوسط تقييم حقيقي من جدول reviews (لا رقم ثابت)
+  const ratings = (reviewRows ?? []).map((r) => Number(r.rating)).filter((n) => Number.isFinite(n) && n > 0);
+  const avgRating = ratings.length ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1) : null;
 
   const firstBranch = branchList?.[0];
   const branchIds = (branchList ?? []).map((b) => b.id);
@@ -91,7 +99,7 @@ export default async function ManagePage() {
           <Kpi label={tr(lang, "خدمناهم (30 يوم)", "Served (30 days)")} value={toAr(served30)} tone="var(--st-open)" />
           <Kpi label={tr(lang, "متوسط الانتظار", "Avg. wait")} value={`${toAr(avgWait)} ${tr(lang, "د", "min")}`} tone="var(--brand-d)" />
           <Kpi label={tr(lang, "بالطابور الآن", "In queue now")} value={toAr(waiting.length)} tone="var(--st-full)" />
-          <Kpi label={tr(lang, "التقييم", "Rating")} value="4.9" tone="var(--star)" />
+          <Kpi label={tr(lang, "التقييم", "Rating")} value={avgRating ?? tr(lang, "—", "—")} tone="var(--star)" />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -167,6 +175,7 @@ export default async function ManagePage() {
         <section className="soft-card p-5">
           <h2 className="mb-4 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "الإعدادات وأوقات العمل", "Settings & hours")}</h2>
           <form action={updateBranchSettings} className="space-y-4">
+            {firstBranch && <input type="hidden" name="branch_id" value={firstBranch.id} />}
             <label className="flex items-center justify-between rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
               <span>
                 <span className="block font-bold text-[color:var(--ink)]">{tr(lang, "استقبال قائمة الانتظار", "Accept waitlist")}</span>

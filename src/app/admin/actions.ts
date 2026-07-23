@@ -15,6 +15,16 @@ export async function adminCreateRestaurant(
   const supabase = await createClient();
 
   const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "يجب تسجيل الدخول." };
+
+  // تحقّق أدمِن المنصّة محليًّا (دفاع في العمق فوق فحص الـ edge function)
+  const { data: isAdmin } = await supabase.rpc("is_platform_admin");
+  if (!isAdmin) return { error: "غير مصرّح — الأدمِن فقط." };
+
+  // نحتاج رمز الوصول لتمريره للـ edge function
+  const {
     data: { session },
   } = await supabase.auth.getSession();
   if (!session) return { error: "يجب تسجيل الدخول." };

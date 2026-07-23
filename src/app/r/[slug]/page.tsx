@@ -5,6 +5,7 @@ import { WaitlistForm } from "./waitlist-form";
 import { RestaurantTabs } from "./restaurant-tabs";
 import { QueueTicket } from "./queue-ticket";
 import { Gallery } from "./gallery";
+import { ShareButton } from "./share-button";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
@@ -14,6 +15,7 @@ const REVIEWS: Record<string, string> = { eficto: "171", "bait-almounah": "98", 
 const LIKES: Record<string, string> = { eficto: "286", "bait-almounah": "142", noo: "97", rudy: "229" };
 const DIST: Record<string, string> = { eficto: "3.3", "bait-almounah": "5.2", noo: "8.9", rudy: "7.1" };
 const CUISINE: Record<string, string> = { eficto: "إيطالي", "bait-almounah": "شعبي", noo: "بحري", rudy: "بيتزا" };
+const CUISINE_EN: Record<string, string> = { eficto: "Italian", "bait-almounah": "Local", noo: "Seafood", rudy: "Pizza" };
 
 export default async function RestaurantPublicPage({
   params,
@@ -55,7 +57,7 @@ export default async function RestaurantPublicPage({
 
   let defaultName = "";
   let defaultPhone = "";
-  let activeEntry: { position: number | null } | null = null;
+  let activeEntry: { position: number | null; branch_id: string } | null = null;
   if (user) {
     const { data: customer } = await supabase.from("customers").select("id, full_name, phone").eq("user_id", user.id).maybeSingle();
     defaultName = customer?.full_name ?? "";
@@ -63,7 +65,7 @@ export default async function RestaurantPublicPage({
     if (customer && branchList.length) {
       const { data: entry } = await supabase
         .from("waitlist_entries")
-        .select("position")
+        .select("position, branch_id")
         .eq("customer_id", customer.id)
         .in("branch_id", branchList.map((b) => b.id))
         .in("status", ["waiting", "notified"])
@@ -74,10 +76,13 @@ export default async function RestaurantPublicPage({
     }
   }
 
-  const initial = restaurant.name.trim().charAt(0) || "م";
+  const initial = (restaurant.name ?? "").trim().charAt(0) || "م";
   const hasBranches = branchList.length > 0;
   const city = branchList[0]?.city ?? "";
-  const total = withCounts[0]?.total ?? 0;
+  // إجمالي الطابور من فرع العميل الفعلي (لا من الفرع الأول دائمًا)
+  const total = activeEntry
+    ? withCounts.find((c) => c.id === activeEntry!.branch_id)?.total ?? withCounts[0]?.total ?? 0
+    : withCounts[0]?.total ?? 0;
   const s0 = branchList[0] as { branch_settings?: { accepts_waitlist: boolean } | { accepts_waitlist: boolean }[] | null } | undefined;
   const settings0 = Array.isArray(s0?.branch_settings) ? s0?.branch_settings[0] : s0?.branch_settings;
   const accepts = settings0?.accepts_waitlist ?? true;
@@ -90,7 +95,7 @@ export default async function RestaurantPublicPage({
   ) : activeEntry ? (
     <QueueTicket position={activeEntry.position ?? 0} total={total} />
   ) : (
-    <WaitlistForm slug={slug} branches={withCounts} accepts={accepts} defaultName={defaultName} defaultPhone={defaultPhone} />
+    <WaitlistForm slug={slug} branches={withCounts} accepts={accepts} defaultName={defaultName} defaultPhone={defaultPhone} restaurantName={restaurant.name} restaurantLogo={restaurant.logo_url} />
   );
 
   return (
@@ -98,9 +103,7 @@ export default async function RestaurantPublicPage({
       {/* هيدر المطعم */}
       <header className="rq-header px-5 pb-16 pt-5">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
-          <button className="rq-circle" aria-label={tr(lang, "مشاركة", "Share")}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3v12M12 3l-4 4M12 3l4 4M6 13v5a2 2 0 002 2h8a2 2 0 002-2v-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          </button>
+          <ShareButton title={restaurant.name} />
           <h1 className="font-display text-2xl font-bold">{restaurant.name}</h1>
           <Link href="/" className="rq-circle" aria-label={tr(lang, "رجوع", "Back")}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -110,9 +113,10 @@ export default async function RestaurantPublicPage({
 
       <main className="mx-auto -mt-11 w-full max-w-2xl flex-1 px-5 pb-14">
         <RestaurantTabs
+          slug={slug}
           name={restaurant.name}
           nameEn={restaurant.name_en}
-          cuisine={CUISINE[slug] ?? tr(lang, "مطعم", "Restaurant")}
+          cuisine={tr(lang, CUISINE[slug] ?? "مطعم", CUISINE_EN[slug] ?? "Restaurant")}
           description={restaurant.description}
           rating={RATING[slug] ?? "4.7"}
           reviewCount={REVIEWS[slug] ?? "42"}

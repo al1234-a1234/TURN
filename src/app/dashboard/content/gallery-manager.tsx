@@ -22,14 +22,25 @@ export function GalleryManager({ restaurantId, photos }: { restaurantId: string;
     setErr(null);
     const supabase = createClient();
     try {
+      const MIME_EXT: Record<string, string> = {
+        "image/jpeg": "jpg",
+        "image/png": "png",
+        "image/webp": "webp",
+        "image/avif": "avif",
+        "image/gif": "gif",
+      };
       for (const file of files) {
+        const ext = MIME_EXT[file.type];
+        if (!ext) {
+          setErr(tr(lang, "بعض الملفات بصيغة غير مدعومة", "Some files have an unsupported format"));
+          continue;
+        }
         if (file.size > 5 * 1024 * 1024) {
           setErr(tr(lang, "بعض الصور تجاوزت 5MB", "Some images exceed 5MB"));
           continue;
         }
-        const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
         const path = `restaurants/${restaurantId}/gallery-${crypto.randomUUID()}.${ext}`;
-        const { error } = await supabase.storage.from("media").upload(path, file, { upsert: true, cacheControl: "3600" });
+        const { error } = await supabase.storage.from("media").upload(path, file, { upsert: true, cacheControl: "3600", contentType: file.type });
         if (error) {
           setErr(tr(lang, "تعذّر رفع بعض الصور", "Failed to upload some images"));
           continue;

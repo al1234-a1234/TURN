@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { joinWaitlistGuest, type WaitlistState } from "./actions";
 import { QueueTicket } from "./queue-ticket";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
+import { recordTurn } from "@/lib/local-store";
 
 type Branch = { id: string; name: string; total: number; inside: number; outside: number };
 
@@ -38,12 +39,16 @@ export function WaitlistForm({
   accepts,
   defaultName,
   defaultPhone,
+  restaurantName,
+  restaurantLogo,
 }: {
   slug: string;
   branches: Branch[];
   accepts: boolean;
   defaultName: string;
   defaultPhone: string;
+  restaurantName?: string;
+  restaurantLogo?: string | null;
 }) {
   const lang = useLang();
   const [state, formAction, pending] = useActionState<WaitlistState, FormData>(
@@ -57,6 +62,15 @@ export function WaitlistForm({
     () => branches.find((b) => b.id === branchId) ?? branches[0],
     [branchId, branches],
   );
+
+  // سجّل الدور في يوميات الضيف عند نجاح الانضمام (تخزين محلّي)
+  useEffect(() => {
+    if (state.ok) {
+      recordTurn({ slug, name: restaurantName ?? slug, logo: restaurantLogo ?? null, at: new Date().toISOString() });
+    }
+    // نعتمد فقط على تغيّر نجاح الحالة
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.ok]);
 
   if (state.ok) {
     return (

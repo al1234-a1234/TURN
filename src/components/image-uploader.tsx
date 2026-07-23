@@ -30,6 +30,19 @@ export function ImageUploader({
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    // نوع الملف من محتواه (MIME) لا من امتداد الاسم — نمنع رفع SVG/HTML وما شابه
+    const MIME_EXT: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+      "image/avif": "avif",
+      "image/gif": "gif",
+    };
+    const ext = MIME_EXT[file.type];
+    if (!ext) {
+      setErr(tr(lang, "صيغة غير مدعومة (JPG/PNG/WebP فقط)", "Unsupported format (JPG/PNG/WebP only)"));
+      return;
+    }
     if (file.size > 5 * 1024 * 1024) {
       setErr(tr(lang, "الحد الأقصى 5MB", "Max size 5MB"));
       return;
@@ -37,11 +50,10 @@ export function ImageUploader({
     setBusy(true);
     setErr(null);
     const supabase = createClient();
-    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
     const path = `restaurants/${restaurantId}/${name}-${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage
       .from("media")
-      .upload(path, file, { upsert: true, cacheControl: "3600" });
+      .upload(path, file, { upsert: true, cacheControl: "3600", contentType: file.type });
     if (error) {
       setErr(tr(lang, "تعذّر رفع الصورة", "Failed to upload image"));
       setBusy(false);
