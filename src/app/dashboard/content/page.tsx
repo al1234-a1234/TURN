@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { loadOwner } from "../owner-context";
 import { staffHasPermission } from "@/lib/features";
 import { saveLinks } from "./actions";
+import { GalleryManager } from "./gallery-manager";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 
@@ -19,6 +20,13 @@ export default async function ContentPage() {
     .eq("id", restaurant.id)
     .maybeSingle();
   const links = (r?.links ?? {}) as Record<string, string>;
+
+  const { data: photos } = await supabase
+    .from("restaurant_photos")
+    .select("id, url, caption")
+    .eq("restaurant_id", restaurant.id)
+    .order("sort_order")
+    .order("created_at");
 
   const fields: { key: string; label: string; placeholder?: string }[] = [
     { key: "maps", label: tr(lang, "رابط خرائط Google", "Google Maps link") },
@@ -49,6 +57,12 @@ export default async function ContentPage() {
           ))}
           <button className="btn btn-primary w-full">{tr(lang, "حفظ الروابط", "Save links")}</button>
         </form>
+      </section>
+
+      <section className="soft-card mt-6 p-5">
+        <h2 className="mb-1 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "معرض الصور", "Photo gallery")}</h2>
+        <p className="mb-4 text-sm text-[color:var(--muted)]">{tr(lang, "صور مطعمك (شعار، واجهة، أجواء) — يتصفّحها العميل في صفحتك.", "Your restaurant photos (logo, storefront, ambiance) — customers browse them on your page.")}</p>
+        <GalleryManager restaurantId={restaurant.id} photos={photos ?? []} />
       </section>
     </>
   );

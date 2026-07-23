@@ -32,10 +32,11 @@ export default async function RestaurantPublicPage({
 
   if (!restaurant) notFound();
 
-  const [{ data: branches }, { data: categories }, { data: items }] = await Promise.all([
+  const [{ data: branches }, { data: categories }, { data: items }, { data: photos }] = await Promise.all([
     supabase.from("branches").select("id, name, city, address, branch_settings(accepts_waitlist)").eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at"),
     supabase.from("menu_categories").select("id, name").eq("restaurant_id", restaurant.id).order("sort_order").order("created_at"),
     supabase.from("menu_items").select("id, name, price, description, image_url, category_id").eq("restaurant_id", restaurant.id).eq("is_available", true).order("created_at"),
+    supabase.from("restaurant_photos").select("id, url, caption").eq("restaurant_id", restaurant.id).order("sort_order").order("created_at"),
   ]);
 
   const {
@@ -127,48 +128,88 @@ export default async function RestaurantPublicPage({
           {waitlistPanel}
         </RestaurantTabs>
 
+        <Gallery photos={photos ?? []} label={tr(lang, "صور من المطعم", "Photos from the restaurant")} />
+
         <RestaurantLinks links={(restaurant.links ?? {}) as Record<string, string>} label={tr(lang, "تابعنا وزورنا", "Follow & visit us")} />
       </main>
     </div>
   );
 }
 
-const LINK_META: { key: string; icon: string; wa?: boolean }[] = [
-  { key: "maps", icon: "📍" },
-  { key: "instagram", icon: "📷" },
-  { key: "x", icon: "𝕏" },
-  { key: "tiktok", icon: "🎵" },
-  { key: "snapchat", icon: "👻" },
-  { key: "whatsapp", icon: "🟢", wa: true },
-  { key: "website", icon: "🌐" },
+/** معرض صور المطعم — قابل للتقليب بالسحب (scroll-snap). */
+function Gallery({ photos, label }: { photos: { id: string; url: string; caption: string | null }[]; label: string }) {
+  if (!photos.length) return null;
+  return (
+    <div className="mt-6">
+      <p className="mb-3 font-display text-base font-bold text-[color:var(--ink)]">{label}</p>
+      <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {photos.map((ph) => (
+          <div key={ph.id} className="relative aspect-[4/3] w-[80%] shrink-0 snap-center overflow-hidden rounded-3xl border sm:w-[46%]" style={{ borderColor: "var(--border)" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={ph.url} alt={ph.caption ?? ""} className="h-full w-full object-cover" />
+            {ph.caption && (
+              <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-3 text-sm font-bold text-white">{ph.caption}</span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const LINK_KEYS: { key: string; wa?: boolean }[] = [
+  { key: "maps" },
+  { key: "instagram" },
+  { key: "x" },
+  { key: "tiktok" },
+  { key: "snapchat" },
+  { key: "whatsapp", wa: true },
+  { key: "website" },
 ];
 
+/** أيقونات المنصّات — أشكال معروفة بهويتنا (أبيض على تدرّج برتقالي). */
+function LinkGlyph({ k }: { k: string }) {
+  const p = { fill: "none", stroke: "#fff", strokeWidth: 1.9, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  switch (k) {
+    case "instagram":
+      return <svg width="21" height="21" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="5" {...p} /><circle cx="12" cy="12" r="4" {...p} /><circle cx="17.2" cy="6.8" r="1.1" fill="#fff" stroke="none" /></svg>;
+    case "maps":
+      return <svg width="21" height="21" viewBox="0 0 24 24"><path d="M12 21s6.5-6.4 6.5-11A6.5 6.5 0 0 0 5.5 10c0 4.6 6.5 11 6.5 11z" {...p} /><circle cx="12" cy="10" r="2.4" {...p} /></svg>;
+    case "x":
+      return <svg width="19" height="19" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19" {...p} /></svg>;
+    case "tiktok":
+      return <svg width="20" height="20" viewBox="0 0 24 24"><path d="M14 4v9.5a3.2 3.2 0 1 1-2.4-3.1" {...p} /><path d="M14 4c.4 2.2 1.9 3.6 4 3.8" {...p} /></svg>;
+    case "snapchat":
+      return <svg width="21" height="21" viewBox="0 0 24 24"><path d="M12 4c2.6 0 3.7 2 3.7 4.4 0 1 .1 1.8.5 2.3M12 4c-2.6 0-3.7 2-3.7 4.4 0 1.6-.1 2.2-.7 2.6M12 4v0" {...p} /><path d="M8 10.6c-1 .6-2 .7-2.4.9-.6.3-.3.9.2 1.2.7.4 1.6.4 1.8 1 .3.9-1.7 2-3 2.3 1 1.2 2.4 1.8 3.6 1.8M16 10.6c1 .6 2 .7 2.4.9.6.3.3.9-.2 1.2-.7.4-1.6.4-1.8 1-.3.9 1.7 2 3 2.3-1 1.2-2.4 1.8-3.6 1.8" {...p} /></svg>;
+    case "whatsapp":
+      return <svg width="21" height="21" viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 1-11.8 7L4 20l1.6-4A8 8 0 1 1 20 11.5z" {...p} /><path d="M9 9.2c.2-.6.4-.6.7-.6h.5c.2 0 .4.3.5.6l.5 1.2c0 .2 0 .3-.1.4l-.4.5c-.1.1-.2.3 0 .5.5.9 1.3 1.5 2.2 1.9.2.1.4 0 .5-.1l.4-.5c.1-.1.3-.2.5-.1l1.2.6c.2.1.3.2.3.4 0 .6-.4 1.2-1 1.4-.5.2-1.1.2-2.6-.5a7 7 0 0 1-3-3c-.6-1.3-.6-1.9-.7-2.6z" fill="#fff" stroke="none" /></svg>;
+    default: // website
+      return <svg width="21" height="21" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.3" {...p} /><path d="M3.7 12h16.6M12 3.7c2.6 2.4 2.6 14.2 0 16.6M12 3.7c-2.6 2.4-2.6 14.2 0 16.6" {...p} /></svg>;
+  }
+}
+
 function RestaurantLinks({ links, label }: { links: Record<string, string>; label: string }) {
-  const present = LINK_META.filter((m) => (links[m.key] ?? "").trim());
+  const present = LINK_KEYS.filter((m) => (links[m.key] ?? "").trim());
   if (present.length === 0) return null;
   return (
-    <div className="mt-6 rq-card p-4 text-center">
-      <p className="mb-3 text-sm font-bold text-[color:var(--muted)]">{label}</p>
+    <div className="mt-6 rq-card p-5 text-center">
+      <p className="mb-4 font-display text-base font-bold text-[color:var(--ink)]">{label}</p>
       <div className="flex flex-wrap items-center justify-center gap-3">
         {present.map((m) => {
           const raw = links[m.key].trim();
           const href = m.wa
-            ? raw.startsWith("http")
-              ? raw
-              : `https://wa.me/${raw.replace(/\D/g, "")}`
-            : raw.startsWith("http")
-              ? raw
-              : `https://${raw}`;
+            ? raw.startsWith("http") ? raw : `https://wa.me/${raw.replace(/\D/g, "")}`
+            : raw.startsWith("http") ? raw : `https://${raw}`;
           return (
             <a
               key={m.key}
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex h-11 w-11 items-center justify-center rounded-2xl text-lg"
-              style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
+              className="flex h-12 w-12 items-center justify-center rounded-full transition active:scale-95"
+              style={{ background: "linear-gradient(155deg,#a8371a,#661c0a)", boxShadow: "0 8px 18px -10px rgba(102,28,10,0.7)" }}
             >
-              {m.icon}
+              <LinkGlyph k={m.key} />
             </a>
           );
         })}
