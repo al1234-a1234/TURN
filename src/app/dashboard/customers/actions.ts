@@ -65,6 +65,51 @@ export async function grantReward(formData: FormData) {
   revalidatePath(`/dashboard/customers/${customerId}`);
 }
 
+/** منح مكافأة لشريحة كاملة (الكل/VIP/ذهبي/فضّي/عائدون) — حملة تسويقية. */
+export async function grantRewardToSegment(formData: FormData) {
+  const caller = await requirePerm("customers");
+  if (!caller) return;
+
+  const title = String(formData.get("title") ?? "").trim();
+  if (!title) return;
+  const segment = String(formData.get("segment") ?? "all");
+  const kind = String(formData.get("kind") ?? "gift") === "discount" ? "discount" : "gift";
+  const valueRaw = String(formData.get("value") ?? "").trim();
+  const value = valueRaw ? Number(valueRaw) : null;
+  const valueKind = String(formData.get("value_kind") ?? "percent") === "amount" ? "amount" : "percent";
+  const description = String(formData.get("description") ?? "").trim() || null;
+  const code = String(formData.get("code") ?? "").trim().toUpperCase() || null;
+  const daysRaw = String(formData.get("expires_days") ?? "").trim();
+  const days = daysRaw ? Math.max(1, Number(daysRaw)) : null;
+  const expires_at = days ? new Date(Date.now() + days * 864e5).toISOString() : null;
+
+  let q = caller.supabase
+    .from("customer_restaurant")
+    .select("customer_id")
+    .eq("restaurant_id", caller.restaurantId);
+  if (segment === "vip") q = q.eq("is_vip", true);
+  else if (segment === "gold") q = q.eq("tier", "gold");
+  else if (segment === "silver") q = q.eq("tier", "silver");
+  else if (segment === "returning") q = q.gte("visits", 2);
+
+  const { data: targets } = await q.limit(5000);
+  const rows = (targets ?? []).map((t) => ({
+    restaurant_id: caller.restaurantId,
+    customer_id: t.customer_id,
+    kind,
+    title,
+    value: kind === "discount" && Number.isFinite(value as number) ? value : null,
+    value_kind: valueKind,
+    description,
+    code,
+    created_by: caller.userId,
+    expires_at,
+  }));
+  if (rows.length > 0) await caller.supabase.from("customer_rewards").insert(rows);
+
+  revalidatePath("/dashboard/customers");
+}
+
 /** إلغاء مكافأة (تعليمها منتهية). */
 export async function revokeReward(formData: FormData) {
   const caller = await requirePerm("customers");

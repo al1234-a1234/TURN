@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CustomerShell } from "@/components/customer-shell";
 import { LangToggle } from "@/components/lang-toggle";
+import { RewardsBadge } from "./rewards-badge";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
 
@@ -33,6 +34,7 @@ export default async function MePage() {
             <Link key={it.href} href={it.href} className="flex items-center gap-3 px-5 py-4 transition active:bg-[color:var(--surface-2)]">
               <span className="text-xl">{it.icon}</span>
               <span className="flex-1 font-bold text-[color:var(--ink)]">{tr(lang, it.ar, it.en)}</span>
+              {it.href === "/me/rewards" && <RewardsBadge />}
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-[color:var(--muted)]"><path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </Link>
           ))}

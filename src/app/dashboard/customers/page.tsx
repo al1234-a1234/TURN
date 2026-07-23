@@ -3,6 +3,7 @@ import Link from "next/link";
 import { loadOwner } from "../owner-context";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { CustomerControls } from "./customer-controls";
+import { CampaignForm } from "./campaign-form";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
@@ -53,6 +54,13 @@ export default async function CustomersPage() {
   const vips = list.filter((p) => p.is_vip).length;
   const totalVisits = list.reduce((a, p) => a + p.visits, 0);
   const avgVisits = list.length ? Math.round((totalVisits / list.length) * 10) / 10 : 0;
+  const segmentCounts = {
+    all: list.length,
+    vip: vips,
+    gold: list.filter((p) => p.tier === "gold").length,
+    silver: list.filter((p) => p.tier === "silver").length,
+    returning: list.filter((p) => p.visits >= 2).length,
+  };
 
   return (
     <div className="space-y-6">
@@ -65,6 +73,8 @@ export default async function CustomersPage() {
         <p className="text-sm text-[color:var(--muted)]">
           {tr(lang, "كل عميل زار مطعمك عبر دور — وصولك الكامل له: زياراته، شريحته، ووسمه كـVIP مع ملاحظاتك الخاصة.", "Every customer who visited your restaurant through Turn — full access: their visits, tier, VIP tag, and your private notes.")}
         </p>
+
+        <CampaignForm counts={segmentCounts} />
 
         {list.length === 0 ? (
           <div className="soft-card py-10 text-center">

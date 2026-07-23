@@ -1229,6 +1229,7 @@ export type Database = {
           expires_at: string
           id: string
           kind: string
+          redeemed_at: string
           restaurant: string
           restaurant_slug: string
           status: string
@@ -1236,6 +1237,10 @@ export type Database = {
           value: number
           value_kind: string
         }[]
+      }
+      redeem_customer_reward: {
+        Args: { p_reward_id: string; p_phone: string }
+        Returns: boolean
       }
       has_feature: {
         Args: { p_module: string; rest_id: string }
