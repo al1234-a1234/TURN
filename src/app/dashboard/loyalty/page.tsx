@@ -71,7 +71,7 @@ export default async function LoyaltyPage() {
             </div>
             <div>
               <label className="field-label">وصف المكافأة</label>
-              <input name="reward_description" defaultValue={program?.reward_description ?? ""} placeholder="مثال: وجبة مجانية عند ١٠ نقاط" className={field} />
+              <input name="reward_description" defaultValue={program?.reward_description ?? ""} placeholder="مثال: وجبة مجانية عند 10 نقاط" className={field} />
             </div>
             <button className="btn btn-primary w-full">حفظ البرنامج</button>
           </form>

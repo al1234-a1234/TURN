@@ -72,7 +72,7 @@ export default async function OffersPage() {
           <form action={createOffer} className="space-y-4">
             <div>
               <label className="field-label">عنوان العرض</label>
-              <input name="title" required placeholder="مثال: خصم ٢٠٪ على الغداء" className={field} />
+              <input name="title" required placeholder="مثال: خصم 20٪ على الغداء" className={field} />
             </div>
             <div>
               <label className="field-label">الوصف (اختياري)</label>
@@ -91,7 +91,7 @@ export default async function OffersPage() {
               </div>
               <div>
                 <label className="field-label">القيمة</label>
-                <input name="value" inputMode="numeric" placeholder="٢٠" className={field} />
+                <input name="value" inputMode="numeric" placeholder="20" className={field} />
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -121,7 +121,7 @@ export default async function OffersPage() {
               </div>
               <div>
                 <label className="field-label">لكل عميل</label>
-                <input name="per_customer_limit" inputMode="numeric" defaultValue="١" className={field} />
+                <input name="per_customer_limit" inputMode="numeric" defaultValue="1" className={field} />
               </div>
             </div>
             <button className="btn btn-primary w-full">نشر العرض</button>

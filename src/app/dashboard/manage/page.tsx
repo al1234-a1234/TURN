@@ -35,14 +35,14 @@ export default async function ManagePage() {
     : { data: null };
   const hours = (settings?.opening_hours ?? {}) as { open?: string; close?: string };
 
-  // ===== تحليلات (آخر ٣٠ يوم) =====
+  // ===== تحليلات (آخر 30 يوم) =====
   const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
   const { data: analytics } = branchIds.length
     ? await supabase.from("waitlist_entries").select("joined_at, seated_at, zone, status").in("branch_id", branchIds).gte("joined_at", since30)
     : { data: [] };
   const rows = analytics ?? [];
 
-  // مخدومون آخر ٧ أيام
+  // مخدومون آخر 7 أيام
   const now = new Date();
   const dayBuckets = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (6 - i));
@@ -57,9 +57,9 @@ export default async function ManagePage() {
     if (b) b.value += 1;
   }
 
-  // ساعات الذروة (نوافذ ساعتين ١٢م→١٢ص)
+  // ساعات الذروة (نوافذ ساعتين 12م→12ص)
   const hourWindows = [12, 14, 16, 18, 20, 22];
-  const hourLabels = ["١٢", "٢", "٤", "٦", "٨", "١٠"];
+  const hourLabels = ["12", "2", "4", "6", "8", "10"];
   const peak = hourWindows.map((h, i) => ({ label: hourLabels[i], value: 0 }));
   for (const r of rows) {
     const hr = new Date(r.joined_at).getHours();
@@ -86,14 +86,14 @@ export default async function ManagePage() {
       <div className="space-y-6">
         {/* ===== التحليلات ===== */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Kpi label="خدمناهم (٣٠ يوم)" value={toAr(served30)} tone="var(--st-open)" />
+          <Kpi label="خدمناهم (30 يوم)" value={toAr(served30)} tone="var(--st-open)" />
           <Kpi label="متوسط الانتظار" value={`${toAr(avgWait)} د`} tone="var(--brand-d)" />
           <Kpi label="بالطابور الآن" value={toAr(waiting.length)} tone="var(--st-full)" />
-          <Kpi label="التقييم" value="٤٫٩" tone="var(--star)" />
+          <Kpi label="التقييم" value="4.9" tone="var(--star)" />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <ChartCard title="المخدومون آخر ٧ أيام" hint="عدد">
+          <ChartCard title="المخدومون آخر 7 أيام" hint="عدد">
             <ColumnChart data={dayBuckets} color="var(--brand)" />
           </ChartCard>
           <ChartCard title="ساعات الذروة" hint="مساءً">

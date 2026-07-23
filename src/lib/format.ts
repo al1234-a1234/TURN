@@ -1,14 +1,11 @@
-const AR = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
+/** الأرقام تُعرض بالخانات الإنجليزية (اللاتينية) — قرار المنتج. */
+export const toAr = (s: string | number) => String(s);
 
-/** تحويل الأرقام اللاتينية إلى هندية */
-export const toAr = (s: string | number) =>
-  String(s).replace(/[0-9]/g, (d) => AR[+d]);
-
-/** سعر بصيغة عربية موحّدة: ٥٠ ر.س (بدون .0) */
+/** سعر موحّد: 50 ر.س (بدون .0) */
 export const money = (v: number | null | undefined) =>
-  v == null ? "" : `${toAr(Math.round(Number(v)))} ر.س`;
+  v == null ? "" : `${Math.round(Number(v))} ر.س`;
 
-/** تقدير الوقت بالدقائق حسب عدد من في الطابور (٧ دقائق للمجموعة) */
+/** تقدير الوقت بالدقائق حسب عدد من في الطابور (7 دقائق للمجموعة) */
 export const MIN_PER_PARTY = 7;
 export const waitMinutes = (aheadCount: number) => aheadCount * MIN_PER_PARTY;
 

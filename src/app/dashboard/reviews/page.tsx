@@ -38,7 +38,7 @@ export default async function ReviewsPage() {
   const avg = count ? Math.round((list.reduce((a, r) => a + r.rating, 0) / count) * 10) / 10 : 0;
   const routed = list.filter((r) => r.routed_to_google).length;
 
-  // توزيع النجوم ٥→١
+  // توزيع النجوم 5→1
   const dist = [5, 4, 3, 2, 1].map((s) => ({ s, n: list.filter((r) => r.rating === s).length }));
   const maxN = Math.max(1, ...dist.map((d) => d.n));
 
@@ -76,7 +76,7 @@ export default async function ReviewsPage() {
               <span>🧭</span> توجيه التقييم الذكي مُفعّل
             </p>
             <p className="mt-1 text-xs text-[color:var(--muted)]">
-              العملاء الراضون (٤★ وأعلى) يُوجَّهون لِخرائط Google، والملاحظات الأقل تصلك أنت مباشرةً.
+              العملاء الراضون (4★ وأعلى) يُوجَّهون لِخرائط Google، والملاحظات الأقل تصلك أنت مباشرةً.
               وُجِّه {toAr(routed)} تقييم إيجابي حتى الآن.
             </p>
           </div>

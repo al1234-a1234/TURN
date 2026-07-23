@@ -12,7 +12,7 @@ function ZoneStat({ label, count }: { label: string; count: number }) {
   return (
     <div className="rq-card p-4 text-center">
       <p className="font-display text-3xl font-bold" style={{ color: busy ? "var(--st-full)" : "var(--st-open)" }}>
-        {busy ? toAr(count) : "٠"}
+        {busy ? toAr(count) : "0"}
       </p>
       <p className="mt-1 text-xs font-bold text-[color:var(--muted)]">{label}</p>
       <p className="mt-0.5 text-[11px] font-bold" style={{ color: busy ? "var(--st-full)" : "var(--st-open)" }}>

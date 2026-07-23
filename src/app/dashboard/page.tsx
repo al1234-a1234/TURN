@@ -8,7 +8,7 @@ import { toAr } from "@/lib/format";
 const AR_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 const HOURS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
 function hourLabel(h: number): string {
-  if (h === 12) return "١٢ م";
+  if (h === 12) return "12 م";
   if (h < 12) return `${toAr(h)} ص`;
   return `${toAr(h - 12)} م`;
 }
@@ -80,7 +80,7 @@ export default async function OverviewPage() {
   const vips = profRows.filter((p) => p.is_vip).length;
   const topCustomers = profRows.slice(0, 5);
 
-  // ===== الطابور والتحليلات (٣٠ يوم) =====
+  // ===== الطابور والتحليلات (30 يوم) =====
   const rows = (analytics.data ?? []) as { joined_at: string; seated_at: string | null; status: string; zone: string; party_size: number }[];
   const seated = rows.filter((r) => r.status === "seated" && r.seated_at);
   const served30 = seated.length;
@@ -104,7 +104,7 @@ export default async function OverviewPage() {
   const outsideNow = waitingNow.filter((r) => r.zone === "outside").length;
   const queueCount = waitingNow.length;
 
-  // مخدومون آخر ٧ أيام
+  // مخدومون آخر 7 أيام
   const dayBuckets = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (6 - i));
     return { key: `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`, label: AR_DAYS[d.getDay()], value: 0 };
@@ -152,13 +152,13 @@ export default async function OverviewPage() {
         </div>
       )}
 
-      {/* المؤشرات (٨) */}
+      {/* المؤشرات (8) */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label="متوسط التقييم" value={ratings.length ? `★ ${toAr(avgRating)}` : "—"} tone="var(--star)" tint="#fbf1e6" />
         <Kpi label="متوسط الانتظار" value={`${toAr(avgWait)} د`} tone="var(--st-full)" tint="#fdf5e6" />
         <Kpi label="جالسون اليوم" value={toAr(seatedToday)} tone="var(--st-open)" tint="#e9f4ee" />
         <Kpi label="إجمالي العملاء" value={toAr(totalCustomers)} tone="var(--brand-d)" tint="#eef3fb" />
-        <Kpi label="خدمناهم (٣٠ يوم)" value={toAr(served30)} tone="var(--brand)" tint="#f8ece7" />
+        <Kpi label="خدمناهم (30 يوم)" value={toAr(served30)} tone="var(--brand)" tint="#f8ece7" />
         <Kpi label="عملاء عائدون" value={`٪${toAr(returningPct)}`} tone="var(--st-open)" tint="#e9f4ee" />
         <Kpi label="عملاء مميّزون" value={toAr(vips)} tone="var(--brand-d)" tint="#f8e9e3" />
         <Kpi label="نسبة التغيّب" value={`٪${toAr(noShowRate)}`} tone={noShowRate >= 20 ? "var(--st-closed)" : "var(--muted)"} tint="#f4eee6" />
@@ -166,7 +166,7 @@ export default async function OverviewPage() {
 
       {/* رسوم */}
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <ChartCard title="المخدومون آخر ٧ أيام" hint="عدد">
+        <ChartCard title="المخدومون آخر 7 أيام" hint="عدد">
           <ColumnChart data={dayBuckets} color="var(--brand)" />
         </ChartCard>
         <ChartCard title="الطابور الآن" hint={`متوسط المجموعة ${toAr(avgParty)}`}>

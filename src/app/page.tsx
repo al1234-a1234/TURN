@@ -5,9 +5,9 @@ import { toAr } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-const RATING: Record<string, string> = { eficto: "٤٫٩", "bait-almounah": "٤٫٧", noo: "٤٫٦", rudy: "٤٫٨" };
+const RATING: Record<string, string> = { eficto: "4.9", "bait-almounah": "4.7", noo: "4.6", rudy: "4.8" };
 const CUISINE: Record<string, string> = { eficto: "إيطالي", "bait-almounah": "شعبي", noo: "بحري", rudy: "بيتزا" };
-const DIST: Record<string, string> = { eficto: "٣٫٣", "bait-almounah": "٥٫٢", noo: "٨٫٩", rudy: "٧٫١" };
+const DIST: Record<string, string> = { eficto: "3.3", "bait-almounah": "5.2", noo: "8.9", rudy: "7.1" };
 
 function ZonePill({ label, count }: { label: string; count: number }) {
   const busy = count > 0;
@@ -107,7 +107,7 @@ export default async function Home() {
                   {/* التقييم */}
                   <span className="flex shrink-0 items-center gap-1 self-start text-[15px] font-extrabold text-[color:var(--ink)]">
                     <span style={{ color: "var(--star)" }}>★</span>
-                    {RATING[r.slug] ?? "٤٫٧"}
+                    {RATING[r.slug] ?? "4.7"}
                   </span>
                 </div>
 

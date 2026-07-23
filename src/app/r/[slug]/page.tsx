@@ -6,10 +6,10 @@ import { RestaurantTabs } from "./restaurant-tabs";
 import { QueueTicket } from "./queue-ticket";
 import { toAr } from "@/lib/format";
 
-const RATING: Record<string, string> = { eficto: "٤٫٩", "bait-almounah": "٤٫٧", noo: "٤٫٦", rudy: "٤٫٨" };
-const REVIEWS: Record<string, string> = { eficto: "١٧١", "bait-almounah": "٩٨", noo: "٦٤", rudy: "٢١٣" };
-const LIKES: Record<string, string> = { eficto: "٢٨٦", "bait-almounah": "١٤٢", noo: "٩٧", rudy: "٢٢٩" };
-const DIST: Record<string, string> = { eficto: "٣٫٣", "bait-almounah": "٥٫٢", noo: "٨٫٩", rudy: "٧٫١" };
+const RATING: Record<string, string> = { eficto: "4.9", "bait-almounah": "4.7", noo: "4.6", rudy: "4.8" };
+const REVIEWS: Record<string, string> = { eficto: "171", "bait-almounah": "98", noo: "64", rudy: "213" };
+const LIKES: Record<string, string> = { eficto: "286", "bait-almounah": "142", noo: "97", rudy: "229" };
+const DIST: Record<string, string> = { eficto: "3.3", "bait-almounah": "5.2", noo: "8.9", rudy: "7.1" };
 const CUISINE: Record<string, string> = { eficto: "إيطالي", "bait-almounah": "شعبي", noo: "بحري", rudy: "بيتزا" };
 
 export default async function RestaurantPublicPage({
@@ -109,10 +109,10 @@ export default async function RestaurantPublicPage({
           nameEn={restaurant.name_en}
           cuisine={CUISINE[slug] ?? "مطعم"}
           description={restaurant.description}
-          rating={RATING[slug] ?? "٤٫٧"}
-          reviewCount={REVIEWS[slug] ?? "٤٢"}
-          likes={LIKES[slug] ?? "٥٠"}
-          distanceKm={DIST[slug] ?? "٤٫٠"}
+          rating={RATING[slug] ?? "4.7"}
+          reviewCount={REVIEWS[slug] ?? "42"}
+          likes={LIKES[slug] ?? "50"}
+          distanceKm={DIST[slug] ?? "4.0"}
           city={city}
           cover={restaurant.cover_url}
           logo={restaurant.logo_url}
