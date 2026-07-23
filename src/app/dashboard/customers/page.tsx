@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { OwnerShell } from "../owner-shell";
 import { loadOwner } from "../owner-context";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
@@ -81,7 +82,7 @@ export default async function CustomersPage() {
               const name = c?.full_name ?? tr(lang, "عميل", "Customer");
               return (
                 <li key={p.customer_id} className="soft-card p-4">
-                  <div className="flex items-center gap-3">
+                  <Link href={`/dashboard/customers/${p.customer_id}`} className="flex items-center gap-3">
                     <span
                       className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-bold"
                       style={{ background: tm.bg, color: tm.color }}
@@ -110,7 +111,7 @@ export default async function CustomersPage() {
                       )}
                       {p.note && <p className="mt-1.5 rounded-xl bg-[color:var(--surface-2)] p-2 text-xs text-[color:var(--ink)]">📝 {p.note}</p>}
                     </div>
-                  </div>
+                  </Link>
                   <CustomerControls
                     customerId={p.customer_id}
                     isVip={p.is_vip}
