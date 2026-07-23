@@ -6,8 +6,8 @@ import { tr } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
-const CUISINE: Record<string, string> = { eficto: "إيطالي", "bait-almounah": "شعبي", noo: "بحري", rudy: "بيتزا" };
-const CUISINE_EN: Record<string, string> = { eficto: "Italian", "bait-almounah": "Local", noo: "Seafood", rudy: "Pizza" };
+const CUISINE: Record<string, string> = { eficto: "إيطالي", "bait-almounah": "شعبي", noo: "بحري", rudy: "بيتزا", "prime-cut": "برجر", takya: "سعودي معاصر", "najd-village": "نجدي" };
+const CUISINE_EN: Record<string, string> = { eficto: "Italian", "bait-almounah": "Local", noo: "Seafood", rudy: "Pizza", "prime-cut": "Burgers", takya: "Modern Saudi", "najd-village": "Najdi" };
 
 export default async function SearchPage() {
   const lang = await getLang();

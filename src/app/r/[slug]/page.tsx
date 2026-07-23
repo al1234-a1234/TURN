@@ -10,12 +10,12 @@ import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 
-const RATING: Record<string, string> = { eficto: "4.9", "bait-almounah": "4.7", noo: "4.6", rudy: "4.8" };
-const REVIEWS: Record<string, string> = { eficto: "171", "bait-almounah": "98", noo: "64", rudy: "213" };
-const LIKES: Record<string, string> = { eficto: "286", "bait-almounah": "142", noo: "97", rudy: "229" };
-const DIST: Record<string, string> = { eficto: "3.3", "bait-almounah": "5.2", noo: "8.9", rudy: "7.1" };
-const CUISINE: Record<string, string> = { eficto: "إيطالي", "bait-almounah": "شعبي", noo: "بحري", rudy: "بيتزا" };
-const CUISINE_EN: Record<string, string> = { eficto: "Italian", "bait-almounah": "Local", noo: "Seafood", rudy: "Pizza" };
+const RATING: Record<string, string> = { eficto: "4.9", "bait-almounah": "4.7", noo: "4.6", rudy: "4.8", "prime-cut": "4.7", takya: "4.8", "najd-village": "4.6" };
+const REVIEWS: Record<string, string> = { eficto: "171", "bait-almounah": "98", noo: "64", rudy: "213", "prime-cut": "312", takya: "204", "najd-village": "418" };
+const LIKES: Record<string, string> = { eficto: "286", "bait-almounah": "142", noo: "97", rudy: "229", "prime-cut": "540", takya: "331", "najd-village": "612" };
+const DIST: Record<string, string> = { eficto: "3.3", "bait-almounah": "5.2", noo: "8.9", rudy: "7.1", "prime-cut": "4.2", takya: "6.5", "najd-village": "5.4" };
+const CUISINE: Record<string, string> = { eficto: "إيطالي", "bait-almounah": "شعبي", noo: "بحري", rudy: "بيتزا", "prime-cut": "برجر", takya: "سعودي معاصر", "najd-village": "نجدي" };
+const CUISINE_EN: Record<string, string> = { eficto: "Italian", "bait-almounah": "Local", noo: "Seafood", rudy: "Pizza", "prime-cut": "Burgers", takya: "Modern Saudi", "najd-village": "Najdi" };
 
 export default async function RestaurantPublicPage({
   params,
