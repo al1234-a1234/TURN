@@ -32,11 +32,8 @@ export function QueueActions({
 
   function remind() {
     const num = waNumber(phone);
-    const msg = tr(
-      lang,
-      `مرحبًا ${name} 👋\nدورك رقم ${position ?? ""} في ${restaurant} أوشك أن يحين. نتشرّف بك — تفضّل للحضور 🌿`,
-      `Hi ${name} 👋\nYour turn (No. ${position ?? ""}) at ${restaurant} is almost here. We'd be honored to have you — please come in 🌿`,
-    );
+    // رسالة العميل تبقى عربية دائمًا (العميل عربي)، بصرف النظر عن لغة لوحة الموظف
+    const msg = `مرحبًا ${name} 👋\nدورك رقم ${position ?? ""} في ${restaurant} أوشك أن يحين. نتشرّف بك — تفضّل للحضور 🌿`;
     const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
     start(async () => {
       await updateWaitlistStatus(id, "notified");

@@ -85,7 +85,7 @@ export function ModuleToggles({
     <div className="space-y-6">
       {groups.map((g) => (
         <div key={g.cat}>
-          <h3 className="mb-2 text-sm font-bold text-[color:var(--muted)]">{CATEGORY_LABEL[g.cat] ?? g.cat}</h3>
+          <h3 className="mb-2 text-sm font-bold text-[color:var(--muted)]">{tr(lang, CATEGORY_LABEL[g.cat] ?? g.cat, CATEGORY_LABEL_EN[g.cat] ?? g.cat)}</h3>
           <div className="space-y-2">
             {g.rows.map((row) => (
               <Toggle key={row.key} restaurantId={restaurantId} row={row} />
