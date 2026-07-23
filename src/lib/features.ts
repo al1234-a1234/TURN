@@ -43,29 +43,44 @@ export type FeatureModule = Database["public"]["Tables"]["feature_modules"]["Row
 
 type DB = SupabaseClient<Database>;
 
+function isKnownModule(key: string): key is ModuleKey {
+  return (MODULE_KEYS as readonly string[]).includes(key);
+}
+
 /**
  * الموديولات المُفعّلة لمطعم معيّن (كمجموعة سريعة الاستعلام).
- * الأساسية مضمّنة دائمًا حتى لو ما لها صف في restaurant_features.
  *
- * استعلام واحد مفهرس (idx_restaurant_features_enabled) — رخيص جدًا حتى مع آلاف المطاعم.
+ * منطق التفعيل (يطابق دالة has_feature في القاعدة):
+ *   1) صف صريح في restaurant_features (تحكّم الأدمن بالباقة) يفوز — تفعيل أو إطفاء.
+ *   2) وإلا: مُفعّل إذا كان أساسيًا (is_core) أو مُفعّلًا افتراضيًا (default_enabled).
+ *   3) وإلا: مطفأ.
+ *
+ * استعلامان مفهرسان صغيران (الكتالوج ١٣ صفًا فقط) — رخيص جدًا حتى مع آلاف المطاعم.
  */
 export async function getEnabledModules(
   supabase: DB,
   restaurantId: string,
 ): Promise<Set<ModuleKey>> {
-  const enabled = new Set<ModuleKey>(CORE_MODULES);
+  const [{ data: catalog }, { data: overrides }] = await Promise.all([
+    supabase.from("feature_modules").select("key, is_core, default_enabled"),
+    supabase
+      .from("restaurant_features")
+      .select("module_key, enabled")
+      .eq("restaurant_id", restaurantId),
+  ]);
 
-  const { data } = await supabase
-    .from("restaurant_features")
-    .select("module_key, enabled")
-    .eq("restaurant_id", restaurantId)
-    .eq("enabled", true);
+  const override = new Map<string, boolean>(
+    (overrides ?? []).map((o) => [o.module_key, o.enabled]),
+  );
 
-  for (const row of data ?? []) {
-    if ((MODULE_KEYS as readonly string[]).includes(row.module_key)) {
-      enabled.add(row.module_key as ModuleKey);
-    }
+  const enabled = new Set<ModuleKey>();
+  for (const m of catalog ?? []) {
+    if (!isKnownModule(m.key)) continue;
+    const on = m.is_core || (override.has(m.key) ? override.get(m.key)! : m.default_enabled);
+    if (on) enabled.add(m.key);
   }
+  // ضمان الأساسية حتى لو غاب الكتالوج لأي سبب
+  for (const core of CORE_MODULES) enabled.add(core);
   return enabled;
 }
 

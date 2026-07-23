@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
 import { LogoutButton } from "@/components/logout-button";
 import { QueueActions } from "./queue-actions";
 import { OwnerHeader, OwnerTabs } from "./owner-chrome";
+import { loadOwner } from "./owner-context";
 import { toAr } from "@/lib/format";
 
 function minutesSince(iso: string): number {
@@ -10,13 +10,9 @@ function minutesSince(iso: string): number {
 }
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
+  const load = await loadOwner();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (load.state === "no_user") {
     return (
       <div className="flex flex-1 flex-col">
         <OwnerHeader />
@@ -30,32 +26,24 @@ export default async function DashboardPage() {
     );
   }
 
-  const { data: staffRows } = await supabase
-    .from("staff")
-    .select("id, role, restaurants(id, name, slug)")
-    .eq("user_id", user.id)
-    .eq("is_active", true)
-    .limit(1);
-
-  const restaurant = staffRows?.[0]?.restaurants as { id: string; name: string; slug: string } | undefined;
-
-  if (!restaurant) {
-    const { data: isAdmin } = await supabase.rpc("is_platform_admin");
+  if (load.state === "no_restaurant") {
     return (
       <div className="flex flex-1 flex-col">
-        <OwnerHeader email={user.email} />
+        <OwnerHeader email={load.email ?? undefined} />
         <main className="mx-auto max-w-xl px-5 py-10">
           <div className="soft-card flex flex-col items-center gap-4 p-8 text-center">
             <span className="flex h-16 w-16 items-center justify-center rounded-2xl text-3xl" style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}>🍽️</span>
             <h1 className="font-display text-2xl font-bold text-[color:var(--ink)]">لا يوجد مطعم مرتبط بحسابك</h1>
             <p className="max-w-sm text-sm text-[color:var(--muted)]">حسابات الملّاك تُنشأ من قِبل إدارة دور فقط. تواصل معنا لإضافة مطعمك.</p>
             <a href="mailto:albraalaan@gmail.com" className="btn btn-primary w-full max-w-xs">تواصل مع الإدارة</a>
-            {isAdmin && <Link href="/admin" className="btn btn-secondary mt-2 w-full max-w-xs">⚙️ لوحة الأدمِن</Link>}
+            {load.isAdmin && <Link href="/admin" className="btn btn-secondary mt-2 w-full max-w-xs">⚙️ لوحة الأدمِن</Link>}
           </div>
         </main>
       </div>
     );
   }
+
+  const { supabase, restaurant, modules, role, permissions } = load.ctx;
 
   const { data: branches } = await supabase
     .from("branches").select("id, name").eq("restaurant_id", restaurant.id).order("created_at");
@@ -125,7 +113,7 @@ export default async function DashboardPage() {
     <div className="flex flex-1 flex-col">
       <OwnerHeader title={restaurant.name} slug={restaurant.slug} actions={<LogoutButton />} />
       <main className="mx-auto -mt-8 w-full max-w-3xl flex-1 px-5 pb-16">
-        <OwnerTabs active="reception" />
+        <OwnerTabs active="reception" modules={modules} role={role} permissions={permissions} />
 
         {/* الأرقام */}
         <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">

@@ -1,5 +1,13 @@
 import Link from "next/link";
 import { BrandLink } from "@/components/brand";
+import {
+  isModuleOn,
+  staffHasPermission,
+  type ModuleKey,
+  type StaffPermission,
+  type StaffPermissionMap,
+} from "@/lib/features";
+import type { Database } from "@/lib/supabase/database.types";
 
 export function OwnerHeader({
   title,
@@ -40,25 +48,66 @@ export function OwnerHeader({
   );
 }
 
-export function OwnerTabs({ active }: { active: "reception" | "manage" }) {
+export type OwnerTabKey =
+  | "reception"
+  | "offers"
+  | "loyalty"
+  | "customers"
+  | "reviews"
+  | "manage";
+
+type TabDef = {
+  key: OwnerTabKey;
+  label: string;
+  href: string;
+  module?: ModuleKey; // يظهر فقط إذا كان الموديول مُفعّلًا
+  perm?: StaffPermission; // يظهر فقط إذا كان للموظف الصلاحية (المدير/المالك دائمًا)
+};
+
+// ترتيب التبويبات في لوحة المالك. الاستقبال دائمًا؛ البقية حسب الموديول والصلاحية.
+const TAB_DEFS: TabDef[] = [
+  { key: "reception", label: "الاستقبال", href: "/dashboard" },
+  { key: "offers", label: "العروض", href: "/dashboard/offers", module: "offers", perm: "offers" },
+  { key: "loyalty", label: "الولاء", href: "/dashboard/loyalty", module: "loyalty", perm: "loyalty" },
+  { key: "customers", label: "العملاء", href: "/dashboard/customers", module: "crm", perm: "customers" },
+  { key: "reviews", label: "التقييمات", href: "/dashboard/reviews", module: "reviews", perm: "reviews" },
+  { key: "manage", label: "الإدارة والتحليلات", href: "/dashboard/manage", perm: "settings" },
+];
+
+export function OwnerTabs({
+  active,
+  modules,
+  role,
+  permissions,
+}: {
+  active: OwnerTabKey;
+  modules: Set<ModuleKey>;
+  role: Database["public"]["Enums"]["user_role"];
+  permissions: StaffPermissionMap;
+}) {
+  const tabs = TAB_DEFS.filter((t) => {
+    if (t.module && !isModuleOn(modules, t.module)) return false;
+    if (t.perm && !staffHasPermission(role, permissions, t.perm)) return false;
+    return true;
+  });
+
   return (
-    <div className="mb-5 grid grid-cols-2 gap-1 rounded-2xl bg-white p-1 shadow-[0_10px_24px_-18px_rgba(20,45,32,0.3)]" style={{ border: "1px solid var(--border)" }}>
-      <Link
-        href="/dashboard"
-        data-active={active === "reception"}
-        className="rounded-xl py-3 text-center text-sm font-bold text-[color:var(--muted)] data-[active=true]:text-white"
-        style={active === "reception" ? { background: "linear-gradient(160deg,#a8371a,#661c0a)" } : undefined}
-      >
-        الاستقبال
-      </Link>
-      <Link
-        href="/dashboard/manage"
-        data-active={active === "manage"}
-        className="rounded-xl py-3 text-center text-sm font-bold text-[color:var(--muted)] data-[active=true]:text-white"
-        style={active === "manage" ? { background: "linear-gradient(160deg,#a8371a,#661c0a)" } : undefined}
-      >
-        الإدارة والتحليلات
-      </Link>
+    <div className="mb-5 -mx-1 flex gap-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {tabs.map((t) => (
+        <Link
+          key={t.key}
+          href={t.href}
+          data-active={active === t.key}
+          className="shrink-0 rounded-2xl px-4 py-3 text-center text-sm font-bold text-[color:var(--muted)] transition data-[active=true]:text-white"
+          style={
+            active === t.key
+              ? { background: "linear-gradient(160deg,#a8371a,#661c0a)" }
+              : { background: "#fff", border: "1px solid var(--border)" }
+          }
+        >
+          {t.label}
+        </Link>
+      ))}
     </div>
   );
 }

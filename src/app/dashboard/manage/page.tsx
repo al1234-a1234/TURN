@@ -1,32 +1,25 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { ImageUploader } from "@/components/image-uploader";
 import { updateRestaurantInfo, updateBranchSettings, addBranch, deleteBranch } from "./actions";
 import { MenuManager } from "./menu-manager";
 import { OwnerHeader, OwnerTabs } from "../owner-chrome";
+import { loadOwner } from "../owner-context";
 import { ColumnChart, SplitBars, ChartCard } from "./charts";
 import { toAr } from "@/lib/format";
 
 const AR_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
 export default async function ManagePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/partners?redirect=/dashboard/manage");
+  const load = await loadOwner();
+  if (load.state !== "ok") redirect("/dashboard");
+  const { supabase, restaurant: base, modules, role, permissions } = load.ctx;
 
-  const { data: staffRows } = await supabase
-    .from("staff")
-    .select("restaurants(id, name, slug, description, logo_url, cover_url)")
-    .eq("user_id", user.id)
-    .eq("is_active", true)
-    .limit(1);
-
-  const restaurant = staffRows?.[0]?.restaurants as
-    | { id: string; name: string; slug: string; description: string | null; logo_url: string | null; cover_url: string | null }
-    | undefined;
-  if (!restaurant) redirect("/dashboard");
+  const { data: full } = await supabase
+    .from("restaurants")
+    .select("id, name, slug, description, logo_url, cover_url")
+    .eq("id", base.id)
+    .maybeSingle();
+  const restaurant = full ?? { ...base, description: null, logo_url: null, cover_url: null };
 
   const [{ data: categories }, { data: items }, { data: branchList }] = await Promise.all([
     supabase.from("menu_categories").select("id, name").eq("restaurant_id", restaurant.id).order("sort_order").order("created_at"),
@@ -92,7 +85,7 @@ export default async function ManagePage() {
     <div className="flex flex-1 flex-col">
       <OwnerHeader title={restaurant.name} slug={restaurant.slug} />
       <main className="mx-auto -mt-8 w-full max-w-3xl flex-1 space-y-6 px-5 pb-16">
-        <OwnerTabs active="manage" />
+        <OwnerTabs active="manage" modules={modules} role={role} permissions={permissions} />
 
         {/* ===== التحليلات ===== */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
