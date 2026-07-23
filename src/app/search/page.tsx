@@ -31,7 +31,7 @@ export default async function SearchPage() {
   });
 
   return (
-    <CustomerShell title={tr(lang, "بحث", "Search")} active="restaurants" search={false}>
+    <CustomerShell active="restaurants" search={false}>
       <SearchList
         items={items}
         placeholder={tr(lang, "ابحث باسم المطعم أو المدينة…", "Search by restaurant or city…")}

@@ -19,7 +19,7 @@ export default function FavoritesPage() {
   }, []);
 
   return (
-    <CustomerShell title={tr(lang, "المفضّلة", "Favorites")} active="other" search={false}>
+    <CustomerShell active="other" search={false}>
       {favs === null ? null : favs.length === 0 ? (
         <div className="rq-card p-10 text-center text-[color:var(--muted)]">
           <span className="text-4xl">🤍</span>

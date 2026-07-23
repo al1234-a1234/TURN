@@ -28,7 +28,7 @@ export function RewardsBadge() {
 
   if (count <= 0) return null;
   return (
-    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[color:var(--st-open)] px-1.5 text-[11px] font-extrabold text-white">
+    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[color:var(--brand-d)] px-1.5 text-[11px] font-extrabold text-white">
       {count}
     </span>
   );

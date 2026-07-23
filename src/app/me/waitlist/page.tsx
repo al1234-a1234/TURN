@@ -27,7 +27,7 @@ export default function MyWaitlistPage() {
     new Date(iso).toLocaleDateString(lang === "en" ? "en-GB" : "ar-SA", { day: "2-digit", month: "short" });
 
   return (
-    <CustomerShell title={tr(lang, "اشتراكاتي", "My subscriptions")} active="other" search={false}>
+    <CustomerShell active="other" search={false}>
       {turns === null ? null : latest.length === 0 ? (
         <div className="rq-card p-10 text-center text-[color:var(--muted)]">
           <span className="text-4xl">⏱️</span>

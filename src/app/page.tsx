@@ -21,12 +21,12 @@ function ZonePill({ label, count, lang }: { label: string; count: number; lang: 
       }
     >
       <span className="flex items-center gap-1.5 text-[13px] font-bold" style={{ color: busy ? "#fff" : "var(--brand-d)" }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ color: busy ? "#fff" : "var(--st-open)" }}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ color: busy ? "#fff" : "var(--brand-d)" }}>
           <path d="M4 10h16M6 10V7a2 2 0 012-2h8a2 2 0 012 2v3M7 14v4M17 14v4M4 14h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
         {label}
       </span>
-      <span className="text-sm font-extrabold" style={{ color: busy ? "#fff" : "var(--st-open)" }}>
+      <span className="text-sm font-extrabold" style={{ color: busy ? "#fff" : "var(--brand-d)" }}>
         {busy ? tr(lang, `${toAr(count)} بالطابور`, `${toAr(count)} in queue`) : tr(lang, "متاح", "Available")}
       </span>
     </span>
@@ -71,7 +71,7 @@ export default async function Home() {
   });
 
   return (
-    <CustomerShell title={tr(lang, "قائمة الانتظار", "Waitlist")} active="restaurants">
+    <CustomerShell active="restaurants">
       {withStatus.length === 0 ? (
         <div className="rq-card p-10 text-center text-[color:var(--muted)]">
           <span className="text-4xl">🍽️</span>
@@ -120,13 +120,13 @@ export default async function Home() {
                 {!r.accepts ? (
                   <div
                     className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-                    style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)", boxShadow: "0 12px 24px -16px rgba(102,28,10,0.72)" }}
+                    style={{ background: "linear-gradient(160deg,#eee7dc,#e2d8c9)", border: "1px solid rgba(45,25,15,0.10)" }}
                   >
-                    <span className="flex items-center gap-2 text-sm font-extrabold text-white">
-                      <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
+                    <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "#8a8377" }}>
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#b3a996" }} />
                       {tr(lang, "لا يستقبل الآن", "Not accepting now")}
                     </span>
-                    <span className="text-xs font-extrabold text-white/85">{tr(lang, "التفاصيل ←", "Details ←")}</span>
+                    <span className="text-xs font-extrabold" style={{ color: "#a89d8a" }}>{tr(lang, "التفاصيل ←", "Details ←")}</span>
                   </div>
                 ) : r.waiting > 0 && r.inside + r.outside > 0 ? (
                   <div className="mt-2.5 grid grid-cols-2 gap-2">
@@ -147,13 +147,13 @@ export default async function Home() {
                 ) : (
                   <div
                     className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-                    style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)", boxShadow: "0 12px 24px -14px rgba(102,28,10,0.75)" }}
+                    style={{ background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", border: "1px solid rgba(102,28,10,0.16)" }}
                   >
-                    <span className="flex items-center gap-2 text-sm font-extrabold text-white">
-                      <span className="h-2.5 w-2.5 rounded-full bg-white/90" style={{ boxShadow: "0 0 0 3px rgba(255,255,255,0.25)" }} />
+                    <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--brand-d)" }}>
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--brand-d)", boxShadow: "0 0 0 3px rgba(102,28,10,0.14)" }} />
                       {tr(lang, "متاح الآن · بدون انتظار", "Available now · No wait")}
                     </span>
-                    <span className="text-xs font-extrabold text-white">{tr(lang, "خذ دورك ←", "Take your turn ←")}</span>
+                    <span className="text-xs font-extrabold" style={{ color: "var(--brand-d)" }}>{tr(lang, "خذ دورك ←", "Take your turn ←")}</span>
                   </div>
                 )}
               </Link>

@@ -13,7 +13,7 @@ export default async function AboutPage() {
     { icon: "🎁", ar: "عروض وولاء", en: "Offers & loyalty", arD: "عروض المطاعم ونقاط ولاء تكافئ زياراتك.", enD: "Restaurant offers and loyalty points that reward your visits." },
   ];
   return (
-    <CustomerShell title={tr(lang, "من نحن", "About")} active="other" search={false}>
+    <CustomerShell active="other" search={false}>
       <div className="space-y-5">
         <div className="rq-card flex flex-col items-center gap-3 p-8 text-center">
           <span className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl bg-brand-800">

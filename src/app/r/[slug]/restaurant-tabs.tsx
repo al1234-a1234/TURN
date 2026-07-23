@@ -165,7 +165,7 @@ export function RestaurantTabs({
         {/* المدينة + الترحيب */}
         <div className="pt-1 text-center">
           {city && <p className="font-display text-2xl font-bold text-[color:var(--ink)]">{city}</p>}
-          <p className="mt-1 text-lg font-bold" style={{ color: "var(--st-open)" }}>{tr(lang, "حيّاك الله", "Welcome")}</p>
+          <p className="mt-1 text-lg font-bold" style={{ color: "var(--brand-d)" }}>{tr(lang, "حيّاك الله", "Welcome")}</p>
         </div>
 
         {/* لوحة أخذ الدور */}

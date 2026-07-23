@@ -28,7 +28,7 @@ export default function DiariesPage() {
     new Date(iso).toLocaleTimeString(lang === "en" ? "en-GB" : "ar-SA", { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <CustomerShell title={tr(lang, "اليوميات", "Diaries")} active="diaries" search={false}>
+    <CustomerShell active="diaries" search={false}>
       {turns === null ? null : turns.length === 0 ? (
         <div className="rq-card p-10 text-center text-[color:var(--muted)]">
           <span className="text-4xl">📔</span>

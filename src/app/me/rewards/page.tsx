@@ -76,7 +76,7 @@ export default function MyRewardsPage() {
   const used = (rewards ?? []).filter((r) => r.status === "redeemed");
 
   return (
-    <CustomerShell title={tr(lang, "هداياي", "My rewards")} active="other" search={false}>
+    <CustomerShell active="other" search={false}>
       <div className="space-y-5">
         <div className="rq-card p-5">
           <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "هداياك وخصوماتك", "Your gifts & discounts")}</p>
@@ -130,7 +130,7 @@ export default function MyRewardsPage() {
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-2 truncate font-display text-[16px] font-bold text-[color:var(--ink)]">
                       {r.title}{valueLabel(r) ? ` · ${valueLabel(r)}` : ""}
-                      {newIds.has(r.id) && <span className="shrink-0 rounded-full bg-[color:var(--st-open)] px-2 py-0.5 text-[10px] font-extrabold text-white">{tr(lang, "جديد", "New")}</span>}
+                      {newIds.has(r.id) && <span className="shrink-0 rounded-full bg-[color:var(--brand-d)] px-2 py-0.5 text-[10px] font-extrabold text-white">{tr(lang, "جديد", "New")}</span>}
                     </p>
                     <p className="mt-0.5 truncate text-[13px] font-medium text-[color:var(--muted)]">
                       {r.restaurant}{r.expires_at ? ` · ${tr(lang, "ينتهي", "ends")} ${fmtDate(r.expires_at)}` : ""}

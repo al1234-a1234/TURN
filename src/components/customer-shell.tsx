@@ -67,12 +67,10 @@ const DRAWER = [
 ];
 
 export function CustomerShell({
-  title,
   active = "restaurants",
   search = true,
   children,
 }: {
-  title: string;
   active?: "restaurants" | "other" | "diaries";
   search?: boolean;
   children: React.ReactNode;
