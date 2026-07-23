@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { WaitlistForm } from "./waitlist-form";
 import { RestaurantTabs } from "./restaurant-tabs";
 import { QueueTicket } from "./queue-ticket";
+import { Gallery } from "./gallery";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
@@ -132,27 +133,6 @@ export default async function RestaurantPublicPage({
 
         <RestaurantLinks links={(restaurant.links ?? {}) as Record<string, string>} label={tr(lang, "تابعنا وزورنا", "Follow & visit us")} />
       </main>
-    </div>
-  );
-}
-
-/** معرض صور المطعم — قابل للتقليب بالسحب (scroll-snap). */
-function Gallery({ photos, label }: { photos: { id: string; url: string; caption: string | null }[]; label: string }) {
-  if (!photos.length) return null;
-  return (
-    <div className="mt-6">
-      <p className="mb-3 font-display text-base font-bold text-[color:var(--ink)]">{label}</p>
-      <div className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {photos.map((ph) => (
-          <div key={ph.id} className="relative aspect-[4/3] w-[80%] shrink-0 snap-center overflow-hidden rounded-3xl border sm:w-[46%]" style={{ borderColor: "var(--border)" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={ph.url} alt={ph.caption ?? ""} className="h-full w-full object-cover" />
-            {ph.caption && (
-              <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-3 text-sm font-bold text-white">{ph.caption}</span>
-            )}
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
