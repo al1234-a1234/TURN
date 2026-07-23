@@ -43,7 +43,7 @@ type NavDef = {
 
 const NAV: NavDef[] = [
   { key: "overview", ar: "لوحة التحكم", en: "Dashboard", href: "/dashboard", icon: "📊" },
-  { key: "reception", ar: "الاستقبال", en: "Reception", href: "/dashboard/reception", icon: "🪑" },
+  { key: "reception", ar: "الاستقبال", en: "Reception", href: "/dashboard/reception", icon: "🪑", perm: "waitlist" },
   { key: "reservations", ar: "الحجوزات", en: "Reservations", href: "/dashboard/reservations", icon: "📅", perm: "reservations", needsReservations: true },
   { key: "offers", ar: "العروض", en: "Offers", href: "/dashboard/offers", icon: "🎁", module: "offers", perm: "offers" },
   { key: "loyalty", ar: "الولاء", en: "Loyalty", href: "/dashboard/loyalty", icon: "⭐", module: "loyalty", perm: "loyalty" },

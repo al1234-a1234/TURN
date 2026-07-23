@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { QueueActions } from "../queue-actions";
 import { WalkInForm } from "./walkin-form";
 import { loadOwner } from "../owner-context";
@@ -16,6 +17,7 @@ export default async function ReceptionPage() {
   const load = await loadOwner();
   if (load.state !== "ok") return null;
   const { supabase, restaurant, role, permissions } = load.ctx;
+  if (!staffHasPermission(role, permissions, "waitlist")) redirect("/dashboard");
   const canViewCustomers = staffHasPermission(role, permissions, "customers");
 
   const { data: branches } = await supabase

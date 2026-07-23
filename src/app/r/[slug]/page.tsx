@@ -10,10 +10,6 @@ import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 
-const RATING: Record<string, string> = { eficto: "4.9", "bait-almounah": "4.7", noo: "4.6", rudy: "4.8", "prime-cut": "4.7", takya: "4.8", "najd-village": "4.6" };
-const REVIEWS: Record<string, string> = { eficto: "171", "bait-almounah": "98", noo: "64", rudy: "213", "prime-cut": "312", takya: "204", "najd-village": "418" };
-const LIKES: Record<string, string> = { eficto: "286", "bait-almounah": "142", noo: "97", rudy: "229", "prime-cut": "540", takya: "331", "najd-village": "612" };
-const DIST: Record<string, string> = { eficto: "3.3", "bait-almounah": "5.2", noo: "8.9", rudy: "7.1", "prime-cut": "4.2", takya: "6.5", "najd-village": "5.4" };
 const CUISINE: Record<string, string> = { eficto: "إيطالي", "bait-almounah": "شعبي", noo: "بحري", rudy: "بيتزا", "prime-cut": "برجر", takya: "سعودي معاصر", "najd-village": "نجدي" };
 const CUISINE_EN: Record<string, string> = { eficto: "Italian", "bait-almounah": "Local", noo: "Seafood", rudy: "Pizza", "prime-cut": "Burgers", takya: "Modern Saudi", "najd-village": "Najdi" };
 
@@ -35,14 +31,31 @@ export default async function RestaurantPublicPage({
 
   if (!restaurant) notFound();
 
-  const [{ data: branches }, { data: categories }, { data: items }, { data: photos }, { data: offers }] = await Promise.all([
+  const [{ data: branches }, { data: categories }, { data: items }, { data: photos }, { data: offers }, { data: reviewRows }] = await Promise.all([
     supabase.from("branches").select("id, name, city, address, branch_settings(accepts_waitlist)").eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at"),
     supabase.from("menu_categories").select("id, name").eq("restaurant_id", restaurant.id).order("sort_order").order("created_at"),
     supabase.from("menu_items").select("id, name, price, description, image_url, category_id").eq("restaurant_id", restaurant.id).eq("is_available", true).order("created_at"),
     supabase.from("restaurant_photos").select("id, url, caption").eq("restaurant_id", restaurant.id).order("sort_order").order("created_at"),
-    // RLS «public reads live offers» يُرجع العروض الفعّالة ضمن نافذتها الزمنية فقط
-    supabase.from("offers").select("id, title, description, kind, value, code, ends_at").eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at", { ascending: false }),
+    // عروض عامّة فقط للزوّار (الشرائح المستهدفة loyalty/walkaway/slow_hours تصل عبر مكافآت العميل)
+    supabase.from("offers").select("id, title, description, kind, value, code, ends_at").eq("restaurant_id", restaurant.id).eq("is_active", true).in("audience", ["all", "new"]).order("created_at", { ascending: false }),
+    // تقييمات حقيقية منشورة (بدل بيانات وهمية)
+    supabase.from("reviews").select("rating, comment, created_at, customers(full_name)").eq("restaurant_id", restaurant.id).eq("is_published", true).order("created_at", { ascending: false }).limit(200),
   ]);
+
+  // تجميع التقييمات الحقيقية
+  const rvRows = (reviewRows ?? []) as { rating: number; comment: string | null; created_at: string; customers: { full_name: string } | { full_name: string }[] | null }[];
+  const reviewCount = rvRows.length;
+  const avgRating = reviewCount ? Math.round((rvRows.reduce((a, r) => a + r.rating, 0) / reviewCount) * 10) / 10 : 0;
+  const ratingDist = [5, 4, 3, 2, 1].map((s) => ({ s, pct: reviewCount ? Math.round((rvRows.filter((r) => r.rating === s).length / reviewCount) * 100) : 0 }));
+  const reviewList = rvRows.slice(0, 30).map((r) => {
+    const c = Array.isArray(r.customers) ? r.customers[0] : r.customers;
+    return {
+      name: c?.full_name?.trim() || tr(lang, "عميل", "Customer"),
+      stars: r.rating,
+      when: new Date(r.created_at).toLocaleDateString(lang === "en" ? "en-GB" : "ar-SA-u-nu-latn", { day: "2-digit", month: "short", year: "numeric" }),
+      text: r.comment ?? "",
+    };
+  });
 
   const {
     data: { user },
@@ -120,10 +133,10 @@ export default async function RestaurantPublicPage({
           nameEn={restaurant.name_en}
           cuisine={tr(lang, CUISINE[slug] ?? "مطعم", CUISINE_EN[slug] ?? "Restaurant")}
           description={restaurant.description}
-          rating={RATING[slug] ?? "4.7"}
-          reviewCount={REVIEWS[slug] ?? "42"}
-          likes={LIKES[slug] ?? "50"}
-          distanceKm={DIST[slug] ?? "4.0"}
+          rating={reviewCount ? String(avgRating) : "—"}
+          reviewCount={String(reviewCount)}
+          reviews={reviewList}
+          dist={ratingDist}
           city={city}
           cover={restaurant.cover_url}
           logo={restaurant.logo_url}

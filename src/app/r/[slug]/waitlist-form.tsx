@@ -91,8 +91,7 @@ export function WaitlistForm({
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" /><path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
         </span>
         <p className="text-lg font-bold text-[color:var(--ink)]">{tr(lang, "لا يستقبل طلبات الانتظار الآن", "Not accepting waitlist requests right now")}</p>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "المطعم متوقف مؤقتًا عن استقبال الطابور.", "The restaurant has paused its queue temporarily.")}</p>
-        <button className="rq-btn-soft mt-5">{tr(lang, "أخبرني عندما يفتح الاستقبال", "Notify me when it reopens")}</button>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "المطعم متوقف مؤقتًا عن استقبال الطابور — تحقّق لاحقًا.", "The restaurant has paused its queue temporarily — check back later.")}</p>
       </div>
     );
   }

@@ -7,7 +7,6 @@ import { tr, type Lang } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
-const RATING: Record<string, string> = { eficto: "4.9", "bait-almounah": "4.7", noo: "4.6", rudy: "4.8", "prime-cut": "4.7", takya: "4.8", "najd-village": "4.6" };
 const CUISINE: Record<string, string> = { eficto: "إيطالي", "bait-almounah": "شعبي", noo: "بحري", rudy: "بيتزا", "prime-cut": "برجر", takya: "سعودي معاصر", "najd-village": "نجدي" };
 const CUISINE_EN: Record<string, string> = { eficto: "Italian", "bait-almounah": "Local", noo: "Seafood", rudy: "Pizza", "prime-cut": "Burgers", takya: "Modern Saudi", "najd-village": "Najdi" };
 const DIST: Record<string, string> = { eficto: "3.3", "bait-almounah": "5.2", noo: "8.9", rudy: "7.1", "prime-cut": "4.2", takya: "6.5", "najd-village": "5.4" };
@@ -57,6 +56,19 @@ export default async function Home() {
     (countsData ?? []).map((c) => [c.branch_id, { total: c.total, inside: c.inside, outside: c.outside }]),
   );
 
+  // متوسط تقييم حقيقي لكل مطعم (استعلام واحد — يطابق لوحة المالك)
+  const { data: ratingRows } = await supabase
+    .from("reviews")
+    .select("restaurant_id, rating")
+    .eq("is_published", true)
+    .in("restaurant_id", list.map((r) => r.id));
+  const ratingAgg = new Map<string, { sum: number; n: number }>();
+  for (const rr of ratingRows ?? []) {
+    const a = ratingAgg.get(rr.restaurant_id) ?? { sum: 0, n: 0 };
+    a.sum += rr.rating; a.n += 1;
+    ratingAgg.set(rr.restaurant_id, a);
+  }
+
   const withStatus = list.map((r) => {
     const b = (r.branches ?? [])[0] as
       | { id: string; city: string | null; is_active: boolean; branch_settings: { accepts_waitlist: boolean } | { accepts_waitlist: boolean }[] | null }
@@ -64,6 +76,8 @@ export default async function Home() {
     const c = b?.id ? counts.get(b.id) : undefined;
     const settings = Array.isArray(b?.branch_settings) ? b?.branch_settings[0] : b?.branch_settings;
     const accepts = settings?.accepts_waitlist ?? true;
+    const ra = ratingAgg.get(r.id);
+    const rating = ra && ra.n > 0 ? (Math.round((ra.sum / ra.n) * 10) / 10).toFixed(1) : null;
     return {
       ...r,
       city: b?.city ?? "",
@@ -71,6 +85,7 @@ export default async function Home() {
       inside: c?.inside ?? 0,
       outside: c?.outside ?? 0,
       accepts,
+      rating,
     };
   });
 
@@ -116,10 +131,12 @@ export default async function Home() {
                   </div>
 
                   {/* التقييم */}
-                  <span className="flex shrink-0 items-center gap-1 self-start text-[15px] font-extrabold text-[color:var(--ink)]">
-                    <span style={{ color: "var(--star)" }}>★</span>
-                    {RATING[r.slug] ?? "4.7"}
-                  </span>
+                  {r.rating && (
+                    <span className="flex shrink-0 items-center gap-1 self-start text-[15px] font-extrabold text-[color:var(--ink)]">
+                      <span style={{ color: "var(--star)" }}>★</span>
+                      {r.rating}
+                    </span>
+                  )}
                 </div>
 
                 {/* شريط الحالة — طابور داخلي/خارجي */}

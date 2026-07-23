@@ -3,7 +3,7 @@ import Link from "next/link";
 import { loadOwner } from "../../owner-context";
 import { RewardForm } from "./reward-form";
 import { revokeReward } from "../actions";
-import { staffHasPermission } from "@/lib/features";
+import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { toAr, money } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
@@ -95,9 +95,9 @@ function fmtTime(iso: string | null, lang: "ar" | "en"): string {
   });
 }
 
-function rewardValueLabel(r: RewardRow): string {
+function rewardValueLabel(r: RewardRow, lang: "ar" | "en"): string {
   if (r.kind !== "discount" || r.value == null) return "";
-  return r.value_kind === "amount" ? money(r.value) : `${toAr(r.value)}%`;
+  return r.value_kind === "amount" ? money(r.value, lang) : `${toAr(r.value)}${lang === "en" ? "%" : "٪"}`;
 }
 
 function zoneLabel(zone: string, lang: "ar" | "en"): string {
@@ -147,7 +147,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   if (load.state !== "ok") return null;
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
 
-  if (!staffHasPermission(role, permissions, "customers")) redirect("/dashboard");
+  if (!isModuleOn(modules, "crm") || !staffHasPermission(role, permissions, "customers")) redirect("/dashboard");
 
   const { data: branchRows } = await supabase.from("branches").select("id").eq("restaurant_id", restaurant.id);
   const branchIds = (branchRows ?? []).map((b) => b.id);
@@ -297,7 +297,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-bold text-[color:var(--ink)]">
                       {r.title}
-                      {r.kind === "discount" && r.value != null ? ` · ${rewardValueLabel(r)}` : ""}
+                      {r.kind === "discount" && r.value != null ? ` · ${rewardValueLabel(r, lang)}` : ""}
                     </p>
                     <p className="mt-0.5 text-xs text-[color:var(--muted)]">
                       {r.code ? <span dir="ltr" className="font-bold">{r.code}</span> : null}

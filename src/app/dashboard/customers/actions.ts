@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requirePerm } from "../guard";
 import type { TablesUpdate } from "@/lib/supabase/database.types";
 
-const TIERS = ["regular", "silver", "gold", "vip"];
+const TIERS = ["regular", "silver", "gold"];
 
 export async function updateCustomerProfile(
   customerId: string,
@@ -38,6 +38,15 @@ export async function grantReward(formData: FormData) {
   const customerId = String(formData.get("customer_id") ?? "");
   const title = String(formData.get("title") ?? "").trim();
   if (!customerId || !title) return;
+
+  // تأكيد أن العميل ينتمي لهذا المطعم (لا مكافآت لعملاء لم يزوروه)
+  const { data: member } = await caller.supabase
+    .from("customer_restaurant")
+    .select("customer_id")
+    .eq("restaurant_id", caller.restaurantId)
+    .eq("customer_id", customerId)
+    .maybeSingle();
+  if (!member) return;
 
   const kind = String(formData.get("kind") ?? "gift") === "discount" ? "discount" : "gift";
   const valueRaw = String(formData.get("value") ?? "").trim();

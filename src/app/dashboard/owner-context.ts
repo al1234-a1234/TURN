@@ -41,6 +41,39 @@ export async function loadOwner(): Promise<OwnerLoad> {
   } = await supabase.auth.getUser();
   if (!user) return { state: "no_user" };
 
+  // أولوية «عرض المشرف»: عند وجود كوكي admin_rid وكان المستخدم مشرف منصّة،
+  // نعرض المطعم المختار حتمًا (حتى لو كان المشرف موظفًا في مطاعم أخرى).
+  const store = await cookies();
+  const adminRid = store.get(ADMIN_RID_COOKIE)?.value;
+  let isAdmin = false;
+  if (adminRid) {
+    const { data } = await supabase.rpc("is_platform_admin");
+    isAdmin = !!data;
+    if (isAdmin) {
+      const { data: rest } = await supabase
+        .from("restaurants")
+        .select("id, name, slug")
+        .eq("id", adminRid)
+        .maybeSingle();
+      if (rest) {
+        const modules = await getEnabledModules(supabase, rest.id);
+        return {
+          state: "ok",
+          ctx: {
+            supabase,
+            userId: user.id,
+            email: user.email ?? null,
+            restaurant: rest as OwnerRestaurant,
+            role: "owner",
+            permissions: {},
+            modules,
+            isAdminView: true,
+          },
+        };
+      }
+    }
+  }
+
   const { data: staffRows } = await supabase
     .from("staff")
     .select("role, permissions, restaurants(id, name, slug)")
@@ -54,36 +87,12 @@ export async function loadOwner(): Promise<OwnerLoad> {
   const restaurant = staff?.restaurants as OwnerRestaurant | undefined;
 
   if (!staff || !restaurant) {
-    const { data: isAdmin } = await supabase.rpc("is_platform_admin");
-    // مشرف المنصّة اختار مطعمًا ليعرض لوحته الكاملة (كوكي) → نبنيه كمالك
-    if (isAdmin) {
-      const store = await cookies();
-      const rid = store.get(ADMIN_RID_COOKIE)?.value;
-      if (rid) {
-        const { data: rest } = await supabase
-          .from("restaurants")
-          .select("id, name, slug")
-          .eq("id", rid)
-          .maybeSingle();
-        if (rest) {
-          const modules = await getEnabledModules(supabase, rest.id);
-          return {
-            state: "ok",
-            ctx: {
-              supabase,
-              userId: user.id,
-              email: user.email ?? null,
-              restaurant: rest as OwnerRestaurant,
-              role: "owner",
-              permissions: {},
-              modules,
-              isAdminView: true,
-            },
-          };
-        }
-      }
+    // نتفادى تكرار استدعاء is_platform_admin إن سبق فحصه أعلاه
+    if (!adminRid) {
+      const { data } = await supabase.rpc("is_platform_admin");
+      isAdmin = !!data;
     }
-    return { state: "no_restaurant", email: user.email ?? null, isAdmin: !!isAdmin, supabase };
+    return { state: "no_restaurant", email: user.email ?? null, isAdmin, supabase };
   }
 
   const modules = await getEnabledModules(supabase, restaurant.id);

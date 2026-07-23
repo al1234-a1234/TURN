@@ -78,10 +78,14 @@ export default async function ManagePage() {
     if (idx >= 0) peak[idx].value += 1;
   }
 
-  // توزيع الطابور الحالي داخلي/خارجي
-  const waiting = rows.filter((r) => r.status === "waiting" || r.status === "notified");
-  const insideNow = waiting.filter((r) => r.zone === "inside").length;
-  const outsideNow = waiting.filter((r) => r.zone === "outside").length;
+  // توزيع الطابور الحالي داخلي/خارجي — استعلام حيّ بلا حدّ زمني (يطابق الاستقبال والنظرة العامة)
+  const { data: liveRows } = branchIds.length
+    ? await supabase.from("waitlist_entries").select("zone").in("branch_id", branchIds).in("status", ["waiting", "notified"])
+    : { data: [] as { zone: string }[] };
+  const live = (liveRows ?? []) as { zone: string }[];
+  const waiting = live;
+  const insideNow = live.filter((r) => r.zone === "inside").length;
+  const outsideNow = live.filter((r) => r.zone === "outside").length;
 
   // مؤشرات
   const served30 = seated.length;

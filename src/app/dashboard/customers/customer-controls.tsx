@@ -6,11 +6,11 @@ import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 
+// الشرائح: عادي/فضي/ذهبي فقط — و«VIP» علامة مستقلّة (is_vip) لا شريحة، لتفادي ازدواج الاستهداف
 const TIER_OPTIONS: { value: string; label: string; labelEn: string }[] = [
   { value: "regular", label: "عادي", labelEn: "Regular" },
   { value: "silver", label: "فضي", labelEn: "Silver" },
   { value: "gold", label: "ذهبي", labelEn: "Gold" },
-  { value: "vip", label: "VIP", labelEn: "VIP" },
 ];
 
 export function CustomerControls({

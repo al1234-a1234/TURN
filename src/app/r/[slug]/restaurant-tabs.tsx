@@ -15,20 +15,8 @@ type Item = {
   category_id: string;
 };
 type Category = { id: string; name: string };
-type Review = { name: string; stars: number; when: string; city: string; text: string };
+type Review = { name: string; stars: number; when: string; text: string };
 
-const DEMO_REVIEWS: Review[] = [
-  { name: "نورة الجلال", stars: 5, when: "06 يونيو 2026", city: "الرياض", text: "الأكل ممتاز والمكان أنيق، وأخذ الدور بالتطبيق وفّر علي وقفة طويلة. رجعت أكثر من مرة." },
-  { name: "ديما", stars: 5, when: "30 مايو 2026", city: "الرياض", text: "تجربة راقية والخدمة سريعة. الإشعار وصلني قبل دوري بدقايق فوصلت بالضبط." },
-  { name: "خالد", stars: 4, when: "01 مايو 2026", city: "الرياض", text: "الطعم حلو والانتظار كان أقل من المتوقع، بس أتمنى الطاولات الخارجية تزيد." },
-  { name: "روان", stars: 5, when: "12 يناير 2026", city: "الرياض", text: "من أنظف وأرتب المطاعم اللي جربتها، والأجواء هادية ومريحة." },
-  { name: "ندى", stars: 4, when: "03 يناير 2026", city: "الرياض", text: "المكان جميل والأسعار معقولة. زحمة يوم الخميس بس الطابور كان منظّم." },
-  { name: "عبدالله بهلول", stars: 3, when: "28 ديسمبر 2025", city: "بريدة", text: "الأكل كويس عمومًا، بس الطلب تأخر شوي في وقت الذروة." },
-];
-// توزيع النجوم (5 ← 1)
-const DIST_BARS: { s: number; pct: number }[] = [
-  { s: 5, pct: 74 }, { s: 4, pct: 18 }, { s: 3, pct: 6 }, { s: 2, pct: 1 }, { s: 1, pct: 1 },
-];
 const Stars = ({ n }: { n: number }) => (
   <span style={{ color: "var(--star)" }}>
     {"★".repeat(n)}
@@ -83,8 +71,8 @@ export function RestaurantTabs({
   description,
   rating,
   reviewCount,
-  likes,
-  distanceKm,
+  reviews,
+  dist,
   city,
   cover,
   logo,
@@ -101,8 +89,8 @@ export function RestaurantTabs({
   description: string | null;
   rating: string;
   reviewCount: string;
-  likes: string;
-  distanceKm: string;
+  reviews: Review[];
+  dist: { s: number; pct: number }[];
   city: string;
   cover: string | null;
   logo: string | null;
@@ -173,17 +161,6 @@ export function RestaurantTabs({
           </div>
         )}
 
-        {/* إعجابات + مسافة */}
-        <div className="flex items-center justify-between px-2">
-          <span className="flex items-center gap-1.5 text-sm font-bold" style={{ color: "var(--like)" }}>
-            {likes}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-9.3-9C1 8.5 3 5 6.5 5 8.7 5 10 6.3 12 8.4 14 6.3 15.3 5 17.5 5 21 5 23 8.5 21.3 12 19 16.5 12 21 12 21z" /></svg>
-          </span>
-          <span className="flex items-center gap-1.5 text-sm font-bold text-[color:var(--ink)]">
-            {distanceKm} {tr(lang, "كم", "km")}
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-brand-600"><path d="M12 21s7-6 7-11a7 7 0 10-14 0c0 5 7 11 7 11z" stroke="currentColor" strokeWidth="2" /><circle cx="12" cy="10" r="2.4" stroke="currentColor" strokeWidth="2" /></svg>
-          </span>
-        </div>
 
         {/* المدينة + الترحيب */}
         <div className="pt-1 text-center">
@@ -233,7 +210,7 @@ export function RestaurantTabs({
                           </div>
                           {it.price != null && (
                             <span className="shrink-0 whitespace-nowrap text-sm font-extrabold text-brand-700">
-                              {money(it.price)}
+                              {money(it.price, lang)}
                             </span>
                           )}
                         </li>
@@ -257,7 +234,7 @@ export function RestaurantTabs({
             <p className="mt-1 text-xs text-[color:var(--muted)]">{reviewCount} {tr(lang, "تقييم", "reviews")}</p>
           </div>
           <div className="min-w-0 flex-1 space-y-1.5">
-            {DIST_BARS.map((d) => (
+            {dist.map((d) => (
               <div key={d.s} className="flex items-center gap-2">
                 <span className="w-3 text-xs font-bold text-[color:var(--muted)]">{d.s}</span>
                 <span className="h-2 flex-1 overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
@@ -268,24 +245,31 @@ export function RestaurantTabs({
           </div>
         </div>
 
-        {/* التعليقات */}
-        <ul className="space-y-3">
-          {DEMO_REVIEWS.map((rv, i) => (
-            <li key={i} className="rq-card p-5">
-              <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[color:var(--sage)] font-display text-base font-bold text-brand-800">
-                  {rv.name.charAt(0)}
-                </span>
-                <div className="min-w-0 flex-1 text-right">
-                  <p className="font-bold text-[color:var(--ink)]">{rv.name}</p>
-                  <p className="mt-0.5 text-xs text-[color:var(--muted)]">{rv.city} • {rv.when}</p>
+        {/* التعليقات — حقيقية */}
+        {reviews.length === 0 ? (
+          <div className="rq-card p-8 text-center text-[color:var(--muted)]">
+            <span className="text-3xl">⭐</span>
+            <p className="mt-2 text-sm">{tr(lang, "لا توجد تقييمات بعد.", "No reviews yet.")}</p>
+          </div>
+        ) : (
+          <ul className="space-y-3">
+            {reviews.map((rv, i) => (
+              <li key={i} className="rq-card p-5">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[color:var(--sage)] font-display text-base font-bold text-brand-800">
+                    {rv.name.charAt(0)}
+                  </span>
+                  <div className="min-w-0 flex-1 text-right">
+                    <p className="font-bold text-[color:var(--ink)]">{rv.name}</p>
+                    <p className="mt-0.5 text-xs text-[color:var(--muted)]">{rv.when}</p>
+                  </div>
+                  <span className="shrink-0 text-sm"><Stars n={rv.stars} /></span>
                 </div>
-                <span className="shrink-0 text-sm"><Stars n={rv.stars} /></span>
-              </div>
-              <p className="mt-3 text-[14px] leading-7 text-[color:var(--muted)]">{rv.text}</p>
-            </li>
-          ))}
-        </ul>
+                {rv.text && <p className="mt-3 text-[14px] leading-7 text-[color:var(--muted)]">{rv.text}</p>}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* ===== ميديا ===== */}
@@ -295,7 +279,7 @@ export function RestaurantTabs({
           <div className="min-w-0 flex-1 text-right">
             <p className="truncate font-display text-xl font-bold text-[color:var(--ink)]">{name}</p>
             <p className="mt-0.5 text-sm text-[color:var(--muted)]">{cuisine}</p>
-            <p className="mt-1 text-sm font-bold text-brand-700">{tr(lang, "المتابعون", "Followers")} {reviewCount}</p>
+            <p className="mt-1 text-sm font-bold text-brand-700">{reviewCount} {tr(lang, "تقييم", "reviews")}{Number(reviewCount) > 0 ? ` · ${rating}★` : ""}</p>
           </div>
         </div>
         <button

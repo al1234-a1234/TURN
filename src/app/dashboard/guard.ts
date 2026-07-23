@@ -33,6 +33,16 @@ export async function resolveCaller(): Promise<Caller | null> {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
+  // أولوية «عرض المشرف»: كوكي admin_rid + مشرف منصّة → يتصرّف كمالك للمطعم المختار
+  const store = await cookies();
+  const adminRid = store.get(ADMIN_RID_COOKIE)?.value;
+  if (adminRid) {
+    const { data: isAdmin } = await supabase.rpc("is_platform_admin");
+    if (isAdmin) {
+      return { supabase, userId: user.id, restaurantId: adminRid, role: "owner", permissions: {} };
+    }
+  }
+
   const { data } = await supabase
     .from("staff")
     .select("role, permissions, restaurant_id")
@@ -50,16 +60,6 @@ export async function resolveCaller(): Promise<Caller | null> {
       role: data.role,
       permissions: (data.permissions ?? {}) as StaffPermissionMap,
     };
-  }
-
-  // مشرف المنصّة يتصرّف كمالك على المطعم المختار (كوكي) — يقدر يدير أي مطعم
-  const { data: isAdmin } = await supabase.rpc("is_platform_admin");
-  if (isAdmin) {
-    const store = await cookies();
-    const rid = store.get(ADMIN_RID_COOKIE)?.value;
-    if (rid) {
-      return { supabase, userId: user.id, restaurantId: rid, role: "owner", permissions: {} };
-    }
   }
   return null;
 }

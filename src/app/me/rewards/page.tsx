@@ -74,7 +74,7 @@ export default function MyRewardsPage() {
 
   const valueLabel = (r: Reward) =>
     r.kind === "discount" && r.value != null
-      ? r.value_kind === "amount" ? money(r.value) : `${toAr(r.value)}%`
+      ? r.value_kind === "amount" ? money(r.value, lang) : `${toAr(r.value)}${lang === "en" ? "%" : "٪"}`
       : "";
   const fmtDate = (iso: string | null) =>
     iso ? new Date(iso).toLocaleDateString(lang === "en" ? "en-GB" : "ar-SA-u-nu-latn", { day: "2-digit", month: "short" }) : "";
