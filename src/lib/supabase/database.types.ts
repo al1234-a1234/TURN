@@ -866,6 +866,7 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          name: string | null
           permissions: Json
           restaurant_id: string
           role: Database["public"]["Enums"]["user_role"]
@@ -876,6 +877,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          name?: string | null
           permissions?: Json
           restaurant_id: string
           role?: Database["public"]["Enums"]["user_role"]
@@ -886,6 +888,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_active?: boolean
+          name?: string | null
           permissions?: Json
           restaurant_id?: string
           role?: Database["public"]["Enums"]["user_role"]
@@ -1097,6 +1100,10 @@ export type Database = {
         }[]
       }
       restaurant_of_branch: { Args: { b_id: string }; Returns: string }
+      set_staff_permission: {
+        Args: { p_staff_id: string; p_perm: string; p_granted: boolean }
+        Returns: undefined
+      }
       rollup_all_daily_stats: { Args: { p_date: string }; Returns: number }
       rollup_daily_stats: {
         Args: { p_branch_id: string; p_date: string }

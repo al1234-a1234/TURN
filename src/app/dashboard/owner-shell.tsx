@@ -18,6 +18,7 @@ export type OwnerNavKey =
   | "loyalty"
   | "customers"
   | "reviews"
+  | "staff"
   | "manage";
 
 type NavDef = {
@@ -36,6 +37,7 @@ const NAV: NavDef[] = [
   { key: "loyalty", label: "الولاء", href: "/dashboard/loyalty", icon: "⭐", module: "loyalty", perm: "loyalty" },
   { key: "customers", label: "العملاء", href: "/dashboard/customers", icon: "👥", module: "crm", perm: "customers" },
   { key: "reviews", label: "التقييمات", href: "/dashboard/reviews", icon: "🌟", module: "reviews", perm: "reviews" },
+  { key: "staff", label: "الموظفون والصلاحيات", href: "/dashboard/staff", icon: "🔐", perm: "team" },
   { key: "manage", label: "الإدارة والتحليلات", href: "/dashboard/manage", icon: "⚙️", perm: "settings" },
 ];
 
