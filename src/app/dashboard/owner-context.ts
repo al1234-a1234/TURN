@@ -40,6 +40,8 @@ export async function loadOwner(): Promise<OwnerLoad> {
     .select("role, permissions, restaurants(id, name, slug)")
     .eq("user_id", user.id)
     .eq("is_active", true)
+    // ترتيب الأدوار في enum: owner < manager < staff < host — يفضّل المطعم الذي تملكه
+    .order("role")
     .limit(1);
 
   const staff = staffRows?.[0];
