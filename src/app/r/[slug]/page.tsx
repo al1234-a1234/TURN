@@ -25,7 +25,7 @@ export default async function RestaurantPublicPage({
 
   const { data: restaurant } = await supabase
     .from("restaurants")
-    .select("id, name, name_en, description, is_active, logo_url, cover_url")
+    .select("id, name, name_en, description, is_active, logo_url, cover_url, links")
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
@@ -126,7 +126,53 @@ export default async function RestaurantPublicPage({
         >
           {waitlistPanel}
         </RestaurantTabs>
+
+        <RestaurantLinks links={(restaurant.links ?? {}) as Record<string, string>} label={tr(lang, "تابعنا وزورنا", "Follow & visit us")} />
       </main>
+    </div>
+  );
+}
+
+const LINK_META: { key: string; icon: string; wa?: boolean }[] = [
+  { key: "maps", icon: "📍" },
+  { key: "instagram", icon: "📷" },
+  { key: "x", icon: "𝕏" },
+  { key: "tiktok", icon: "🎵" },
+  { key: "snapchat", icon: "👻" },
+  { key: "whatsapp", icon: "🟢", wa: true },
+  { key: "website", icon: "🌐" },
+];
+
+function RestaurantLinks({ links, label }: { links: Record<string, string>; label: string }) {
+  const present = LINK_META.filter((m) => (links[m.key] ?? "").trim());
+  if (present.length === 0) return null;
+  return (
+    <div className="mt-6 rq-card p-4 text-center">
+      <p className="mb-3 text-sm font-bold text-[color:var(--muted)]">{label}</p>
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        {present.map((m) => {
+          const raw = links[m.key].trim();
+          const href = m.wa
+            ? raw.startsWith("http")
+              ? raw
+              : `https://wa.me/${raw.replace(/\D/g, "")}`
+            : raw.startsWith("http")
+              ? raw
+              : `https://${raw}`;
+          return (
+            <a
+              key={m.key}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-11 w-11 items-center justify-center rounded-2xl text-lg"
+              style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
+            >
+              {m.icon}
+            </a>
+          );
+        })}
+      </div>
     </div>
   );
 }
