@@ -17,7 +17,7 @@ function ZonePill({ label, count, lang }: { label: string; count: number; lang: 
   return (
     <span
       className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-      style={{ background: "var(--surface-2)" }}
+      style={{ background: "var(--sage)", border: "1px solid rgba(102,28,10,0.10)" }}
     >
       <span className="flex items-center gap-1.5 text-[13px] font-bold text-[color:var(--ink)]">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className={busy ? "" : "opacity-50"} style={{ color: busy ? "var(--st-full)" : "var(--st-open)" }}>
@@ -117,12 +117,12 @@ export default async function Home() {
 
                 {/* شريط الحالة — طابور داخلي/خارجي */}
                 {!r.accepts ? (
-                  <div className="mt-3 flex items-center justify-between rounded-2xl px-4 py-2.5" style={{ background: "var(--surface-2)" }}>
+                  <div className="mt-3 flex items-center justify-between rounded-2xl px-4 py-2.5" style={{ background: "rgba(192,86,74,0.09)", border: "1px solid rgba(192,86,74,0.20)" }}>
                     <span className="flex items-center gap-2 text-sm font-bold" style={{ color: "var(--st-closed)" }}>
                       <span className="h-2 w-2 rounded-full" style={{ background: "var(--st-closed)" }} />
                       {tr(lang, "لا يستقبل الآن", "Not accepting now")}
                     </span>
-                    <span className="text-xs font-bold text-brand-700">{tr(lang, "التفاصيل ←", "Details ←")}</span>
+                    <span className="text-xs font-bold" style={{ color: "var(--st-closed)" }}>{tr(lang, "التفاصيل ←", "Details ←")}</span>
                   </div>
                 ) : r.waiting > 0 ? (
                   <div className="mt-3 grid grid-cols-2 gap-2">
@@ -130,12 +130,15 @@ export default async function Home() {
                     <ZonePill label={tr(lang, "خارجي", "Outdoor")} count={r.outside} lang={lang} />
                   </div>
                 ) : (
-                  <div className="mt-3 flex items-center justify-between rounded-2xl px-4 py-2.5" style={{ background: "var(--surface-2)" }}>
-                    <span className="flex items-center gap-2 text-sm font-bold" style={{ color: "var(--st-open)" }}>
-                      <span className="h-2 w-2 rounded-full" style={{ background: "var(--st-open)" }} />
+                  <div
+                    className="mt-3 flex items-center justify-between rounded-2xl px-4 py-3"
+                    style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)", boxShadow: "0 12px 24px -14px rgba(102,28,10,0.75)" }}
+                  >
+                    <span className="flex items-center gap-2 text-sm font-extrabold text-white">
+                      <span className="h-2.5 w-2.5 rounded-full bg-white/90" style={{ boxShadow: "0 0 0 3px rgba(255,255,255,0.25)" }} />
                       {tr(lang, "متاح الآن · بدون انتظار", "Available now · No wait")}
                     </span>
-                    <span className="text-xs font-bold text-brand-700">{tr(lang, "خذ دورك ←", "Take your turn ←")}</span>
+                    <span className="text-xs font-extrabold text-white">{tr(lang, "خذ دورك ←", "Take your turn ←")}</span>
                   </div>
                 )}
               </Link>
