@@ -82,26 +82,21 @@ export function CustomerShell({
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      {/* الهيدر — همبرغر + بحث + شعار التطبيق (بلا عنوان) */}
+      {/* الهيدر — يمين: الشعار (يفتح القائمة) · يسار: بحث */}
       <header className="rq-header px-5 pb-5 pt-5">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
-          <button onClick={() => setOpen(true)} className="rq-circle" aria-label={tr(lang, "القائمة", "Menu")}>
-            <IcMenuBars />
+          <button
+            onClick={() => setOpen(true)}
+            aria-label={tr(lang, "القائمة", "Menu")}
+            className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-white/15 ring-1 ring-white/25 transition active:scale-95"
+          >
+            <BrandMark size={30} />
           </button>
-          <div className="flex items-center gap-3">
-            {search && (
-              <Link href="/search" className="rq-circle" aria-label={tr(lang, "بحث", "Search")}>
-                <IcSearch />
-              </Link>
-            )}
-            <Link
-              href="/"
-              aria-label={tr(lang, "دور", "Turn")}
-              className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-white/15 ring-1 ring-white/25"
-            >
-              <BrandMark size={30} />
+          {search && (
+            <Link href="/search" className="rq-circle" aria-label={tr(lang, "بحث", "Search")}>
+              <IcSearch />
             </Link>
-          </div>
+          )}
         </div>
       </header>
 
