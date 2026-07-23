@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { money } from "@/lib/format";
+import { tr } from "@/lib/i18n";
+import { useLang } from "@/components/lang-provider";
 
 type Item = {
   id: string;
@@ -107,6 +109,7 @@ export function RestaurantTabs({
   items: Item[];
   children: React.ReactNode;
 }) {
+  const lang = useLang();
   const [tab, setTab] = useState<Tab>("waitlist");
   const [openCat, setOpenCat] = useState<string | null>(categories[0]?.id ?? null);
   const hasMenu = categories.length > 0;
@@ -127,16 +130,16 @@ export function RestaurantTabs({
       {/* المربّعات الأربعة */}
       <div className="rq-card mb-5 grid grid-cols-4 gap-2.5 p-2.5">
         <button className="rq-tile" data-active={tab === "waitlist"} onClick={() => setTab("waitlist")}>
-          <IcWait /><span className="rq-tile-label">الانتظار</span>
+          <IcWait /><span className="rq-tile-label">{tr(lang, "الانتظار", "Waitlist")}</span>
         </button>
         <button className="rq-tile" data-active={tab === "menu"} onClick={() => setTab("menu")} disabled={!hasMenu}>
-          <IcMenu /><span className="rq-tile-label">القائمة</span>
+          <IcMenu /><span className="rq-tile-label">{tr(lang, "القائمة", "Menu")}</span>
         </button>
         <button className="rq-tile" data-active={tab === "reviews"} onClick={() => setTab("reviews")}>
-          <IcReviews /><span className="rq-tile-label">التقييمات</span>
+          <IcReviews /><span className="rq-tile-label">{tr(lang, "التقييمات", "Reviews")}</span>
         </button>
         <button className="rq-tile" data-active={tab === "media"} onClick={() => setTab("media")}>
-          <IcMedia /><span className="rq-tile-label">ميديا</span>
+          <IcMedia /><span className="rq-tile-label">{tr(lang, "ميديا", "Media")}</span>
         </button>
       </div>
 
@@ -169,7 +172,7 @@ export function RestaurantTabs({
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-9.3-9C1 8.5 3 5 6.5 5 8.7 5 10 6.3 12 8.4 14 6.3 15.3 5 17.5 5 21 5 23 8.5 21.3 12 19 16.5 12 21 12 21z" /></svg>
           </span>
           <span className="flex items-center gap-1.5 text-sm font-bold text-[color:var(--ink)]">
-            {distanceKm} كم
+            {distanceKm} {tr(lang, "كم", "km")}
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="text-brand-600"><path d="M12 21s7-6 7-11a7 7 0 10-14 0c0 5 7 11 7 11z" stroke="currentColor" strokeWidth="2" /><circle cx="12" cy="10" r="2.4" stroke="currentColor" strokeWidth="2" /></svg>
           </span>
         </div>
@@ -177,7 +180,7 @@ export function RestaurantTabs({
         {/* المدينة + الترحيب */}
         <div className="pt-1 text-center">
           {city && <p className="font-display text-2xl font-bold text-[color:var(--ink)]">{city}</p>}
-          <p className="mt-1 text-lg font-bold" style={{ color: "var(--st-open)" }}>حيّاك الله</p>
+          <p className="mt-1 text-lg font-bold" style={{ color: "var(--st-open)" }}>{tr(lang, "حيّاك الله", "Welcome")}</p>
         </div>
 
         {/* لوحة أخذ الدور */}
@@ -187,7 +190,7 @@ export function RestaurantTabs({
       {/* ===== القائمة ===== */}
       <div className={tab === "menu" ? "" : "hidden"}>
         {!hasMenu ? (
-          <div className="rq-card p-8 text-center text-sm text-[color:var(--muted)]">لا توجد قائمة بعد.</div>
+          <div className="rq-card p-8 text-center text-sm text-[color:var(--muted)]">{tr(lang, "لا توجد قائمة بعد.", "No menu yet.")}</div>
         ) : (
           <div className="space-y-3">
             {categories.map((cat) => {
@@ -243,7 +246,7 @@ export function RestaurantTabs({
           <div className="shrink-0 text-center">
             <p className="font-display text-5xl font-bold text-[color:var(--ink)] leading-none">{rating}</p>
             <p className="mt-1 text-sm"><Stars n={5} /></p>
-            <p className="mt-1 text-xs text-[color:var(--muted)]">{reviewCount} تقييم</p>
+            <p className="mt-1 text-xs text-[color:var(--muted)]">{reviewCount} {tr(lang, "تقييم", "reviews")}</p>
           </div>
           <div className="min-w-0 flex-1 space-y-1.5">
             {DIST_BARS.map((d) => (
@@ -284,10 +287,10 @@ export function RestaurantTabs({
           <div className="min-w-0 flex-1 text-right">
             <p className="truncate font-display text-xl font-bold text-[color:var(--ink)]">{name}</p>
             <p className="mt-0.5 text-sm text-[color:var(--muted)]">{cuisine}</p>
-            <p className="mt-1 text-sm font-bold text-brand-700">المتابعون {reviewCount}</p>
+            <p className="mt-1 text-sm font-bold text-brand-700">{tr(lang, "المتابعون", "Followers")} {reviewCount}</p>
           </div>
         </div>
-        <button className="rq-btn">متابعة</button>
+        <button className="rq-btn">{tr(lang, "متابعة", "Follow")}</button>
         {description && (
           <div className="rq-card p-5 text-right text-[14px] leading-7 text-[color:var(--muted)]">{description}</div>
         )}
@@ -296,9 +299,9 @@ export function RestaurantTabs({
         )}
         <div className="rq-card p-8 text-center">
           <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[color:var(--sage)] text-2xl">🔔</span>
-          <p className="font-bold text-[color:var(--ink)]">تابع المطعم</p>
+          <p className="font-bold text-[color:var(--ink)]">{tr(lang, "تابع المطعم", "Follow the restaurant")}</p>
           <p className="mt-1 text-sm leading-6 text-[color:var(--muted)]">
-            يوصلك جديد العروض والأصناف والأوقات الأقل زحمة أول بأول.
+            {tr(lang, "يوصلك جديد العروض والأصناف والأوقات الأقل زحمة أول بأول.", "Get the latest offers, dishes, and quieter times as they happen.")}
           </p>
         </div>
       </div>

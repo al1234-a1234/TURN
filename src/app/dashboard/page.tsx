@@ -4,16 +4,20 @@ import { OwnerHeader } from "./owner-chrome";
 import { loadOwner } from "./owner-context";
 import { ColumnChart, SplitBars, ChartCard } from "./manage/charts";
 import { toAr } from "@/lib/format";
+import { tr, type Lang } from "@/lib/i18n";
+import { getLang } from "@/lib/i18n-server";
 
 const AR_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+const EN_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const HOURS = [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22];
-function hourLabel(h: number): string {
-  if (h === 12) return "12 م";
-  if (h < 12) return `${toAr(h)} ص`;
-  return `${toAr(h - 12)} م`;
+function hourLabel(h: number, lang: Lang): string {
+  if (h === 12) return tr(lang, "12 م", "12 PM");
+  if (h < 12) return `${toAr(h)} ${tr(lang, "ص", "AM")}`;
+  return `${toAr(h - 12)} ${tr(lang, "م", "PM")}`;
 }
 
 export default async function OverviewPage() {
+  const lang = await getLang();
   const load = await loadOwner();
 
   if (load.state === "no_user") {
@@ -22,8 +26,8 @@ export default async function OverviewPage() {
         <OwnerHeader />
         <main className="mx-auto w-full max-w-3xl px-5 py-10">
           <p className="text-[color:var(--muted)]">
-            يجب تسجيل الدخول.{" "}
-            <Link href="/partners" className="font-bold text-brand-700">تسجيل الدخول</Link>
+            {tr(lang, "يجب تسجيل الدخول.", "You must sign in.")}{" "}
+            <Link href="/partners" className="font-bold text-brand-700">{tr(lang, "تسجيل الدخول", "Sign in")}</Link>
           </p>
         </main>
       </div>
@@ -37,10 +41,10 @@ export default async function OverviewPage() {
         <main className="mx-auto max-w-xl px-5 py-10">
           <div className="soft-card flex flex-col items-center gap-4 p-8 text-center">
             <span className="flex h-16 w-16 items-center justify-center rounded-2xl text-3xl" style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}>🍽️</span>
-            <h1 className="font-display text-2xl font-bold text-[color:var(--ink)]">لا يوجد مطعم مرتبط بحسابك</h1>
-            <p className="max-w-sm text-sm text-[color:var(--muted)]">حسابات الملّاك تُنشأ من قِبل إدارة دور فقط. تواصل معنا لإضافة مطعمك.</p>
-            <a href="mailto:albraalaan@gmail.com" className="btn btn-primary w-full max-w-xs">تواصل مع الإدارة</a>
-            {load.isAdmin && <Link href="/admin" className="btn btn-secondary mt-2 w-full max-w-xs">⚙️ لوحة الأدمِن</Link>}
+            <h1 className="font-display text-2xl font-bold text-[color:var(--ink)]">{tr(lang, "لا يوجد مطعم مرتبط بحسابك", "No restaurant linked to your account")}</h1>
+            <p className="max-w-sm text-sm text-[color:var(--muted)]">{tr(lang, "حسابات الملّاك تُنشأ من قِبل إدارة دور فقط. تواصل معنا لإضافة مطعمك.", "Owner accounts are created by the Turn team only. Contact us to add your restaurant.")}</p>
+            <a href="mailto:albraalaan@gmail.com" className="btn btn-primary w-full max-w-xs">{tr(lang, "تواصل مع الإدارة", "Contact the team")}</a>
+            {load.isAdmin && <Link href="/admin" className="btn btn-secondary mt-2 w-full max-w-xs">{tr(lang, "⚙️ لوحة الأدمِن", "⚙️ Admin Panel")}</Link>}
           </div>
         </main>
       </div>
@@ -107,7 +111,7 @@ export default async function OverviewPage() {
   // مخدومون آخر 7 أيام
   const dayBuckets = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (6 - i));
-    return { key: `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`, label: AR_DAYS[d.getDay()], value: 0 };
+    return { key: `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`, label: tr(lang, AR_DAYS[d.getDay()], EN_DAYS[d.getDay()]), value: 0 };
   });
   const bucketByKey = new Map(dayBuckets.map((b) => [b.key, b]));
   for (const r of seated) {
@@ -123,9 +127,9 @@ export default async function OverviewPage() {
 
   // تنبيهات ذكية
   const alerts: { icon: string; text: string; tone: string }[] = [];
-  if (queueCount >= 8) alerts.push({ icon: "🔥", text: `الطابور مزدحم الآن (${toAr(queueCount)} بالانتظار)`, tone: "var(--st-full)" });
-  if (ratings.length >= 3 && avgRating < 4) alerts.push({ icon: "⚠️", text: `متوسط التقييم منخفض (${toAr(avgRating)}) — راجع التقييمات`, tone: "var(--st-closed)" });
-  if (noShowRate >= 20) alerts.push({ icon: "📉", text: `نسبة التغيّب مرتفعة (٪${toAr(noShowRate)})`, tone: "var(--st-closed)" });
+  if (queueCount >= 8) alerts.push({ icon: "🔥", text: tr(lang, `الطابور مزدحم الآن (${toAr(queueCount)} بالانتظار)`, `The queue is busy now (${toAr(queueCount)} waiting)`), tone: "var(--st-full)" });
+  if (ratings.length >= 3 && avgRating < 4) alerts.push({ icon: "⚠️", text: tr(lang, `متوسط التقييم منخفض (${toAr(avgRating)}) — راجع التقييمات`, `Average rating is low (${toAr(avgRating)}) — review your ratings`), tone: "var(--st-closed)" });
+  if (noShowRate >= 20) alerts.push({ icon: "📉", text: tr(lang, `نسبة التغيّب مرتفعة (٪${toAr(noShowRate)})`, `No-show rate is high (٪${toAr(noShowRate)})`), tone: "var(--st-closed)" });
 
   return (
     <OwnerShell
@@ -137,8 +141,8 @@ export default async function OverviewPage() {
       counts={{ reception: queueCount, customers: totalCustomers, reviews: ratings.length }}
     >
       <div className="mb-6 hidden lg:block">
-        <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">لوحة التحكم</h1>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">نظرة شاملة على أداء {restaurant.name}</p>
+        <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "لوحة التحكم", "Dashboard")}</h1>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, `نظرة شاملة على أداء ${restaurant.name}`, `An overview of ${restaurant.name}'s performance`)}</p>
       </div>
 
       {/* تنبيهات */}
@@ -154,26 +158,26 @@ export default async function OverviewPage() {
 
       {/* المؤشرات (8) */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi label="متوسط التقييم" value={ratings.length ? `★ ${toAr(avgRating)}` : "—"} tone="var(--star)" tint="#fbf1e6" />
-        <Kpi label="متوسط الانتظار" value={`${toAr(avgWait)} د`} tone="var(--st-full)" tint="#fdf5e6" />
-        <Kpi label="جالسون اليوم" value={toAr(seatedToday)} tone="var(--st-open)" tint="#e9f4ee" />
-        <Kpi label="إجمالي العملاء" value={toAr(totalCustomers)} tone="var(--brand-d)" tint="#eef3fb" />
-        <Kpi label="خدمناهم (30 يوم)" value={toAr(served30)} tone="var(--brand)" tint="#f8ece7" />
-        <Kpi label="عملاء عائدون" value={`٪${toAr(returningPct)}`} tone="var(--st-open)" tint="#e9f4ee" />
-        <Kpi label="عملاء مميّزون" value={toAr(vips)} tone="var(--brand-d)" tint="#f8e9e3" />
-        <Kpi label="نسبة التغيّب" value={`٪${toAr(noShowRate)}`} tone={noShowRate >= 20 ? "var(--st-closed)" : "var(--muted)"} tint="#f4eee6" />
+        <Kpi label={tr(lang, "متوسط التقييم", "Average Rating")} value={ratings.length ? `★ ${toAr(avgRating)}` : "—"} tone="var(--star)" tint="#fbf1e6" />
+        <Kpi label={tr(lang, "متوسط الانتظار", "Average Wait")} value={`${toAr(avgWait)} ${tr(lang, "د", "min")}`} tone="var(--st-full)" tint="#fdf5e6" />
+        <Kpi label={tr(lang, "جالسون اليوم", "Seated Today")} value={toAr(seatedToday)} tone="var(--st-open)" tint="#e9f4ee" />
+        <Kpi label={tr(lang, "إجمالي العملاء", "Total Customers")} value={toAr(totalCustomers)} tone="var(--brand-d)" tint="#eef3fb" />
+        <Kpi label={tr(lang, "خدمناهم (30 يوم)", "Served (30 days)")} value={toAr(served30)} tone="var(--brand)" tint="#f8ece7" />
+        <Kpi label={tr(lang, "عملاء عائدون", "Returning Customers")} value={`٪${toAr(returningPct)}`} tone="var(--st-open)" tint="#e9f4ee" />
+        <Kpi label={tr(lang, "عملاء مميّزون", "VIP Customers")} value={toAr(vips)} tone="var(--brand-d)" tint="#f8e9e3" />
+        <Kpi label={tr(lang, "نسبة التغيّب", "No-show Rate")} value={`٪${toAr(noShowRate)}`} tone={noShowRate >= 20 ? "var(--st-closed)" : "var(--muted)"} tint="#f4eee6" />
       </div>
 
       {/* رسوم */}
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <ChartCard title="المخدومون آخر 7 أيام" hint="عدد">
+        <ChartCard title={tr(lang, "المخدومون آخر 7 أيام", "Served in the last 7 days")} hint={tr(lang, "عدد", "Count")}>
           <ColumnChart data={dayBuckets} color="var(--brand)" />
         </ChartCard>
-        <ChartCard title="الطابور الآن" hint={`متوسط المجموعة ${toAr(avgParty)}`}>
+        <ChartCard title={tr(lang, "الطابور الآن", "Queue Now")} hint={tr(lang, `متوسط المجموعة ${toAr(avgParty)}`, `Average party ${toAr(avgParty)}`)}>
           <SplitBars
             rows={[
-              { label: "طاولات داخلية", value: insideNow, color: "var(--st-full)" },
-              { label: "طاولات خارجية", value: outsideNow, color: "var(--brand)" },
+              { label: tr(lang, "طاولات داخلية", "Indoor tables"), value: insideNow, color: "var(--st-full)" },
+              { label: tr(lang, "طاولات خارجية", "Outdoor tables"), value: outsideNow, color: "var(--brand)" },
             ]}
           />
         </ChartCard>
@@ -182,10 +186,10 @@ export default async function OverviewPage() {
       {/* ساعات الذروة */}
       <section className="soft-card mt-6 p-5">
         <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold text-[color:var(--ink)]">
-          <span className="h-4 w-1.5 rounded-full" style={{ background: "var(--brand)" }} /> ساعات الذروة
+          <span className="h-4 w-1.5 rounded-full" style={{ background: "var(--brand)" }} /> {tr(lang, "ساعات الذروة", "Peak Hours")}
         </h2>
         {rows.length === 0 ? (
-          <p className="py-6 text-center text-sm text-[color:var(--muted)]">لا توجد بيانات كافية بعد.</p>
+          <p className="py-6 text-center text-sm text-[color:var(--muted)]">{tr(lang, "لا توجد بيانات كافية بعد.", "Not enough data yet.")}</p>
         ) : (
           <div className="space-y-2">
             {HOURS.map((h) => {
@@ -193,7 +197,7 @@ export default async function OverviewPage() {
               const pct = Math.round((n / maxHour) * 100);
               return (
                 <div key={h} className="flex items-center gap-3">
-                  <span className="w-12 shrink-0 text-xs font-bold text-[color:var(--muted)]">{hourLabel(h)}</span>
+                  <span className="w-12 shrink-0 text-xs font-bold text-[color:var(--muted)]">{hourLabel(h, lang)}</span>
                   <div className="h-3 flex-1 overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
                     <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(pct, 2)}%`, background: "linear-gradient(90deg,#b23c1d,#661c0a)" }} />
                   </div>
@@ -209,11 +213,11 @@ export default async function OverviewPage() {
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <section className="soft-card p-5">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-display text-lg font-bold text-[color:var(--ink)]">أبرز عملائك</h2>
-            <Link href="/dashboard/customers" className="text-xs font-bold text-brand-700">الكل ←</Link>
+            <h2 className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "أبرز عملائك", "Your Top Customers")}</h2>
+            <Link href="/dashboard/customers" className="text-xs font-bold text-brand-700">{tr(lang, "الكل ←", "All ←")}</Link>
           </div>
           {topCustomers.length === 0 ? (
-            <p className="py-4 text-center text-sm text-[color:var(--muted)]">لا يوجد عملاء بعد.</p>
+            <p className="py-4 text-center text-sm text-[color:var(--muted)]">{tr(lang, "لا يوجد عملاء بعد.", "No customers yet.")}</p>
           ) : (
             <ul className="space-y-2">
               {topCustomers.map((p, i) => {
@@ -221,8 +225,8 @@ export default async function OverviewPage() {
                 return (
                   <li key={i} className="flex items-center gap-3">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-display text-sm font-bold text-white" style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}>{toAr(i + 1)}</span>
-                    <span className="min-w-0 flex-1 truncate font-bold text-[color:var(--ink)]">{c?.full_name ?? "عميل"}{p.is_vip ? " ⭐" : ""}</span>
-                    <span className="text-sm font-bold text-[color:var(--muted)]">{toAr(p.visits)} زيارة</span>
+                    <span className="min-w-0 flex-1 truncate font-bold text-[color:var(--ink)]">{c?.full_name ?? tr(lang, "عميل", "Customer")}{p.is_vip ? " ⭐" : ""}</span>
+                    <span className="text-sm font-bold text-[color:var(--muted)]">{toAr(p.visits)} {tr(lang, "زيارة", "visits")}</span>
                   </li>
                 );
               })}
@@ -232,8 +236,8 @@ export default async function OverviewPage() {
 
         <Link href="/dashboard/reception" className="soft-card flex items-center justify-between p-5 transition hover:brightness-[0.99]">
           <div>
-            <p className="font-display text-lg font-bold text-[color:var(--ink)]">الطابور الآن</p>
-            <p className="text-sm text-[color:var(--muted)]">افتح الاستقبال لإدارة الطابور</p>
+            <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "الطابور الآن", "Queue Now")}</p>
+            <p className="text-sm text-[color:var(--muted)]">{tr(lang, "افتح الاستقبال لإدارة الطابور", "Open reception to manage the queue")}</p>
           </div>
           <span className="flex items-center gap-2">
             <span className="font-display text-4xl font-bold text-brand-700">{toAr(queueCount)}</span>

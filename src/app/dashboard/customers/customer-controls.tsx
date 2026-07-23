@@ -3,12 +3,14 @@
 import { useState, useTransition } from "react";
 import { updateCustomerProfile } from "./actions";
 import { toAr } from "@/lib/format";
+import { tr } from "@/lib/i18n";
+import { useLang } from "@/components/lang-provider";
 
-const TIER_OPTIONS: { value: string; label: string }[] = [
-  { value: "regular", label: "عادي" },
-  { value: "silver", label: "فضي" },
-  { value: "gold", label: "ذهبي" },
-  { value: "vip", label: "VIP" },
+const TIER_OPTIONS: { value: string; label: string; labelEn: string }[] = [
+  { value: "regular", label: "عادي", labelEn: "Regular" },
+  { value: "silver", label: "فضي", labelEn: "Silver" },
+  { value: "gold", label: "ذهبي", labelEn: "Gold" },
+  { value: "vip", label: "VIP", labelEn: "VIP" },
 ];
 
 export function CustomerControls({
@@ -24,6 +26,7 @@ export function CustomerControls({
   note: string | null;
   visits: number;
 }) {
+  const lang = useLang();
   const [open, setOpen] = useState(false);
   const [vip, setVip] = useState(isVip);
   const [tierVal, setTierVal] = useState(tier);
@@ -45,13 +48,13 @@ export function CustomerControls({
         onClick={() => setOpen((v) => !v)}
         className="text-xs font-bold text-brand-700"
       >
-        {open ? "إخفاء الإدارة" : "إدارة العميل"}
+        {open ? tr(lang, "إخفاء الإدارة", "Hide management") : tr(lang, "إدارة العميل", "Manage customer")}
       </button>
 
       {open && (
         <div className="mt-3 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-bold text-[color:var(--ink)]">عميل مميّز (VIP)</span>
+            <span className="text-sm font-bold text-[color:var(--ink)]">{tr(lang, "عميل مميّز (VIP)", "VIP customer")}</span>
             <button
               type="button"
               role="switch"
@@ -65,27 +68,27 @@ export function CustomerControls({
           </div>
 
           <div>
-            <label className="field-label">الشريحة</label>
+            <label className="field-label">{tr(lang, "الشريحة", "Tier")}</label>
             <select value={tierVal} onChange={(e) => setTierVal(e.target.value)} className="field-input">
               {TIER_OPTIONS.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
+                <option key={t.value} value={t.value}>{tr(lang, t.label, t.labelEn)}</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="field-label">ملاحظة خاصة ({toAr(visits)} زيارة)</label>
+            <label className="field-label">{tr(lang, `ملاحظة خاصة (${toAr(visits)} زيارة)`, `Private note (${toAr(visits)} visits)`)}</label>
             <textarea
               value={noteVal}
               onChange={(e) => setNoteVal(e.target.value)}
               rows={2}
-              placeholder="تفضيلاته، حساسية طعام، مناسبة…"
+              placeholder={tr(lang, "تفضيلاته، حساسية طعام، مناسبة…", "Preferences, food allergies, occasion…")}
               className="field-input"
             />
           </div>
 
           <button type="button" onClick={save} disabled={pending} className="btn btn-primary w-full">
-            {pending ? "جارٍ الحفظ…" : saved ? "تم الحفظ ✓" : "حفظ"}
+            {pending ? tr(lang, "جارٍ الحفظ…", "Saving…") : saved ? tr(lang, "تم الحفظ ✓", "Saved ✓") : tr(lang, "حفظ", "Save")}
           </button>
         </div>
       )}

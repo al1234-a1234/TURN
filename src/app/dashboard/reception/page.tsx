@@ -3,12 +3,15 @@ import { QueueActions } from "../queue-actions";
 import { OwnerShell } from "../owner-shell";
 import { loadOwner } from "../owner-context";
 import { toAr } from "@/lib/format";
+import { tr } from "@/lib/i18n";
+import { getLang } from "@/lib/i18n-server";
 
 function minutesSince(iso: string): number {
   return Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
 }
 
 export default async function ReceptionPage() {
+  const lang = await getLang();
   const load = await loadOwner();
   if (load.state !== "ok") redirect("/dashboard");
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
@@ -49,13 +52,13 @@ export default async function ReceptionPage() {
           {q.position ? toAr(q.position) : "•"}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-bold text-[color:var(--ink)]">{cust?.full_name ?? "عميل"}</p>
+          <p className="truncate font-bold text-[color:var(--ink)]">{cust?.full_name ?? tr(lang, "عميل", "Customer")}</p>
           <p className="text-sm text-[color:var(--muted)]" dir="ltr">{cust?.phone ?? "—"}</p>
           <p className="mt-0.5 text-xs text-[color:var(--muted)]">
-            {toAr(q.party_size)} أشخاص · ⏱ {toAr(waited)} دقيقة{q.status === "notified" ? " · أُشعِر ✓" : ""}
+            {toAr(q.party_size)} {tr(lang, "أشخاص", "guests")} · ⏱ {toAr(waited)} {tr(lang, "دقيقة", "min")}{q.status === "notified" ? tr(lang, " · أُشعِر ✓", " · Notified ✓") : ""}
           </p>
         </div>
-        <QueueActions id={q.id} name={cust?.full_name ?? "عميلنا"} phone={cust?.phone ?? ""} restaurant={restaurant.name} position={q.position} />
+        <QueueActions id={q.id} name={cust?.full_name ?? tr(lang, "عميلنا", "our guest")} phone={cust?.phone ?? ""} restaurant={restaurant.name} position={q.position} />
       </li>
     );
   };
@@ -72,7 +75,7 @@ export default async function ReceptionPage() {
       {rows.length ? (
         <ul className="space-y-2.5">{rows.map((q) => <Card key={q.id} q={q} />)}</ul>
       ) : (
-        <div className="soft-card py-8 text-center text-sm text-[color:var(--muted)]">لا أحد بالانتظار</div>
+        <div className="soft-card py-8 text-center text-sm text-[color:var(--muted)]">{tr(lang, "لا أحد بالانتظار", "No one waiting")}</div>
       )}
     </div>
   );
@@ -87,23 +90,23 @@ export default async function ReceptionPage() {
       counts={{ reception: list.length }}
     >
       <div className="mb-5 hidden lg:block">
-        <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">الاستقبال</h1>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">الطابور الحيّ — إجلاس، تنبيه، وإدارة</p>
+        <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "الاستقبال", "Reception")}</h1>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "الطابور الحيّ — إجلاس، تنبيه، وإدارة", "Live queue — seat, notify, and manage")}</p>
       </div>
 
       <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label="في الطابور الآن" value={toAr(list.length)} tone="var(--brand-d)" />
-        <Stat label="طابور داخلي" value={toAr(inside.length)} tone="var(--st-full)" />
-        <Stat label="طابور خارجي" value={toAr(outside.length)} tone="var(--st-full)" />
-        <Stat label="خدمناهم اليوم" value={toAr(servedToday)} tone="var(--st-open)" />
+        <Stat label={tr(lang, "في الطابور الآن", "In queue now")} value={toAr(list.length)} tone="var(--brand-d)" />
+        <Stat label={tr(lang, "طابور داخلي", "Indoor queue")} value={toAr(inside.length)} tone="var(--st-full)" />
+        <Stat label={tr(lang, "طابور خارجي", "Outdoor queue")} value={toAr(outside.length)} tone="var(--st-full)" />
+        <Stat label={tr(lang, "خدمناهم اليوم", "Served today")} value={toAr(servedToday)} tone="var(--st-open)" />
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
-        <ZoneColumn title="طاولات داخلية" rows={inside} tone="var(--st-full)" />
-        <ZoneColumn title="طاولات خارجية" rows={outside} tone="var(--st-full)" />
+        <ZoneColumn title={tr(lang, "طاولات داخلية", "Indoor tables")} rows={inside} tone="var(--st-full)" />
+        <ZoneColumn title={tr(lang, "طاولات خارجية", "Outdoor tables")} rows={outside} tone="var(--st-full)" />
       </div>
       {other.length > 0 && (
-        <div className="mt-6"><ZoneColumn title="غير محدّد" rows={other} tone="var(--muted)" /></div>
+        <div className="mt-6"><ZoneColumn title={tr(lang, "غير محدّد", "Unspecified")} rows={other} tone="var(--muted)" /></div>
       )}
     </OwnerShell>
   );

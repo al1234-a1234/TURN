@@ -2,8 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { toggleOffer } from "./actions";
+import { tr } from "@/lib/i18n";
+import { useLang } from "@/components/lang-provider";
 
 export function OfferToggle({ id, active }: { id: string; active: boolean }) {
+  const lang = useLang();
   const [on, setOn] = useState(active);
   const [pending, start] = useTransition();
 
@@ -22,7 +25,7 @@ export function OfferToggle({ id, active }: { id: string; active: boolean }) {
       }
       className="relative h-7 w-12 shrink-0 rounded-full transition disabled:opacity-60"
       style={{ background: on ? "linear-gradient(160deg,#a8371a,#661c0a)" : "var(--surface-2)", border: "1px solid var(--border)" }}
-      title={on ? "مُفعّل" : "متوقّف"}
+      title={on ? tr(lang, "مُفعّل", "Active") : tr(lang, "متوقّف", "Paused")}
     >
       <span
         className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white shadow transition-all"

@@ -6,10 +6,14 @@ import { OwnerShell } from "../owner-shell";
 import { loadOwner } from "../owner-context";
 import { ColumnChart, SplitBars, ChartCard } from "./charts";
 import { toAr } from "@/lib/format";
+import { tr } from "@/lib/i18n";
+import { getLang } from "@/lib/i18n-server";
 
 const AR_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+const EN_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default async function ManagePage() {
+  const lang = await getLang();
   const load = await loadOwner();
   if (load.state !== "ok") redirect("/dashboard");
   const { supabase, restaurant: base, modules, role, permissions } = load.ctx;
@@ -46,7 +50,7 @@ export default async function ManagePage() {
   const now = new Date();
   const dayBuckets = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (6 - i));
-    return { key: `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`, label: AR_DAYS[d.getDay()], value: 0 };
+    return { key: `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`, label: (lang === "en" ? EN_DAYS : AR_DAYS)[d.getDay()], value: 0 };
   });
   const bucketByKey = new Map(dayBuckets.map((b) => [b.key, b]));
   const seated = rows.filter((r) => r.status === "seated" && r.seated_at);
@@ -86,54 +90,54 @@ export default async function ManagePage() {
       <div className="space-y-6">
         {/* ===== التحليلات ===== */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Kpi label="خدمناهم (30 يوم)" value={toAr(served30)} tone="var(--st-open)" />
-          <Kpi label="متوسط الانتظار" value={`${toAr(avgWait)} د`} tone="var(--brand-d)" />
-          <Kpi label="بالطابور الآن" value={toAr(waiting.length)} tone="var(--st-full)" />
-          <Kpi label="التقييم" value="4.9" tone="var(--star)" />
+          <Kpi label={tr(lang, "خدمناهم (30 يوم)", "Served (30 days)")} value={toAr(served30)} tone="var(--st-open)" />
+          <Kpi label={tr(lang, "متوسط الانتظار", "Avg. wait")} value={`${toAr(avgWait)} ${tr(lang, "د", "min")}`} tone="var(--brand-d)" />
+          <Kpi label={tr(lang, "بالطابور الآن", "In queue now")} value={toAr(waiting.length)} tone="var(--st-full)" />
+          <Kpi label={tr(lang, "التقييم", "Rating")} value="4.9" tone="var(--star)" />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <ChartCard title="المخدومون آخر 7 أيام" hint="عدد">
+          <ChartCard title={tr(lang, "المخدومون آخر 7 أيام", "Served in the last 7 days")} hint={tr(lang, "عدد", "count")}>
             <ColumnChart data={dayBuckets} color="var(--brand)" />
           </ChartCard>
-          <ChartCard title="ساعات الذروة" hint="مساءً">
+          <ChartCard title={tr(lang, "ساعات الذروة", "Peak hours")} hint={tr(lang, "مساءً", "PM")}>
             <ColumnChart data={peak} color="var(--st-full)" />
           </ChartCard>
         </div>
-        <ChartCard title="توزيع الطابور الآن" hint="داخلي مقابل خارجي">
+        <ChartCard title={tr(lang, "توزيع الطابور الآن", "Current queue split")} hint={tr(lang, "داخلي مقابل خارجي", "inside vs. outside")}>
           <SplitBars
             rows={[
-              { label: "طاولات داخلية", value: insideNow, color: "var(--st-full)" },
-              { label: "طاولات خارجية", value: outsideNow, color: "var(--brand)" },
+              { label: tr(lang, "طاولات داخلية", "Indoor tables"), value: insideNow, color: "var(--st-full)" },
+              { label: tr(lang, "طاولات خارجية", "Outdoor tables"), value: outsideNow, color: "var(--brand)" },
             ]}
           />
         </ChartCard>
 
         {/* ===== معلومات وصور المطعم ===== */}
         <section className="soft-card p-5">
-          <h2 className="mb-4 font-display text-lg font-bold text-[color:var(--ink)]">معلومات المطعم والصور</h2>
+          <h2 className="mb-4 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "معلومات المطعم والصور", "Restaurant info & images")}</h2>
           <form action={updateRestaurantInfo} className="space-y-4">
             <div className="flex flex-wrap gap-6">
-              <ImageUploader restaurantId={restaurant.id} name="logo_url" label="الشعار" defaultUrl={restaurant.logo_url} shape="circle" />
+              <ImageUploader restaurantId={restaurant.id} name="logo_url" label={tr(lang, "الشعار", "Logo")} defaultUrl={restaurant.logo_url} shape="circle" />
               <div className="min-w-[220px] flex-1">
-                <ImageUploader restaurantId={restaurant.id} name="cover_url" label="صورة الغلاف" defaultUrl={restaurant.cover_url} shape="wide" />
+                <ImageUploader restaurantId={restaurant.id} name="cover_url" label={tr(lang, "صورة الغلاف", "Cover image")} defaultUrl={restaurant.cover_url} shape="wide" />
               </div>
             </div>
             <div>
-              <label className="field-label">اسم المطعم</label>
+              <label className="field-label">{tr(lang, "اسم المطعم", "Restaurant name")}</label>
               <input name="name" defaultValue={restaurant.name} className="field-input" />
             </div>
             <div>
-              <label className="field-label">الوصف</label>
-              <textarea name="description" rows={3} defaultValue={restaurant.description ?? ""} className="field-input" placeholder="نبذة عن المطعم…" />
+              <label className="field-label">{tr(lang, "الوصف", "Description")}</label>
+              <textarea name="description" rows={3} defaultValue={restaurant.description ?? ""} className="field-input" placeholder={tr(lang, "نبذة عن المطعم…", "About the restaurant…")} />
             </div>
-            <button className="btn btn-primary w-full">حفظ المعلومات</button>
+            <button className="btn btn-primary w-full">{tr(lang, "حفظ المعلومات", "Save info")}</button>
           </form>
         </section>
 
         {/* ===== الفروع والمواقع ===== */}
         <section className="soft-card p-5">
-          <h2 className="mb-4 font-display text-lg font-bold text-[color:var(--ink)]">الفروع والمواقع</h2>
+          <h2 className="mb-4 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "الفروع والمواقع", "Branches & locations")}</h2>
           <ul className="mb-4 space-y-2">
             {(branchList ?? []).map((b) => (
               <li key={b.id} className={`${inputDark} flex items-center gap-3`} style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
@@ -145,7 +149,7 @@ export default async function ManagePage() {
                 {(branchList ?? []).length > 1 && (
                   <form action={deleteBranch}>
                     <input type="hidden" name="branch_id" value={b.id} />
-                    <button className="rounded-lg px-2 py-1 text-xs font-bold text-[color:var(--muted)] transition hover:text-red-600">حذف</button>
+                    <button className="rounded-lg px-2 py-1 text-xs font-bold text-[color:var(--muted)] transition hover:text-red-600">{tr(lang, "حذف", "Delete")}</button>
                   </form>
                 )}
               </li>
@@ -153,11 +157,11 @@ export default async function ManagePage() {
           </ul>
           <form action={addBranch} className="space-y-3 rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
             <div className="grid gap-3 sm:grid-cols-3">
-              <input name="name" required placeholder="اسم الفرع" className="field-input" />
-              <input name="city" placeholder="المدينة" className="field-input" />
-              <input name="address" placeholder="العنوان" className="field-input" />
+              <input name="name" required placeholder={tr(lang, "اسم الفرع", "Branch name")} className="field-input" />
+              <input name="city" placeholder={tr(lang, "المدينة", "City")} className="field-input" />
+              <input name="address" placeholder={tr(lang, "العنوان", "Address")} className="field-input" />
             </div>
-            <button className="btn btn-secondary w-full">+ إضافة فرع</button>
+            <button className="btn btn-secondary w-full">{tr(lang, "+ إضافة فرع", "+ Add branch")}</button>
           </form>
         </section>
 

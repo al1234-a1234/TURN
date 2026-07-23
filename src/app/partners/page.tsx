@@ -4,6 +4,9 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { BrandMark } from "@/components/brand";
+import { LangToggle } from "@/components/lang-toggle";
+import { tr } from "@/lib/i18n";
+import { useLang } from "@/components/lang-provider";
 
 export default function PartnersPage() {
   return (
@@ -14,6 +17,7 @@ export default function PartnersPage() {
 }
 
 function PartnersLogin() {
+  const lang = useLang();
   const router = useRouter();
   const params = useSearchParams();
   const redirect = params.get("redirect") || "/dashboard";

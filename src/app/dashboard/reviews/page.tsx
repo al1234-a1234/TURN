@@ -4,6 +4,8 @@ import { loadOwner } from "../owner-context";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { ReviewPublishToggle } from "./review-toggle";
 import { toAr } from "@/lib/format";
+import { tr } from "@/lib/i18n";
+import { getLang } from "@/lib/i18n-server";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Review = Database["public"]["Tables"]["reviews"]["Row"] & {
@@ -18,6 +20,7 @@ function fmtDate(iso: string): string {
 }
 
 export default async function ReviewsPage() {
+  const lang = await getLang();
   const load = await loadOwner();
   if (load.state !== "ok") redirect("/dashboard");
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
@@ -53,7 +56,7 @@ export default async function ReviewsPage() {
             <div className="text-center">
               <p className="font-display text-5xl font-bold text-brand-700 leading-none">{toAr(avg)}</p>
               <p className="mt-1 text-lg" style={{ color: "var(--star)" }}>{stars(Math.round(avg))}</p>
-              <p className="mt-1 text-xs text-[color:var(--muted)]">{toAr(count)} تقييم</p>
+              <p className="mt-1 text-xs text-[color:var(--muted)]">{toAr(count)} {tr(lang, "تقييم", "reviews")}</p>
             </div>
             <div className="flex-1 space-y-1.5">
               {dist.map((d) => (
@@ -73,23 +76,23 @@ export default async function ReviewsPage() {
         {routingOn && (
           <div className="rounded-2xl p-4" style={{ background: "var(--sage)", border: "1px solid var(--border)" }}>
             <p className="flex items-center gap-2 text-sm font-bold text-[color:var(--brand-d)]">
-              <span>🧭</span> توجيه التقييم الذكي مُفعّل
+              <span>🧭</span> {tr(lang, "توجيه التقييم الذكي مُفعّل", "Smart review routing is on")}
             </p>
             <p className="mt-1 text-xs text-[color:var(--muted)]">
-              العملاء الراضون (4★ وأعلى) يُوجَّهون لِخرائط Google، والملاحظات الأقل تصلك أنت مباشرةً.
-              وُجِّه {toAr(routed)} تقييم إيجابي حتى الآن.
+              {tr(lang, "العملاء الراضون (4★ وأعلى) يُوجَّهون لِخرائط Google، والملاحظات الأقل تصلك أنت مباشرةً. وُجِّه ", "Happy customers (4★ and up) are routed to Google Maps, while lower feedback reaches you directly. ")}
+              {toAr(routed)} {tr(lang, "تقييم إيجابي حتى الآن.", "positive reviews routed so far.")}
             </p>
           </div>
         )}
 
         {/* قائمة التقييمات */}
         <section>
-          <h2 className="mb-3 font-display text-lg font-bold text-[color:var(--ink)]">كل التقييمات</h2>
+          <h2 className="mb-3 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "كل التقييمات", "All reviews")}</h2>
           {count === 0 ? (
             <div className="soft-card py-10 text-center">
               <p className="text-2xl">⭐</p>
-              <p className="mt-2 font-bold text-[color:var(--ink)]">لا توجد تقييمات بعد</p>
-              <p className="mt-1 text-sm text-[color:var(--muted)]">تظهر التقييمات هنا بعد زيارات العملاء.</p>
+              <p className="mt-2 font-bold text-[color:var(--ink)]">{tr(lang, "لا توجد تقييمات بعد", "No reviews yet")}</p>
+              <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "تظهر التقييمات هنا بعد زيارات العملاء.", "Reviews appear here after customer visits.")}</p>
             </div>
           ) : (
             <ul className="space-y-3">
@@ -104,7 +107,7 @@ export default async function ReviewsPage() {
                           {r.routed_to_google && <span className="text-[10px] font-bold text-[color:var(--st-open)]">↗ Google</span>}
                         </div>
                         <p className="mt-1.5 text-sm text-[color:var(--ink)]">{r.comment ?? "—"}</p>
-                        <p className="mt-1.5 text-xs text-[color:var(--muted)]">{c?.full_name ?? "عميل"} · {fmtDate(r.created_at)}</p>
+                        <p className="mt-1.5 text-xs text-[color:var(--muted)]">{c?.full_name ?? tr(lang, "عميل", "Customer")} · {fmtDate(r.created_at)}</p>
                       </div>
                       <ReviewPublishToggle id={r.id} published={r.is_published} />
                     </div>

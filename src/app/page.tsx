@@ -2,14 +2,17 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { CustomerShell } from "@/components/customer-shell";
 import { toAr } from "@/lib/format";
+import { getLang } from "@/lib/i18n-server";
+import { tr, type Lang } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
 const RATING: Record<string, string> = { eficto: "4.9", "bait-almounah": "4.7", noo: "4.6", rudy: "4.8" };
 const CUISINE: Record<string, string> = { eficto: "إيطالي", "bait-almounah": "شعبي", noo: "بحري", rudy: "بيتزا" };
+const CUISINE_EN: Record<string, string> = { eficto: "Italian", "bait-almounah": "Local", noo: "Seafood", rudy: "Pizza" };
 const DIST: Record<string, string> = { eficto: "3.3", "bait-almounah": "5.2", noo: "8.9", rudy: "7.1" };
 
-function ZonePill({ label, count }: { label: string; count: number }) {
+function ZonePill({ label, count, lang }: { label: string; count: number; lang: Lang }) {
   const busy = count > 0;
   return (
     <span
@@ -23,13 +26,14 @@ function ZonePill({ label, count }: { label: string; count: number }) {
         {label}
       </span>
       <span className="text-sm font-extrabold" style={{ color: busy ? "var(--st-full)" : "var(--st-open)" }}>
-        {busy ? `${toAr(count)} بالطابور` : "متاح"}
+        {busy ? tr(lang, `${toAr(count)} بالطابور`, `${toAr(count)} in queue`) : tr(lang, "متاح", "Available")}
       </span>
     </span>
   );
 }
 
 export default async function Home() {
+  const lang = await getLang();
   const supabase = await createClient();
 
   const { data: restaurants } = await supabase
@@ -64,11 +68,11 @@ export default async function Home() {
   });
 
   return (
-    <CustomerShell title="قائمة الانتظار" active="restaurants">
+    <CustomerShell title={tr(lang, "قائمة الانتظار", "Waitlist")} active="restaurants">
       {withStatus.length === 0 ? (
         <div className="rq-card p-10 text-center text-[color:var(--muted)]">
           <span className="text-4xl">🍽️</span>
-          <p className="mt-3 text-sm">لا توجد مطاعم متاحة بعد.</p>
+          <p className="mt-3 text-sm">{tr(lang, "لا توجد مطاعم متاحة بعد.", "No restaurants available yet.")}</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -96,11 +100,11 @@ export default async function Home() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-display text-xl font-bold text-[color:var(--ink)]">{r.name}</p>
                     <p className="mt-0.5 truncate text-sm font-medium text-[color:var(--muted)]">
-                      {CUISINE[r.slug] ?? "مطعم"}{r.city ? ` · ${r.city}` : ""}
+                      {tr(lang, CUISINE[r.slug] ?? "مطعم", CUISINE_EN[r.slug] ?? "Restaurant")}{r.city ? ` · ${r.city}` : ""}
                     </p>
                     <p className="mt-1 flex items-center gap-1 text-[13px] font-bold text-[color:var(--muted)]">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" className="text-brand-600"><path d="M12 21s7-6 7-11a7 7 0 10-14 0c0 5 7 11 7 11z" stroke="currentColor" strokeWidth="2" /><circle cx="12" cy="10" r="2.4" stroke="currentColor" strokeWidth="2" /></svg>
-                      {DIST[r.slug] ?? "—"} كم
+                      {DIST[r.slug] ?? "—"} {tr(lang, "كم", "km")}
                     </p>
                   </div>
 
@@ -116,22 +120,22 @@ export default async function Home() {
                   <div className="mt-3 flex items-center justify-between rounded-2xl px-4 py-2.5" style={{ background: "var(--surface-2)" }}>
                     <span className="flex items-center gap-2 text-sm font-bold" style={{ color: "var(--st-closed)" }}>
                       <span className="h-2 w-2 rounded-full" style={{ background: "var(--st-closed)" }} />
-                      لا يستقبل الآن
+                      {tr(lang, "لا يستقبل الآن", "Not accepting now")}
                     </span>
-                    <span className="text-xs font-bold text-brand-700">التفاصيل ←</span>
+                    <span className="text-xs font-bold text-brand-700">{tr(lang, "التفاصيل ←", "Details ←")}</span>
                   </div>
                 ) : r.waiting > 0 ? (
                   <div className="mt-3 grid grid-cols-2 gap-2">
-                    <ZonePill label="داخلي" count={r.inside} />
-                    <ZonePill label="خارجي" count={r.outside} />
+                    <ZonePill label={tr(lang, "داخلي", "Indoor")} count={r.inside} lang={lang} />
+                    <ZonePill label={tr(lang, "خارجي", "Outdoor")} count={r.outside} lang={lang} />
                   </div>
                 ) : (
                   <div className="mt-3 flex items-center justify-between rounded-2xl px-4 py-2.5" style={{ background: "var(--surface-2)" }}>
                     <span className="flex items-center gap-2 text-sm font-bold" style={{ color: "var(--st-open)" }}>
                       <span className="h-2 w-2 rounded-full" style={{ background: "var(--st-open)" }} />
-                      متاح الآن · بدون انتظار
+                      {tr(lang, "متاح الآن · بدون انتظار", "Available now · No wait")}
                     </span>
-                    <span className="text-xs font-bold text-brand-700">خذ دورك ←</span>
+                    <span className="text-xs font-bold text-brand-700">{tr(lang, "خذ دورك ←", "Take your turn ←")}</span>
                   </div>
                 )}
               </Link>

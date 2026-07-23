@@ -5,6 +5,8 @@ import { WaitlistForm } from "./waitlist-form";
 import { RestaurantTabs } from "./restaurant-tabs";
 import { QueueTicket } from "./queue-ticket";
 import { toAr } from "@/lib/format";
+import { tr } from "@/lib/i18n";
+import { getLang } from "@/lib/i18n-server";
 
 const RATING: Record<string, string> = { eficto: "4.9", "bait-almounah": "4.7", noo: "4.6", rudy: "4.8" };
 const REVIEWS: Record<string, string> = { eficto: "171", "bait-almounah": "98", noo: "64", rudy: "213" };
@@ -18,6 +20,7 @@ export default async function RestaurantPublicPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const lang = await getLang();
   const supabase = await createClient();
 
   const { data: restaurant } = await supabase
@@ -80,7 +83,7 @@ export default async function RestaurantPublicPage({
   const waitlistPanel = !hasBranches ? (
     <div className="rq-card p-10 text-center text-[color:var(--muted)]">
       <span className="text-4xl">🏝️</span>
-      <p className="mt-3 text-sm">لا توجد فروع متاحة حاليًا.</p>
+      <p className="mt-3 text-sm">{tr(lang, "لا توجد فروع متاحة حاليًا.", "No branches available right now.")}</p>
     </div>
   ) : activeEntry ? (
     <QueueTicket position={activeEntry.position ?? 0} total={total} />
@@ -93,11 +96,11 @@ export default async function RestaurantPublicPage({
       {/* هيدر المطعم */}
       <header className="rq-header px-5 pb-16 pt-5">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
-          <button className="rq-circle" aria-label="مشاركة">
+          <button className="rq-circle" aria-label={tr(lang, "مشاركة", "Share")}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3v12M12 3l-4 4M12 3l4 4M6 13v5a2 2 0 002 2h8a2 2 0 002-2v-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
           <h1 className="font-display text-2xl font-bold">{restaurant.name}</h1>
-          <Link href="/" className="rq-circle" aria-label="رجوع">
+          <Link href="/" className="rq-circle" aria-label={tr(lang, "رجوع", "Back")}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </Link>
         </div>
@@ -107,7 +110,7 @@ export default async function RestaurantPublicPage({
         <RestaurantTabs
           name={restaurant.name}
           nameEn={restaurant.name_en}
-          cuisine={CUISINE[slug] ?? "مطعم"}
+          cuisine={CUISINE[slug] ?? tr(lang, "مطعم", "Restaurant")}
           description={restaurant.description}
           rating={RATING[slug] ?? "4.7"}
           reviewCount={REVIEWS[slug] ?? "42"}

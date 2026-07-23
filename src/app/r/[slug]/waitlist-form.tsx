@@ -4,10 +4,13 @@ import { useActionState, useMemo, useState } from "react";
 import { joinWaitlistGuest, type WaitlistState } from "./actions";
 import { QueueTicket } from "./queue-ticket";
 import { toAr } from "@/lib/format";
+import { tr } from "@/lib/i18n";
+import { useLang } from "@/components/lang-provider";
 
 type Branch = { id: string; name: string; total: number; inside: number; outside: number };
 
 function ZoneStat({ label, count }: { label: string; count: number }) {
+  const lang = useLang();
   const busy = count > 0;
   return (
     <div className="rq-card p-4 text-center">
@@ -16,7 +19,7 @@ function ZoneStat({ label, count }: { label: string; count: number }) {
       </p>
       <p className="mt-1 text-xs font-bold text-[color:var(--muted)]">{label}</p>
       <p className="mt-0.5 text-[11px] font-bold" style={{ color: busy ? "var(--st-full)" : "var(--st-open)" }}>
-        {busy ? "بالطابور" : "متاح الآن"}
+        {busy ? tr(lang, "بالطابور", "In queue") : tr(lang, "متاح الآن", "Available now")}
       </p>
     </div>
   );
@@ -35,6 +38,7 @@ export function WaitlistForm({
   defaultName: string;
   defaultPhone: string;
 }) {
+  const lang = useLang();
   const [state, formAction, pending] = useActionState<WaitlistState, FormData>(
     joinWaitlistGuest,
     { ok: false },
@@ -65,9 +69,9 @@ export function WaitlistForm({
         <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full" style={{ background: "rgba(192,86,74,0.12)", color: "var(--st-closed)" }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" /><path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
         </span>
-        <p className="text-lg font-bold text-[color:var(--ink)]">لا يستقبل طلبات الانتظار الآن</p>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">المطعم متوقف مؤقتًا عن استقبال الطابور.</p>
-        <button className="rq-btn-soft mt-5">أخبرني عندما يفتح الاستقبال</button>
+        <p className="text-lg font-bold text-[color:var(--ink)]">{tr(lang, "لا يستقبل طلبات الانتظار الآن", "Not accepting waitlist requests right now")}</p>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "المطعم متوقف مؤقتًا عن استقبال الطابور.", "The restaurant has paused its queue temporarily.")}</p>
+        <button className="rq-btn-soft mt-5">{tr(lang, "أخبرني عندما يفتح الاستقبال", "Notify me when it reopens")}</button>
       </div>
     );
   }
@@ -83,13 +87,13 @@ export function WaitlistForm({
 
       {/* طابور كل قسم */}
       <div className="grid grid-cols-2 gap-3">
-        <ZoneStat label="طاولات داخلية" count={inside} />
-        <ZoneStat label="طاولات خارجية" count={outside} />
+        <ZoneStat label={tr(lang, "طاولات داخلية", "Indoor tables")} count={inside} />
+        <ZoneStat label={tr(lang, "طاولات خارجية", "Outdoor tables")} count={outside} />
       </div>
 
       {/* اختيار القسم */}
       <div className="rq-card p-4">
-        <p className="field-label mb-2">اختر مكانك</p>
+        <p className="field-label mb-2">{tr(lang, "اختر مكانك", "Choose your spot")}</p>
         <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[color:var(--surface-2)] p-1">
           {(["inside", "outside"] as const).map((z) => (
             <button
@@ -100,7 +104,7 @@ export function WaitlistForm({
               className="rq-seg-btn"
               style={zone === z ? undefined : { background: "transparent" }}
             >
-              {z === "inside" ? "طاولة داخلية" : "طاولة خارجية"}
+              {z === "inside" ? tr(lang, "طاولة داخلية", "Indoor table") : tr(lang, "طاولة خارجية", "Outdoor table")}
             </button>
           ))}
         </div>
@@ -108,7 +112,7 @@ export function WaitlistForm({
 
       {branches.length > 1 && (
         <div className="rq-card p-5">
-          <label className="field-label">الفرع</label>
+          <label className="field-label">{tr(lang, "الفرع", "Branch")}</label>
           <select value={branchId} onChange={(e) => setBranchId(e.target.value)} className="field-input">
             {branches.map((b) => (
               <option key={b.id} value={b.id}>{b.name}</option>
@@ -120,18 +124,18 @@ export function WaitlistForm({
       {/* اسم + رقم */}
       <div className="rq-card space-y-4 p-5">
         <div className="text-right">
-          <p className="font-display text-lg font-bold text-[color:var(--ink)]">سجّل بياناتك وخذ دورك</p>
+          <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "سجّل بياناتك وخذ دورك", "Enter your details and take your turn")}</p>
           <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-[color:var(--sage)] px-3 py-1 text-xs font-bold text-brand-800">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            بلا حساب ولا كلمة مرور
+            {tr(lang, "بلا حساب ولا كلمة مرور", "No account, no password")}
           </span>
         </div>
         <div>
-          <label htmlFor="full_name" className="field-label">الاسم</label>
-          <input id="full_name" name="full_name" required defaultValue={defaultName} className="field-input" placeholder="اكتب اسمك" />
+          <label htmlFor="full_name" className="field-label">{tr(lang, "الاسم", "Name")}</label>
+          <input id="full_name" name="full_name" required defaultValue={defaultName} className="field-input" placeholder={tr(lang, "اكتب اسمك", "Enter your name")} />
         </div>
         <div>
-          <label htmlFor="phone" className="field-label">رقم الجوّال</label>
+          <label htmlFor="phone" className="field-label">{tr(lang, "رقم الجوّال", "Mobile number")}</label>
           <input id="phone" name="phone" required dir="ltr" inputMode="tel" defaultValue={defaultPhone} className="field-input text-left" placeholder="05xxxxxxxx" />
         </div>
       </div>
@@ -143,7 +147,7 @@ export function WaitlistForm({
       )}
 
       <button type="submit" disabled={pending} className="rq-btn">
-        {pending ? "جارٍ التسجيل…" : "خذ دورك الآن"}
+        {pending ? tr(lang, "جارٍ التسجيل…", "Registering…") : tr(lang, "خذ دورك الآن", "Take your turn now")}
       </button>
     </form>
   );

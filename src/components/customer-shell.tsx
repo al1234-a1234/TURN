@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { BrandMark } from "@/components/brand";
+import { useLang } from "@/components/lang-provider";
+import { tr } from "@/lib/i18n";
+import { LangToggle } from "@/components/lang-toggle";
 
 /* أيقونات صغيرة */
 function IcSearch() {
@@ -56,11 +59,11 @@ function IcDiary() {
 }
 
 const DRAWER = [
-  { label: "الاشتراكات", href: "/me/waitlist" },
-  { label: "المفضلة", href: "/me/favorites" },
-  { label: "الإعدادات", href: "/me" },
-  { label: "من نحن", href: "/about" },
-  { label: "تواصل معنا", href: "/contact" },
+  { label: "الاشتراكات", en: "Subscriptions", href: "/me/waitlist" },
+  { label: "المفضلة", en: "Favorites", href: "/me/favorites" },
+  { label: "الإعدادات", en: "Settings", href: "/me" },
+  { label: "من نحن", en: "About Us", href: "/about" },
+  { label: "تواصل معنا", en: "Contact Us", href: "/contact" },
 ];
 
 export function CustomerShell({
@@ -75,6 +78,7 @@ export function CustomerShell({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const lang = useLang();
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
@@ -83,7 +87,7 @@ export function CustomerShell({
         <div className="mx-auto flex max-w-2xl items-center justify-between">
           {/* يمين: عنوان + همبرغر + علم */}
           <div className="flex items-center gap-3">
-            <button onClick={() => setOpen(true)} className="rq-circle" aria-label="القائمة">
+            <button onClick={() => setOpen(true)} className="rq-circle" aria-label={tr(lang, "القائمة", "Menu")}>
               <IcMenuBars />
             </button>
             <span className="relative">
@@ -93,12 +97,13 @@ export function CustomerShell({
           </div>
           {/* يسار: بحث + الطابور */}
           <div className="flex items-center gap-3">
+            <LangToggle />
             {search && (
-              <Link href="/search" className="rq-circle" aria-label="بحث">
+              <Link href="/search" className="rq-circle" aria-label={tr(lang, "بحث", "Search")}>
                 <IcSearch />
               </Link>
             )}
-            <Link href="/me/waitlist" className="rq-circle" aria-label="قوائمي">
+            <Link href="/me/waitlist" className="rq-circle" aria-label={tr(lang, "قوائمي", "My lists")}>
               <IcPeople />
             </Link>
           </div>
@@ -113,17 +118,17 @@ export function CustomerShell({
         <div className="rq-nav">
           <Link href="/diaries" className="rq-nav-item" data-active={active === "diaries"}>
             <IcDiary />
-            اليوميات
+            {tr(lang, "اليوميات", "Diaries")}
           </Link>
           <Link href="/me" className="rq-nav-item" data-active={active === "other"}>
             <IcList />
-            أخرى
+            {tr(lang, "أخرى", "Other")}
           </Link>
           <Link href="/" className="rq-nav-item" data-active={active === "restaurants"}>
             <span className={active === "restaurants" ? "rq-nav-fab -mt-6" : ""}>
               <IcRestaurants />
             </span>
-            <span className={active === "restaurants" ? "text-brand-800" : ""}>المطاعم</span>
+            <span className={active === "restaurants" ? "text-brand-800" : ""}>{tr(lang, "المطاعم", "Restaurants")}</span>
           </Link>
         </div>
       </nav>
@@ -134,11 +139,11 @@ export function CustomerShell({
           <div className="absolute inset-0 bg-black/35" onClick={() => setOpen(false)} />
           <aside className="absolute inset-y-0 right-0 w-[82%] max-w-sm overflow-y-auto rounded-s-[34px] bg-[color:var(--background)] shadow-2xl">
             <div className="rq-header rounded-s-[34px] rounded-e-none px-6 pb-8 pt-5">
-              <button onClick={() => setOpen(false)} className="rq-circle mb-6" aria-label="إغلاق">
+              <button onClick={() => setOpen(false)} className="rq-circle mb-6" aria-label={tr(lang, "إغلاق", "Close")}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" /></svg>
               </button>
               <div className="flex items-center justify-end gap-3">
-                <span className="font-display text-xl font-bold">دور</span>
+                <span className="font-display text-xl font-bold">{tr(lang, "دور", "Turn")}</span>
                 <span className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-white/15 ring-1 ring-white/25">
                   <BrandMark size={40} />
                 </span>
@@ -153,7 +158,7 @@ export function CustomerShell({
                     className="flex items-center justify-between border-b border-[color:var(--border)] py-4 text-[15px] font-bold text-[color:var(--ink)]"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-[color:var(--muted)]"><path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                    {d.label}
+                    {tr(lang, d.label, d.en)}
                   </Link>
                 </li>
               ))}

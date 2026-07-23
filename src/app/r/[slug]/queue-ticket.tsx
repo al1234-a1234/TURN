@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import { cancelWaitlistGuest } from "./actions";
 import { toAr, peopleAhead } from "@/lib/format";
+import { tr } from "@/lib/i18n";
+import { useLang } from "@/components/lang-provider";
 
 export function QueueTicket({
   position,
@@ -15,6 +17,7 @@ export function QueueTicket({
   entryId?: string;
   phone?: string;
 }) {
+  const lang = useLang();
   const [pending, start] = useTransition();
   const [cancelled, setCancelled] = useState(false);
 
@@ -33,8 +36,8 @@ export function QueueTicket({
         <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--sage)] text-3xl text-brand-700">
           ✓
         </span>
-        <p className="text-lg font-extrabold text-[color:var(--ink)]">تم إلغاء دورك</p>
-        <p className="text-sm text-[color:var(--muted)]">تقدر تأخذ دورك من جديد وقت ما تحب.</p>
+        <p className="text-lg font-extrabold text-[color:var(--ink)]">{tr(lang, "تم إلغاء دورك", "Your turn was cancelled")}</p>
+        <p className="text-sm text-[color:var(--muted)]">{tr(lang, "تقدر تأخذ دورك من جديد وقت ما تحب.", "You can take a new turn whenever you like.")}</p>
       </div>
     );
   }
@@ -64,26 +67,26 @@ export function QueueTicket({
         </svg>
         <div className="flex flex-col items-center">
           <span className="font-display text-6xl font-bold text-brand-700 leading-none">{position ? toAr(position) : "—"}</span>
-          <span className="mt-1 text-xs font-bold tracking-widest text-[color:var(--muted)]">رقم دورك</span>
+          <span className="mt-1 text-xs font-bold tracking-widest text-[color:var(--muted)]">{tr(lang, "رقم دورك", "Your turn number")}</span>
         </div>
       </div>
 
       <div>
-        <p className="font-display text-2xl font-bold text-[color:var(--ink)]">{peopleAhead(ahead)}</p>
+        <p className="font-display text-2xl font-bold text-[color:var(--ink)]">{peopleAhead(ahead, lang)}</p>
         <p className="mt-1 text-sm text-[color:var(--muted)]">
-          {ahead === 0 ? "استعد — جاي دورك" : "راقب رقمك، وننبّهك قبل دورك"}
+          {ahead === 0 ? tr(lang, "استعد — جاي دورك", "Get ready — your turn is coming") : tr(lang, "راقب رقمك، وننبّهك قبل دورك", "Keep an eye on your number, we'll alert you before your turn")}
         </p>
       </div>
 
       {/* أهم معلومتين للعميل الواقف */}
       <div className="grid w-full grid-cols-2 gap-3">
         <div className="rounded-2xl border border-[var(--border)] bg-[color:var(--surface-2)] p-4">
-          <p className="text-2xl font-extrabold text-brand-700">{ahead === 0 ? "التالي" : toAr(ahead)}</p>
-          <p className="mt-1 text-xs text-[color:var(--muted)]">{ahead === 0 ? "أنت" : "أمامك بالطابور"}</p>
+          <p className="text-2xl font-extrabold text-brand-700">{ahead === 0 ? tr(lang, "التالي", "Next") : toAr(ahead)}</p>
+          <p className="mt-1 text-xs text-[color:var(--muted)]">{ahead === 0 ? tr(lang, "أنت", "You") : tr(lang, "أمامك بالطابور", "Ahead of you in queue")}</p>
         </div>
         <div className="rounded-2xl border border-[var(--border)] bg-[color:var(--surface-2)] p-4">
           <p className="text-2xl font-extrabold text-brand-700">{toAr(total)}</p>
-          <p className="mt-1 text-xs text-[color:var(--muted)]">إجمالي الطابور</p>
+          <p className="mt-1 text-xs text-[color:var(--muted)]">{tr(lang, "إجمالي الطابور", "Total in queue")}</p>
         </div>
       </div>
 
@@ -94,7 +97,7 @@ export function QueueTicket({
           className="mt-1 h-11 w-full rounded-2xl border text-sm font-bold text-[color:var(--muted)] transition hover:text-red-600"
           style={{ borderColor: "rgba(200,70,70,0.28)" }}
         >
-          {pending ? "جارٍ الإلغاء…" : "إلغاء دوري"}
+          {pending ? tr(lang, "جارٍ الإلغاء…", "Cancelling…") : tr(lang, "إلغاء دوري", "Cancel my turn")}
         </button>
       )}
     </div>

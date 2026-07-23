@@ -5,9 +5,10 @@ import { PermToggle } from "./perm-toggle";
 import {
   staffHasPermission,
   STAFF_PERMISSIONS,
-  STAFF_PERMISSION_LABELS,
   type StaffPermissionMap,
 } from "@/lib/features";
+import { tr } from "@/lib/i18n";
+import { getLang } from "@/lib/i18n-server";
 import type { Database } from "@/lib/supabase/database.types";
 
 type StaffRow = {
@@ -25,7 +26,42 @@ const ROLE_LABEL: Record<string, string> = {
   host: "استقبال",
 };
 
+const ROLE_LABEL_EN: Record<string, string> = {
+  owner: "Owner",
+  manager: "Manager",
+  staff: "Staff",
+  host: "Host",
+};
+
+// تسمية الصلاحيات محليًا (عربي/إنجليزي) بدل STAFF_PERMISSION_LABELS
+const PERM_LABEL_AR: Record<string, string> = {
+  waitlist: "إدارة الطابور",
+  reservations: "إدارة الحجوزات",
+  analytics: "عرض التحليلات",
+  offers: "إدارة العروض",
+  loyalty: "إدارة الولاء",
+  customers: "ملفّات العملاء",
+  reviews: "التقييمات",
+  settings: "الإعدادات وأوقات العمل",
+  menu: "المنيو والأسعار",
+  team: "إدارة الفريق",
+};
+
+const PERM_LABEL_EN: Record<string, string> = {
+  waitlist: "Queue",
+  reservations: "Reservations",
+  analytics: "Analytics",
+  offers: "Offers",
+  loyalty: "Loyalty",
+  customers: "Customer profiles",
+  reviews: "Reviews",
+  settings: "Settings & hours",
+  menu: "Menu & prices",
+  team: "Team",
+};
+
 export default async function StaffPage() {
+  const lang = await getLang();
   const load = await loadOwner();
   if (load.state !== "ok") redirect("/dashboard");
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
@@ -45,8 +81,8 @@ export default async function StaffPage() {
   return (
     <OwnerShell active="staff" restaurant={restaurant} modules={modules} role={role} permissions={permissions} counts={{ staff: team.length }}>
       <div className="mb-5 hidden lg:block">
-        <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">الموظفون والصلاحيات</h1>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">افتح لكل موظف ما تريده بالضبط — تحكّم كامل ومرن</p>
+        <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "الموظفون والصلاحيات", "Staff & permissions")}</h1>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "افتح لكل موظف ما تريده بالضبط — تحكّم كامل ومرن", "Grant each staff member exactly what you want — full, flexible control")}</p>
       </div>
 
       <div className="space-y-4">
@@ -57,22 +93,22 @@ export default async function StaffPage() {
             <section key={m.id} className="soft-card p-5">
               <div className="mb-4 flex items-center gap-3">
                 <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-bold text-white" style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}>
-                  {(m.name ?? "؟").trim().charAt(0)}
+                  {(m.name ?? tr(lang, "؟", "?")).trim().charAt(0)}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-bold text-[color:var(--ink)]">{m.name ?? "موظف"}</p>
-                  <p className="text-xs text-[color:var(--muted)]">{ROLE_LABEL[m.role] ?? m.role}</p>
+                  <p className="truncate font-bold text-[color:var(--ink)]">{m.name ?? tr(lang, "موظف", "Staff")}</p>
+                  <p className="text-xs text-[color:var(--muted)]">{tr(lang, ROLE_LABEL[m.role] ?? m.role, ROLE_LABEL_EN[m.role] ?? m.role)}</p>
                 </div>
                 {isBoss && (
                   <span className="rounded-full px-3 py-1 text-xs font-bold" style={{ background: "var(--sage)", color: "var(--brand-d)" }}>
-                    كل الصلاحيات
+                    {tr(lang, "كل الصلاحيات", "All permissions")}
                   </span>
                 )}
               </div>
 
               {isBoss ? (
                 <p className="text-sm text-[color:var(--muted)]">
-                  {m.role === "owner" ? "المالك يملك صلاحية كل شيء تلقائيًا." : "المدير يملك كل الصلاحيات تلقائيًا."}
+                  {m.role === "owner" ? tr(lang, "المالك يملك صلاحية كل شيء تلقائيًا.", "The owner automatically has access to everything.") : tr(lang, "المدير يملك كل الصلاحيات تلقائيًا.", "The manager automatically has all permissions.")}
                 </p>
               ) : (
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -81,7 +117,7 @@ export default async function StaffPage() {
                       key={p}
                       staffId={m.id}
                       perm={p}
-                      label={STAFF_PERMISSION_LABELS[p]}
+                      label={tr(lang, PERM_LABEL_AR[p] ?? p, PERM_LABEL_EN[p] ?? p)}
                       granted={perms[p] === true}
                     />
                   ))}
@@ -92,7 +128,7 @@ export default async function StaffPage() {
         })}
 
         <div className="rounded-2xl p-4 text-center text-sm text-[color:var(--muted)]" style={{ background: "var(--surface)", border: "1px dashed var(--border)" }}>
-          لإضافة موظف جديد تواصل مع إدارة دور — نُنشئ له حساب دخول ثم تتحكّم بصلاحياته من هنا.
+          {tr(lang, "لإضافة موظف جديد تواصل مع إدارة دور — نُنشئ له حساب دخول ثم تتحكّم بصلاحياته من هنا.", "To add a new staff member, contact the Turn team — we'll create a login account, then you control their permissions here.")}
         </div>
       </div>
     </OwnerShell>
