@@ -40,24 +40,28 @@ export default async function Home() {
 
   const list = (restaurants ?? []).filter((r) => (r.branches ?? []).length > 0);
 
-  const withStatus = await Promise.all(
-    list.map(async (r) => {
-      const b = (r.branches ?? [])[0] as
-        | { id: string; city: string | null; branch_settings: { accepts_waitlist: boolean } | { accepts_waitlist: boolean }[] | null }
-        | undefined;
-      let waiting = 0, inside = 0, outside = 0;
-      if (b?.id) {
-        const { data } = await supabase.rpc("waitlist_counts", { b_id: b.id });
-        const c = Array.isArray(data) ? data[0] : undefined;
-        waiting = c?.total ?? 0;
-        inside = c?.inside ?? 0;
-        outside = c?.outside ?? 0;
-      }
-      const settings = Array.isArray(b?.branch_settings) ? b?.branch_settings[0] : b?.branch_settings;
-      const accepts = settings?.accepts_waitlist ?? true;
-      return { ...r, city: b?.city ?? "", waiting, inside, outside, accepts };
-    }),
+  // استعلام واحد لعدّادات كل الفروع النشطة (بدل استعلام لكل مطعم — يمنع N+1)
+  const { data: countsData } = await supabase.rpc("active_waitlist_counts");
+  const counts = new Map(
+    (countsData ?? []).map((c) => [c.branch_id, { total: c.total, inside: c.inside, outside: c.outside }]),
   );
+
+  const withStatus = list.map((r) => {
+    const b = (r.branches ?? [])[0] as
+      | { id: string; city: string | null; branch_settings: { accepts_waitlist: boolean } | { accepts_waitlist: boolean }[] | null }
+      | undefined;
+    const c = b?.id ? counts.get(b.id) : undefined;
+    const settings = Array.isArray(b?.branch_settings) ? b?.branch_settings[0] : b?.branch_settings;
+    const accepts = settings?.accepts_waitlist ?? true;
+    return {
+      ...r,
+      city: b?.city ?? "",
+      waiting: c?.total ?? 0,
+      inside: c?.inside ?? 0,
+      outside: c?.outside ?? 0,
+      accepts,
+    };
+  });
 
   return (
     <CustomerShell title="قائمة الانتظار" active="restaurants">

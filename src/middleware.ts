@@ -6,13 +6,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    /*
-     * طابق كل المسارات عدا:
-     * - _next/static (ملفات ثابتة)
-     * - _next/image (تحسين الصور)
-     * - favicon.ico وملفات الصور
-     */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  // نشغّل الmiddleware فقط على المسارات التي تحتاج جلسة/حماية.
+  // صفحات العميل العامة (/ و /r/*) لا تمرّ به إطلاقًا → صفر اتصال مصادقة، ضغط أسرع بكثير.
+  matcher: ["/dashboard/:path*"],
 };

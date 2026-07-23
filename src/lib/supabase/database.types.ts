@@ -1033,6 +1033,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      active_waitlist_counts: {
+        Args: never
+        Returns: {
+          branch_id: string
+          total: number
+          inside: number
+          outside: number
+        }[]
+      }
       admin_create_restaurant: {
         Args: {
           p_address?: string
