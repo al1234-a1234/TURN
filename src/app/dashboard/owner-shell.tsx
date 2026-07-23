@@ -3,9 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { BrandLink } from "@/components/brand";
 import { LogoutButton } from "@/components/logout-button";
 import { LangToggle } from "@/components/lang-toggle";
-import { toAr } from "@/lib/format";
-import { tr } from "@/lib/i18n";
+import { OwnerNavSidebar, OwnerNavTabs, type NavItem } from "./owner-nav";
 import { getLang } from "@/lib/i18n-server";
+import { tr } from "@/lib/i18n";
 import {
   isModuleOn,
   staffHasPermission,
@@ -31,45 +31,31 @@ export type OwnerNavKey =
 
 type NavDef = {
   key: OwnerNavKey;
-  label: string;
+  ar: string;
+  en: string;
   href: string;
   icon: string;
   module?: ModuleKey;
   perm?: StaffPermission;
+  needsReservations?: boolean;
 };
 
 const NAV: NavDef[] = [
-  { key: "overview", label: "لوحة التحكم", href: "/dashboard", icon: "📊" },
-  { key: "reception", label: "الاستقبال", href: "/dashboard/reception", icon: "🪑" },
-  { key: "reservations", label: "الحجوزات", href: "/dashboard/reservations", icon: "📅", perm: "reservations" },
-  { key: "offers", label: "العروض", href: "/dashboard/offers", icon: "🎁", module: "offers", perm: "offers" },
-  { key: "loyalty", label: "الولاء", href: "/dashboard/loyalty", icon: "⭐", module: "loyalty", perm: "loyalty" },
-  { key: "customers", label: "العملاء", href: "/dashboard/customers", icon: "👥", module: "crm", perm: "customers" },
-  { key: "reviews", label: "التقييمات", href: "/dashboard/reviews", icon: "🌟", module: "reviews", perm: "reviews" },
-  { key: "staff", label: "الموظفون والصلاحيات", href: "/dashboard/staff", icon: "🔐", perm: "team" },
-  { key: "tables", label: "الطاولات", href: "/dashboard/tables", icon: "🍽️", perm: "settings" },
-  { key: "content", label: "المحتوى والروابط", href: "/dashboard/content", icon: "🔗", perm: "settings" },
-  { key: "reports", label: "التقارير", href: "/dashboard/reports", icon: "📈", perm: "analytics" },
-  { key: "manage", label: "الإدارة والتحليلات", href: "/dashboard/manage", icon: "⚙️", perm: "settings" },
+  { key: "overview", ar: "لوحة التحكم", en: "Dashboard", href: "/dashboard", icon: "📊" },
+  { key: "reception", ar: "الاستقبال", en: "Reception", href: "/dashboard/reception", icon: "🪑" },
+  { key: "reservations", ar: "الحجوزات", en: "Reservations", href: "/dashboard/reservations", icon: "📅", perm: "reservations", needsReservations: true },
+  { key: "offers", ar: "العروض", en: "Offers", href: "/dashboard/offers", icon: "🎁", module: "offers", perm: "offers" },
+  { key: "loyalty", ar: "الولاء", en: "Loyalty", href: "/dashboard/loyalty", icon: "⭐", module: "loyalty", perm: "loyalty" },
+  { key: "customers", ar: "العملاء", en: "Customers", href: "/dashboard/customers", icon: "👥", module: "crm", perm: "customers" },
+  { key: "reviews", ar: "التقييمات", en: "Reviews", href: "/dashboard/reviews", icon: "🌟", module: "reviews", perm: "reviews" },
+  { key: "staff", ar: "الموظفون والصلاحيات", en: "Staff & Permissions", href: "/dashboard/staff", icon: "🔐", perm: "team" },
+  { key: "tables", ar: "الطاولات", en: "Tables", href: "/dashboard/tables", icon: "🍽️", perm: "settings" },
+  { key: "content", ar: "المحتوى والروابط", en: "Content & Links", href: "/dashboard/content", icon: "🔗", perm: "settings" },
+  { key: "reports", ar: "التقارير", en: "Reports", href: "/dashboard/reports", icon: "📈", perm: "analytics" },
+  { key: "manage", ar: "الإدارة والتحليلات", en: "Management & Analytics", href: "/dashboard/manage", icon: "⚙️", perm: "settings" },
 ];
 
-const NAV_EN: Record<OwnerNavKey, string> = {
-  overview: "Dashboard",
-  reception: "Reception",
-  reservations: "Reservations",
-  offers: "Offers",
-  loyalty: "Loyalty",
-  customers: "Customers",
-  reviews: "Reviews",
-  staff: "Staff & Permissions",
-  tables: "Tables",
-  content: "Content & Links",
-  reports: "Reports",
-  manage: "Management & Analytics",
-};
-
 export async function OwnerShell({
-  active,
   restaurant,
   modules,
   role,
@@ -77,8 +63,7 @@ export async function OwnerShell({
   counts,
   children,
 }: {
-  active: OwnerNavKey;
-  restaurant: { id?: string; name: string; slug: string };
+  restaurant: { id: string; name: string; slug: string };
   modules: Set<ModuleKey>;
   role: Database["public"]["Enums"]["user_role"];
   permissions: StaffPermissionMap;
@@ -87,70 +72,42 @@ export async function OwnerShell({
 }) {
   const lang = await getLang();
 
-  // هل المطعم يستقبل حجوزات؟ (تحكّم لكل مطعم) — يخفي تبويب الحجوزات إن أُوقف
-  let acceptsReservations = false;
-  if (restaurant.id) {
-    const supabase = await createClient();
-    const { data: b } = await supabase
-      .from("branches")
-      .select("branch_settings(accepts_reservations)")
-      .eq("restaurant_id", restaurant.id)
-      .order("created_at")
-      .limit(1)
-      .maybeSingle();
-    const bs = Array.isArray(b?.branch_settings) ? b?.branch_settings[0] : b?.branch_settings;
-    acceptsReservations = bs?.accepts_reservations ?? false;
-  }
+  // هل المطعم يستقبل حجوزات؟ (يخفي تبويب الحجوزات إن أُوقف)
+  const supabase = await createClient();
+  const { data: b } = await supabase
+    .from("branches")
+    .select("branch_settings(accepts_reservations)")
+    .eq("restaurant_id", restaurant.id)
+    .order("created_at")
+    .limit(1)
+    .maybeSingle();
+  const bs = Array.isArray(b?.branch_settings) ? b?.branch_settings[0] : b?.branch_settings;
+  const acceptsReservations = bs?.accepts_reservations ?? false;
 
-  const items = NAV.filter((n) => {
-    if (n.key === "reservations" && !acceptsReservations) return false;
+  const items: NavItem[] = NAV.filter((n) => {
+    if (n.needsReservations && !acceptsReservations) return false;
     if (n.module && !isModuleOn(modules, n.module)) return false;
     if (n.perm && !staffHasPermission(role, permissions, n.perm)) return false;
     return true;
-  });
+  }).map((n) => ({ key: n.key, label: tr(lang, n.ar, n.en), href: n.href, icon: n.icon }));
+
+  const countsRec = (counts ?? {}) as Record<string, number>;
 
   return (
     <div className="flex flex-1 flex-col lg:flex-row">
-      {/* ===== قائمة جانبية (ديسكتوب/تابلت) ===== */}
+      {/* ===== قائمة جانبية ثابتة (ديسكتوب/تابلت) ===== */}
       <aside className="hidden w-64 shrink-0 flex-col border-e bg-white lg:flex" style={{ borderColor: "var(--border)" }}>
         <div className="border-b p-5" style={{ borderColor: "var(--border)" }}>
           <BrandLink href="/dashboard" size={34} />
           <p className="mt-3 truncate font-display text-lg font-bold text-[color:var(--ink)]">{restaurant.name}</p>
-          <p className="text-xs text-[color:var(--muted)]">{tr(lang, "لوحة المالك", "Owner Panel")}</p>
+          <p className="text-xs text-[color:var(--muted)]">{tr(lang, "لوحة المالك", "Owner dashboard")}</p>
         </div>
-        <nav className="flex-1 space-y-1 p-3">
-          {items.map((n) => {
-            const on = active === n.key;
-            const c = counts?.[n.key];
-            return (
-              <Link
-                key={n.key}
-                href={n.href}
-                data-active={on}
-                className="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm font-bold transition data-[active=true]:text-white"
-                style={on ? { background: "linear-gradient(160deg,#a8371a,#661c0a)" } : { color: "var(--ink)" }}
-              >
-                <span className="text-base">{n.icon}</span>
-                <span className="flex-1">{tr(lang, n.label, NAV_EN[n.key])}</span>
-                {c != null && c > 0 && (
-                  <span
-                    className="rounded-full px-2 py-0.5 text-[11px] font-extrabold"
-                    style={on ? { background: "rgba(255,255,255,0.25)", color: "#fff" } : { background: "var(--sage)", color: "var(--brand-d)" }}
-                  >
-                    {toAr(c)}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+        <OwnerNavSidebar items={items} counts={countsRec} />
         <div className="border-t p-3" style={{ borderColor: "var(--border)" }}>
+          <div className="mb-2 flex justify-center"><LangToggle variant="plain" /></div>
           <Link href={`/r/${restaurant.slug}`} className="mb-2 flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-bold text-[color:var(--muted)] transition hover:text-brand-700">
-            <span>🌐</span> {tr(lang, "الصفحة العامة", "Public Page")}
+            <span>🌐</span> {tr(lang, "الصفحة العامة", "Public page")}
           </Link>
-          <div className="mb-2 flex justify-center">
-            <LangToggle variant="plain" />
-          </div>
           <LogoutButton />
         </div>
       </aside>
@@ -163,7 +120,7 @@ export async function OwnerShell({
             <BrandLink href="/dashboard" size={38} />
             <div className="flex items-center gap-2">
               <LangToggle />
-              <Link href={`/r/${restaurant.slug}`} className="icon-btn" title={tr(lang, "الصفحة العامة", "Public Page")}>
+              <Link href={`/r/${restaurant.slug}`} className="icon-btn" title={tr(lang, "الصفحة العامة", "Public page")}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
                   <path d="M14 3h7v7M21 3l-9 9M10 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
@@ -172,26 +129,14 @@ export async function OwnerShell({
             </div>
           </div>
           <div className="mx-auto mt-6 max-w-3xl">
-            <p className="text-xs font-bold tracking-[0.3em] text-cream-200/85">{tr(lang, "لوحة المطعم", "Restaurant Panel")}</p>
+            <p className="text-xs font-bold tracking-[0.3em] text-cream-200/85">{tr(lang, "لوحة المطعم", "Restaurant dashboard")}</p>
             <h1 className="mt-1 font-display text-3xl font-bold">{restaurant.name}</h1>
           </div>
         </header>
 
         <div className="px-5 lg:hidden">
           <div className="mx-auto -mt-8 max-w-3xl">
-            <div className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {items.map((n) => (
-                <Link
-                  key={n.key}
-                  href={n.href}
-                  data-active={active === n.key}
-                  className="shrink-0 rounded-2xl px-4 py-3 text-center text-sm font-bold text-[color:var(--muted)] transition data-[active=true]:text-white"
-                  style={active === n.key ? { background: "linear-gradient(160deg,#a8371a,#661c0a)" } : { background: "#fff", border: "1px solid var(--border)" }}
-                >
-                  {tr(lang, n.label, NAV_EN[n.key])}
-                </Link>
-              ))}
-            </div>
+            <OwnerNavTabs items={items} />
           </div>
         </div>
 

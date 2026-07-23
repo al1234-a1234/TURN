@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { OwnerShell } from "../owner-shell";
 import { loadOwner } from "../owner-context";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { CustomerControls } from "./customer-controls";
@@ -35,7 +34,7 @@ function fmtDate(iso: string | null, lang: "ar" | "en"): string {
 export default async function CustomersPage() {
   const lang = await getLang();
   const load = await loadOwner();
-  if (load.state !== "ok") redirect("/dashboard");
+  if (load.state !== "ok") return null;
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
 
   if (!isModuleOn(modules, "crm") || !staffHasPermission(role, permissions, "customers")) {
@@ -56,8 +55,7 @@ export default async function CustomersPage() {
   const avgVisits = list.length ? Math.round((totalVisits / list.length) * 10) / 10 : 0;
 
   return (
-    <OwnerShell active="customers" restaurant={restaurant} modules={modules} role={role} permissions={permissions} counts={{ customers: list.length }}>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="grid grid-cols-3 gap-3">
           <Kpi label={tr(lang, "عملاؤك", "Your customers")} value={toAr(list.length)} tone="var(--brand-d)" />
           <Kpi label={tr(lang, "مميّزون (VIP)", "VIPs")} value={toAr(vips)} tone="var(--st-open)" />
@@ -124,8 +122,7 @@ export default async function CustomersPage() {
             })}
           </ul>
         )}
-      </div>
-    </OwnerShell>
+    </div>
   );
 }
 

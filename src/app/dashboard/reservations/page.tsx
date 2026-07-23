@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { OwnerShell } from "../owner-shell";
 import { loadOwner } from "../owner-context";
 import { staffHasPermission } from "@/lib/features";
 import { getLang } from "@/lib/i18n-server";
@@ -25,7 +24,7 @@ const STATUS_META: Record<string, { ar: string; en: string; color: string }> = {
 export default async function ReservationsPage() {
   const lang = await getLang();
   const load = await loadOwner();
-  if (load.state !== "ok") redirect("/dashboard");
+  if (load.state !== "ok") return null;
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
   if (!staffHasPermission(role, permissions, "reservations")) redirect("/dashboard");
 
@@ -37,16 +36,14 @@ export default async function ReservationsPage() {
 
   if (!acceptsReservations) {
     return (
-      <OwnerShell active="reservations" restaurant={restaurant} modules={modules} role={role} permissions={permissions}>
-        <div className="soft-card mx-auto max-w-md p-8 text-center">
-          <p className="text-3xl">📅</p>
-          <h1 className="mt-2 font-display text-xl font-bold text-[color:var(--ink)]">{tr(lang, "الحجوزات موقّفة", "Reservations are off")}</h1>
-          <p className="mt-2 text-sm text-[color:var(--muted)]">
-            {tr(lang, "الحجز المسبق للطاولات منفصل عن طابور الحضور. فعّله ليبدأ استقبال الحجوزات.", "Advance table booking is separate from the walk-in queue. Enable it to start accepting reservations.")}
-          </p>
-          <a href="/dashboard/manage" className="btn btn-primary mt-5 inline-flex w-full max-w-xs">{tr(lang, "تفعيل من الإعدادات", "Enable in settings")}</a>
-        </div>
-      </OwnerShell>
+      <div className="soft-card mx-auto max-w-md p-8 text-center">
+        <p className="text-3xl">📅</p>
+        <h1 className="mt-2 font-display text-xl font-bold text-[color:var(--ink)]">{tr(lang, "الحجوزات موقّفة", "Reservations are off")}</h1>
+        <p className="mt-2 text-sm text-[color:var(--muted)]">
+          {tr(lang, "الحجز المسبق للطاولات منفصل عن طابور الحضور. فعّله ليبدأ استقبال الحجوزات.", "Advance table booking is separate from the walk-in queue. Enable it to start accepting reservations.")}
+        </p>
+        <a href="/dashboard/manage" className="btn btn-primary mt-5 inline-flex w-full max-w-xs">{tr(lang, "تفعيل من الإعدادات", "Enable in settings")}</a>
+      </div>
     );
   }
 
@@ -78,7 +75,7 @@ export default async function ReservationsPage() {
   const field = "field-input";
 
   return (
-    <OwnerShell active="reservations" restaurant={restaurant} modules={modules} role={role} permissions={permissions} counts={{ reservations: active.length }}>
+    <>
       <div className="mb-5 hidden lg:block">
         <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "الحجوزات", "Reservations")}</h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "احجز طاولات مسبقًا وأدِر حضور العملاء", "Book tables ahead and manage arrivals")}</p>
@@ -141,7 +138,7 @@ export default async function ReservationsPage() {
           </ul>
         )}
       </section>
-    </OwnerShell>
+    </>
   );
 }
 

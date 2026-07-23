@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { ImageUploader } from "@/components/image-uploader";
 import { updateRestaurantInfo, updateBranchSettings, addBranch, deleteBranch } from "./actions";
 import { MenuManager } from "./menu-manager";
-import { OwnerShell } from "../owner-shell";
 import { loadOwner } from "../owner-context";
 import { ColumnChart, SplitBars, ChartCard } from "./charts";
 import { toAr } from "@/lib/format";
@@ -15,7 +14,7 @@ const EN_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export default async function ManagePage() {
   const lang = await getLang();
   const load = await loadOwner();
-  if (load.state !== "ok") redirect("/dashboard");
+  if (load.state !== "ok") return null;
   const { supabase, restaurant: base, modules, role, permissions } = load.ctx;
 
   const { data: full } = await supabase
@@ -86,8 +85,7 @@ export default async function ManagePage() {
   const inputDark = "rounded-2xl border p-3";
 
   return (
-    <OwnerShell active="manage" restaurant={restaurant} modules={modules} role={role} permissions={permissions}>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* ===== التحليلات ===== */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Kpi label={tr(lang, "خدمناهم (30 يوم)", "Served (30 days)")} value={toAr(served30)} tone="var(--st-open)" />
@@ -206,8 +204,7 @@ export default async function ManagePage() {
           <h2 className="mb-4 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "المنيو والأسعار", "Menu & prices")}</h2>
           <MenuManager restaurantId={restaurant.id} categories={categories ?? []} items={items ?? []} />
         </section>
-      </div>
-    </OwnerShell>
+    </div>
   );
 }
 

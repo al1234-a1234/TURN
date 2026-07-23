@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { OwnerShell } from "../owner-shell";
 import { loadOwner } from "../owner-context";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { createOffer, deleteOffer } from "./actions";
@@ -52,7 +51,7 @@ function offerValueText(o: Offer, lang: Lang): string {
 export default async function OffersPage() {
   const lang = await getLang();
   const load = await loadOwner();
-  if (load.state !== "ok") redirect("/dashboard");
+  if (load.state !== "ok") return null;
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
 
   // بوابة الموديول + الصلاحية
@@ -73,8 +72,7 @@ export default async function OffersPage() {
   const field = "field-input";
 
   return (
-    <OwnerShell active="offers" restaurant={restaurant} modules={modules} role={role} permissions={permissions}>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* مؤشرات */}
         <div className="grid grid-cols-3 gap-3">
           <Kpi label={tr(lang, "عروض نشطة", "Active offers")} value={toAr(activeCount)} tone="var(--st-open)" />
@@ -193,8 +191,7 @@ export default async function OffersPage() {
             </ul>
           )}
         </section>
-      </div>
-    </OwnerShell>
+    </div>
   );
 }
 

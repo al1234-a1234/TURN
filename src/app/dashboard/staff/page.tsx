@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { OwnerShell } from "../owner-shell";
 import { loadOwner } from "../owner-context";
 import { PermToggle } from "./perm-toggle";
 import {
@@ -63,7 +62,7 @@ const PERM_LABEL_EN: Record<string, string> = {
 export default async function StaffPage() {
   const lang = await getLang();
   const load = await loadOwner();
-  if (load.state !== "ok") redirect("/dashboard");
+  if (load.state !== "ok") return null;
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
 
   // إدارة الفريق للمالك/المدير فقط
@@ -79,7 +78,7 @@ export default async function StaffPage() {
   const team = (data ?? []) as StaffRow[];
 
   return (
-    <OwnerShell active="staff" restaurant={restaurant} modules={modules} role={role} permissions={permissions} counts={{ staff: team.length }}>
+    <>
       <div className="mb-5 hidden lg:block">
         <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "الموظفون والصلاحيات", "Staff & permissions")}</h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "افتح لكل موظف ما تريده بالضبط — تحكّم كامل ومرن", "Grant each staff member exactly what you want — full, flexible control")}</p>
@@ -131,6 +130,6 @@ export default async function StaffPage() {
           {tr(lang, "لإضافة موظف جديد تواصل مع إدارة دور — نُنشئ له حساب دخول ثم تتحكّم بصلاحياته من هنا.", "To add a new staff member, contact the Turn team — we'll create a login account, then you control their permissions here.")}
         </div>
       </div>
-    </OwnerShell>
+    </>
   );
 }

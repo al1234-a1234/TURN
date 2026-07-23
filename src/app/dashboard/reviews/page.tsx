@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { OwnerShell } from "../owner-shell";
 import { loadOwner } from "../owner-context";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { ReviewPublishToggle } from "./review-toggle";
@@ -22,7 +21,7 @@ function fmtDate(iso: string, lang: "ar" | "en"): string {
 export default async function ReviewsPage() {
   const lang = await getLang();
   const load = await loadOwner();
-  if (load.state !== "ok") redirect("/dashboard");
+  if (load.state !== "ok") return null;
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
 
   if (!isModuleOn(modules, "reviews") || !staffHasPermission(role, permissions, "reviews")) {
@@ -48,8 +47,7 @@ export default async function ReviewsPage() {
   const routingOn = isModuleOn(modules, "review_routing");
 
   return (
-    <OwnerShell active="reviews" restaurant={restaurant} modules={modules} role={role} permissions={permissions} counts={{ reviews: count }}>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* ملخّص التقييم */}
         <section className="soft-card p-5">
           <div className="flex items-center gap-5">
@@ -117,7 +115,6 @@ export default async function ReviewsPage() {
             </ul>
           )}
         </section>
-      </div>
-    </OwnerShell>
+    </div>
   );
 }

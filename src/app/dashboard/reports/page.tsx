@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { OwnerShell } from "../owner-shell";
 import { loadOwner } from "../owner-context";
 import { ColumnChart, SplitBars, ChartCard } from "../manage/charts";
 import { PrintButton } from "./print-button";
@@ -56,7 +55,7 @@ export default async function ReportsPage({
 
   const lang = await getLang();
   const load = await loadOwner();
-  if (load.state !== "ok") redirect("/dashboard");
+  if (load.state !== "ok") return null;
 
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
 
@@ -218,7 +217,7 @@ export default async function ReportsPage({
   });
 
   return (
-    <OwnerShell active="reports" restaurant={restaurant} modules={modules} role={role} permissions={permissions}>
+    <>
       {/* محدّد الفترة */}
       <div className="mb-5 flex flex-wrap gap-2 print:hidden">
         {PERIODS.map((p) => {
@@ -307,7 +306,7 @@ export default async function ReportsPage({
           </div>
         )}
       </section>
-    </OwnerShell>
+    </>
   );
 }
 

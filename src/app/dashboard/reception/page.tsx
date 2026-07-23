@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { QueueActions } from "../queue-actions";
-import { OwnerShell } from "../owner-shell";
 import { WalkInForm } from "./walkin-form";
 import { loadOwner } from "../owner-context";
 import { toAr } from "@/lib/format";
@@ -14,7 +13,7 @@ function minutesSince(iso: string): number {
 export default async function ReceptionPage() {
   const lang = await getLang();
   const load = await loadOwner();
-  if (load.state !== "ok") redirect("/dashboard");
+  if (load.state !== "ok") return null;
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
 
   const { data: branches } = await supabase
@@ -82,14 +81,7 @@ export default async function ReceptionPage() {
   );
 
   return (
-    <OwnerShell
-      active="reception"
-      restaurant={restaurant}
-      modules={modules}
-      role={role}
-      permissions={permissions}
-      counts={{ reception: list.length }}
-    >
+    <>
       <div className="mb-5 hidden lg:block">
         <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "الاستقبال", "Reception")}</h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "الطابور الحيّ — إجلاس، تنبيه، وإدارة", "Live queue — seat, notify, and manage")}</p>
@@ -111,7 +103,7 @@ export default async function ReceptionPage() {
       {other.length > 0 && (
         <div className="mt-6"><ZoneColumn title={tr(lang, "غير محدّد", "Unspecified")} rows={other} tone="var(--muted)" /></div>
       )}
-    </OwnerShell>
+    </>
   );
 }
 

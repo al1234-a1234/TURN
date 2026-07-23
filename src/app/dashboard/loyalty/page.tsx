@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { OwnerShell } from "../owner-shell";
 import { loadOwner } from "../owner-context";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { saveLoyaltyProgram } from "./actions";
@@ -15,7 +14,7 @@ type Member = Database["public"]["Tables"]["customer_restaurant"]["Row"] & {
 export default async function LoyaltyPage() {
   const lang = await getLang();
   const load = await loadOwner();
-  if (load.state !== "ok") redirect("/dashboard");
+  if (load.state !== "ok") return null;
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
 
   if (!isModuleOn(modules, "loyalty") || !staffHasPermission(role, permissions, "loyalty")) {
@@ -42,8 +41,7 @@ export default async function LoyaltyPage() {
   const field = "field-input";
 
   return (
-    <OwnerShell active="loyalty" restaurant={restaurant} modules={modules} role={role} permissions={permissions}>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="grid grid-cols-3 gap-3">
           <Kpi label={tr(lang, "الحالة", "Status")} value={active ? tr(lang, "نشط", "Active") : tr(lang, "متوقّف", "Paused")} tone={active ? "var(--st-open)" : "var(--muted)"} />
           <Kpi label={tr(lang, "أعضاء بنقاط", "Members with points")} value={toAr(list.length)} tone="var(--brand-d)" />
@@ -111,8 +109,7 @@ export default async function LoyaltyPage() {
             </ul>
           )}
         </section>
-      </div>
-    </OwnerShell>
+    </div>
   );
 }
 

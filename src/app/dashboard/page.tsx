@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { OwnerShell } from "./owner-shell";
-import { OwnerHeader } from "./owner-chrome";
 import { loadOwner } from "./owner-context";
 import { ColumnChart, SplitBars, ChartCard } from "./manage/charts";
 import { toAr } from "@/lib/format";
@@ -19,37 +17,7 @@ function hourLabel(h: number, lang: Lang): string {
 export default async function OverviewPage() {
   const lang = await getLang();
   const load = await loadOwner();
-
-  if (load.state === "no_user") {
-    return (
-      <div className="flex flex-1 flex-col">
-        <OwnerHeader />
-        <main className="mx-auto w-full max-w-3xl px-5 py-10">
-          <p className="text-[color:var(--muted)]">
-            {tr(lang, "يجب تسجيل الدخول.", "You must sign in.")}{" "}
-            <Link href="/partners" className="font-bold text-brand-700">{tr(lang, "تسجيل الدخول", "Sign in")}</Link>
-          </p>
-        </main>
-      </div>
-    );
-  }
-
-  if (load.state === "no_restaurant") {
-    return (
-      <div className="flex flex-1 flex-col">
-        <OwnerHeader email={load.email ?? undefined} />
-        <main className="mx-auto max-w-xl px-5 py-10">
-          <div className="soft-card flex flex-col items-center gap-4 p-8 text-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-2xl text-3xl" style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}>🍽️</span>
-            <h1 className="font-display text-2xl font-bold text-[color:var(--ink)]">{tr(lang, "لا يوجد مطعم مرتبط بحسابك", "No restaurant linked to your account")}</h1>
-            <p className="max-w-sm text-sm text-[color:var(--muted)]">{tr(lang, "حسابات الملّاك تُنشأ من قِبل إدارة دور فقط. تواصل معنا لإضافة مطعمك.", "Owner accounts are created by the Turn team only. Contact us to add your restaurant.")}</p>
-            <a href="mailto:albraalaan@gmail.com" className="btn btn-primary w-full max-w-xs">{tr(lang, "تواصل مع الإدارة", "Contact the team")}</a>
-            {load.isAdmin && <Link href="/admin" className="btn btn-secondary mt-2 w-full max-w-xs">{tr(lang, "⚙️ لوحة الأدمِن", "⚙️ Admin Panel")}</Link>}
-          </div>
-        </main>
-      </div>
-    );
-  }
+  if (load.state !== "ok") return null;
 
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
 
@@ -136,14 +104,7 @@ export default async function OverviewPage() {
   if (noShowRate >= 20) alerts.push({ icon: "📉", text: tr(lang, `نسبة التغيّب مرتفعة (٪${toAr(noShowRate)})`, `No-show rate is high (${toAr(noShowRate)}%)`), tone: "var(--st-closed)" });
 
   return (
-    <OwnerShell
-      active="overview"
-      restaurant={restaurant}
-      modules={modules}
-      role={role}
-      permissions={permissions}
-      counts={{ reception: queueCount, customers: totalCustomers, reviews: ratings.length }}
-    >
+    <>
       <div className="mb-6 hidden lg:block">
         <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "لوحة التحكم", "Dashboard")}</h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, `نظرة شاملة على أداء ${restaurant.name}`, `An overview of ${restaurant.name}'s performance`)}</p>
@@ -267,7 +228,7 @@ export default async function OverviewPage() {
           </span>
         </Link>
       </div>
-    </OwnerShell>
+    </>
   );
 }
 

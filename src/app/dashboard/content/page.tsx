@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { OwnerShell } from "../owner-shell";
 import { loadOwner } from "../owner-context";
 import { staffHasPermission } from "@/lib/features";
 import { saveLinks } from "./actions";
@@ -9,7 +8,7 @@ import { getLang } from "@/lib/i18n-server";
 export default async function ContentPage() {
   const lang = await getLang();
   const load = await loadOwner();
-  if (load.state !== "ok") redirect("/dashboard");
+  if (load.state !== "ok") return null;
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
 
   if (!staffHasPermission(role, permissions, "settings")) redirect("/dashboard");
@@ -32,7 +31,7 @@ export default async function ContentPage() {
   ];
 
   return (
-    <OwnerShell active="content" restaurant={restaurant} modules={modules} role={role} permissions={permissions}>
+    <>
       <div className="mb-5 hidden lg:block">
         <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "المحتوى والروابط", "Content & Links")}</h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "روابط مطعمك العامة على الخرائط ومنصات التواصل", "Your restaurant's public links on maps and social platforms")}</p>
@@ -51,6 +50,6 @@ export default async function ContentPage() {
           <button className="btn btn-primary w-full">{tr(lang, "حفظ الروابط", "Save links")}</button>
         </form>
       </section>
-    </OwnerShell>
+    </>
   );
 }

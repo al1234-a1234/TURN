@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { OwnerShell } from "../../owner-shell";
 import { loadOwner } from "../../owner-context";
 import { staffHasPermission } from "@/lib/features";
 import { toAr } from "@/lib/format";
@@ -117,7 +116,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   const { id } = await params;
   const lang = await getLang();
   const load = await loadOwner();
-  if (load.state !== "ok") redirect("/dashboard");
+  if (load.state !== "ok") return null;
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
 
   if (!staffHasPermission(role, permissions, "customers")) redirect("/dashboard");
@@ -160,8 +159,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   const name = customer.full_name?.trim() || tr(lang, "عميل", "Customer");
 
   return (
-    <OwnerShell active="customers" restaurant={restaurant} modules={modules} role={role} permissions={permissions}>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <Link href="/dashboard/customers" className="inline-flex text-sm font-bold text-brand-700">
           {tr(lang, "← العملاء", "← Customers")}
         </Link>
@@ -325,8 +323,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             </ul>
           )}
         </section>
-      </div>
-    </OwnerShell>
+    </div>
   );
 }
 

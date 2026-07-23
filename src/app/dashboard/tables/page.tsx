@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { OwnerShell } from "../owner-shell";
 import { loadOwner } from "../owner-context";
 import { staffHasPermission } from "@/lib/features";
 import { getLang } from "@/lib/i18n-server";
@@ -13,7 +12,7 @@ type Table = Database["public"]["Tables"]["tables"]["Row"];
 export default async function TablesPage() {
   const lang = await getLang();
   const load = await loadOwner();
-  if (load.state !== "ok") redirect("/dashboard");
+  if (load.state !== "ok") return null;
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
   if (!staffHasPermission(role, permissions, "settings")) redirect("/dashboard");
 
@@ -61,7 +60,7 @@ export default async function TablesPage() {
   );
 
   return (
-    <OwnerShell active="tables" restaurant={restaurant} modules={modules} role={role} permissions={permissions} counts={{ tables: list.length }}>
+    <>
       <div className="mb-5 hidden lg:block">
         <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "الطاولات", "Tables")}</h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "عرّف طاولاتك الداخلية والخارجية وسعاتها", "Define your indoor & outdoor tables and their seats")}</p>
@@ -90,7 +89,7 @@ export default async function TablesPage() {
         <Zone title={tr(lang, "طاولات داخلية", "Indoor tables")} rows={inside} tone="var(--st-full)" />
         <Zone title={tr(lang, "طاولات خارجية", "Outdoor tables")} rows={outsideTables} tone="var(--brand)" />
       </div>
-    </OwnerShell>
+    </>
   );
 }
 
