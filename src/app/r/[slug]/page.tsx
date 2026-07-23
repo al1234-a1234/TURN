@@ -35,11 +35,13 @@ export default async function RestaurantPublicPage({
 
   if (!restaurant) notFound();
 
-  const [{ data: branches }, { data: categories }, { data: items }, { data: photos }] = await Promise.all([
+  const [{ data: branches }, { data: categories }, { data: items }, { data: photos }, { data: offers }] = await Promise.all([
     supabase.from("branches").select("id, name, city, address, branch_settings(accepts_waitlist)").eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at"),
     supabase.from("menu_categories").select("id, name").eq("restaurant_id", restaurant.id).order("sort_order").order("created_at"),
     supabase.from("menu_items").select("id, name, price, description, image_url, category_id").eq("restaurant_id", restaurant.id).eq("is_available", true).order("created_at"),
     supabase.from("restaurant_photos").select("id, url, caption").eq("restaurant_id", restaurant.id).order("sort_order").order("created_at"),
+    // RLS «public reads live offers» يُرجع العروض الفعّالة ضمن نافذتها الزمنية فقط
+    supabase.from("offers").select("id, title, description, kind, value, code, ends_at").eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at", { ascending: false }),
   ]);
 
   const {
@@ -133,10 +135,76 @@ export default async function RestaurantPublicPage({
           {waitlistPanel}
         </RestaurantTabs>
 
+        <OffersSection offers={(offers ?? []) as OfferLite[]} lang={lang} />
+
         <Gallery photos={photos ?? []} label={tr(lang, "صور من المطعم", "Photos from the restaurant")} />
 
         <RestaurantLinks links={(restaurant.links ?? {}) as Record<string, string>} label={tr(lang, "تابعنا وزورنا", "Follow & visit us")} />
       </main>
+    </div>
+  );
+}
+
+type OfferLite = {
+  id: string;
+  title: string;
+  description: string | null;
+  kind: string;
+  value: number | null;
+  code: string | null;
+  ends_at: string | null;
+};
+
+function offerBadge(o: OfferLite, lang: "ar" | "en"): string {
+  if (o.kind === "percent" && o.value != null) return `${toAr(o.value)}${lang === "en" ? "%" : "٪"}`;
+  if (o.kind === "fixed" && o.value != null) return `${toAr(Math.round(o.value))} ${tr(lang, "ر.س", "SAR")}`;
+  if (o.kind === "points" && o.value != null) return `×${toAr(o.value)}`;
+  if (o.kind === "free_item") return tr(lang, "مجاني", "Free");
+  if (o.kind === "bogo") return "1+1";
+  return "★";
+}
+
+/** عروض المطعم العامّة + منفذ للهدايا الشخصية — يشوفها أي عميل. */
+function OffersSection({ offers, lang }: { offers: OfferLite[]; lang: "ar" | "en" }) {
+  return (
+    <div className="mt-6">
+      <p className="mb-3 font-display text-base font-bold text-[color:var(--ink)]">{tr(lang, "العروض والمكافآت", "Offers & rewards")}</p>
+
+      {offers.length > 0 ? (
+        <div className="space-y-2.5">
+          {offers.map((o) => (
+            <div key={o.id} className="rq-card flex items-center gap-3 p-3.5">
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-extrabold text-white" style={{ background: "linear-gradient(155deg,#a8371a,#661c0a)" }}>
+                {offerBadge(o, lang)}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-display text-[15px] font-bold text-[color:var(--ink)]">{o.title}</p>
+                {o.description && <p className="mt-0.5 truncate text-[13px] text-[color:var(--muted)]">{o.description}</p>}
+                {o.ends_at && (
+                  <p className="mt-0.5 text-[11px] font-bold text-[color:var(--muted)]">
+                    {tr(lang, "ينتهي", "Ends")} {new Date(o.ends_at).toLocaleDateString(lang === "en" ? "en-GB" : "ar-SA-u-nu-latn", { day: "2-digit", month: "short" })}
+                  </p>
+                )}
+              </div>
+              {o.code && (
+                <span dir="ltr" className="shrink-0 rounded-lg bg-brand-800 px-2.5 py-1 text-xs font-extrabold text-cream-100">{o.code}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rq-card p-5 text-center text-sm text-[color:var(--muted)]">
+          {tr(lang, "لا توجد عروض عامّة حاليًا.", "No public offers right now.")}
+        </div>
+      )}
+
+      {/* منفذ الهدايا الشخصية (بلا حساب — عبر الرقم) */}
+      <Link href="/me/rewards" className="mt-2.5 flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: "linear-gradient(160deg,#faefe8,#f4ddd0)", border: "1px solid rgba(102,28,10,0.14)" }}>
+        <span className="flex items-center gap-2 text-sm font-bold" style={{ color: "var(--brand-d)" }}>
+          <span>🎁</span> {tr(lang, "عندك هديّة خاصة؟ اعرفها برقمك", "Got a personal reward? Check with your number")}
+        </span>
+        <span className="text-[color:var(--brand-d)]">←</span>
+      </Link>
     </div>
   );
 }
