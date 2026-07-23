@@ -61,6 +61,13 @@ export default async function AdminPage() {
                     </p>
                   </div>
                   <Link
+                    href={`/admin/${r.id}`}
+                    className="shrink-0 rounded-full px-3 py-2 text-xs font-bold text-white"
+                    style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}
+                  >
+                    الباقة
+                  </Link>
+                  <Link
                     href={`/r/${r.slug}`}
                     title="الصفحة العامة"
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--hairline)] bg-[rgba(201,169,97,0.12)] text-[color:var(--gold-1)] transition"
