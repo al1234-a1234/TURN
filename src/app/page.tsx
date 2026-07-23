@@ -7,9 +7,6 @@ import { tr, type Lang } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
-const CUISINE: Record<string, string> = { eficto: "إيطالي", "bait-almounah": "شعبي", noo: "بحري", rudy: "بيتزا", "prime-cut": "برجر", takya: "سعودي معاصر", "najd-village": "نجدي" };
-const CUISINE_EN: Record<string, string> = { eficto: "Italian", "bait-almounah": "Local", noo: "Seafood", rudy: "Pizza", "prime-cut": "Burgers", takya: "Modern Saudi", "najd-village": "Najdi" };
-const DIST: Record<string, string> = { eficto: "3.3", "bait-almounah": "5.2", noo: "8.9", rudy: "7.1", "prime-cut": "4.2", takya: "6.5", "najd-village": "5.4" };
 
 function ZonePill({ label, count, lang }: { label: string; count: number; lang: Lang }) {
   const busy = count > 0;
@@ -41,7 +38,7 @@ export default async function Home() {
 
   const { data: restaurants } = await supabase
     .from("restaurants")
-    .select("id, name, slug, logo_url, cover_url, branches(id, city, is_active, branch_settings(accepts_waitlist))")
+    .select("id, name, slug, logo_url, cover_url, cuisine, cuisine_en, branches(id, city, is_active, branch_settings(accepts_waitlist))")
     .eq("is_active", true)
     .order("created_at", { ascending: false });
 
@@ -118,15 +115,11 @@ export default async function Home() {
                     )}
                   </span>
 
-                  {/* الاسم + المطبخ + المسافة */}
+                  {/* الاسم + المطبخ + المدينة */}
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-display text-[17px] font-bold text-[color:var(--ink)]">{r.name}</p>
                     <p className="mt-0.5 truncate text-[13px] font-medium text-[color:var(--muted)]">
-                      {tr(lang, CUISINE[r.slug] ?? "مطعم", CUISINE_EN[r.slug] ?? "Restaurant")}{r.city ? ` · ${r.city}` : ""}
-                    </p>
-                    <p className="mt-0.5 flex items-center gap-1 text-[12px] font-bold text-[color:var(--muted)]">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" className="text-brand-600"><path d="M12 21s7-6 7-11a7 7 0 10-14 0c0 5 7 11 7 11z" stroke="currentColor" strokeWidth="2" /><circle cx="12" cy="10" r="2.4" stroke="currentColor" strokeWidth="2" /></svg>
-                      {DIST[r.slug] ?? "—"} {tr(lang, "كم", "km")}
+                      {tr(lang, r.cuisine ?? "مطعم", r.cuisine_en ?? "Restaurant")}{r.city ? ` · ${r.city}` : ""}
                     </p>
                   </div>
 

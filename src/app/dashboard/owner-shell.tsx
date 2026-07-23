@@ -52,7 +52,7 @@ const NAV: NavDef[] = [
   { key: "staff", ar: "الموظفون والصلاحيات", en: "Staff & Permissions", href: "/dashboard/staff", icon: "🔐", perm: "team" },
   { key: "tables", ar: "الطاولات", en: "Tables", href: "/dashboard/tables", icon: "🍽️", perm: "settings" },
   { key: "content", ar: "المحتوى والروابط", en: "Content & Links", href: "/dashboard/content", icon: "🔗", perm: "settings" },
-  { key: "reports", ar: "التقارير", en: "Reports", href: "/dashboard/reports", icon: "📈", perm: "analytics" },
+  { key: "reports", ar: "التقارير", en: "Reports", href: "/dashboard/reports", icon: "📈", module: "analytics", perm: "analytics" },
   { key: "manage", ar: "الإدارة والتحليلات", en: "Management & Analytics", href: "/dashboard/manage", icon: "⚙️", perm: "settings" },
 ];
 

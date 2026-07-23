@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { loadOwner } from "../owner-context";
 import { ColumnChart, SplitBars, ChartCard } from "../manage/charts";
 import { PrintButton } from "./print-button";
-import { staffHasPermission } from "@/lib/features";
+import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { toAr } from "@/lib/format";
 import { tr, pct, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
@@ -59,7 +59,7 @@ export default async function ReportsPage({
 
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
 
-  if (!staffHasPermission(role, permissions, "analytics")) redirect("/dashboard");
+  if (!isModuleOn(modules, "analytics") || !staffHasPermission(role, permissions, "analytics")) redirect("/dashboard");
 
   const { data: branches } = await supabase
     .from("branches")

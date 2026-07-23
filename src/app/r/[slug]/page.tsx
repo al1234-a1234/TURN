@@ -10,9 +10,6 @@ import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 
-const CUISINE: Record<string, string> = { eficto: "إيطالي", "bait-almounah": "شعبي", noo: "بحري", rudy: "بيتزا", "prime-cut": "برجر", takya: "سعودي معاصر", "najd-village": "نجدي" };
-const CUISINE_EN: Record<string, string> = { eficto: "Italian", "bait-almounah": "Local", noo: "Seafood", rudy: "Pizza", "prime-cut": "Burgers", takya: "Modern Saudi", "najd-village": "Najdi" };
-
 export default async function RestaurantPublicPage({
   params,
 }: {
@@ -24,7 +21,7 @@ export default async function RestaurantPublicPage({
 
   const { data: restaurant } = await supabase
     .from("restaurants")
-    .select("id, name, name_en, description, is_active, logo_url, cover_url, links")
+    .select("id, name, name_en, description, is_active, logo_url, cover_url, links, cuisine, cuisine_en")
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
@@ -131,7 +128,7 @@ export default async function RestaurantPublicPage({
           slug={slug}
           name={restaurant.name}
           nameEn={restaurant.name_en}
-          cuisine={tr(lang, CUISINE[slug] ?? "مطعم", CUISINE_EN[slug] ?? "Restaurant")}
+          cuisine={tr(lang, restaurant.cuisine ?? "مطعم", restaurant.cuisine_en ?? "Restaurant")}
           description={restaurant.description}
           rating={reviewCount ? String(avgRating) : "—"}
           reviewCount={String(reviewCount)}

@@ -6,16 +6,13 @@ import { tr } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
-const CUISINE: Record<string, string> = { eficto: "إيطالي", "bait-almounah": "شعبي", noo: "بحري", rudy: "بيتزا", "prime-cut": "برجر", takya: "سعودي معاصر", "najd-village": "نجدي" };
-const CUISINE_EN: Record<string, string> = { eficto: "Italian", "bait-almounah": "Local", noo: "Seafood", rudy: "Pizza", "prime-cut": "Burgers", takya: "Modern Saudi", "najd-village": "Najdi" };
-
 export default async function SearchPage() {
   const lang = await getLang();
   const supabase = await createClient();
 
   const { data: restaurants } = await supabase
     .from("restaurants")
-    .select("id, name, slug, logo_url, branches(id, city, is_active)")
+    .select("id, name, slug, logo_url, cuisine, cuisine_en, branches(id, city, is_active)")
     .eq("is_active", true)
     .order("created_at", { ascending: false });
 
@@ -27,7 +24,7 @@ export default async function SearchPage() {
       name: r.name ?? "",
       logo: r.logo_url,
       city: branch.city ?? "",
-      cuisine: tr(lang, CUISINE[r.slug] ?? "مطعم", CUISINE_EN[r.slug] ?? "Restaurant"),
+      cuisine: tr(lang, r.cuisine ?? "مطعم", r.cuisine_en ?? "Restaurant"),
     }];
   });
 

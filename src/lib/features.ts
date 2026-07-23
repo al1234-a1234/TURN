@@ -111,7 +111,6 @@ export const STAFF_PERMISSIONS = [
   "customers",
   "reviews",
   "settings",
-  "menu",
   "team",
 ] as const;
 
@@ -126,7 +125,6 @@ export const STAFF_PERMISSION_LABELS: Record<StaffPermission, string> = {
   customers: "ملفّات العملاء",
   reviews: "التقييمات",
   settings: "الإعدادات وأوقات العمل",
-  menu: "المنيو والأسعار",
   team: "إدارة الفريق",
 };
 

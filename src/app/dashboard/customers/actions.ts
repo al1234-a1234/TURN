@@ -133,3 +133,19 @@ export async function revokeReward(formData: FormData) {
     .eq("restaurant_id", caller.restaurantId);
   revalidatePath(`/dashboard/customers/${customerId}`);
 }
+
+/** اعتماد استخدام المكافأة من طرف الطاقم (العميل يقدّمها عند الطلب). */
+export async function redeemReward(formData: FormData) {
+  const caller = await requirePerm("customers");
+  if (!caller) return;
+  const rewardId = String(formData.get("reward_id") ?? "");
+  const customerId = String(formData.get("customer_id") ?? "");
+  if (!rewardId) return;
+  await caller.supabase
+    .from("customer_rewards")
+    .update({ status: "redeemed", redeemed_at: new Date().toISOString() })
+    .eq("id", rewardId)
+    .eq("restaurant_id", caller.restaurantId)
+    .eq("status", "active");
+  revalidatePath(`/dashboard/customers/${customerId}`);
+}

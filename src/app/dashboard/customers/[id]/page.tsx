@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { loadOwner } from "../../owner-context";
 import { RewardForm } from "./reward-form";
-import { revokeReward } from "../actions";
+import { revokeReward, redeemReward } from "../actions";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { toAr, money } from "@/lib/format";
 import { tr } from "@/lib/i18n";
@@ -305,10 +305,15 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                       {r.expires_at ? tr(lang, `ينتهي ${fmtDate(r.expires_at, lang)}`, `Expires ${fmtDate(r.expires_at, lang)}`) : (!r.code ? tr(lang, "بلا انتهاء", "No expiry") : "")}
                     </p>
                   </div>
-                  <form action={revokeReward}>
+                  <form action={redeemReward} className="shrink-0">
                     <input type="hidden" name="reward_id" value={r.id} />
                     <input type="hidden" name="customer_id" value={customer.id} />
-                    <button className="shrink-0 rounded-lg px-2 py-1 text-xs font-bold text-[color:var(--muted)] transition hover:text-red-600">{tr(lang, "إلغاء", "Revoke")}</button>
+                    <button className="rounded-lg bg-[color:var(--sage)] px-2.5 py-1 text-xs font-bold text-brand-800 transition hover:brightness-95">{tr(lang, "اعتمد الاستخدام ✓", "Redeem ✓")}</button>
+                  </form>
+                  <form action={revokeReward} className="shrink-0">
+                    <input type="hidden" name="reward_id" value={r.id} />
+                    <input type="hidden" name="customer_id" value={customer.id} />
+                    <button className="rounded-lg px-2 py-1 text-xs font-bold text-[color:var(--muted)] transition hover:text-red-600">{tr(lang, "إلغاء", "Revoke")}</button>
                   </form>
                 </li>
               ))}

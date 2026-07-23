@@ -12,7 +12,9 @@ export async function updateRestaurantInfo(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim() || null;
   const logo_url = String(formData.get("logo_url") ?? "").trim() || null;
   const cover_url = String(formData.get("cover_url") ?? "").trim() || null;
-  const patch: TablesUpdate<"restaurants"> = { logo_url, cover_url, description };
+  const cuisine = String(formData.get("cuisine") ?? "").trim() || null;
+  const cuisine_en = String(formData.get("cuisine_en") ?? "").trim() || null;
+  const patch: TablesUpdate<"restaurants"> = { logo_url, cover_url, description, cuisine, cuisine_en };
   if (name) patch.name = name;
   await supabase.from("restaurants").update(patch).eq("id", rid);
   revalidatePath("/dashboard/manage");
@@ -91,7 +93,7 @@ export async function deleteBranch(formData: FormData) {
 }
 
 export async function toggleMenuItem(formData: FormData) {
-  const caller = await requirePerm("menu");
+  const caller = await requirePerm("settings");
   if (!caller) return;
   const id = String(formData.get("item_id") ?? "");
   const available = formData.get("available") === "true";
@@ -103,7 +105,7 @@ export async function toggleMenuItem(formData: FormData) {
 }
 
 export async function addMenuCategory(formData: FormData) {
-  const caller = await requirePerm("menu");
+  const caller = await requirePerm("settings");
   if (!caller) return;
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return;
@@ -112,7 +114,7 @@ export async function addMenuCategory(formData: FormData) {
 }
 
 export async function deleteMenuCategory(id: string) {
-  const caller = await requirePerm("menu");
+  const caller = await requirePerm("settings");
   if (!caller) return;
   await caller.supabase
     .from("menu_categories").delete()
@@ -121,7 +123,7 @@ export async function deleteMenuCategory(id: string) {
 }
 
 export async function addMenuItem(formData: FormData) {
-  const caller = await requirePerm("menu");
+  const caller = await requirePerm("settings");
   if (!caller) return;
   const { supabase, restaurantId: rid } = caller;
   const categoryId = String(formData.get("category_id") ?? "");
@@ -143,7 +145,7 @@ export async function addMenuItem(formData: FormData) {
 }
 
 export async function deleteMenuItem(id: string) {
-  const caller = await requirePerm("menu");
+  const caller = await requirePerm("settings");
   if (!caller) return;
   await caller.supabase
     .from("menu_items").delete()

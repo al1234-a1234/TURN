@@ -22,10 +22,10 @@ export default async function ManagePage() {
 
   const { data: full } = await supabase
     .from("restaurants")
-    .select("id, name, slug, description, logo_url, cover_url")
+    .select("id, name, slug, description, logo_url, cover_url, cuisine, cuisine_en")
     .eq("id", base.id)
     .maybeSingle();
-  const restaurant = full ?? { ...base, description: null, logo_url: null, cover_url: null };
+  const restaurant = full ?? { ...base, description: null, logo_url: null, cover_url: null, cuisine: null, cuisine_en: null };
 
   const [{ data: categories }, { data: items }, { data: branchList }, { data: reviewRows }] = await Promise.all([
     supabase.from("menu_categories").select("id, name").eq("restaurant_id", restaurant.id).order("sort_order").order("created_at"),
@@ -136,6 +136,16 @@ export default async function ManagePage() {
             <div>
               <label className="field-label">{tr(lang, "اسم المطعم", "Restaurant name")}</label>
               <input name="name" defaultValue={restaurant.name} className="field-input" />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="field-label">{tr(lang, "نوع المطبخ (عربي)", "Cuisine (Arabic)")}</label>
+                <input name="cuisine" defaultValue={restaurant.cuisine ?? ""} className="field-input" placeholder={tr(lang, "مثال: إيطالي", "e.g. إيطالي")} />
+              </div>
+              <div>
+                <label className="field-label">{tr(lang, "نوع المطبخ (إنجليزي)", "Cuisine (English)")}</label>
+                <input name="cuisine_en" defaultValue={restaurant.cuisine_en ?? ""} className="field-input" placeholder="e.g. Italian" dir="ltr" />
+              </div>
             </div>
             <div>
               <label className="field-label">{tr(lang, "الوصف", "Description")}</label>

@@ -865,6 +865,8 @@ export type Database = {
           claimed_at: string | null
           cover_url: string | null
           created_at: string
+          cuisine: string | null
+          cuisine_en: string | null
           description: string | null
           email: string | null
           id: string
@@ -885,6 +887,8 @@ export type Database = {
           claimed_at?: string | null
           cover_url?: string | null
           created_at?: string
+          cuisine?: string | null
+          cuisine_en?: string | null
           description?: string | null
           email?: string | null
           id?: string
@@ -905,6 +909,8 @@ export type Database = {
           claimed_at?: string | null
           cover_url?: string | null
           created_at?: string
+          cuisine?: string | null
+          cuisine_en?: string | null
           description?: string | null
           email?: string | null
           id?: string
@@ -1241,6 +1247,16 @@ export type Database = {
       redeem_customer_reward: {
         Args: { p_reward_id: string; p_phone: string }
         Returns: boolean
+      }
+      get_customer_loyalty: {
+        Args: { p_phone: string }
+        Returns: {
+          restaurant: string
+          restaurant_slug: string
+          points: number
+          reward_threshold: number
+          reward_description: string
+        }[]
       }
       has_feature: {
         Args: { p_module: string; rest_id: string }
