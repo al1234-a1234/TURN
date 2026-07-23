@@ -92,29 +92,18 @@ export async function grantRewardToSegment(formData: FormData) {
   const days = daysRaw ? Math.max(1, Number(daysRaw)) : null;
   const expires_at = days ? new Date(Date.now() + days * 864e5).toISOString() : null;
 
-  let q = caller.supabase
-    .from("customer_restaurant")
-    .select("customer_id")
-    .eq("restaurant_id", caller.restaurantId);
-  if (segment === "vip") q = q.eq("is_vip", true);
-  else if (segment === "gold") q = q.eq("tier", "gold");
-  else if (segment === "silver") q = q.eq("tier", "silver");
-  else if (segment === "returning") q = q.gte("visits", 2);
-
-  const { data: targets } = await q.limit(5000);
-  const rows = (targets ?? []).map((t) => ({
-    restaurant_id: caller.restaurantId,
-    customer_id: t.customer_id,
-    kind,
-    title,
-    value: kind === "discount" && Number.isFinite(value as number) ? value : null,
-    value_kind: valueKind,
-    description,
-    code,
-    created_by: caller.userId,
-    expires_at,
-  }));
-  if (rows.length > 0) await caller.supabase.from("customer_rewards").insert(rows);
+  // إدراج set-based لكل الشريحة بجملة واحدة (يتوسّع لأي عدد عملاء)
+  await caller.supabase.rpc("grant_reward_to_segment", {
+    p_restaurant_id: caller.restaurantId,
+    p_segment: segment,
+    p_kind: kind,
+    p_title: title,
+    p_value: value,
+    p_value_kind: valueKind,
+    p_description: description,
+    p_code: code,
+    p_expires_at: expires_at,
+  });
 
   revalidatePath("/dashboard/customers");
 }

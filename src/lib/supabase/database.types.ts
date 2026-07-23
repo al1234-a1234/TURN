@@ -1248,6 +1248,20 @@ export type Database = {
         Args: { p_reward_id: string; p_phone: string }
         Returns: boolean
       }
+      grant_reward_to_segment: {
+        Args: {
+          p_restaurant_id: string
+          p_segment: string
+          p_kind: string
+          p_title: string
+          p_value: number | null
+          p_value_kind: string
+          p_description: string | null
+          p_code: string | null
+          p_expires_at: string | null
+        }
+        Returns: number
+      }
       get_customer_loyalty: {
         Args: { p_phone: string }
         Returns: {

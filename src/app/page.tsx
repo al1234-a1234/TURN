@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getDiscovery } from "@/lib/supabase/public-cache";
 import { CustomerShell } from "@/components/customer-shell";
 import { toAr } from "@/lib/format";
 import { getLang } from "@/lib/i18n-server";
@@ -36,20 +37,11 @@ export default async function Home() {
   const lang = await getLang();
   const supabase = await createClient();
 
-  // اكتشاف محدود (مب كل المطاعم) — للتوسّع؛ البقية عبر البحث
-  const { data: restaurants } = await supabase
-    .from("restaurants")
-    .select("id, name, slug, logo_url, cover_url, cuisine, cuisine_en, branches(id, city, is_active, branch_settings(accepts_waitlist))")
-    .eq("is_active", true)
-    .order("created_at", { ascending: false })
-    .limit(60);
+  // قائمة الاكتشاف + التقييمات مكاشة (٣٠ث) — لا تضرب القاعدة في كل زيارة
+  const { list, ratings } = await getDiscovery();
+  const ratingAgg = new Map(Object.entries(ratings));
 
-  // نعرض فقط المطاعم التي لديها فرع فعّال واحد على الأقل (يطابق صفحة المطعم)
-  const list = (restaurants ?? [])
-    .map((r) => ({ ...r, branches: (r.branches ?? []).filter((b) => b.is_active) }))
-    .filter((r) => r.branches.length > 0);
-
-  // عدّاد الطوابير محصور بفروع الصفحة فقط (بدل مسح كل المنصّة)
+  // عدّاد الطوابير حيّ (خارج الكاش) ومحصور بفروع الصفحة فقط
   const pageBranchIds = list.flatMap((r) => r.branches.map((b) => b.id));
   const { data: countsData } = pageBranchIds.length
     ? await supabase.rpc("waitlist_counts_for", { p_branch_ids: pageBranchIds })
@@ -57,19 +49,6 @@ export default async function Home() {
   const counts = new Map(
     (countsData ?? []).map((c) => [c.branch_id, { total: c.total, inside: c.inside, outside: c.outside }]),
   );
-
-  // متوسط تقييم حقيقي لكل مطعم (استعلام واحد — يطابق لوحة المالك)
-  const { data: ratingRows } = await supabase
-    .from("reviews")
-    .select("restaurant_id, rating")
-    .eq("is_published", true)
-    .in("restaurant_id", list.map((r) => r.id));
-  const ratingAgg = new Map<string, { sum: number; n: number }>();
-  for (const rr of ratingRows ?? []) {
-    const a = ratingAgg.get(rr.restaurant_id) ?? { sum: 0, n: 0 };
-    a.sum += rr.rating; a.n += 1;
-    ratingAgg.set(rr.restaurant_id, a);
-  }
 
   const withStatus = list.map((r) => {
     const b = (r.branches ?? [])[0] as
