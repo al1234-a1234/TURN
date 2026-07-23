@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
 import { BrandLink } from "@/components/brand";
 import { LogoutButton } from "@/components/logout-button";
 import { LangToggle } from "@/components/lang-toggle";
@@ -77,7 +78,7 @@ export async function OwnerShell({
   children,
 }: {
   active: OwnerNavKey;
-  restaurant: { name: string; slug: string };
+  restaurant: { id?: string; name: string; slug: string };
   modules: Set<ModuleKey>;
   role: Database["public"]["Enums"]["user_role"];
   permissions: StaffPermissionMap;
@@ -85,7 +86,24 @@ export async function OwnerShell({
   children: React.ReactNode;
 }) {
   const lang = await getLang();
+
+  // هل المطعم يستقبل حجوزات؟ (تحكّم لكل مطعم) — يخفي تبويب الحجوزات إن أُوقف
+  let acceptsReservations = false;
+  if (restaurant.id) {
+    const supabase = await createClient();
+    const { data: b } = await supabase
+      .from("branches")
+      .select("branch_settings(accepts_reservations)")
+      .eq("restaurant_id", restaurant.id)
+      .order("created_at")
+      .limit(1)
+      .maybeSingle();
+    const bs = Array.isArray(b?.branch_settings) ? b?.branch_settings[0] : b?.branch_settings;
+    acceptsReservations = bs?.accepts_reservations ?? false;
+  }
+
   const items = NAV.filter((n) => {
+    if (n.key === "reservations" && !acceptsReservations) return false;
     if (n.module && !isModuleOn(modules, n.module)) return false;
     if (n.perm && !staffHasPermission(role, permissions, n.perm)) return false;
     return true;

@@ -35,7 +35,7 @@ export default async function ManagePage() {
   const branchIds = (branchList ?? []).map((b) => b.id);
 
   const { data: settings } = firstBranch
-    ? await supabase.from("branch_settings").select("accepts_waitlist, max_party_size, opening_hours").eq("branch_id", firstBranch.id).maybeSingle()
+    ? await supabase.from("branch_settings").select("accepts_waitlist, accepts_reservations, max_party_size, opening_hours").eq("branch_id", firstBranch.id).maybeSingle()
     : { data: null };
   const hours = (settings?.opening_hours ?? {}) as { open?: string; close?: string };
 
@@ -175,6 +175,13 @@ export default async function ManagePage() {
                 <span className="text-xs text-[color:var(--muted)]">{tr(lang, "أوقفها لإغلاق الطابور مؤقتًا أمام العملاء", "Turn off to temporarily close the queue to customers")}</span>
               </span>
               <input type="checkbox" name="accepts_waitlist" defaultChecked={settings?.accepts_waitlist ?? true} className="h-6 w-6 accent-[#a3341a]" />
+            </label>
+            <label className="flex items-center justify-between rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
+              <span>
+                <span className="block font-bold text-[color:var(--ink)]">{tr(lang, "استقبال الحجوزات", "Accept reservations")}</span>
+                <span className="text-xs text-[color:var(--muted)]">{tr(lang, "فعّل الحجز المسبق للطاولات — منفصل عن طابور الحضور", "Enable advance table booking — separate from the walk-in queue")}</span>
+              </span>
+              <input type="checkbox" name="accepts_reservations" defaultChecked={settings?.accepts_reservations ?? false} className="h-6 w-6 accent-[#a3341a]" />
             </label>
             <div className="grid gap-4 sm:grid-cols-3">
               <div>

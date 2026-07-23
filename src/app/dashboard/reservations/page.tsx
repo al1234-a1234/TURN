@@ -29,8 +29,26 @@ export default async function ReservationsPage() {
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
   if (!staffHasPermission(role, permissions, "reservations")) redirect("/dashboard");
 
-  const { data: branches } = await supabase.from("branches").select("id").eq("restaurant_id", restaurant.id).order("created_at");
+  const { data: branches } = await supabase
+    .from("branches").select("id, branch_settings(accepts_reservations)").eq("restaurant_id", restaurant.id).order("created_at");
   const branchIds = (branches ?? []).map((b) => b.id);
+  const firstBs = branches?.[0]?.branch_settings;
+  const acceptsReservations = (Array.isArray(firstBs) ? firstBs[0] : firstBs)?.accepts_reservations ?? false;
+
+  if (!acceptsReservations) {
+    return (
+      <OwnerShell active="reservations" restaurant={restaurant} modules={modules} role={role} permissions={permissions}>
+        <div className="soft-card mx-auto max-w-md p-8 text-center">
+          <p className="text-3xl">📅</p>
+          <h1 className="mt-2 font-display text-xl font-bold text-[color:var(--ink)]">{tr(lang, "الحجوزات موقّفة", "Reservations are off")}</h1>
+          <p className="mt-2 text-sm text-[color:var(--muted)]">
+            {tr(lang, "الحجز المسبق للطاولات منفصل عن طابور الحضور. فعّله ليبدأ استقبال الحجوزات.", "Advance table booking is separate from the walk-in queue. Enable it to start accepting reservations.")}
+          </p>
+          <a href="/dashboard/manage" className="btn btn-primary mt-5 inline-flex w-full max-w-xs">{tr(lang, "تفعيل من الإعدادات", "Enable in settings")}</a>
+        </div>
+      </OwnerShell>
+    );
+  }
 
   const { data } = branchIds.length
     ? await supabase

@@ -38,6 +38,7 @@ export async function updateBranchSettings(formData: FormData) {
   if (!rid) return;
 
   const acceptsWaitlist = formData.get("accepts_waitlist") === "on";
+  const acceptsReservations = formData.get("accepts_reservations") === "on";
   const maxPartyRaw = String(formData.get("max_party_size") ?? "").trim();
   const maxParty = maxPartyRaw ? Math.max(1, Number(maxPartyRaw)) : 20;
   const open = String(formData.get("open_time") ?? "").trim() || null;
@@ -51,6 +52,7 @@ export async function updateBranchSettings(formData: FormData) {
     .from("branch_settings")
     .update({
       accepts_waitlist: acceptsWaitlist,
+      accepts_reservations: acceptsReservations,
       max_party_size: Number.isFinite(maxParty) ? maxParty : 20,
       opening_hours: { open, close },
     })
