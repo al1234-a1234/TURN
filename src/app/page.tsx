@@ -17,15 +17,15 @@ function ZonePill({ label, count, lang }: { label: string; count: number; lang: 
   return (
     <span
       className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-      style={{ background: "var(--sage)", border: "1px solid rgba(102,28,10,0.10)" }}
+      style={{ background: "linear-gradient(160deg,#faefe8,#f4ddd0)", border: "1px solid rgba(102,28,10,0.14)" }}
     >
-      <span className="flex items-center gap-1.5 text-[13px] font-bold text-[color:var(--ink)]">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className={busy ? "" : "opacity-50"} style={{ color: busy ? "var(--st-full)" : "var(--st-open)" }}>
+      <span className="flex items-center gap-1.5 text-[13px] font-bold text-[color:var(--brand-d)]">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ color: busy ? "var(--brand-d)" : "var(--st-open)" }}>
           <path d="M4 10h16M6 10V7a2 2 0 012-2h8a2 2 0 012 2v3M7 14v4M17 14v4M4 14h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
         {label}
       </span>
-      <span className="text-sm font-extrabold" style={{ color: busy ? "var(--st-full)" : "var(--st-open)" }}>
+      <span className="text-sm font-extrabold" style={{ color: busy ? "var(--brand-d)" : "var(--st-open)" }}>
         {busy ? tr(lang, `${toAr(count)} بالطابور`, `${toAr(count)} in queue`) : tr(lang, "متاح", "Available")}
       </span>
     </span>
@@ -117,12 +117,15 @@ export default async function Home() {
 
                 {/* شريط الحالة — طابور داخلي/خارجي */}
                 {!r.accepts ? (
-                  <div className="mt-3 flex items-center justify-between rounded-2xl px-4 py-2.5" style={{ background: "rgba(192,86,74,0.09)", border: "1px solid rgba(192,86,74,0.20)" }}>
-                    <span className="flex items-center gap-2 text-sm font-bold" style={{ color: "var(--st-closed)" }}>
-                      <span className="h-2 w-2 rounded-full" style={{ background: "var(--st-closed)" }} />
+                  <div
+                    className="mt-3 flex items-center justify-between rounded-2xl px-4 py-3"
+                    style={{ background: "linear-gradient(150deg,#2a3550,#17243f)", boxShadow: "0 12px 24px -16px rgba(23,36,63,0.7)" }}
+                  >
+                    <span className="flex items-center gap-2 text-sm font-extrabold text-white">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#e08a8a" }} />
                       {tr(lang, "لا يستقبل الآن", "Not accepting now")}
                     </span>
-                    <span className="text-xs font-bold" style={{ color: "var(--st-closed)" }}>{tr(lang, "التفاصيل ←", "Details ←")}</span>
+                    <span className="text-xs font-extrabold text-white/85">{tr(lang, "التفاصيل ←", "Details ←")}</span>
                   </div>
                 ) : r.waiting > 0 ? (
                   <div className="mt-3 grid grid-cols-2 gap-2">
