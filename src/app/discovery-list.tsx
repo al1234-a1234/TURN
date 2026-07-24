@@ -24,40 +24,38 @@ function OffersRail({ offers, lang }: { offers: DiscoveryOffer[]; lang: Lang }) 
         <h2 className="font-display text-[15px] font-bold text-[color:var(--brand-d)]">{tr(lang, "عروض حيّة", "Live offers")}</h2>
         <span className="text-[12px] font-bold text-[color:var(--muted)]">{toAr(offers.length)}</span>
       </div>
-      <div className="-mx-5 flex gap-3 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="-mx-5 flex gap-2.5 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {offers.map((o) => {
           const initial = (o.restaurant.name ?? "").trim().charAt(0) || "م";
           return (
             <Link
               key={o.id}
               href={`/r/${o.restaurant.slug}`}
-              className="relative flex w-[248px] shrink-0 flex-col justify-between overflow-hidden rounded-3xl p-4 text-cream-100"
-              style={{ background: "linear-gradient(150deg,#b23c1d,#7c230f 62%,#4c1406)", boxShadow: "0 16px 30px -20px rgba(102,28,10,0.8)" }}
+              className="flex w-[172px] shrink-0 flex-col gap-2 rounded-2xl bg-white p-3 transition active:scale-[0.98]"
+              style={{ border: "1px solid rgba(102,28,10,0.12)", boxShadow: "0 8px 18px -16px rgba(102,28,10,0.4)" }}
             >
-              <div className="flex items-start justify-between gap-2">
-                <span className="font-display text-3xl font-extrabold leading-none">{offerBadge(o, lang)}</span>
+              <div className="flex items-center justify-between gap-2">
+                <span
+                  className="rounded-xl px-2.5 py-1 font-display text-sm font-extrabold text-white"
+                  style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)" }}
+                >
+                  {offerBadge(o, lang)}
+                </span>
                 {o.code && (
-                  <span dir="ltr" className="rounded-lg bg-white/20 px-2 py-0.5 text-[11px] font-extrabold tracking-wide ring-1 ring-white/25">{o.code}</span>
+                  <span dir="ltr" className="truncate rounded-md px-1.5 py-0.5 text-[10px] font-extrabold" style={{ color: "var(--brand-d)", background: "rgba(102,28,10,0.08)" }}>{o.code}</span>
                 )}
               </div>
-              <div className="mt-4">
-                <p className="line-clamp-2 text-[14px] font-bold leading-snug">{o.title}</p>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15 font-serif text-xs font-bold ring-1 ring-white/25">
-                    {o.restaurant.logo_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={o.restaurant.logo_url} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      initial
-                    )}
-                  </span>
-                  <span className="truncate text-[12px] font-bold text-cream-100/85">{o.restaurant.name}</span>
-                </div>
-                {o.ends_at && (
-                  <p className="mt-1.5 text-[10px] font-bold text-cream-100/70">
-                    {tr(lang, "ينتهي", "Ends")} {new Date(o.ends_at).toLocaleDateString(lang === "en" ? "en-GB" : "ar-SA-u-nu-latn", { day: "2-digit", month: "short" })}
-                  </p>
-                )}
+              <p className="line-clamp-2 text-[13px] font-bold leading-snug text-[color:var(--ink)]">{o.title}</p>
+              <div className="mt-auto flex items-center gap-1.5">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-800 font-serif text-[9px] font-bold text-cream-100">
+                  {o.restaurant.logo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={o.restaurant.logo_url} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    initial
+                  )}
+                </span>
+                <span className="truncate text-[11px] font-bold text-[color:var(--muted)]">{o.restaurant.name}</span>
               </div>
             </Link>
           );
