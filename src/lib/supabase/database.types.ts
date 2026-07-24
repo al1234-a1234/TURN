@@ -7,6 +7,8 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
@@ -127,6 +129,96 @@ export type Database = {
           },
         ]
       }
+      checkin_settings: {
+        Row: {
+          restaurant_id: string
+          updated_at: string
+          welcome_enabled: boolean
+          welcome_expires_days: number
+          welcome_kind: string
+          welcome_title: string
+          welcome_value: number | null
+          welcome_value_kind: string
+        }
+        Insert: {
+          restaurant_id: string
+          updated_at?: string
+          welcome_enabled?: boolean
+          welcome_expires_days?: number
+          welcome_kind?: string
+          welcome_title?: string
+          welcome_value?: number | null
+          welcome_value_kind?: string
+        }
+        Update: {
+          restaurant_id?: string
+          updated_at?: string
+          welcome_enabled?: boolean
+          welcome_expires_days?: number
+          welcome_kind?: string
+          welcome_title?: string
+          welcome_value?: number | null
+          welcome_value_kind?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkin_settings_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: true
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checkins: {
+        Row: {
+          branch_id: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          restaurant_id: string
+          source: string
+        }
+        Insert: {
+          branch_id?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          restaurant_id: string
+          source?: string
+        }
+        Update: {
+          branch_id?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          restaurant_id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkins_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkins_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkins_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_restaurant: {
         Row: {
           customer_id: string
@@ -239,7 +331,22 @@ export type Database = {
           value?: number | null
           value_kind?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "customer_rewards_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_rewards_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       customers: {
         Row: {
@@ -1176,9 +1283,9 @@ export type Database = {
         Args: never
         Returns: {
           branch_id: string
-          total: number
           inside: number
           outside: number
+          total: number
         }[]
       }
       admin_create_restaurant: {
@@ -1205,10 +1312,10 @@ export type Database = {
         Args: {
           p_branch_id: string
           p_full_name: string
+          p_notes?: string
+          p_party_size: number
           p_phone: string
           p_reserved_at: string
-          p_party_size: number
-          p_notes?: string
         }
         Returns: string
       }
@@ -1225,7 +1332,18 @@ export type Database = {
         }
         Returns: string
       }
+      demo_live_activity: { Args: never; Returns: undefined }
       gen_claim_code: { Args: never; Returns: string }
+      get_customer_loyalty: {
+        Args: { p_phone: string }
+        Returns: {
+          points: number
+          restaurant: string
+          restaurant_slug: string
+          reward_description: string
+          reward_threshold: number
+        }[]
+      }
       get_customer_rewards: {
         Args: { p_phone: string }
         Returns: {
@@ -1244,33 +1362,19 @@ export type Database = {
           value_kind: string
         }[]
       }
-      redeem_customer_reward: {
-        Args: { p_reward_id: string; p_phone: string }
-        Returns: boolean
-      }
       grant_reward_to_segment: {
         Args: {
+          p_code: string | null
+          p_description: string | null
+          p_expires_at: string | null
+          p_kind: string
           p_restaurant_id: string
           p_segment: string
-          p_kind: string
           p_title: string
           p_value: number | null
           p_value_kind: string
-          p_description: string | null
-          p_code: string | null
-          p_expires_at: string | null
         }
         Returns: number
-      }
-      get_customer_loyalty: {
-        Args: { p_phone: string }
-        Returns: {
-          restaurant: string
-          restaurant_slug: string
-          points: number
-          reward_threshold: number
-          reward_description: string
-        }[]
       }
       has_feature: {
         Args: { p_module: string; rest_id: string }
@@ -1292,14 +1396,24 @@ export type Database = {
           queue_pos: number
         }[]
       }
-      restaurant_of_branch: { Args: { b_id: string }; Returns: string }
-      set_staff_permission: {
-        Args: { p_staff_id: string; p_perm: string; p_granted: boolean }
-        Returns: undefined
+      public_checkin: {
+        Args: { p_name?: string; p_phone: string; p_slug: string }
+        Returns: Json
       }
+      redeem_customer_reward: {
+        Args: { p_phone: string; p_reward_id: string }
+        Returns: boolean
+      }
+      restaurant_of_branch: { Args: { b_id: string }; Returns: string }
       rollup_all_daily_stats: { Args: { p_date: string }; Returns: number }
       rollup_daily_stats: {
         Args: { p_branch_id: string; p_date: string }
+        Returns: undefined
+      }
+      run_daily_digest: { Args: never; Returns: number }
+      run_slow_hours: { Args: never; Returns: number }
+      set_staff_permission: {
+        Args: { p_granted: boolean; p_perm: string; p_staff_id: string }
         Returns: undefined
       }
       staff_can_read_customer: { Args: { cust_id: string }; Returns: boolean }

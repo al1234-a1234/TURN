@@ -24,6 +24,7 @@ export const MODULE_KEYS = [
   "smart_alerts",
   "daily_digest",
   "crm",
+  "checkin",
 ] as const;
 
 export type ModuleKey = (typeof MODULE_KEYS)[number];
