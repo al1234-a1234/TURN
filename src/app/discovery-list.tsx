@@ -84,22 +84,18 @@ function ZonePill({ label, count, lang }: { label: string; count: number; lang: 
   const busy = count > 0;
   return (
     <span
-      className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
+      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
       style={
         busy
-          ? { background: "linear-gradient(155deg,#b23c1d,#661c0a)", boxShadow: "0 10px 20px -14px rgba(102,28,10,0.7)" }
-          : { background: "linear-gradient(160deg,#faefe8,#f4ddd0)", border: "1px solid rgba(102,28,10,0.14)" }
+          ? { background: "linear-gradient(150deg,#b23c1d,#661c0a)", color: "#fff" }
+          : { background: "linear-gradient(160deg,#faefe8,#f4ddd0)", color: "var(--brand-d)", border: "1px solid rgba(102,28,10,0.14)" }
       }
     >
-      <span className="flex items-center gap-1.5 text-[13px] font-bold" style={{ color: busy ? "#fff" : "var(--brand-d)" }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ color: busy ? "#fff" : "var(--brand-d)" }}>
-          <path d="M4 10h16M6 10V7a2 2 0 012-2h8a2 2 0 012 2v3M7 14v4M17 14v4M4 14h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        </svg>
-        {label}
-      </span>
-      <span className="text-sm font-extrabold" style={{ color: busy ? "#fff" : "var(--brand-d)" }}>
-        {busy ? tr(lang, `${toAr(count)} بالطابور`, `${toAr(count)} in queue`) : tr(lang, "متاح", "Available")}
-      </span>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden style={{ color: "currentColor" }}>
+        <path d="M4 10h16M6 10V7a2 2 0 012-2h8a2 2 0 012 2v3M7 14v4M17 14v4M4 14h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+      <span>{label}</span>
+      <span className="font-extrabold">{busy ? toAr(count) : tr(lang, "متاح", "—")}</span>
     </span>
   );
 }
@@ -149,7 +145,7 @@ function Card({ r, lang, delay }: { r: DiscoveryItem; lang: Lang; delay: number 
           <span className="text-xs font-extrabold" style={{ color: "#a89d8a" }}>{tr(lang, "التفاصيل ←", "Details ←")}</span>
         </div>
       ) : r.waiting > 0 && r.inside + r.outside > 0 ? (
-        <div className="mt-2.5 grid grid-cols-2 gap-2">
+        <div className="mt-2.5 flex flex-col items-end gap-1.5">
           <ZonePill label={tr(lang, "داخلي", "Indoor")} count={r.inside} lang={lang} />
           <ZonePill label={tr(lang, "خارجي", "Outdoor")} count={r.outside} lang={lang} />
         </div>
@@ -192,6 +188,7 @@ function SectionHeading({ label, count }: { label: string; count: number }) {
 
 export function DiscoveryList({ items, offers = [], lang }: { items: DiscoveryItem[]; offers?: DiscoveryOffer[]; lang: Lang }) {
   const [cuisine, setCuisine] = useState<string>("");
+  const [filterOpen, setFilterOpen] = useState(false);
 
   // شرائح المطابخ — مشتقّة من المطاعم المعروضة (بلا تكرار)
   const cuisines = useMemo(() => {
@@ -222,6 +219,9 @@ export function DiscoveryList({ items, offers = [], lang }: { items: DiscoveryIt
     ].filter((g) => g.rows.length > 0);
   }, [filtered, lang]);
 
+  const selected = cuisines.find((c) => c.ar === cuisine);
+  const selectedLabel = selected ? tr(lang, selected.ar, selected.en ?? selected.ar) : "";
+
   const chip = (active: boolean) =>
     active
       ? { background: "linear-gradient(160deg,#a8371a,#661c0a)", color: "#fff", border: "1px solid transparent" }
@@ -234,26 +234,61 @@ export function DiscoveryList({ items, offers = [], lang }: { items: DiscoveryIt
       {/* شريط العروض الحيّة — بارز أعلى الشاشة */}
       <OffersRail offers={offers} lang={lang} />
 
-      {/* شرائح المطابخ */}
+      {/* تصفية المطابخ — زر يفتح الخيارات */}
       {cuisines.length > 0 && (
-        <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="relative">
           <button
-            onClick={() => setCuisine("")}
-            className="shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-[13px] font-bold transition active:scale-95"
-            style={chip(cuisine === "")}
+            onClick={() => setFilterOpen((o) => !o)}
+            className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-bold transition active:scale-95"
+            style={chip(cuisine !== "")}
           >
-            {tr(lang, "الكل", "All")}
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            {cuisine ? selectedLabel : tr(lang, "تصفية", "Filter")}
+            {cuisine ? (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => { e.stopPropagation(); setCuisine(""); setFilterOpen(false); }}
+                className="ms-0.5 grid h-4 w-4 place-items-center rounded-full bg-white/25 text-[11px] leading-none"
+              >
+                ✕
+              </span>
+            ) : (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden style={{ transform: filterOpen ? "rotate(180deg)" : "none" }}>
+                <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
           </button>
-          {cuisines.map((c) => (
-            <button
-              key={c.ar}
-              onClick={() => setCuisine(c.ar)}
-              className="shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-[13px] font-bold transition active:scale-95"
-              style={chip(cuisine === c.ar)}
-            >
-              {tr(lang, c.ar, c.en ?? c.ar)}
-            </button>
-          ))}
+
+          {filterOpen && (
+            <>
+              <button className="fixed inset-0 z-10 cursor-default" aria-hidden onClick={() => setFilterOpen(false)} />
+              <div
+                className="absolute z-20 mt-2 flex max-h-72 w-[min(20rem,85vw)] flex-wrap gap-2 overflow-y-auto rounded-3xl bg-white p-3 shadow-xl"
+                style={{ border: "1px solid rgba(102,28,10,0.12)" }}
+              >
+                <button
+                  onClick={() => { setCuisine(""); setFilterOpen(false); }}
+                  className="rounded-full px-3.5 py-1.5 text-[13px] font-bold transition active:scale-95"
+                  style={chip(cuisine === "")}
+                >
+                  {tr(lang, "الكل", "All")}
+                </button>
+                {cuisines.map((c) => (
+                  <button
+                    key={c.ar}
+                    onClick={() => { setCuisine(c.ar); setFilterOpen(false); }}
+                    className="rounded-full px-3.5 py-1.5 text-[13px] font-bold transition active:scale-95"
+                    style={chip(cuisine === c.ar)}
+                  >
+                    {tr(lang, c.ar, c.en ?? c.ar)}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
