@@ -170,13 +170,13 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
       {!r.accepts ? (
         <div
           className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-          style={{ background: "linear-gradient(160deg,#f3e8df,#e9d7c8)", border: "1px solid rgba(102,28,10,0.14)" }}
+          style={{ background: "linear-gradient(160deg,#5c2412,#3a1206)", boxShadow: "0 12px 24px -18px rgba(72,18,7,0.7)" }}
         >
-          <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "#9a6a4c" }}>
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#b98a6a" }} />
+          <span className="flex items-center gap-2 text-sm font-extrabold text-white">
+            <span className="h-2.5 w-2.5 rounded-full bg-white/70" />
             {tr(lang, "لا يستقبل الآن", "Not accepting now")}
           </span>
-          <span className="text-xs font-extrabold" style={{ color: "#b08865" }}>{tr(lang, "التفاصيل ←", "Details ←")}</span>
+          <span className="text-xs font-extrabold text-white/80">{tr(lang, "التفاصيل ←", "Details ←")}</span>
         </div>
       ) : r.waiting > 0 && r.inside + r.outside > 0 ? (
         <div className="mt-2.5 flex flex-col items-end gap-1.5">
