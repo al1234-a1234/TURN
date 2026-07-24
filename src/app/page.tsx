@@ -26,7 +26,7 @@ export default async function Home() {
 
   const withStatus = list.map((r) => {
     const b = (r.branches ?? [])[0] as
-      | { id: string; city: string | null; is_active: boolean; branch_settings: { accepts_waitlist: boolean } | { accepts_waitlist: boolean }[] | null }
+      | { id: string; city: string | null; lat: number | null; lng: number | null; is_active: boolean; branch_settings: { accepts_waitlist: boolean } | { accepts_waitlist: boolean }[] | null }
       | undefined;
     const c = b?.id ? counts.get(b.id) : undefined;
     const settings = Array.isArray(b?.branch_settings) ? b?.branch_settings[0] : b?.branch_settings;
@@ -36,6 +36,8 @@ export default async function Home() {
     return {
       ...r,
       city: b?.city ?? "",
+      lat: b?.lat ?? null,
+      lng: b?.lng ?? null,
       waiting: c?.total ?? 0,
       inside: c?.inside ?? 0,
       outside: c?.outside ?? 0,

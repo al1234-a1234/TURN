@@ -23,7 +23,7 @@ export type DiscoveryRestaurant = {
   cover_url: string | null;
   cuisine: string | null;
   cuisine_en: string | null;
-  branches: { id: string; city: string | null; is_active: boolean; branch_settings: { accepts_waitlist: boolean } | { accepts_waitlist: boolean }[] | null }[];
+  branches: { id: string; city: string | null; lat: number | null; lng: number | null; is_active: boolean; branch_settings: { accepts_waitlist: boolean } | { accepts_waitlist: boolean }[] | null }[];
 };
 
 export type DiscoveryOffer = {
@@ -49,7 +49,7 @@ export const getDiscovery = unstable_cache(
     const sb = anon();
     const { data: restaurants } = await sb
       .from("restaurants")
-      .select("id, name, slug, logo_url, cover_url, cuisine, cuisine_en, branches(id, city, is_active, branch_settings(accepts_waitlist))")
+      .select("id, name, slug, logo_url, cover_url, cuisine, cuisine_en, branches(id, city, lat, lng, is_active, branch_settings(accepts_waitlist))")
       .eq("is_active", true)
       .order("created_at", { ascending: false })
       .limit(60);

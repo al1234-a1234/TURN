@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toAr } from "@/lib/format";
 import { tr, type Lang } from "@/lib/i18n";
 import type { DiscoveryOffer } from "@/lib/supabase/public-cache";
@@ -73,6 +73,8 @@ export type DiscoveryItem = {
   cuisine: string | null;
   cuisine_en: string | null;
   city: string;
+  lat: number | null;
+  lng: number | null;
   waiting: number;
   inside: number;
   outside: number;
@@ -80,28 +82,51 @@ export type DiscoveryItem = {
   rating: string | null;
 };
 
+// مسافة هافرساين بالمتر
+function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const R = 6371000;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+  const la1 = (a.lat * Math.PI) / 180;
+  const la2 = (b.lat * Math.PI) / 180;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+function distanceLabel(m: number, lang: Lang): string {
+  if (m < 1000) return tr(lang, `${toAr(Math.round(m / 10) * 10)} م`, `${Math.round(m / 10) * 10} m`);
+  const km = m / 1000;
+  const v = km < 10 ? Math.round(km * 10) / 10 : Math.round(km);
+  return tr(lang, `${toAr(v)} كم`, `${v} km`);
+}
+
 function ZonePill({ label, count, lang }: { label: string; count: number; lang: Lang }) {
   const busy = count > 0;
   return (
     <span
-      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold"
+      className="inline-flex w-[116px] items-center justify-between rounded-full px-3 py-1.5 text-[12px] font-bold"
       style={
         busy
           ? { background: "linear-gradient(150deg,#b23c1d,#661c0a)", color: "#fff" }
           : { background: "linear-gradient(160deg,#faefe8,#f4ddd0)", color: "var(--brand-d)", border: "1px solid rgba(102,28,10,0.14)" }
       }
     >
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden style={{ color: "currentColor" }}>
-        <path d="M4 10h16M6 10V7a2 2 0 012-2h8a2 2 0 012 2v3M7 14v4M17 14v4M4 14h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      </svg>
-      <span>{label}</span>
+      <span className="inline-flex items-center gap-1.5">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path d="M4 10h16M6 10V7a2 2 0 012-2h8a2 2 0 012 2v3M7 14v4M17 14v4M4 14h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+        {label}
+      </span>
       <span className="font-extrabold">{busy ? toAr(count) : tr(lang, "متاح", "—")}</span>
     </span>
   );
 }
 
-function Card({ r, lang, delay }: { r: DiscoveryItem; lang: Lang; delay: number }) {
+function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay: number; coords: { lat: number; lng: number } | null }) {
   const initial = (r.name ?? "").trim().charAt(0) || "م";
+  const dist =
+    coords && r.lat != null && r.lng != null
+      ? distanceLabel(distanceMeters(coords, { lat: r.lat, lng: r.lng }), lang)
+      : null;
   return (
     <Link
       href={`/r/${r.slug}`}
@@ -109,7 +134,7 @@ function Card({ r, lang, delay }: { r: DiscoveryItem; lang: Lang; delay: number 
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-center gap-3">
-        <span className="flex h-[72px] w-[72px] shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-800 font-serif text-2xl font-bold text-cream-100">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-800 font-serif text-xl font-bold text-cream-100">
           {r.logo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={r.logo_url} alt="" className="h-full w-full object-cover" />
@@ -119,14 +144,23 @@ function Card({ r, lang, delay }: { r: DiscoveryItem; lang: Lang; delay: number 
         </span>
 
         <div className="min-w-0 flex-1">
-          <p className="truncate font-display text-[17px] font-bold text-[color:var(--ink)]">{r.name}</p>
-          <p className="mt-0.5 truncate text-[13px] font-medium text-[color:var(--muted)]">
+          <p className="truncate font-display text-[15px] font-bold text-[color:var(--ink)]">{r.name}</p>
+          <p className="mt-0.5 truncate text-[12px] font-medium text-[color:var(--muted)]">
             {tr(lang, r.cuisine ?? "مطعم", r.cuisine_en ?? "Restaurant")}{r.city ? ` · ${r.city}` : ""}
           </p>
+          {dist && (
+            <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold" style={{ color: "var(--brand-d)" }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M12 21s7-6.3 7-11a7 7 0 10-14 0c0 4.7 7 11 7 11z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+                <circle cx="12" cy="10" r="2.4" stroke="currentColor" strokeWidth="1.8" />
+              </svg>
+              {tr(lang, `يبعد ${dist}`, `${dist} away`)}
+            </p>
+          )}
         </div>
 
         {r.rating && (
-          <span className="flex shrink-0 items-center gap-1 self-start text-[15px] font-extrabold text-[color:var(--ink)]">
+          <span className="flex shrink-0 items-center gap-1 self-start text-[14px] font-extrabold text-[color:var(--ink)]">
             <span style={{ color: "var(--star)" }}>★</span>
             {r.rating}
           </span>
@@ -189,6 +223,17 @@ function SectionHeading({ label, count }: { label: string; count: number }) {
 export function DiscoveryList({ items, offers = [], lang }: { items: DiscoveryItem[]; offers?: DiscoveryOffer[]; lang: Lang }) {
   const [cuisine, setCuisine] = useState<string>("");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+
+  // موقع العميل لعرض المسافة (بإذنه) — يُطلب مرّة، والرفض لا يؤثّر
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {},
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 },
+    );
+  }, []);
 
   // شرائح المطابخ — مشتقّة من المطاعم المعروضة (بلا تكرار)
   const cuisines = useMemo(() => {
@@ -303,7 +348,7 @@ export function DiscoveryList({ items, offers = [], lang }: { items: DiscoveryIt
             <SectionHeading label={g.label} count={g.rows.length} />
             <div className="space-y-2.5">
               {g.rows.map((r) => (
-                <Card key={r.id} r={r} lang={lang} delay={(delay++ % 8) * 45} />
+                <Card key={r.id} r={r} lang={lang} delay={(delay++ % 8) * 45} coords={coords} />
               ))}
             </div>
           </section>

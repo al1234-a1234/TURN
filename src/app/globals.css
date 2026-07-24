@@ -28,8 +28,9 @@
   --color-navy-900: #101a30;
 
   --font-sans: var(--font-almarai), "Almarai", system-ui, sans-serif;
-  --font-display: var(--font-elmessiri), "El Messiri", system-ui, sans-serif;
-  --font-serif: var(--font-playfair), Georgia, serif;
+  /* خط موحّد عادي لكل التطبيق (بدون خطوط زخرفية) */
+  --font-display: var(--font-almarai), "Almarai", system-ui, sans-serif;
+  --font-serif: var(--font-almarai), "Almarai", system-ui, sans-serif;
 
   --radius-card: 26px;
   --radius-btn: 18px;
