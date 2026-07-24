@@ -285,7 +285,7 @@ export function DiscoveryList({ items, offers = [], lang }: { items: DiscoveryIt
           <button
             onClick={() => setFilterOpen((o) => !o)}
             className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-bold transition active:scale-95"
-            style={chip(cuisine !== "")}
+            style={chip(true)}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
               <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
