@@ -60,6 +60,8 @@ const NAV: NavDef[] = [
 
 export async function OwnerShell({
   restaurant,
+  branchId = null,
+  branchName = null,
   modules,
   role,
   permissions,
@@ -68,6 +70,8 @@ export async function OwnerShell({
   children,
 }: {
   restaurant: { id: string; name: string; slug: string };
+  branchId?: string | null;
+  branchName?: string | null;
   modules: Set<ModuleKey>;
   role: Database["public"]["Enums"]["user_role"];
   permissions: StaffPermissionMap;
@@ -77,15 +81,14 @@ export async function OwnerShell({
 }) {
   const lang = await getLang();
 
-  // هل المطعم يستقبل حجوزات؟ (يخفي تبويب الحجوزات إن أُوقف)
+  // هل المطعم يستقبل حجوزات؟ (يخفي تبويب الحجوزات إن أُوقف) — لفرع الحساب إن كان مربوطًا
   const supabase = await createClient();
-  const { data: b } = await supabase
+  let bq = supabase
     .from("branches")
     .select("branch_settings(accepts_reservations)")
-    .eq("restaurant_id", restaurant.id)
-    .order("created_at")
-    .limit(1)
-    .maybeSingle();
+    .eq("restaurant_id", restaurant.id);
+  if (branchId) bq = bq.eq("id", branchId);
+  const { data: b } = await bq.order("created_at").limit(1).maybeSingle();
   const bs = Array.isArray(b?.branch_settings) ? b?.branch_settings[0] : b?.branch_settings;
   const acceptsReservations = bs?.accepts_reservations ?? false;
 
@@ -124,7 +127,14 @@ export async function OwnerShell({
         <div className="border-b p-5" style={{ borderColor: "var(--border)" }}>
           <BrandLink href="/dashboard" size={34} />
           <p className="mt-3 truncate font-display text-lg font-bold text-[color:var(--ink)]">{restaurant.name}</p>
-          <p className="text-xs text-[color:var(--muted)]">{tr(lang, "لوحة المالك", "Owner dashboard")}</p>
+          {branchName ? (
+            <p className="mt-0.5 inline-flex max-w-full items-center gap-1 truncate rounded-full bg-[color:var(--surface-2)] px-2 py-0.5 text-[11px] font-extrabold text-brand-700">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "var(--brand-d)" }} />
+              {tr(lang, `فرع ${branchName}`, `${branchName} branch`)}
+            </p>
+          ) : (
+            <p className="text-xs text-[color:var(--muted)]">{tr(lang, "لوحة المالك", "Owner dashboard")}</p>
+          )}
         </div>
         <OwnerNavSidebar items={items} counts={countsRec} />
         <div className="border-t p-3" style={{ borderColor: "var(--border)" }}>
@@ -153,7 +163,7 @@ export async function OwnerShell({
             </div>
           </div>
           <div className="mx-auto mt-6 max-w-3xl">
-            <p className="text-xs font-bold tracking-[0.3em] text-cream-200/85">{tr(lang, "لوحة المطعم", "Restaurant dashboard")}</p>
+            <p className="text-xs font-bold tracking-[0.3em] text-cream-200/85">{branchName ? tr(lang, `فرع ${branchName}`, `${branchName} branch`) : tr(lang, "لوحة المطعم", "Restaurant dashboard")}</p>
             <h1 className="mt-1 font-display text-3xl font-bold">{restaurant.name}</h1>
           </div>
         </header>

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { loadOwner } from "../owner-context";
+import { loadOwner, scopeBranchIds } from "../owner-context";
 import { ColumnChart, SplitBars, ChartCard } from "../manage/charts";
 import { PrintButton } from "./print-button";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
@@ -66,7 +66,7 @@ export default async function ReportsPage({
     .select("id, name")
     .eq("restaurant_id", restaurant.id)
     .order("created_at");
-  const branchIds = (branches ?? []).map((b) => b.id);
+  const branchIds = scopeBranchIds(load.ctx, (branches ?? []).map((b) => b.id));
 
   // ===== نافذة الفترة =====
   const now = new Date();

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { loadOwner } from "./owner-context";
+import { loadOwner, scopeBranchIds } from "./owner-context";
 import { ColumnChart, SplitBars, ChartCard } from "./manage/charts";
 import { toAr } from "@/lib/format";
 import { tr, pct, type Lang } from "@/lib/i18n";
@@ -22,7 +22,7 @@ export default async function OverviewPage() {
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
 
   const { data: branches } = await supabase.from("branches").select("id, name").eq("restaurant_id", restaurant.id).order("created_at");
-  const branchIds = (branches ?? []).map((b) => b.id);
+  const branchIds = scopeBranchIds(load.ctx, (branches ?? []).map((b) => b.id));
 
   const now = new Date();
   const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());

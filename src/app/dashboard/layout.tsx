@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { OwnerShell } from "./owner-shell";
 import { OwnerHeader } from "./owner-chrome";
-import { loadOwner } from "./owner-context";
+import { loadOwner, scopeBranchIds } from "./owner-context";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
 
@@ -40,11 +40,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     );
   }
 
-  const { supabase, restaurant, modules, role, permissions, isAdminView } = load.ctx;
+  const { supabase, restaurant, modules, role, permissions, isAdminView, branchId, branchName } = load.ctx;
 
-  // عدّادات القائمة (تُحسب مرة مع القائمة الثابتة)
+  // عدّادات القائمة (تُحسب مرة مع القائمة الثابتة) — محصورة بفرع الحساب (عزل الفرانشايز)
   const { data: branches } = await supabase.from("branches").select("id").eq("restaurant_id", restaurant.id);
-  const branchIds = (branches ?? []).map((b) => b.id);
+  const branchIds = scopeBranchIds(load.ctx, (branches ?? []).map((b) => b.id));
 
   const [queueRes, custRes, resvRes, revRes, staffRes] = await Promise.all([
     branchIds.length
@@ -67,7 +67,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   };
 
   return (
-    <OwnerShell restaurant={restaurant} modules={modules} role={role} permissions={permissions} counts={counts} adminView={isAdminView}>
+    <OwnerShell restaurant={restaurant} branchId={branchId} branchName={branchName} modules={modules} role={role} permissions={permissions} counts={counts} adminView={isAdminView}>
       {children}
     </OwnerShell>
   );

@@ -21,9 +21,22 @@ export type OwnerContext = {
   role: Database["public"]["Enums"]["user_role"];
   permissions: StaffPermissionMap;
   modules: Set<ModuleKey>;
+  /** الفرع المربوط بالحساب — كل حساب مستقل يرى فرعه فقط (نموذج الفرانشايز).
+   *  null = حساب غير مربوط بفرع (مشرف منصّة/مالك علامة) يرى كل الفروع. */
+  branchId: string | null;
+  branchName: string | null;
   /** true إذا كان الداخل مشرف منصّة يعرض هذا المطعم (لا مالكه الفعلي). */
   isAdminView: boolean;
 };
+
+/**
+ * يحصر قائمة معرّفات الفروع في فرع الحساب المربوط (عزل الفرانشايز).
+ * حساب غير مربوط (branchId=null) يرى كل الفروع كما هي.
+ */
+export function scopeBranchIds(ctx: OwnerContext, allIds: string[]): string[] {
+  if (!ctx.branchId) return allIds;
+  return allIds.filter((id) => id === ctx.branchId);
+}
 
 export type OwnerLoad =
   | { state: "no_user" }
@@ -67,6 +80,8 @@ export async function loadOwner(): Promise<OwnerLoad> {
             role: "owner",
             permissions: {},
             modules,
+            branchId: null,
+            branchName: null,
             isAdminView: true,
           },
         };
@@ -76,7 +91,7 @@ export async function loadOwner(): Promise<OwnerLoad> {
 
   const { data: staffRows } = await supabase
     .from("staff")
-    .select("role, permissions, restaurants(id, name, slug)")
+    .select("role, permissions, branch_id, restaurants(id, name, slug), branches(id, name)")
     .eq("user_id", user.id)
     .eq("is_active", true)
     // ترتيب الأدوار في enum: owner < manager < staff < host — يفضّل المطعم الذي تملكه
@@ -85,6 +100,7 @@ export async function loadOwner(): Promise<OwnerLoad> {
 
   const staff = staffRows?.[0];
   const restaurant = staff?.restaurants as OwnerRestaurant | undefined;
+  const boundBranch = staff?.branches as { id: string; name: string } | null | undefined;
 
   if (!staff || !restaurant) {
     // نتفادى تكرار استدعاء is_platform_admin إن سبق فحصه أعلاه
@@ -107,6 +123,8 @@ export async function loadOwner(): Promise<OwnerLoad> {
       role: staff.role,
       permissions: (staff.permissions ?? {}) as StaffPermissionMap,
       modules,
+      branchId: staff.branch_id ?? null,
+      branchName: boundBranch?.name ?? null,
       isAdminView: false,
     },
   };

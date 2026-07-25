@@ -10,8 +10,9 @@ export async function addWalkIn(formData: FormData) {
   if (!caller) return;
   const supabase = caller.supabase;
 
-  // الفرع المختار في الاستقبال — لا بد أن يكون تابعًا لمطعم صاحب الصلاحية (منع الخلط بين الفروع/المطاعم)
-  const submittedBranch = String(formData.get("branch_id") ?? "").trim();
+  // الفرع المختار في الاستقبال — لا بد أن يكون تابعًا لمطعم صاحب الصلاحية (منع الخلط بين الفروع/المطاعم).
+  // وحساب مربوط بفرع لا يضيف إلا لفرعه (عزل الفرانشايز).
+  const submittedBranch = caller.branchId ?? String(formData.get("branch_id") ?? "").trim();
   const branchQuery = supabase
     .from("branches").select("id").eq("restaurant_id", caller.restaurantId).eq("is_active", true);
   const { data: branch } = submittedBranch

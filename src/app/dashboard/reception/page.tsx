@@ -4,7 +4,7 @@ import { QueueActions } from "../queue-actions";
 import { WalkInForm } from "./walkin-form";
 import { AutoRefresh } from "./auto-refresh";
 import { BranchTabs } from "./branch-tabs";
-import { loadOwner } from "../owner-context";
+import { loadOwner, scopeBranchIds } from "../owner-context";
 import { staffHasPermission } from "@/lib/features";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
@@ -28,7 +28,9 @@ export default async function ReceptionPage({
 
   const { data: branches } = await supabase
     .from("branches").select("id, name, city").eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at");
-  const branchList = branches ?? [];
+  // عزل الفرانشايز: حساب مربوط بفرع يرى فرعه فقط (بلا تبويبات)؛ غير المربوط يرى الكل
+  const scopedIds = new Set(scopeBranchIds(load.ctx, (branches ?? []).map((b) => b.id)));
+  const branchList = (branches ?? []).filter((b) => scopedIds.has(b.id));
   const multi = branchList.length > 1;
 
   // فرع مختار — كل فرع قسم مستقل تمامًا (نمط ريكيو). الاستقبال يعمل على فرع واحد فقط.

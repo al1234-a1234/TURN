@@ -21,6 +21,8 @@ export type Caller = {
   supabase: SupabaseClient<Database>;
   userId: string;
   restaurantId: string;
+  /** الفرع المربوط بالحساب (عزل الفرانشايز) — null = غير مربوط (يرى كل الفروع). */
+  branchId: string | null;
   role: Database["public"]["Enums"]["user_role"];
   permissions: StaffPermissionMap;
 };
@@ -39,13 +41,13 @@ export async function resolveCaller(): Promise<Caller | null> {
   if (adminRid) {
     const { data: isAdmin } = await supabase.rpc("is_platform_admin");
     if (isAdmin) {
-      return { supabase, userId: user.id, restaurantId: adminRid, role: "owner", permissions: {} };
+      return { supabase, userId: user.id, restaurantId: adminRid, branchId: null, role: "owner", permissions: {} };
     }
   }
 
   const { data } = await supabase
     .from("staff")
-    .select("role, permissions, restaurant_id")
+    .select("role, permissions, restaurant_id, branch_id")
     .eq("user_id", user.id)
     .eq("is_active", true)
     .order("role")
@@ -57,6 +59,7 @@ export async function resolveCaller(): Promise<Caller | null> {
       supabase,
       userId: user.id,
       restaurantId: data.restaurant_id,
+      branchId: data.branch_id ?? null,
       role: data.role,
       permissions: (data.permissions ?? {}) as StaffPermissionMap,
     };
@@ -72,8 +75,10 @@ export async function requirePerm(perm: StaffPermission): Promise<Caller | null>
   return caller;
 }
 
-/** معرّفات فروع مطعم المتصل — لتضييق التحديثات/الحذف على فروعه فقط (دفاع في العمق). */
+/** معرّفات فروع المتصل — لتضييق التحديثات/الحذف على فروعه فقط (دفاع في العمق).
+ *  حساب مربوط بفرع → فرعه فقط؛ غير المربوط → كل فروع مطعمه. */
 export async function callerBranchIds(caller: Caller): Promise<string[]> {
+  if (caller.branchId) return [caller.branchId];
   const { data } = await caller.supabase
     .from("branches")
     .select("id")

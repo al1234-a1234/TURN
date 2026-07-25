@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { loadOwner } from "../owner-context";
+import { loadOwner, scopeBranchIds } from "../owner-context";
 import { staffHasPermission } from "@/lib/features";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
@@ -28,10 +28,12 @@ export default async function ReservationsPage() {
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
   if (!staffHasPermission(role, permissions, "reservations")) redirect("/dashboard");
 
-  const { data: branches } = await supabase
+  const { data: branchesRaw } = await supabase
     .from("branches").select("id, branch_settings(accepts_reservations)").eq("restaurant_id", restaurant.id).order("created_at");
-  const branchIds = (branches ?? []).map((b) => b.id);
-  const firstBs = branches?.[0]?.branch_settings;
+  const scopedIds = new Set(scopeBranchIds(load.ctx, (branchesRaw ?? []).map((b) => b.id)));
+  const branches = (branchesRaw ?? []).filter((b) => scopedIds.has(b.id));
+  const branchIds = branches.map((b) => b.id);
+  const firstBs = branches[0]?.branch_settings;
   const acceptsReservations = (Array.isArray(firstBs) ? firstBs[0] : firstBs)?.accepts_reservations ?? false;
 
   if (!acceptsReservations) {

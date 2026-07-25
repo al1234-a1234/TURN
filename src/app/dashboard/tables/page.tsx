@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { loadOwner } from "../owner-context";
+import { loadOwner, scopeBranchIds } from "../owner-context";
 import { staffHasPermission } from "@/lib/features";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
@@ -17,7 +17,7 @@ export default async function TablesPage() {
   if (!staffHasPermission(role, permissions, "settings")) redirect("/dashboard");
 
   const { data: branches } = await supabase.from("branches").select("id").eq("restaurant_id", restaurant.id).order("created_at");
-  const branchIds = (branches ?? []).map((b) => b.id);
+  const branchIds = scopeBranchIds(load.ctx, (branches ?? []).map((b) => b.id));
 
   const { data } = branchIds.length
     ? await supabase.from("tables").select("*").in("branch_id", branchIds).eq("is_active", true).order("zone").order("label")
