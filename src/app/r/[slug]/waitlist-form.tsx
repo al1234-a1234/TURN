@@ -114,7 +114,7 @@ export function WaitlistForm({
   }, [state.ok]);
 
   if (state.ok) {
-    return <QueueTicket position={state.position ?? 0} total={state.total ?? 0} entryId={state.entryId} phone={state.phone} />;
+    return <QueueTicket position={state.position ?? 0} total={state.total ?? 0} entryId={state.entryId} phone={state.phone} restaurantName={restaurantName} />;
   }
 
   // خطوة اختيار الفرع (لمّا فيه أكثر من فرع ولم يُختَر بعد) — كل فرع بطاقة مستقلة

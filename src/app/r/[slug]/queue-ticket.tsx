@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { cancelWaitlistGuest } from "./actions";
 import { createClient } from "@/lib/supabase/client";
 import { toAr, peopleAhead } from "@/lib/format";
@@ -21,19 +21,49 @@ export function QueueTicket({
   total,
   entryId,
   phone,
+  restaurantName,
 }: {
   position: number;
   total: number;
   entryId?: string;
   phone?: string;
+  restaurantName?: string;
 }) {
   const lang = useLang();
   const [pending, start] = useTransition();
 
-  // حالة حيّة (تُحدَّث بالاستطلاع)
+  // حالة حيّة (تُحدَّث بالاستطلاع) — pos هو الترتيب الحيّ = عدد من أمامك + 1
   const [status, setStatus] = useState<string>("waiting");
   const [pos, setPos] = useState<number>(position);
   const [ahead, setAhead] = useState<number>(Math.max(position - 1, 0));
+  const [liveTotal, setLiveTotal] = useState<number>(total);
+
+  // آخر إشعار أُطلق (منعًا للتكرار): 'notified' | 'next' | 'seated'
+  const alertedRef = useRef<string>("");
+
+  // إشعار المتصفّح (banner فوق) — يظهر لحظة ينبّهك المطعم أو يجي دورك.
+  // ملاحظة: يعمل والصفحة مفتوحة (أو عند العودة إليها)؛ الإشعار في الخلفية التامّة
+  // يحتاج Web Push (service worker + خادم) — خطوة لاحقة إن رغبت.
+  function fireAlert(key: string, title: string, body: string) {
+    if (alertedRef.current === key) return;
+    alertedRef.current = key;
+    try {
+      if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+        new Notification(title, { body, icon: "/icon-192.png", tag: "turn-queue" });
+      }
+    } catch {
+      /* بعض المتصفّحات (iOS Safari) لا تدعم المُنشئ مباشرة — نتجاهل بهدوء */
+    }
+  }
+
+  // اطلب إذن الإشعار مرة واحدة بعد أخذ الدور (إيماءة المستخدم)
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+        void Notification.requestPermission();
+      }
+    } catch { /* تجاهُل */ }
+  }, []);
 
   // استطلاع خفيف بلا Realtime: setTimeout متكيّف + إيقاف عند الخمول + تنظيف + تباعد عند الفشل
   useEffect(() => {
@@ -42,6 +72,7 @@ export function QueueTicket({
     let fails = 0;
     let timer: ReturnType<typeof setTimeout> | null = null;
     const supabase = createClient();
+    const venue = restaurantName?.trim() || tr(lang, "المطعم", "the restaurant");
 
     const clear = () => { if (timer) { clearTimeout(timer); timer = null; } };
     const schedule = (ms: number) => { clear(); timer = setTimeout(tick, ms); };
@@ -60,6 +91,17 @@ export function QueueTicket({
         setStatus(row.status);
         setPos(row.position);
         setAhead(row.ahead);
+        setLiveTotal(row.total ?? 0);
+
+        // إشعار العميل (banner فوق) عند اللحظات المهمّة — مرّة واحدة لكل حالة
+        if (row.status === "seated") {
+          fireAlert("seated", tr(lang, "تفضّل، دورك جاهز 🎉", "You're up 🎉"), tr(lang, `توجّه إلى الاستقبال في ${venue}.`, `Head to reception at ${venue}.`));
+        } else if (row.status === "notified") {
+          fireAlert("notified", tr(lang, "دورك اقترب 🔔", "Your turn is near 🔔"), tr(lang, `نبّهك ${venue} — استعدّ للحضور.`, `${venue} alerted you — get ready.`));
+        } else if (row.ahead === 0) {
+          fireAlert("next", tr(lang, "أنت التالي 🟢", "You're next 🟢"), tr(lang, `لم يبقَ أحد أمامك في ${venue}.`, `No one ahead of you at ${venue}.`));
+        }
+
         if (TERMINAL.has(row.status)) { stopped = true; clear(); return; }  // حالة نهائية
         schedule(intervalFor(row.ahead));
       } catch {
@@ -76,14 +118,14 @@ export function QueueTicket({
     };
 
     document.addEventListener("visibilitychange", onVis);
-    if (!document.hidden) schedule(intervalFor(Math.max(position - 1, 0)));
+    if (!document.hidden) tick();                 // نبضة فورية: يظهر الترتيب الحيّ فورًا لا بعد ثوانٍ
 
     return () => {
       stopped = true;
       clear();
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, [entryId, phone, position]);
+  }, [entryId, phone, restaurantName, lang]);
 
   // إلغاء يدوي من العميل
   const cancelled = status === "cancelled";
@@ -120,7 +162,7 @@ export function QueueTicket({
     );
   }
 
-  const denom = Math.max(total, pos, 1);
+  const denom = Math.max(liveTotal, pos, 1);
   const progress = Math.min(Math.max((denom - ahead) / denom, 0.08), 1);
   const R = 54;
   const C = 2 * Math.PI * R;
@@ -169,7 +211,7 @@ export function QueueTicket({
           <p className="mt-1 text-xs text-[color:var(--muted)]">{ahead === 0 ? tr(lang, "أنت", "You") : tr(lang, "أمامك بالطابور", "Ahead of you in queue")}</p>
         </div>
         <div className="rounded-2xl border border-[var(--border)] bg-[color:var(--surface-2)] p-4">
-          <p className="text-2xl font-extrabold text-brand-700">{toAr(total)}</p>
+          <p className="text-2xl font-extrabold text-brand-700">{toAr(liveTotal)}</p>
           <p className="mt-1 text-xs text-[color:var(--muted)]">{tr(lang, "إجمالي الطابور", "Total in queue")}</p>
         </div>
       </div>

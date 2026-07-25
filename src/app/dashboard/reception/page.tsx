@@ -59,13 +59,14 @@ export default async function ReceptionPage({
   const servedToday = todayRes?.count ?? 0;
 
   type Row = (typeof list)[number];
-  const Card = ({ q }: { q: Row }) => {
+  // rank = الترتيب الحيّ داخل القسم (1،2،3…) لا الرقم المخزَّن — ينضغط عند الإجلاس
+  const Card = ({ q, rank }: { q: Row; rank: number }) => {
     const cust = Array.isArray(q.customers) ? q.customers[0] : q.customers;
     const waited = minutesSince(q.joined_at);
     return (
       <li className="soft-card flex items-center gap-3 p-3.5">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-xl font-bold text-white" style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}>
-          {q.position ? toAr(q.position) : "•"}
+          {toAr(rank)}
         </span>
         <div className="min-w-0 flex-1">
           {canViewCustomers ? (
@@ -80,7 +81,7 @@ export default async function ReceptionPage({
             {toAr(q.party_size)} {tr(lang, "أشخاص", "guests")} · ⏱ {toAr(waited)} {tr(lang, "دقيقة", "min")}{q.status === "notified" ? tr(lang, " · أُشعِر ✓", " · Notified ✓") : ""}
           </p>
         </div>
-        <QueueActions id={q.id} name={cust?.full_name ?? tr(lang, "عميلنا", "our guest")} phone={cust?.phone ?? ""} restaurant={restaurant.name} position={q.position} />
+        <QueueActions id={q.id} name={cust?.full_name ?? tr(lang, "عميلنا", "our guest")} phone={cust?.phone ?? ""} restaurant={restaurant.name} position={rank} />
       </li>
     );
   };
@@ -95,7 +96,7 @@ export default async function ReceptionPage({
         <span className="rounded-full px-2.5 py-0.5 text-sm font-extrabold" style={{ background: "var(--surface-2)", color: tone }}>{toAr(rows.length)}</span>
       </div>
       {rows.length ? (
-        <ul className="space-y-2.5">{rows.map((q) => <Card key={q.id} q={q} />)}</ul>
+        <ul className="space-y-2.5">{rows.map((q, i) => <Card key={q.id} q={q} rank={i + 1} />)}</ul>
       ) : (
         <div className="soft-card py-8 text-center text-sm text-[color:var(--muted)]">{tr(lang, "لا أحد بالانتظار", "No one waiting")}</div>
       )}

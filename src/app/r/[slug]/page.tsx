@@ -78,7 +78,7 @@ export default async function RestaurantPublicPage({
 
   let defaultName = "";
   let defaultPhone = "";
-  let activeEntry: { position: number | null; branch_id: string } | null = null;
+  let activeEntry: { id: string; position: number | null; branch_id: string; phone: string } | null = null;
   if (user) {
     const { data: customer } = await supabase.from("customers").select("id, full_name, phone").eq("user_id", user.id).maybeSingle();
     defaultName = customer?.full_name ?? "";
@@ -86,14 +86,14 @@ export default async function RestaurantPublicPage({
     if (customer && branchList.length) {
       const { data: entry } = await supabase
         .from("waitlist_entries")
-        .select("position, branch_id")
+        .select("id, position, branch_id")
         .eq("customer_id", customer.id)
         .in("branch_id", branchList.map((b) => b.id))
         .in("status", ["waiting", "notified"])
         .order("joined_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      activeEntry = entry ?? null;
+      activeEntry = entry ? { ...entry, phone: customer.phone ?? "" } : null;
     }
   }
 
@@ -111,7 +111,7 @@ export default async function RestaurantPublicPage({
       <p className="mt-3 text-sm">{tr(lang, "لا توجد فروع متاحة حاليًا.", "No branches available right now.")}</p>
     </div>
   ) : activeEntry ? (
-    <QueueTicket position={activeEntry.position ?? 0} total={total} />
+    <QueueTicket position={activeEntry.position ?? 0} total={total} entryId={activeEntry.id} phone={activeEntry.phone} restaurantName={restaurant.name} />
   ) : (
     <WaitlistForm slug={slug} branches={withCounts} defaultName={defaultName} defaultPhone={defaultPhone} restaurantName={restaurant.name} restaurantLogo={restaurant.logo_url} />
   );

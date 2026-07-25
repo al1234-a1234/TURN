@@ -1444,6 +1444,7 @@ export type Database = {
           status: string
           position: number
           ahead: number
+          total: number
         }[]
       }
     }
