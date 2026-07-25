@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { QueueActions } from "../queue-actions";
 import { WalkInForm } from "./walkin-form";
+import { AutoRefresh } from "./auto-refresh";
 import { loadOwner } from "../owner-context";
 import { staffHasPermission } from "@/lib/features";
 import { toAr } from "@/lib/format";
@@ -92,6 +93,9 @@ export default async function ReceptionPage() {
 
   return (
     <>
+      {/* تحديث تلقائي كل 10ث (بلا Realtime، بلا إعادة تحميل كامل) */}
+      <AutoRefresh intervalMs={10_000} />
+
       <div className="mb-5 hidden lg:block">
         <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "الاستقبال", "Reception")}</h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "الطابور الحيّ — إجلاس، تنبيه، وإدارة", "Live queue — seat, notify, and manage")}</p>

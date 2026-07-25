@@ -1438,6 +1438,14 @@ export type Database = {
           total: number
         }[]
       }
+      waitlist_ticket_status: {
+        Args: { p_entry_id: string; p_phone: string }
+        Returns: {
+          status: string
+          position: number
+          ahead: number
+        }[]
+      }
     }
     Enums: {
       notification_channel: "sms" | "whatsapp" | "push" | "email"
