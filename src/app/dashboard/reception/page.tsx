@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { QueueActions } from "../queue-actions";
 import { WalkInForm } from "./walkin-form";
 import { AutoRefresh } from "./auto-refresh";
+import { BranchTabs } from "./branch-tabs";
 import { loadOwner } from "../owner-context";
 import { staffHasPermission } from "@/lib/features";
 import { toAr } from "@/lib/format";
@@ -13,7 +14,11 @@ function minutesSince(iso: string): number {
   return Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
 }
 
-export default async function ReceptionPage() {
+export default async function ReceptionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ branch?: string }>;
+}) {
   const lang = await getLang();
   const load = await loadOwner();
   if (load.state !== "ok") return null;
@@ -22,22 +27,28 @@ export default async function ReceptionPage() {
   const canViewCustomers = staffHasPermission(role, permissions, "customers");
 
   const { data: branches } = await supabase
-    .from("branches").select("id, name").eq("restaurant_id", restaurant.id).order("created_at");
-  const branchIds = (branches ?? []).map((b) => b.id);
+    .from("branches").select("id, name, city").eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at");
+  const branchList = branches ?? [];
+  const multi = branchList.length > 1;
+
+  // فرع مختار — كل فرع قسم مستقل تمامًا (نمط ريكيو). الاستقبال يعمل على فرع واحد فقط.
+  const requested = (await searchParams).branch;
+  const activeBranch =
+    branchList.find((b) => b.id === requested) ?? branchList[0] ?? null;
 
   const now = new Date();
   const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
 
-  const [{ data: queue }, todayRes] = branchIds.length
+  const [{ data: queue }, todayRes] = activeBranch
     ? await Promise.all([
         supabase
           .from("waitlist_entries")
           .select("id, customer_id, position, party_size, zone, status, joined_at, customers(full_name, phone)")
-          .in("branch_id", branchIds)
+          .eq("branch_id", activeBranch.id)
           .in("status", ["waiting", "notified"])
           .order("position", { nullsFirst: false }),
         supabase.from("waitlist_entries").select("id", { count: "exact", head: true })
-          .in("branch_id", branchIds).eq("status", "seated").gte("seated_at", startToday),
+          .eq("branch_id", activeBranch.id).eq("status", "seated").gte("seated_at", startToday),
       ])
     : [{ data: [] }, { count: 0 }];
 
@@ -101,21 +112,34 @@ export default async function ReceptionPage() {
         <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "الطابور الحيّ — إجلاس، تنبيه، وإدارة", "Live queue — seat, notify, and manage")}</p>
       </div>
 
-      <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Stat label={tr(lang, "في الطابور الآن", "In queue now")} value={toAr(list.length)} tone="var(--brand-d)" />
-        <Stat label={tr(lang, "طابور داخلي", "Indoor queue")} value={toAr(inside.length)} tone="var(--st-full)" />
-        <Stat label={tr(lang, "طابور خارجي", "Outdoor queue")} value={toAr(outside.length)} tone="var(--st-full)" />
-        <Stat label={tr(lang, "خدمناهم اليوم", "Served today")} value={toAr(servedToday)} tone="var(--st-open)" />
-      </div>
+      {/* تبويبات الفروع — كل فرع قسم مستقل تمامًا */}
+      {multi && activeBranch && (
+        <BranchTabs branches={branchList} activeId={activeBranch.id} />
+      )}
 
-      <WalkInForm />
+      {activeBranch ? (
+        <>
+          <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <Stat label={tr(lang, "في الطابور الآن", "In queue now")} value={toAr(list.length)} tone="var(--brand-d)" />
+            <Stat label={tr(lang, "طابور داخلي", "Indoor queue")} value={toAr(inside.length)} tone="var(--st-full)" />
+            <Stat label={tr(lang, "طابور خارجي", "Outdoor queue")} value={toAr(outside.length)} tone="var(--st-full)" />
+            <Stat label={tr(lang, "خدمناهم اليوم", "Served today")} value={toAr(servedToday)} tone="var(--st-open)" />
+          </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <ZoneColumn title={tr(lang, "طاولات داخلية", "Indoor tables")} rows={inside} tone="var(--st-full)" />
-        <ZoneColumn title={tr(lang, "طاولات خارجية", "Outdoor tables")} rows={outside} tone="var(--st-full)" />
-      </div>
-      {other.length > 0 && (
-        <div className="mt-6"><ZoneColumn title={tr(lang, "غير محدّد", "Unspecified")} rows={other} tone="var(--muted)" /></div>
+          <WalkInForm branchId={activeBranch.id} branchName={multi ? activeBranch.name : undefined} />
+
+          <div className="grid gap-6 sm:grid-cols-2">
+            <ZoneColumn title={tr(lang, "طاولات داخلية", "Indoor tables")} rows={inside} tone="var(--st-full)" />
+            <ZoneColumn title={tr(lang, "طاولات خارجية", "Outdoor tables")} rows={outside} tone="var(--st-full)" />
+          </div>
+          {other.length > 0 && (
+            <div className="mt-6"><ZoneColumn title={tr(lang, "غير محدّد", "Unspecified")} rows={other} tone="var(--muted)" /></div>
+          )}
+        </>
+      ) : (
+        <div className="soft-card py-12 text-center text-sm text-[color:var(--muted)]">
+          {tr(lang, "لا يوجد فرع نشِط بعد.", "No active branch yet.")}
+        </div>
       )}
     </>
   );

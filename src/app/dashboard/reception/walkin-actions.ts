@@ -10,8 +10,13 @@ export async function addWalkIn(formData: FormData) {
   if (!caller) return;
   const supabase = caller.supabase;
 
-  const { data: branch } = await supabase
-    .from("branches").select("id").eq("restaurant_id", caller.restaurantId).order("created_at").limit(1).maybeSingle();
+  // الفرع المختار في الاستقبال — لا بد أن يكون تابعًا لمطعم صاحب الصلاحية (منع الخلط بين الفروع/المطاعم)
+  const submittedBranch = String(formData.get("branch_id") ?? "").trim();
+  const branchQuery = supabase
+    .from("branches").select("id").eq("restaurant_id", caller.restaurantId).eq("is_active", true);
+  const { data: branch } = submittedBranch
+    ? await branchQuery.eq("id", submittedBranch).maybeSingle()
+    : await branchQuery.order("created_at").limit(1).maybeSingle();
   if (!branch) return;
 
   const name = String(formData.get("full_name") ?? "").trim() || "ضيف";

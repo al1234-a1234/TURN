@@ -5,7 +5,7 @@ import { addWalkIn } from "./walkin-actions";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 
-export function WalkInForm() {
+export function WalkInForm({ branchId, branchName }: { branchId: string; branchName?: string }) {
   const lang = useLang();
   const [open, setOpen] = useState(false);
   const field = "field-input";
@@ -17,12 +17,16 @@ export function WalkInForm() {
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between font-display text-base font-bold text-[color:var(--ink)]"
       >
-        <span>➕ {tr(lang, "إضافة عميل للطابور", "Add walk-in to queue")}</span>
+        <span>
+          ➕ {tr(lang, "إضافة عميل للطابور", "Add walk-in to queue")}
+          {branchName ? <span className="text-sm font-medium text-[color:var(--muted)]"> · {branchName}</span> : null}
+        </span>
         <span className="text-[color:var(--muted)]">{open ? "▲" : "▼"}</span>
       </button>
 
       {open && (
         <form action={addWalkIn} className="mt-4 space-y-3">
+          <input type="hidden" name="branch_id" value={branchId} />
           <div className="grid gap-3 sm:grid-cols-2">
             <input name="full_name" placeholder={tr(lang, "الاسم (اختياري)", "Name (optional)")} className={field} />
             <input name="phone" required dir="ltr" placeholder="05xxxxxxxx" className={field} />
