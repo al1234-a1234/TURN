@@ -8,7 +8,15 @@ import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 import { recordTurn } from "@/lib/local-store";
 
-type Branch = { id: string; name: string; total: number; inside: number; outside: number };
+type Branch = {
+  id: string;
+  name: string;
+  city: string;
+  total: number;
+  inside: number;
+  outside: number;
+  accepts: boolean;
+};
 
 function ZoneStat({ label, count }: { label: string; count: number }) {
   const lang = useLang();
@@ -33,10 +41,50 @@ function ZoneStat({ label, count }: { label: string; count: number }) {
   );
 }
 
+/** بطاقة فرع مستقلة بحالتها (نمط ريكيو) — كل فرع قسم منفصل تمامًا */
+function BranchCard({ b, onSelect }: { b: Branch; onSelect: () => void }) {
+  const lang = useLang();
+  return (
+    <button type="button" onClick={onSelect} className="reveal rq-card block w-full overflow-hidden p-3.5 text-right transition active:scale-[0.985]">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate font-display text-[16px] font-bold text-[color:var(--ink)]">{b.name}</p>
+          {b.city && <p className="mt-0.5 truncate text-[13px] font-medium text-[color:var(--muted)]">{b.city}</p>}
+        </div>
+        <span className="shrink-0 text-[color:var(--muted)]">←</span>
+      </div>
+
+      {!b.accepts ? (
+        <div className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5" style={{ background: "linear-gradient(160deg,#f3e8df,#e9d7c8)", border: "1px solid rgba(102,28,10,0.14)" }}>
+          <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "#9a6a4c" }}>
+            <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#b98a6a" }} />
+            {tr(lang, "لا يستقبل الآن", "Not accepting now")}
+          </span>
+        </div>
+      ) : b.total > 0 ? (
+        <div className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5" style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)", boxShadow: "0 12px 24px -16px rgba(102,28,10,0.72)" }}>
+          <span className="flex items-center gap-2 text-sm font-extrabold text-white">
+            <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
+            {tr(lang, `${toAr(b.total)} بالطابور الآن`, `${toAr(b.total)} in queue now`)}
+          </span>
+          <span className="text-xs font-extrabold text-white/85">{tr(lang, "خذ دورك ←", "Take your turn ←")}</span>
+        </div>
+      ) : (
+        <div className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5" style={{ background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", border: "1px solid rgba(102,28,10,0.16)" }}>
+          <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--brand-d)" }}>
+            <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--brand-d)", boxShadow: "0 0 0 3px rgba(102,28,10,0.14)" }} />
+            {tr(lang, "متاح الآن · بدون انتظار", "Available now · No wait")}
+          </span>
+          <span className="text-xs font-extrabold" style={{ color: "var(--brand-d)" }}>{tr(lang, "خذ دورك ←", "Take your turn ←")}</span>
+        </div>
+      )}
+    </button>
+  );
+}
+
 export function WaitlistForm({
   slug,
   branches,
-  accepts,
   defaultName,
   defaultPhone,
   restaurantName,
@@ -44,54 +92,57 @@ export function WaitlistForm({
 }: {
   slug: string;
   branches: Branch[];
-  accepts: boolean;
   defaultName: string;
   defaultPhone: string;
   restaurantName?: string;
   restaurantLogo?: string | null;
 }) {
   const lang = useLang();
-  const [state, formAction, pending] = useActionState<WaitlistState, FormData>(
-    joinWaitlistGuest,
-    { ok: false },
-  );
+  const [state, formAction, pending] = useActionState<WaitlistState, FormData>(joinWaitlistGuest, { ok: false });
 
-  const [branchId, setBranchId] = useState(branches[0]?.id ?? "");
+  const multi = branches.length > 1;
+  // فرع واحد → مختار تلقائيًّا؛ عدّة فروع → يختار العميل من البطاقات أولًا
+  const [branchId, setBranchId] = useState<string>(multi ? "" : branches[0]?.id ?? "");
   const [zone, setZone] = useState<"inside" | "outside">("inside");
-  const branch = useMemo(
-    () => branches.find((b) => b.id === branchId) ?? branches[0],
-    [branchId, branches],
-  );
+  const branch = useMemo(() => branches.find((b) => b.id === branchId), [branchId, branches]);
 
-  // سجّل الدور في يوميات الضيف عند نجاح الانضمام (تخزين محلّي)
   useEffect(() => {
     if (state.ok) {
       recordTurn({ slug, name: restaurantName ?? slug, logo: restaurantLogo ?? null, at: new Date().toISOString() });
     }
-    // نعتمد فقط على تغيّر نجاح الحالة
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.ok]);
 
   if (state.ok) {
+    return <QueueTicket position={state.position ?? 0} total={state.total ?? 0} entryId={state.entryId} phone={state.phone} />;
+  }
+
+  // خطوة اختيار الفرع (لمّا فيه أكثر من فرع ولم يُختَر بعد) — كل فرع بطاقة مستقلة
+  if (multi && !branchId) {
     return (
-      <QueueTicket
-        position={state.position ?? 0}
-        total={state.total ?? 0}
-        entryId={state.entryId}
-        phone={state.phone}
-      />
+      <div className="space-y-3">
+        <p className="px-1 font-display text-base font-bold text-[color:var(--ink)]">{tr(lang, "اختر الفرع", "Choose a branch")}</p>
+        {branches.map((b) => (
+          <BranchCard key={b.id} b={b} onSelect={() => setBranchId(b.id)} />
+        ))}
+      </div>
     );
   }
 
-  // مغلق / لا يستقبل الآن
-  if (!accepts) {
+  // مغلق / لا يستقبل الآن (لهذا الفرع)
+  if (branch && !branch.accepts) {
     return (
-      <div className="rq-card p-7 text-center">
-        <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full" style={{ background: "rgba(192,86,74,0.12)", color: "var(--st-closed)" }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" /><path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-        </span>
-        <p className="text-lg font-bold text-[color:var(--ink)]">{tr(lang, "لا يستقبل طلبات الانتظار الآن", "Not accepting waitlist requests right now")}</p>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "المطعم متوقف مؤقتًا عن استقبال الطابور — تحقّق لاحقًا.", "The restaurant has paused its queue temporarily — check back later.")}</p>
+      <div className="space-y-3">
+        {multi && (
+          <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
+        )}
+        <div className="rq-card p-7 text-center">
+          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full" style={{ background: "rgba(192,86,74,0.12)", color: "var(--st-closed)" }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" /><path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+          </span>
+          <p className="text-lg font-bold text-[color:var(--ink)]">{tr(lang, "لا يستقبل طلبات الانتظار الآن", "Not accepting waitlist requests right now")}</p>
+          <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "هذا الفرع متوقف مؤقتًا عن استقبال الطابور — تحقّق لاحقًا.", "This branch has paused its queue temporarily — check back later.")}</p>
+        </div>
       </div>
     );
   }
@@ -105,7 +156,17 @@ export function WaitlistForm({
       <input type="hidden" name="branch_id" value={branchId} />
       <input type="hidden" name="zone" value={zone} />
 
-      {/* طابور كل قسم */}
+      {/* رأس الفرع المختار + تغيير الفرع */}
+      {multi && branch && (
+        <div className="flex items-center justify-between px-1">
+          <p className="font-display text-lg font-bold text-[color:var(--ink)]">
+            {branch.name}{branch.city ? <span className="text-sm font-medium text-[color:var(--muted)]"> · {branch.city}</span> : null}
+          </p>
+          <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
+        </div>
+      )}
+
+      {/* طابور القسم (لهذا الفرع) */}
       <div className="grid grid-cols-2 gap-3">
         <ZoneStat label={tr(lang, "طاولات داخلية", "Indoor tables")} count={inside} />
         <ZoneStat label={tr(lang, "طاولات خارجية", "Outdoor tables")} count={outside} />
@@ -129,17 +190,6 @@ export function WaitlistForm({
           ))}
         </div>
       </div>
-
-      {branches.length > 1 && (
-        <div className="rq-card p-5">
-          <label className="field-label">{tr(lang, "الفرع", "Branch")}</label>
-          <select value={branchId} onChange={(e) => setBranchId(e.target.value)} className="field-input">
-            {branches.map((b) => (
-              <option key={b.id} value={b.id}>{b.name}</option>
-            ))}
-          </select>
-        </div>
-      )}
 
       {/* اسم + رقم */}
       <div className="rq-card space-y-4 p-5">
@@ -166,7 +216,7 @@ export function WaitlistForm({
         </p>
       )}
 
-      <button type="submit" disabled={pending} className="rq-btn">
+      <button type="submit" disabled={pending || !branchId} className="rq-btn">
         {pending ? tr(lang, "جارٍ التسجيل…", "Registering…") : tr(lang, "خذ دورك الآن", "Take your turn now")}
       </button>
     </form>

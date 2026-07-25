@@ -63,7 +63,16 @@ export default async function RestaurantPublicPage({
     branchList.map(async (b) => {
       const { data } = await supabase.rpc("waitlist_counts", { b_id: b.id });
       const c = Array.isArray(data) ? data[0] : undefined;
-      return { id: b.id, name: b.name, total: c?.total ?? 0, inside: c?.inside ?? 0, outside: c?.outside ?? 0 };
+      const bs = Array.isArray(b.branch_settings) ? b.branch_settings[0] : b.branch_settings;
+      return {
+        id: b.id,
+        name: b.name,
+        city: (b as { city?: string | null }).city ?? "",
+        total: c?.total ?? 0,
+        inside: c?.inside ?? 0,
+        outside: c?.outside ?? 0,
+        accepts: (bs as { accepts_waitlist?: boolean } | null)?.accepts_waitlist ?? true,
+      };
     }),
   );
 
@@ -95,9 +104,6 @@ export default async function RestaurantPublicPage({
   const total = activeEntry
     ? withCounts.find((c) => c.id === activeEntry!.branch_id)?.total ?? withCounts[0]?.total ?? 0
     : withCounts[0]?.total ?? 0;
-  const s0 = branchList[0] as { branch_settings?: { accepts_waitlist: boolean } | { accepts_waitlist: boolean }[] | null } | undefined;
-  const settings0 = Array.isArray(s0?.branch_settings) ? s0?.branch_settings[0] : s0?.branch_settings;
-  const accepts = settings0?.accepts_waitlist ?? true;
 
   const waitlistPanel = !hasBranches ? (
     <div className="rq-card p-10 text-center text-[color:var(--muted)]">
@@ -107,7 +113,7 @@ export default async function RestaurantPublicPage({
   ) : activeEntry ? (
     <QueueTicket position={activeEntry.position ?? 0} total={total} />
   ) : (
-    <WaitlistForm slug={slug} branches={withCounts} accepts={accepts} defaultName={defaultName} defaultPhone={defaultPhone} restaurantName={restaurant.name} restaurantLogo={restaurant.logo_url} />
+    <WaitlistForm slug={slug} branches={withCounts} defaultName={defaultName} defaultPhone={defaultPhone} restaurantName={restaurant.name} restaurantLogo={restaurant.logo_url} />
   );
 
   return (
