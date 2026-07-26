@@ -38,7 +38,12 @@
 - `src/lib/push-client.ts` — التسجيل والاشتراك في المتصفّح.
 - الجدول `push_subscriptions` + دوال `save_push_subscription` /
   `push_subs_for_entry` / `delete_push_subscription` (migration 0017).
-- يُرسَل من `updateWaitlistStatus` عند `notified` أو `seated`.
+- يُرسَل من `updateWaitlistStatus`:
+  - **لصاحب الصف** عند `notified` أو `seated`.
+  - **تلقائيًّا لكل من تقدّم دوره** عند `seated`/`cancelled` عبر
+    `queue_push_targets` (migration 0018) — بلا أي ضغطة إضافية من الاستقبال.
+- ضدّ الإزعاج: كل الإشعارات بنفس الـ`tag` فتُستبدل في مكانها بدل التكدّس،
+  والتنبيه الصوتي يعمل لأول ٣ فقط ومن بعدهم تحديث صامت (`silent`).
 
 ### متغيّرات البيئة
 

@@ -18,10 +18,13 @@ self.addEventListener("push", (event) => {
     icon: payload.icon || "/icon-192.png",
     badge: "/icon-192.png",
     tag: payload.tag || "turn-queue",
-    renotify: true,
+    // نفس الـtag ⇒ يُستبدل الإشعار في مكانه بدل التكدّس.
+    // الصامت: يحدّث الرقم بلا تنبيه/اهتزاز (لمن دوره بعيد).
+    renotify: payload.silent !== true,
+    silent: payload.silent === true,
     dir: "rtl",
     lang: payload.lang || "ar",
-    vibrate: [120, 60, 120],
+    vibrate: payload.silent === true ? undefined : [120, 60, 120],
     requireInteraction: payload.requireInteraction === true,
     data: { url: payload.url || "/" },
   };

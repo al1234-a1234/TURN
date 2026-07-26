@@ -1469,6 +1469,16 @@ export type Database = {
         Args: { p_endpoint: string }
         Returns: undefined
       }
+      queue_push_targets: {
+        Args: { p_branch_id: string; p_zone: string | null }
+        Returns: {
+          entry_id: string
+          rank: number
+          endpoint: string
+          p256dh: string
+          auth: string
+        }[]
+      }
     }
     Enums: {
       notification_channel: "sms" | "whatsapp" | "push" | "email"

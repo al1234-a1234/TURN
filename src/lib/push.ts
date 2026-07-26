@@ -26,7 +26,93 @@ export type PushPayload = {
   url?: string;
   tag?: string;
   requireInteraction?: boolean;
+  /** تحديث صامت: يستبدل الإشعار بلا تنبيه صوتي/اهتزاز (لمن دوره بعيد). */
+  silent?: boolean;
 };
+
+/** إرسال دفعة واحدة لاشتراك، مع تنظيف الاشتراك الميّت. يعيد true إن نجح. */
+async function sendOne(
+  supabase: SupabaseClient<Database>,
+  sub: { endpoint: string; p256dh: string; auth: string },
+  body: string,
+): Promise<boolean> {
+  try {
+    await webpush.sendNotification(
+      { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+      body,
+    );
+    return true;
+  } catch (err) {
+    const code = (err as { statusCode?: number })?.statusCode;
+    // 404/410 = اشتراك ميّت (أُلغي التصريح أو حُذف التطبيق) → نظّفه
+    if (code === 404 || code === 410) {
+      await supabase.rpc("delete_push_subscription", { p_endpoint: sub.endpoint });
+    }
+    return false;
+  }
+}
+
+/**
+ * إشعار تلقائي لكل من **تقدّم دوره** في نفس (الفرع + القسم) بعد إجلاس/إزالة.
+ * يرسله التطبيق من نفسه — لا يحتاج أي ضغطة من الاستقبال.
+ *
+ * لتفادي الإزعاج: كل الإشعارات تحمل نفس الـtag فتُستبدل في مكانها بدل التكدّس،
+ * والتنبيه الصوتي (renotify) يعمل فقط لمن اقترب دوره (أول ٣).
+ */
+export async function pushQueueRankUpdates(
+  supabase: SupabaseClient<Database>,
+  branchId: string,
+  zone: string | null,
+  venue: string,
+  url: string,
+): Promise<number> {
+  if (!pushConfigured) return 0;
+
+  try {
+    const { data: targets, error } = await supabase.rpc("queue_push_targets", {
+      p_branch_id: branchId,
+      p_zone: zone,
+    });
+    if (error || !targets?.length) return 0;
+
+    let sent = 0;
+    await Promise.all(
+      targets.map(async (t) => {
+        const rank = t.rank;
+        const payload: PushPayload =
+          rank === 1
+            ? {
+                title: "أنت التالي 🟢",
+                body: `لم يبقَ أحد أمامك في ${venue} — استعدّ.`,
+                url,
+                tag: "turn-queue",
+                requireInteraction: true,
+              }
+            : rank <= 3
+              ? {
+                  title: `تقدّم دورك — رقمك الآن ${rank} 🔔`,
+                  body: `أمامك ${rank - 1} في ${venue}. اقترب دورك.`,
+                  url,
+                  tag: "turn-queue",
+                }
+              : {
+                  // بعيد عن الدور: تحديث صامت للرقم بلا تنبيه مزعج
+                  title: `تقدّم دورك — رقمك الآن ${rank}`,
+                  body: `أمامك ${rank - 1} في ${venue}.`,
+                  url,
+                  tag: "turn-queue",
+                  silent: true,
+                };
+
+        if (await sendOne(supabase, t, JSON.stringify(payload))) sent += 1;
+      }),
+    );
+
+    return sent;
+  } catch {
+    return 0;
+  }
+}
 
 /**
  * يرسل إشعارًا لكل أجهزة عميل صفِّ الطابور المحدَّد.
@@ -51,19 +137,7 @@ export async function pushToWaitlistEntry(
 
     await Promise.all(
       subs.map(async (s) => {
-        try {
-          await webpush.sendNotification(
-            { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-            body,
-          );
-          sent += 1;
-        } catch (err) {
-          const code = (err as { statusCode?: number })?.statusCode;
-          // 404/410 = اشتراك ميّت (أُلغي التصريح أو حُذف التطبيق) → نظّفه
-          if (code === 404 || code === 410) {
-            await supabase.rpc("delete_push_subscription", { p_endpoint: s.endpoint });
-          }
-        }
+        if (await sendOne(supabase, s, body)) sent += 1;
       }),
     );
 
