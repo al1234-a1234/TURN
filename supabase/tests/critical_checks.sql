@@ -39,6 +39,22 @@ with checks(name, pass) as (
   ('no_null_branch_offers',    not exists(select 1 from public.offers where branch_id is null)),
   ('no_cross_branch_refs',     not exists(select 1 from public.menu_items i join public.menu_categories c on c.id=i.category_id where c.branch_id<>i.branch_id)),
   ('branch_matches_restaurant',not exists(select 1 from public.menu_items i join public.branches b on b.id=i.branch_id where b.restaurant_id<>i.restaurant_id)),
+  -- ── عزل الفرانشايز: كل سياسة موظّفين على جدول يحمل branch_id تفحص الفرع ──
+  ('branch_guard_exists',      exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+                                      where n.nspname='public' and p.proname='can_access_branch')),
+  ('branch_rls_everywhere',    not exists(
+                                 select 1 from pg_policies
+                                 where schemaname='public'
+                                   and tablename in ('waitlist_entries','reservations','tables','branch_settings',
+                                                     'notifications','daily_stats','menu_categories','menu_items',
+                                                     'offers','restaurant_photos','checkins','checkin_settings',
+                                                     'reviews','offer_redemptions','branches','staff')
+                                   and (qual like '%is_staff_of%' or qual like '%staff_has_perm%' or qual like '%is_manager_of%')
+                                   and qual not like '%can_access_branch%')),
+  ('branch_guard_in_push_rpc', (select pg_get_functiondef(oid) like '%can_access_branch%'
+                                from pg_proc where proname='queue_push_targets')),
+  ('branch_guard_in_customer', (select pg_get_functiondef(oid) like '%can_access_branch%'
+                                from pg_proc where proname='staff_can_read_customer')),
   -- ── RLS مفعّل على الجداول الحسّاسة ──
   ('rls_customers',            (select relrowsecurity from pg_class where relname='customers')),
   ('rls_waitlist',             (select relrowsecurity from pg_class where relname='waitlist_entries')),
