@@ -83,11 +83,17 @@ export const getDiscovery = unstable_cache(
       }
 
       const now = Date.now();
+      // العروض صارت لكل فرع، والرئيسية على مستوى المطعم — نعرض العرض مرّة واحدة
+      // لكل (مطعم + عنوان) كي لا يتكرّر بعدد الفروع.
+      const seen = new Set<string>();
       offers = (offerRows ?? [])
         .filter((o) => !o.ends_at || new Date(o.ends_at).getTime() > now)
         .flatMap((o) => {
           const r = meta.get(o.restaurant_id);
           if (!r) return [];
+          const key = `${o.restaurant_id}|${o.title}`;
+          if (seen.has(key)) return [];
+          seen.add(key);
           return [{
             id: o.id, title: o.title, kind: o.kind, value: o.value, code: o.code, ends_at: o.ends_at,
             restaurant: r,
@@ -96,6 +102,6 @@ export const getDiscovery = unstable_cache(
     }
     return { list, ratings, offers };
   },
-  ["discovery-v2"],
+  ["discovery-v3"],
   { revalidate: 30, tags: ["discovery"] },
 );

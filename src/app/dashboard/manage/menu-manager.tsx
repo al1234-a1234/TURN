@@ -23,10 +23,12 @@ type Category = { id: string; name: string };
 
 export function MenuManager({
   restaurantId,
+  branchId,
   categories,
   items,
 }: {
   restaurantId: string;
+  branchId: string;
   categories: Category[];
   items: Item[];
 }) {
@@ -34,6 +36,7 @@ export function MenuManager({
   return (
     <div className="space-y-4">
       <form action={addMenuCategory} className="soft-card flex items-end gap-3 p-4">
+        <input type="hidden" name="branch_id" value={branchId} />
         <div className="flex-1">
           <label className="field-label">{tr(lang, "إضافة فئة جديدة", "Add new category")}</label>
           <input name="name" required placeholder={tr(lang, "مثال: المقبلات الباردة", "e.g. Cold appetizers")} className="field-input" />
@@ -51,6 +54,7 @@ export function MenuManager({
             key={cat.id}
             category={cat}
             restaurantId={restaurantId}
+            branchId={branchId}
             items={items.filter((i) => i.category_id === cat.id)}
           />
         ))
@@ -62,10 +66,12 @@ export function MenuManager({
 function CategoryBlock({
   category,
   restaurantId,
+  branchId,
   items,
 }: {
   category: Category;
   restaurantId: string;
+  branchId: string;
   items: Item[];
 }) {
   const lang = useLang();
@@ -95,6 +101,7 @@ function CategoryBlock({
 
       {open && (
         <form action={addMenuItem} className="mt-4 space-y-3 rounded-2xl bg-sand-100 p-4 dark:bg-stone-800/40">
+            <input type="hidden" name="branch_id" value={branchId} />
           <input type="hidden" name="category_id" value={category.id} />
           <ImageUploader restaurantId={restaurantId} name="image_url" label={tr(lang, "صورة الصنف", "Item image")} />
           <div className="grid gap-3 sm:grid-cols-2">

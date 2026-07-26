@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requirePerm } from "../guard";
+import { requirePerm, resolveWriteBranch } from "../guard";
 import type { TablesInsert, Database } from "@/lib/supabase/database.types";
 
 type OfferKind = Database["public"]["Enums"]["offer_kind"];
@@ -29,8 +29,13 @@ export async function createOffer(formData: FormData) {
 
   const startRaw = String(formData.get("ends_at") ?? "").trim();
 
+  // العرض يخصّ فرعًا بعينه — بلا فرع صالح لا يُنشأ
+  const branchId = await resolveWriteBranch(caller, formData.get("branch_id") as string);
+  if (!branchId) return;
+
   const offer: TablesInsert<"offers"> = {
     restaurant_id: caller.restaurantId,
+    branch_id: branchId,
     title,
     description: String(formData.get("description") ?? "").trim() || null,
     kind,

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import type { TablesUpdate } from "@/lib/supabase/database.types";
-import { requirePerm } from "../guard";
+import { requirePerm, resolveWriteBranch } from "../guard";
 
 export async function updateRestaurantInfo(formData: FormData) {
   const caller = await requirePerm("settings");
@@ -109,7 +109,9 @@ export async function addMenuCategory(formData: FormData) {
   if (!caller) return;
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return;
-  await caller.supabase.from("menu_categories").insert({ restaurant_id: caller.restaurantId, name });
+  const branchId = await resolveWriteBranch(caller, formData.get("branch_id") as string);
+  if (!branchId) return;
+  await caller.supabase.from("menu_categories").insert({ restaurant_id: caller.restaurantId, branch_id: branchId, name });
   revalidatePath("/dashboard/manage");
 }
 
@@ -133,8 +135,11 @@ export async function addMenuItem(formData: FormData) {
   const price = priceRaw ? Number(priceRaw) : null;
   const description = String(formData.get("description") ?? "").trim() || null;
   const image_url = String(formData.get("image_url") ?? "").trim() || null;
+  const branchId = await resolveWriteBranch(caller, formData.get("branch_id") as string);
+  if (!branchId) return;
   await supabase.from("menu_items").insert({
     restaurant_id: rid,
+    branch_id: branchId,
     category_id: categoryId,
     name,
     price: Number.isFinite(price as number) ? price : null,

@@ -498,6 +498,7 @@ export type Database = {
       }
       menu_categories: {
         Row: {
+          branch_id: string
           created_at: string
           id: string
           name: string
@@ -505,6 +506,7 @@ export type Database = {
           sort_order: number
         }
         Insert: {
+          branch_id: string
           created_at?: string
           id?: string
           name: string
@@ -512,6 +514,7 @@ export type Database = {
           sort_order?: number
         }
         Update: {
+          branch_id?: string
           created_at?: string
           id?: string
           name?: string
@@ -530,6 +533,7 @@ export type Database = {
       }
       menu_items: {
         Row: {
+          branch_id: string
           category_id: string
           created_at: string
           description: string | null
@@ -543,6 +547,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          branch_id: string
           category_id: string
           created_at?: string
           description?: string | null
@@ -556,6 +561,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          branch_id?: string
           category_id?: string
           created_at?: string
           description?: string | null
@@ -700,6 +706,7 @@ export type Database = {
       }
       offers: {
         Row: {
+          branch_id: string
           audience: string
           code: string | null
           conditions: Json
@@ -719,6 +726,7 @@ export type Database = {
           value: number | null
         }
         Insert: {
+          branch_id: string
           audience?: string
           code?: string | null
           conditions?: Json
@@ -738,6 +746,7 @@ export type Database = {
           value?: number | null
         }
         Update: {
+          branch_id?: string
           audience?: string
           code?: string | null
           conditions?: Json
@@ -933,6 +942,7 @@ export type Database = {
       }
       restaurant_photos: {
         Row: {
+          branch_id: string
           caption: string | null
           created_at: string
           id: string
@@ -941,6 +951,7 @@ export type Database = {
           url: string
         }
         Insert: {
+          branch_id: string
           caption?: string | null
           created_at?: string
           id?: string
@@ -949,6 +960,7 @@ export type Database = {
           url: string
         }
         Update: {
+          branch_id?: string
           caption?: string | null
           created_at?: string
           id?: string

@@ -12,8 +12,10 @@ import { getLang } from "@/lib/i18n-server";
 
 export default async function RestaurantPublicPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ branch?: string }>;
 }) {
   const { slug } = await params;
   const lang = await getLang();
@@ -28,13 +30,20 @@ export default async function RestaurantPublicPage({
 
   if (!restaurant) notFound();
 
-  const [{ data: branches }, { data: categories }, { data: items }, { data: photos }, { data: offers }, { data: reviewRows }] = await Promise.all([
-    supabase.from("branches").select("id, name, city, address, branch_settings(accepts_waitlist)").eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at"),
-    supabase.from("menu_categories").select("id, name").eq("restaurant_id", restaurant.id).order("sort_order").order("created_at"),
-    supabase.from("menu_items").select("id, name, price, description, image_url, category_id").eq("restaurant_id", restaurant.id).eq("is_available", true).order("created_at"),
-    supabase.from("restaurant_photos").select("id, url, caption").eq("restaurant_id", restaurant.id).order("sort_order").order("created_at"),
+  // الفروع أولًا: القائمة والعروض والصور صارت لكل فرع على حدة (فرانشايز)
+  const { data: branches } = await supabase
+    .from("branches").select("id, name, city, address, branch_settings(accepts_waitlist)")
+    .eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at");
+  const requestedBranch = (await searchParams).branch;
+  const contentBranchId =
+    (branches ?? []).find((b) => b.id === requestedBranch)?.id ?? branches?.[0]?.id ?? "";
+
+  const [{ data: categories }, { data: items }, { data: photos }, { data: offers }, { data: reviewRows }] = await Promise.all([
+    supabase.from("menu_categories").select("id, name").eq("branch_id", contentBranchId).order("sort_order").order("created_at"),
+    supabase.from("menu_items").select("id, name, price, description, image_url, category_id").eq("branch_id", contentBranchId).eq("is_available", true).order("created_at"),
+    supabase.from("restaurant_photos").select("id, url, caption").eq("branch_id", contentBranchId).order("sort_order").order("created_at"),
     // عروض عامّة فقط للزوّار (الشرائح المستهدفة loyalty/walkaway/slow_hours تصل عبر مكافآت العميل)
-    supabase.from("offers").select("id, title, description, kind, value, code, ends_at").eq("restaurant_id", restaurant.id).eq("is_active", true).in("audience", ["all", "new"]).order("created_at", { ascending: false }),
+    supabase.from("offers").select("id, title, description, kind, value, code, ends_at").eq("branch_id", contentBranchId).eq("is_active", true).in("audience", ["all", "new"]).order("created_at", { ascending: false }),
     // تقييمات حقيقية منشورة (بدل بيانات وهمية)
     supabase.from("reviews").select("rating, comment, created_at, customers(full_name)").eq("restaurant_id", restaurant.id).eq("is_published", true).order("created_at", { ascending: false }).limit(200),
   ]);

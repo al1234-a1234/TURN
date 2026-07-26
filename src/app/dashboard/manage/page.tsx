@@ -3,6 +3,8 @@ import { ImageUploader } from "@/components/image-uploader";
 import { updateRestaurantInfo, updateBranchSettings, addBranch, deleteBranch } from "./actions";
 import { MenuManager } from "./menu-manager";
 import { loadOwner } from "../owner-context";
+import { resolveBranchScope } from "../branch-scope";
+import { BranchPicker } from "../branch-picker";
 import { ColumnChart, SplitBars, ChartCard } from "./charts";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
@@ -12,11 +14,14 @@ import { staffHasPermission } from "@/lib/features";
 const AR_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 const EN_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export default async function ManagePage() {
+export default async function ManagePage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
   const lang = await getLang();
   const load = await loadOwner();
   if (load.state !== "ok") return null;
   const { supabase, restaurant: base, role, permissions } = load.ctx;
+  // القائمة صارت لكل فرع على حدة (فرانشايز) — نحدّد الفرع النشِط أولًا
+  const scope = await resolveBranchScope(load.ctx, (await searchParams).branch);
+  const activeBranchId = scope.active?.id ?? "";
   // بوابة الصلاحية: صفحة الإدارة تعدّل إعدادات المطعم والمنيو → تتطلب صلاحية «الإعدادات»
   if (!staffHasPermission(role, permissions, "settings")) redirect("/dashboard");
 
@@ -28,8 +33,8 @@ export default async function ManagePage() {
   const restaurant = full ?? { ...base, description: null, logo_url: null, cover_url: null, cuisine: null, cuisine_en: null };
 
   const [{ data: categories }, { data: items }, { data: branchList }, { data: reviewRows }] = await Promise.all([
-    supabase.from("menu_categories").select("id, name").eq("restaurant_id", restaurant.id).order("sort_order").order("created_at"),
-    supabase.from("menu_items").select("id, name, price, description, image_url, category_id").eq("restaurant_id", restaurant.id).order("created_at"),
+    supabase.from("menu_categories").select("id, name").eq("branch_id", activeBranchId).order("sort_order").order("created_at"),
+    supabase.from("menu_items").select("id, name, price, description, image_url, category_id").eq("branch_id", activeBranchId).order("created_at"),
     supabase.from("branches").select("id, name, city, address").eq("restaurant_id", restaurant.id).order("created_at"),
     supabase.from("reviews").select("rating").eq("restaurant_id", restaurant.id),
   ]);
@@ -98,6 +103,9 @@ export default async function ManagePage() {
 
   return (
     <div className="space-y-6">
+      {scope.multi && scope.active && (
+        <BranchPicker branches={scope.branches} activeId={scope.active.id} />
+      )}
         {/* ===== التحليلات ===== */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Kpi label={tr(lang, "خدمناهم (30 يوم)", "Served (30 days)")} value={toAr(served30)} tone="var(--st-open)" />
@@ -225,7 +233,7 @@ export default async function ManagePage() {
         {/* ===== المنيو ===== */}
         <section>
           <h2 className="mb-4 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "المنيو والأسعار", "Menu & prices")}</h2>
-          <MenuManager restaurantId={restaurant.id} categories={categories ?? []} items={items ?? []} />
+          <MenuManager restaurantId={restaurant.id} branchId={activeBranchId} categories={categories ?? []} items={items ?? []} />
         </section>
     </div>
   );

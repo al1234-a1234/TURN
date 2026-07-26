@@ -85,3 +85,23 @@ export async function callerBranchIds(caller: Caller): Promise<string[]> {
     .eq("restaurant_id", caller.restaurantId);
   return (data ?? []).map((b) => b.id);
 }
+
+/**
+ * الفرع الذي يُكتب إليه المحتوى (قائمة/عروض/صور).
+ * حساب مربوط بفرع → فرعه حتمًا (يتجاهل ما أُرسل). غير المربوط → الفرع المُرسَل
+ * بعد التحقّق أنه من مطعمه، وإلا أول فرع. يمنع الكتابة على فرع مطعم آخر.
+ */
+export async function resolveWriteBranch(
+  caller: Caller,
+  submitted?: string | null,
+): Promise<string | null> {
+  if (caller.branchId) return caller.branchId;
+  const id = String(submitted ?? "").trim();
+  const q = caller.supabase
+    .from("branches").select("id")
+    .eq("restaurant_id", caller.restaurantId).eq("is_active", true);
+  const { data } = id
+    ? await q.eq("id", id).maybeSingle()
+    : await q.order("created_at").limit(1).maybeSingle();
+  return data?.id ?? null;
+}

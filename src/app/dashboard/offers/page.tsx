@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { loadOwner } from "../owner-context";
+import { resolveBranchScope } from "../branch-scope";
+import { BranchPicker } from "../branch-picker";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { createOffer, deleteOffer } from "./actions";
 import { OfferToggle } from "./offer-toggle";
@@ -48,11 +50,14 @@ function offerValueText(o: Offer, lang: Lang): string {
   return "—";
 }
 
-export default async function OffersPage() {
+export default async function OffersPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
   const lang = await getLang();
   const load = await loadOwner();
   if (load.state !== "ok") return null;
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
+  // العروض صارت لكل فرع على حدة
+  const scope = await resolveBranchScope(load.ctx, (await searchParams).branch);
+  const activeBranchId = scope.active?.id ?? "";
 
   // بوابة الموديول + الصلاحية
   if (!isModuleOn(modules, "offers") || !staffHasPermission(role, permissions, "offers")) {
@@ -62,7 +67,7 @@ export default async function OffersPage() {
   const { data: offers } = await supabase
     .from("offers")
     .select("*")
-    .eq("restaurant_id", restaurant.id)
+    .eq("branch_id", activeBranchId)
     .order("created_at", { ascending: false });
 
   const list = (offers ?? []) as Offer[];
@@ -73,6 +78,9 @@ export default async function OffersPage() {
 
   return (
     <div className="space-y-6">
+      {scope.multi && scope.active && (
+        <BranchPicker branches={scope.branches} activeId={scope.active.id} />
+      )}
         {/* مؤشرات */}
         <div className="grid grid-cols-3 gap-3">
           <Kpi label={tr(lang, "عروض نشطة", "Active offers")} value={toAr(activeCount)} tone="var(--st-open)" />
@@ -85,6 +93,7 @@ export default async function OffersPage() {
           <h2 className="mb-1 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "عرض جديد", "New offer")}</h2>
           <p className="mb-4 text-sm text-[color:var(--muted)]">{tr(lang, "أنشئ خصمًا أو مكافأة تصل عملاءك مباشرةً داخل تطبيق دور.", "Create a discount or reward that reaches your customers directly in the Turn app.")}</p>
           <form action={createOffer} className="space-y-4">
+            <input type="hidden" name="branch_id" value={activeBranchId} />
             <div>
               <label className="field-label">{tr(lang, "عنوان العرض", "Offer title")}</label>
               <input name="title" required placeholder={tr(lang, "مثال: خصم 20٪ على الغداء", "e.g. 20% off lunch")} className={field} />
