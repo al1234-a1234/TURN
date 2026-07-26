@@ -41,7 +41,7 @@ export default function MyWaitlistPage() {
             {latest.map((t) => {
               const initial = (t.name || "م").trim().charAt(0);
               return (
-                <Link key={t.slug} href={`/r/${t.slug}`} className="rq-card flex items-center gap-3 p-3 transition active:scale-[0.985]">
+                <Link key={t.slug} href={t.entryId ? `/t/${t.entryId}` : `/r/${t.slug}`} className="rq-card flex items-center gap-3 p-3 transition active:scale-[0.985]">
                   <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-800 font-serif text-xl font-bold text-cream-100">
                     {t.logo ? (
                       // eslint-disable-next-line @next/next/no-img-element

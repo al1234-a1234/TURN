@@ -61,7 +61,10 @@ export default function MyRewardsPage() {
   }, []);
 
   useEffect(() => {
-    const saved = typeof window !== "undefined" ? window.localStorage.getItem("turn:phone") : null;
+    if (typeof window === "undefined") return;
+    // ?phone= من رابط المسح له الأولوية (متصفح آخر/خاص لا يملك التخزين المحلي)
+    const fromUrl = new URLSearchParams(window.location.search).get("phone");
+    const saved = fromUrl || window.localStorage.getItem("turn:phone");
     if (saved) { setPhone(saved); runLookup(saved); }
   }, [runLookup]);
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { joinWaitlistGuest, type WaitlistState } from "./actions";
 import { QueueTicket } from "./queue-ticket";
 import { toAr, normalizePhone } from "@/lib/format";
@@ -185,6 +186,7 @@ export function WaitlistForm({
   restaurantName,
   restaurantLogo,
   logo,
+  initialBranchId,
 }: {
   slug: string;
   branches: Branch[];
@@ -193,13 +195,28 @@ export function WaitlistForm({
   restaurantName?: string;
   restaurantLogo?: string | null;
   logo?: string | null;
+  /** فرع مبدئي من الرابط (?branch=) — QR الشاشة داخل الفرع لا يسأل العميل عن الفرع */
+  initialBranchId?: string;
 }) {
   const lang = useLang();
+  const router = useRouter();
   const [state, formAction, pending] = useActionState<WaitlistState, FormData>(joinWaitlistGuest, { ok: false });
 
   const multi = branches.length > 1;
   // فرع واحد → مختار تلقائيًّا؛ عدّة فروع → يختار العميل من البطاقات أولًا
-  const [branchId, setBranchId] = useState<string>(multi ? "" : branches[0]?.id ?? "");
+  // (إلا إذا جاء الفرع من الرابط — QR داخل الفرع)
+  const [branchId, setBranchIdRaw] = useState<string>(initialBranchId ?? (multi ? "" : branches[0]?.id ?? ""));
+  // اختيار الفرع يحدَّث في الرابط أيضًا كي تتبعه القائمة والعروض والصور —
+  // كان العميل يختار فرعًا ويقرأ منيو فرعٍ آخر
+  function setBranchId(id: string) {
+    setBranchIdRaw(id);
+    // router.replace يعيد جلب محتوى الفرع (منيو/عروض/صور) من الخادم بلا قفزة
+    if (typeof window !== "undefined") {
+      const u = new URL(window.location.href);
+      if (id) u.searchParams.set("branch", id); else u.searchParams.delete("branch");
+      router.replace(`${u.pathname}?${u.searchParams.toString()}`, { scroll: false });
+    }
+  }
   const [zone, setZone] = useState<"inside" | "outside">("inside");
   const [phone, setPhone] = useState<string>(normalizePhone(defaultPhone).slice(0, 10));
   // بوابة الموقع: لا يُؤخذ الدور إلا بمشاركة الموقع (يمنع الحجز الوهمي من بعيد)
@@ -211,7 +228,6 @@ export function WaitlistForm({
   useEffect(() => {
     const rec = lastTurnFor(slug);
     if (rec?.entryId && rec.phone) setRestored({ entryId: rec.entryId, phone: rec.phone });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   function askLocation(thenSubmit: boolean) {

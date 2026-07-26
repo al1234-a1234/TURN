@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { WaitlistForm } from "./waitlist-form";
+import { OfferClaim } from "./offer-claim";
 import { RestaurantTabs } from "./restaurant-tabs";
 import { QueueTicket } from "./queue-ticket";
 import { Gallery } from "./gallery";
@@ -45,7 +46,7 @@ export default async function RestaurantPublicPage({
     supabase.from("menu_items").select("id, name, price, description, image_url, category_id").eq("branch_id", contentBranchId).eq("is_available", true).order("created_at"),
     supabase.from("restaurant_photos").select("id, url, caption").eq("branch_id", contentBranchId).order("sort_order").order("created_at"),
     // عروض عامّة فقط للزوّار (الشرائح المستهدفة loyalty/walkaway/slow_hours تصل عبر مكافآت العميل)
-    supabase.from("offers").select("id, title, description, kind, value, code, ends_at").eq("branch_id", contentBranchId).eq("is_active", true).in("audience", ["all", "new"]).order("created_at", { ascending: false }),
+    supabase.from("offers").select("id, title, description, kind, value, code, ends_at").eq("branch_id", contentBranchId).eq("is_active", true) .in("audience", ["all", "new", "slow_hours"]).order("created_at", { ascending: false }),
     // تقييمات حقيقية منشورة (بدل بيانات وهمية)
     supabase.from("reviews").select("rating, comment, created_at, customers(full_name)").eq("restaurant_id", restaurant.id).eq("is_published", true).order("created_at", { ascending: false }).limit(200),
   ]);
@@ -148,7 +149,7 @@ export default async function RestaurantPublicPage({
   ) : activeEntry ? (
     <QueueTicket position={activeEntry.position ?? 0} total={total} entryId={activeEntry.id} phone={activeEntry.phone} restaurantName={restaurant.name} />
   ) : (
-    <WaitlistForm slug={slug} branches={withCounts} logo={restaurant.logo_url} defaultName={defaultName} defaultPhone={defaultPhone} restaurantName={restaurant.name} restaurantLogo={restaurant.logo_url} />
+    <WaitlistForm slug={slug} branches={withCounts} logo={restaurant.logo_url} defaultName={defaultName} defaultPhone={defaultPhone} restaurantName={restaurant.name} restaurantLogo={restaurant.logo_url} initialBranchId={requestedBranch && (branches ?? []).some((b) => b.id === requestedBranch) ? requestedBranch : undefined} />
   );
 
   return (
@@ -180,7 +181,7 @@ export default async function RestaurantPublicPage({
           rating={reviewCount ? String(avgRating) : "—"}
           reviewCount={String(reviewCount)}
           reviews={reviewList}
-          reviewForm={<ReviewForm slug={slug} />}
+          reviewForm={<ReviewForm slug={slug} googleUrl={((restaurant.links ?? {}) as Record<string, string>).google ?? null} />}
           dist={ratingDist}
           city={city}
           cover={restaurant.cover_url}
@@ -244,9 +245,7 @@ function OffersSection({ offers, lang }: { offers: OfferLite[]; lang: "ar" | "en
                   </p>
                 )}
               </div>
-              {o.code && (
-                <span dir="ltr" className="shrink-0 rounded-lg bg-brand-800 px-2.5 py-1 text-xs font-extrabold text-cream-100">{o.code}</span>
-              )}
+              <OfferClaim offerId={o.id} />
             </div>
           ))}
         </div>

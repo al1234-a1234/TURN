@@ -1,4 +1,5 @@
 import QRCode from "qrcode";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { TvBoard } from "./tv-board";
 
@@ -25,7 +26,11 @@ export default async function TvPage({ params }: { params: Promise<{ id: string 
     );
   }
 
-  const joinUrl = `https://turn-alpha.vercel.app/r/${meta.restaurant_slug}?branch=${id}`;
+  // النطاق من الطلب نفسه — رابط ثابت كان يكسر QR عند تغيير الاستضافة/النطاق
+  const h = await headers();
+  const host = h.get("host") ?? "turn-alpha.vercel.app";
+  const proto = host.includes("localhost") ? "http" : "https";
+  const joinUrl = `${proto}://${host}/r/${meta.restaurant_slug}?branch=${id}`;
   const qr = await QRCode.toString(joinUrl, { type: "svg", margin: 1, color: { dark: "#661c0a", light: "#00000000" } });
 
   return (

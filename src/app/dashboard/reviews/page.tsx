@@ -38,7 +38,6 @@ export default async function ReviewsPage() {
   const list = (data ?? []) as Review[];
   const count = list.length;
   const avg = count ? Math.round((list.reduce((a, r) => a + r.rating, 0) / count) * 10) / 10 : 0;
-  const routed = list.filter((r) => r.routed_to_google).length;
 
   // توزيع النجوم 5→1
   const dist = [5, 4, 3, 2, 1].map((s) => ({ s, n: list.filter((r) => r.rating === s).length }));
@@ -77,8 +76,9 @@ export default async function ReviewsPage() {
               <span>🧭</span> {tr(lang, "توجيه التقييم الذكي مُفعّل", "Smart review routing is on")}
             </p>
             <p className="mt-1 text-xs text-[color:var(--muted)]">
-              {tr(lang, "العملاء الراضون (4★ وأعلى) يُوجَّهون لِخرائط Google، والملاحظات الأقل تصلك أنت مباشرةً. وُجِّه ", "Happy customers (4★ and up) are routed to Google Maps, while lower feedback reaches you directly. ")}
-              {toAr(routed)} {tr(lang, "تقييم إيجابي حتى الآن.", "positive reviews routed so far.")}
+              {tr(lang,
+                "بعد تقييم 4★ وأعلى يُدعى العميل لنشره في خرائط Google (يشترط ضبط رابط Google في «المحتوى»)، والملاحظات الأقل تصلك هنا مباشرة.",
+                "After a 4★+ review the customer is invited to post it on Google Maps (requires the Google link in Content), while lower feedback reaches you directly here.")}
             </p>
           </div>
         )}
