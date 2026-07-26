@@ -5,7 +5,7 @@ import { CustomerShell } from "@/components/customer-shell";
 import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/components/lang-provider";
 import { tr } from "@/lib/i18n";
-import { toAr, money } from "@/lib/format";
+import {toAr, money, normalizePhone } from "@/lib/format";
 
 type Loyalty = { restaurant: string; restaurant_slug: string; points: number; reward_threshold: number; reward_description: string | null };
 
@@ -82,7 +82,7 @@ export default function MyRewardsPage() {
           <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "هداياك وخصوماتك", "Your gifts & discounts")}</p>
           <p className="mt-0.5 text-sm text-[color:var(--muted)]">{tr(lang, "محفوظة عندك برقم جوّالك — أدخله لعرضها.", "Saved to your number — enter it to view.")}</p>
           <form onSubmit={(e) => { e.preventDefault(); runLookup(phone.trim()); }} className="mt-3 flex gap-2">
-            <input dir="ltr" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="05xxxxxxxx" className="field-input flex-1 text-left" />
+            <input dir="ltr" inputMode="tel" value={phone} onChange={(e) => setPhone(normalizePhone(e.target.value).slice(0, 10))} placeholder="05xxxxxxxx" className="field-input flex-1 text-left" />
             <button type="submit" disabled={loading} className="rq-btn shrink-0 px-5">{loading ? "…" : tr(lang, "عرض", "Show")}</button>
           </form>
         </div>

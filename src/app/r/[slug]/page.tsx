@@ -6,6 +6,7 @@ import { RestaurantTabs } from "./restaurant-tabs";
 import { QueueTicket } from "./queue-ticket";
 import { Gallery } from "./gallery";
 import { ShareButton } from "./share-button";
+import { ReviewForm } from "./review-form";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
@@ -163,6 +164,7 @@ export default async function RestaurantPublicPage({
           rating={reviewCount ? String(avgRating) : "—"}
           reviewCount={String(reviewCount)}
           reviews={reviewList}
+          reviewForm={<ReviewForm slug={slug} />}
           dist={ratingDist}
           city={city}
           cover={restaurant.cover_url}

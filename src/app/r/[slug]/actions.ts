@@ -186,3 +186,36 @@ export async function joinWaitlist(
   if (slug) revalidatePath(`/r/${slug}`);
   return { ok: true, position: entry.position ?? undefined };
 }
+
+export type ReviewState = { ok: boolean; error?: string };
+
+/** كتابة تقييم — محروس في القاعدة: زيارة فعلية (إجلاس/مسح) خلال ٧ أيام. */
+export async function submitReview(
+  _prev: ReviewState,
+  formData: FormData,
+): Promise<ReviewState> {
+  const slug = String(formData.get("slug") ?? "");
+  const phone = saudiMobile(String(formData.get("phone") ?? ""));
+  const rating = Number(formData.get("rating"));
+  const comment = String(formData.get("comment") ?? "").trim();
+
+  if (!phone) return { ok: false, error: "رقم الجوّال غير صحيح — يبدأ بـ 05 ويتكوّن من 10 خانات." };
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) return { ok: false, error: "اختر عدد النجوم." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("submit_review", {
+    p_slug: slug,
+    p_phone: phone,
+    p_rating: rating,
+    p_comment: comment || undefined,
+  });
+  if (error) return { ok: false, error: "تعذّر إرسال التقييم. حاول مرة أخرى." };
+
+  const r = (data ?? {}) as { ok?: boolean; error?: string };
+  if (!r.ok) {
+    if (r.error === "no_visit") return { ok: false, error: "التقييم لمن زار فعلًا — خذ دورك أو سجّل مسحك أولًا، والتقييم متاح ٧ أيام بعد الزيارة." };
+    return { ok: false, error: "تعذّر إرسال التقييم." };
+  }
+  if (slug) revalidatePath(`/r/${slug}`);
+  return { ok: true };
+}

@@ -82,7 +82,7 @@ function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; o
                 style={{ background: "linear-gradient(160deg,#f3e8df,#e9d7c8)", border: "1px solid rgba(102,28,10,0.14)" }}>
             <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "#9a6a4c" }}>
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#b98a6a" }} />
-              {tr(lang, "لا يستقبل الآن", "Not accepting now")}
+              {tr(lang, "استقبال مباشر — بلا حجز دور", "Walk-in — no queue")}
             </span>
           </span>
         ) : b.total > 0 ? (
@@ -251,8 +251,8 @@ export function WaitlistForm({
           <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full" style={{ background: "rgba(192,86,74,0.12)", color: "var(--st-closed)" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" /><path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
           </span>
-          <p className="text-lg font-bold text-[color:var(--ink)]">{tr(lang, "لا يستقبل طلبات الانتظار الآن", "Not accepting waitlist requests right now")}</p>
-          <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "هذا الفرع متوقف مؤقتًا عن استقبال الطابور — تحقّق لاحقًا.", "This branch has paused its queue temporarily — check back later.")}</p>
+          <p className="text-lg font-bold text-[color:var(--ink)]">{tr(lang, "هذا الفرع يستقبل مباشرة — بلا حجز دور", "This branch welcomes walk-ins — no queue needed")}</p>
+          <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "تفضّل مباشرة. وعند الطاولة امسح رمز «امسح خذ هديتك» لتسجيل زيارتك ونقاطك 🎁", "Just come in. At the table, scan the gift QR to log your visit and points 🎁")}</p>
         </div>
       </div>
     );

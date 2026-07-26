@@ -174,9 +174,9 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
         >
           <span className="flex items-center gap-2 text-sm font-extrabold text-white">
             <span className="h-2.5 w-2.5 rounded-full bg-white/70" />
-            {tr(lang, "لا يستقبل الآن", "Not accepting now")}
+            {tr(lang, "استقبال مباشر — بلا حجز دور", "Walk-in — no queue")}
           </span>
-          <span className="text-xs font-extrabold text-white/80">{tr(lang, "التفاصيل ←", "Details ←")}</span>
+          <span className="text-xs font-extrabold text-white/80">{tr(lang, "تفضّل ←", "Come in ←")}</span>
         </div>
       ) : r.waiting > 0 && r.inside + r.outside > 0 ? (
         <div className="mt-2.5 flex flex-col items-end gap-1.5">
@@ -260,7 +260,7 @@ export function DiscoveryList({ items, offers = [], lang }: { items: DiscoveryIt
     return [
       { key: "available", label: tr(lang, "متاح الآن · بدون انتظار", "Available now · No wait"), rows: available },
       { key: "queued", label: tr(lang, "فيه طابور الآن", "Queue running now"), rows: queued },
-      { key: "closed", label: tr(lang, "لا يستقبل حاليًا", "Not accepting now"), rows: closed },
+      { key: "closed", label: tr(lang, "استقبال مباشر · بلا حجز دور", "Walk-in · no queue"), rows: closed },
     ].filter((g) => g.rows.length > 0);
   }, [filtered, lang]);
 

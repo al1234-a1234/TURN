@@ -1516,6 +1516,10 @@ export type Database = {
         Args: { p_entry_id: string }
         Returns: boolean
       }
+      submit_review: {
+        Args: { p_slug: string; p_phone: string; p_rating: number; p_comment?: string }
+        Returns: Json
+      }
       set_entry_distance: {
         Args: { p_entry_id: string; p_lat: number; p_lng: number }
         Returns: boolean

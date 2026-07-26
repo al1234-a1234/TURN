@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { checkinAction, type CheckinState, type Gift } from "./actions";
 import { toAr } from "@/lib/format";
+import { normalizePhone } from "@/lib/format";
 import { tr, type Lang } from "@/lib/i18n";
 
 const PHONE_KEY = "turn:phone";
@@ -20,7 +21,7 @@ export function CheckinForm({ slug, branchId, lang }: { slug: string; branchId: 
 
   // تعبئة الرقم المحفوظ بعد الترطيب (بلا عدم تطابق SSR)
   useEffect(() => {
-    try { const p = localStorage.getItem(PHONE_KEY); if (p) setPhone(p); } catch {}
+    try { const p = localStorage.getItem(PHONE_KEY); if (p) setPhone(normalizePhone(p).slice(0, 10)); } catch {}
   }, []);
 
   // حفظ الرقم محليًا للمرّات الجاية (راحة العميل)
@@ -108,6 +109,14 @@ export function CheckinForm({ slug, branchId, lang }: { slug: string; branchId: 
           <span style={{ color: "var(--brand-d)" }}>←</span>
         </Link>
 
+        <Link href={`/r/${slug}`} className="flex items-center justify-between rounded-2xl px-4 py-3"
+          style={{ background: "var(--surface-2)", border: "1px solid rgba(102,28,10,0.12)" }}>
+          <span className="flex items-center gap-2 text-sm font-bold" style={{ color: "var(--brand-d)" }}>
+            ⭐ {tr(lang, "قيّم تجربتك اليوم", "Rate today's visit")}
+          </span>
+          <span style={{ color: "var(--brand-d)" }}>←</span>
+        </Link>
+
         <Link href={`/r/${slug}`} className="block text-center text-[13px] font-bold text-[color:var(--muted)]">
           {tr(lang, "زيارة صفحة المطعم ←", "Visit restaurant page ←")}
         </Link>
@@ -130,7 +139,7 @@ export function CheckinForm({ slug, branchId, lang }: { slug: string; branchId: 
           placeholder="05xxxxxxxx"
           required
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(e) => setPhone(normalizePhone(e.target.value).slice(0, 10))}
           className="mt-2 w-full rounded-2xl border border-[color:var(--border)] bg-white px-4 py-3 text-center text-lg font-bold tracking-widest text-[color:var(--ink)] outline-none focus:border-[color:var(--brand-d)]"
         />
         <label className="mt-4 block text-[13px] font-bold text-[color:var(--ink)]">{tr(lang, "اسمك (اختياري)", "Your name (optional)")}</label>

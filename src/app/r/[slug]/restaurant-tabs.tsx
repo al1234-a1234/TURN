@@ -72,6 +72,7 @@ export function RestaurantTabs({
   rating,
   reviewCount,
   reviews,
+  reviewForm,
   dist,
   city,
   cover,
@@ -90,6 +91,7 @@ export function RestaurantTabs({
   rating: string;
   reviewCount: string;
   reviews: Review[];
+  reviewForm?: React.ReactNode;
   dist: { s: number; pct: number }[];
   city: string;
   cover: string | null;
@@ -226,6 +228,7 @@ export function RestaurantTabs({
 
       {/* ===== التقييمات ===== */}
       <div className={tab === "reviews" ? "space-y-4" : "hidden"}>
+        {reviewForm}
         {/* ملخّص + توزيع النجوم */}
         <div className="rq-card flex items-center gap-5 p-5">
           <div className="shrink-0 text-center">
