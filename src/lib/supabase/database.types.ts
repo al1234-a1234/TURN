@@ -1516,6 +1516,20 @@ export type Database = {
         Args: { p_entry_id: string }
         Returns: boolean
       }
+      tv_queue: {
+        Args: { p_branch_id: string }
+        Returns: {
+          rank: number | null
+          display_name: string | null
+          status: string | null
+          zone: string | null
+          branch_name: string
+          restaurant_name: string
+          restaurant_slug: string
+          restaurant_logo: string | null
+          served_today: number
+        }[]
+      }
       submit_review: {
         Args: { p_slug: string; p_phone: string; p_rating: number; p_comment?: string }
         Returns: Json

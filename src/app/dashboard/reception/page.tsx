@@ -125,9 +125,18 @@ export default async function ReceptionPage({
       {/* تحديث تلقائي كل 10ث (بلا Realtime، بلا إعادة تحميل كامل) */}
       <AutoRefresh intervalMs={10_000} />
 
-      <div className="mb-5 hidden lg:block">
-        <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "الاستقبال", "Reception")}</h1>
-        <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "الطابور الحيّ — إجلاس، تنبيه، وإدارة", "Live queue — seat, notify, and manage")}</p>
+      <div className="mb-5 hidden items-center justify-between lg:flex">
+        <div>
+          <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "الاستقبال", "Reception")}</h1>
+          <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "الطابور الحيّ — إجلاس، تنبيه، وإدارة", "Live queue — seat, notify, and manage")}</p>
+        </div>
+        {activeBranch && (
+          <a href={`/tv/${activeBranch.id}`} target="_blank" rel="noreferrer"
+             className="rounded-2xl px-4 py-2.5 text-sm font-extrabold text-white"
+             style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)" }}>
+            📺 {tr(lang, "شاشة العرض", "TV display")}
+          </a>
+        )}
       </div>
 
       {/* تبويبات الفروع — كل فرع قسم مستقل تمامًا */}
