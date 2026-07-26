@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { loadOwner } from "../owner-context";
-import { resolveBranchScope } from "../branch-scope";
+import { resolveBranchScope, NO_BRANCH } from "../branch-scope";
 import { BranchPicker } from "../branch-picker";
 import { staffHasPermission } from "@/lib/features";
 import { saveLinks } from "./actions";
@@ -12,10 +12,10 @@ export default async function ContentPage({ searchParams }: { searchParams: Prom
   const lang = await getLang();
   const load = await loadOwner();
   if (load.state !== "ok") return null;
-  const { supabase, restaurant, modules, role, permissions } = load.ctx;
+  const { supabase, restaurant, role, permissions } = load.ctx;
   // الصور صارت لكل فرع على حدة
   const scope = await resolveBranchScope(load.ctx, (await searchParams).branch);
-  const activeBranchId = scope.active?.id ?? "";
+  const activeBranchId = scope.active?.id ?? NO_BRANCH;
 
   if (!staffHasPermission(role, permissions, "settings")) redirect("/dashboard");
 

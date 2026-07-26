@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
-import { loadOwner, scopeBranchIds } from "../owner-context";
+import { loadOwner } from "../owner-context";
+import { resolveBranchScope } from "../branch-scope";
+import { BranchPicker } from "../branch-picker";
 import { staffHasPermission } from "@/lib/features";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
@@ -22,20 +24,21 @@ const STATUS_META: Record<string, { ar: string; en: string; color: string }> = {
   no_show: { ar: "لم يحضر", en: "No-show", color: "var(--st-closed)" },
 };
 
-export default async function ReservationsPage() {
+export default async function ReservationsPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
   const lang = await getLang();
   const load = await loadOwner();
   if (load.state !== "ok") return null;
-  const { supabase, restaurant, modules, role, permissions } = load.ctx;
+  const { supabase, role, permissions } = load.ctx;
   if (!staffHasPermission(role, permissions, "reservations")) redirect("/dashboard");
 
-  const { data: branchesRaw } = await supabase
-    .from("branches").select("id, branch_settings(accepts_reservations)").eq("restaurant_id", restaurant.id).order("created_at");
-  const scopedIds = new Set(scopeBranchIds(load.ctx, (branchesRaw ?? []).map((b) => b.id)));
-  const branches = (branchesRaw ?? []).filter((b) => scopedIds.has(b.id));
-  const branchIds = branches.map((b) => b.id);
-  const firstBs = branches[0]?.branch_settings;
-  const acceptsReservations = (Array.isArray(firstBs) ? firstBs[0] : firstBs)?.accepts_reservations ?? false;
+  // كل فرع قسم مستقل: الحجوزات والتفعيل يتبعان الفرع المختار، لا الفرع الأقدم
+  const scope = await resolveBranchScope(load.ctx, (await searchParams).branch);
+  const activeBranch = scope.active;
+
+  const { data: bs } = activeBranch
+    ? await supabase.from("branch_settings").select("accepts_reservations").eq("branch_id", activeBranch.id).maybeSingle()
+    : { data: null };
+  const acceptsReservations = bs?.accepts_reservations ?? false;
 
   if (!acceptsReservations) {
     return (
@@ -45,16 +48,24 @@ export default async function ReservationsPage() {
         <p className="mt-2 text-sm text-[color:var(--muted)]">
           {tr(lang, "الحجز المسبق للطاولات منفصل عن طابور الحضور. فعّله ليبدأ استقبال الحجوزات.", "Advance table booking is separate from the walk-in queue. Enable it to start accepting reservations.")}
         </p>
-        <a href="/dashboard/manage" className="btn btn-primary mt-5 inline-flex w-full max-w-xs">{tr(lang, "تفعيل من الإعدادات", "Enable in settings")}</a>
+        {activeBranch && scope.multi && (
+          <p className="mt-3 text-xs font-bold text-[color:var(--muted)]">
+            {tr(lang, `الفرع المعروض: ${activeBranch.name}`, `Showing branch: ${activeBranch.name}`)}
+          </p>
+        )}
+        <a href={`/dashboard/manage${activeBranch ? `?branch=${activeBranch.id}` : ""}`} className="btn btn-primary mt-5 inline-flex w-full max-w-xs">{tr(lang, "تفعيل من الإعدادات", "Enable in settings")}</a>
+        {scope.multi && (
+          <div className="mt-6 text-start"><BranchPicker branches={scope.branches} activeId={activeBranch?.id ?? ""} /></div>
+        )}
       </div>
     );
   }
 
-  const { data } = branchIds.length
+  const { data } = activeBranch
     ? await supabase
         .from("reservations")
         .select("id, reserved_at, party_size, status, notes, customers(full_name, phone)")
-        .in("branch_id", branchIds)
+        .eq("branch_id", activeBranch.id)
         .order("reserved_at")
         .limit(200)
     : { data: [] };
@@ -85,6 +96,8 @@ export default async function ReservationsPage() {
         <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "احجز طاولات مسبقًا وأدِر حضور العملاء", "Book tables ahead and manage arrivals")}</p>
       </div>
 
+      {scope.multi && activeBranch && <BranchPicker branches={scope.branches} activeId={activeBranch.id} />}
+
       <div className="mb-6 grid grid-cols-3 gap-3">
         <Kpi label={tr(lang, "حجوزات اليوم", "Today")} value={toAr(todayCount)} tone="var(--brand-d)" />
         <Kpi label={tr(lang, "قادمة", "Upcoming")} value={toAr(active.length)} tone="var(--st-open)" />
@@ -92,8 +105,14 @@ export default async function ReservationsPage() {
       </div>
 
       <section className="soft-card mb-6 p-5">
-        <h2 className="mb-4 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "حجز جديد", "New reservation")}</h2>
+        <h2 className="mb-1 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "حجز جديد", "New reservation")}</h2>
+        <p className="mb-4 text-xs font-bold text-[color:var(--muted)]">
+          {activeBranch
+            ? tr(lang, `يُسجَّل في فرع: ${activeBranch.name}`, `Filed under branch: ${activeBranch.name}`)
+            : tr(lang, "لا يوجد فرع نشِط", "No active branch")}
+        </p>
         <form action={createReservation} className="space-y-3">
+          {activeBranch && <input type="hidden" name="branch_id" value={activeBranch.id} />}
           <div className="grid gap-3 sm:grid-cols-2">
             <input name="full_name" placeholder={tr(lang, "اسم العميل", "Customer name")} className={field} />
             <input name="phone" required dir="ltr" placeholder="05xxxxxxxx" className={field} />

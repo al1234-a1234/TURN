@@ -25,7 +25,7 @@ export default async function LoyaltyPage() {
     supabase.from("loyalty_programs").select("*").eq("restaurant_id", restaurant.id).maybeSingle(),
     supabase
       .from("customer_restaurant")
-      .select("customer_id, points, visits, tier, customers(full_name, phone)")
+      .select("customer_id, points, visits, tier, customers!inner(full_name, phone)")
       .eq("restaurant_id", restaurant.id)
       .gt("points", 0)
       .order("points", { ascending: false })

@@ -50,7 +50,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     branchIds.length
       ? supabase.from("waitlist_entries").select("id", { count: "exact", head: true }).in("branch_id", branchIds).in("status", ["waiting", "notified"])
       : Promise.resolve({ count: 0 }),
-    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id),
+    supabase.from("customer_restaurant").select("customer_id, customers!inner(id)", { count: "exact", head: true }).eq("restaurant_id", restaurant.id),
     branchIds.length
       ? supabase.from("reservations").select("id", { count: "exact", head: true }).in("branch_id", branchIds).in("status", ["pending", "confirmed"])
       : Promise.resolve({ count: 0 }),

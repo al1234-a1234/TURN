@@ -3,6 +3,10 @@ import type { OwnerContext } from "./owner-context";
 
 export type ScopedBranch = { id: string; name: string; city: string | null };
 
+/** فرع «غير موجود» — نمرّره بدل "" لأعمدة uuid كي يعود الاستعلام فارغًا
+ *  بدل أن يفشل صامتًا ويُظهر الصفحة كأنها بلا بيانات. */
+export const NO_BRANCH = "00000000-0000-0000-0000-000000000000";
+
 /**
  * يحدّد فروع الحساب والفرع النشِط لصفحات المحتوى (القائمة، العروض، الصور).
  *

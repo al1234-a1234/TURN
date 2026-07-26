@@ -20,7 +20,7 @@ export default async function OverviewPage() {
   const load = await loadOwner();
   if (load.state !== "ok") return null;
 
-  const { supabase, restaurant, modules, role, permissions } = load.ctx;
+  const { supabase, restaurant } = load.ctx;
 
   const { data: branches } = await supabase.from("branches").select("id, name").eq("restaurant_id", restaurant.id).order("created_at");
   const branchIds = scopeBranchIds(load.ctx, (branches ?? []).map((b) => b.id));
@@ -32,7 +32,9 @@ export default async function OverviewPage() {
     supabase.from("reviews").select("rating").eq("restaurant_id", restaurant.id),
     supabase
       .from("customer_restaurant")
-      .select("visits, is_vip, tier, points, customers(full_name)")
+      // !inner: RLS على customers يقصر النتيجة على من زار فروع المتصل،
+      // فلا تختلط أرقام العلامة بأرقام الفرع ولا تظهر أسماء فارغة
+      .select("visits, is_vip, tier, points, customers!inner(full_name)")
       .eq("restaurant_id", restaurant.id)
       .order("visits", { ascending: false }),
     branchIds.length

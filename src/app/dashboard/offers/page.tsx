@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { loadOwner } from "../owner-context";
 import { fmtDate } from "@/lib/dates";
-import { resolveBranchScope } from "../branch-scope";
+import { resolveBranchScope, NO_BRANCH } from "../branch-scope";
 import { BranchPicker } from "../branch-picker";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { createOffer, deleteOffer } from "./actions";
@@ -55,10 +55,10 @@ export default async function OffersPage({ searchParams }: { searchParams: Promi
   const lang = await getLang();
   const load = await loadOwner();
   if (load.state !== "ok") return null;
-  const { supabase, restaurant, modules, role, permissions } = load.ctx;
+  const { supabase, modules, role, permissions } = load.ctx;
   // العروض صارت لكل فرع على حدة
   const scope = await resolveBranchScope(load.ctx, (await searchParams).branch);
-  const activeBranchId = scope.active?.id ?? "";
+  const activeBranchId = scope.active?.id ?? NO_BRANCH;
 
   // بوابة الموديول + الصلاحية
   if (!isModuleOn(modules, "offers") || !staffHasPermission(role, permissions, "offers")) {

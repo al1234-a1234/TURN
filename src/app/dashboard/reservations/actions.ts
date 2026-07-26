@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import type { Database } from "@/lib/supabase/database.types";
-import { requirePerm, callerBranchIds } from "../guard";
+import { requirePerm, callerBranchIds, resolveWriteBranch } from "../guard";
 import { saudiMobile } from "@/lib/format";
 
 type ResStatus = Database["public"]["Enums"]["reservation_status"];
@@ -11,15 +11,9 @@ const STATUSES: ResStatus[] = ["pending", "confirmed", "seated", "completed", "c
 export async function createReservation(formData: FormData) {
   const caller = await requirePerm("reservations");
   if (!caller) return;
-  // الفرع الأقدم كافتراضي (نموذج فرع-واحد)؛ نتحقّق أنه ضمن فروع مطعم المتصل
-  const { data: branch } = await caller.supabase
-    .from("branches")
-    .select("id")
-    .eq("restaurant_id", caller.restaurantId)
-    .order("created_at")
-    .limit(1)
-    .maybeSingle();
-  if (!branch) return;
+  // الفرع المختار من المبدّل — حجز الفرع الثاني كان يُقيَّد على الفرع الأوّل
+  const branchId = await resolveWriteBranch(caller, String(formData.get("branch_id") ?? ""));
+  if (!branchId) return;
 
   const name = String(formData.get("full_name") ?? "").trim();
   // تطبيع وتحقّق الرقم — نفس قاعدة العميل، وإلا تشظّى العميل الواحد من مسار الموظّف
@@ -30,7 +24,7 @@ export async function createReservation(formData: FormData) {
   const notes = String(formData.get("notes") ?? "").trim() || undefined;
 
   await caller.supabase.rpc("create_reservation_guest", {
-    p_branch_id: branch.id,
+    p_branch_id: branchId,
     p_full_name: name,
     p_phone: phone,
     p_reserved_at: new Date(when).toISOString(),

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requirePerm, resolveWriteBranch } from "../guard";
+import { requirePerm, resolveWriteBranch, callerBranchIds } from "../guard";
 import type { TablesInsert, Database } from "@/lib/supabase/database.types";
 
 type OfferKind = Database["public"]["Enums"]["offer_kind"];
@@ -59,7 +59,7 @@ export async function toggleOffer(id: string, next: boolean) {
     .from("offers")
     .update({ is_active: next })
     .eq("id", id)
-    .eq("restaurant_id", caller.restaurantId);
+    .in("branch_id", await callerBranchIds(caller));
   revalidatePath("/dashboard/offers");
 }
 
@@ -72,6 +72,6 @@ export async function deleteOffer(formData: FormData) {
     .from("offers")
     .delete()
     .eq("id", id)
-    .eq("restaurant_id", caller.restaurantId);
+    .in("branch_id", await callerBranchIds(caller));
   revalidatePath("/dashboard/offers");
 }

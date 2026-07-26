@@ -17,6 +17,7 @@ type StaffRow = {
   role: Database["public"]["Enums"]["user_role"];
   permissions: StaffPermissionMap | null;
   is_active: boolean;
+  branch_id: string | null;
 };
 
 const ROLE_LABEL: Record<string, string> = {
@@ -64,7 +65,7 @@ export default async function StaffPage() {
   const lang = await getLang();
   const load = await loadOwner();
   if (load.state !== "ok") return null;
-  const { supabase, restaurant, modules, role, permissions } = load.ctx;
+  const { supabase, restaurant, role, permissions } = load.ctx;
 
   // إدارة الفريق للمالك/المدير فقط
   if (!staffHasPermission(role, permissions, "team")) redirect("/dashboard");
@@ -74,12 +75,16 @@ export default async function StaffPage() {
 
   const { data } = await supabase
     .from("staff")
-    .select("id, name, role, permissions, is_active")
+    .select("id, name, role, permissions, is_active, branch_id")
     .eq("restaurant_id", restaurant.id)
     .eq("is_active", true)
     .order("role");
 
   const team = (data ?? []) as StaffRow[];
+  const branchName = new Map((branchRows ?? []).map((b) => [b.id, b.name]));
+  const isBrandLevel = load.ctx.branchId == null;
+  // موظّف العلامة (بلا فرع) فوق مدير الفرع — يُعرض ولا يُعدَّل من داخل الفرع
+  const canEdit = (m: StaffRow) => isBrandLevel || m.branch_id === load.ctx.branchId;
 
   return (
     <>
@@ -100,7 +105,13 @@ export default async function StaffPage() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-bold text-[color:var(--ink)]">{m.name ?? tr(lang, "موظف", "Staff")}</p>
-                  <p className="text-xs text-[color:var(--muted)]">{tr(lang, ROLE_LABEL[m.role] ?? m.role, ROLE_LABEL_EN[m.role] ?? m.role)}</p>
+                  <p className="text-xs text-[color:var(--muted)]">
+                    {tr(lang, ROLE_LABEL[m.role] ?? m.role, ROLE_LABEL_EN[m.role] ?? m.role)}
+                    {" · "}
+                    {m.branch_id
+                      ? (branchName.get(m.branch_id) ?? tr(lang, "فرع", "Branch"))
+                      : tr(lang, "كل الفروع", "All branches")}
+                  </p>
                 </div>
                 {isBoss && (
                   <span className="rounded-full px-3 py-1 text-xs font-bold" style={{ background: "var(--sage)", color: "var(--brand-d)" }}>
@@ -109,7 +120,11 @@ export default async function StaffPage() {
                 )}
               </div>
 
-              {isBoss ? (
+              {!canEdit(m) ? (
+                <p className="text-sm text-[color:var(--muted)]">
+                  {tr(lang, "حساب على مستوى العلامة — يديره مالك العلامة.", "A brand-level account — managed by the brand owner.")}
+                </p>
+              ) : isBoss ? (
                 <p className="text-sm text-[color:var(--muted)]">
                   {m.role === "owner" ? tr(lang, "المالك يملك صلاحية كل شيء تلقائيًا.", "The owner automatically has access to everything.") : tr(lang, "المدير يملك كل الصلاحيات تلقائيًا.", "The manager automatically has all permissions.")}
                 </p>
@@ -126,12 +141,12 @@ export default async function StaffPage() {
                   ))}
                 </div>
               )}
-              {m.role !== "owner" && <ResetCode staffId={m.id} />}
+              {m.role !== "owner" && canEdit(m) && <ResetCode staffId={m.id} />}
             </section>
           );
         })}
 
-        <StaffProvision restaurantId={restaurant.id} branches={branchRows ?? []} />
+        <StaffProvision restaurantId={restaurant.id} branches={(branchRows ?? []).filter((b) => isBrandLevel || b.id === load.ctx.branchId)} />
 
         <p className="text-center text-xs text-[color:var(--muted)]">
           {tr(lang, "الموظّف يدخل من صفحة الاستقبال /reception باسم المستخدم والرمز.", "Staff sign in at /reception with their username and code.")}

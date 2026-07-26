@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
-import { loadOwner, scopeBranchIds } from "../owner-context";
+import { loadOwner } from "../owner-context";
+import { resolveBranchScope } from "../branch-scope";
+import { BranchPicker } from "../branch-picker";
 import { staffHasPermission } from "@/lib/features";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
@@ -9,18 +11,18 @@ import type { Database } from "@/lib/supabase/database.types";
 
 type Table = Database["public"]["Tables"]["tables"]["Row"];
 
-export default async function TablesPage() {
+export default async function TablesPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
   const lang = await getLang();
   const load = await loadOwner();
   if (load.state !== "ok") return null;
-  const { supabase, restaurant, modules, role, permissions } = load.ctx;
+  const { supabase, role, permissions } = load.ctx;
   if (!staffHasPermission(role, permissions, "settings")) redirect("/dashboard");
 
-  const { data: branches } = await supabase.from("branches").select("id").eq("restaurant_id", restaurant.id).order("created_at");
-  const branchIds = scopeBranchIds(load.ctx, (branches ?? []).map((b) => b.id));
+  // الطاولات تخصّ فرعًا بعينه — نعرض فرعًا واحدًا لا خليطًا من كل الفروع
+  const scope = await resolveBranchScope(load.ctx, (await searchParams).branch);
 
-  const { data } = branchIds.length
-    ? await supabase.from("tables").select("*").in("branch_id", branchIds).eq("is_active", true).order("zone").order("label")
+  const { data } = scope.active
+    ? await supabase.from("tables").select("*").eq("branch_id", scope.active.id).eq("is_active", true).order("zone").order("label")
     : { data: [] };
   const list = (data ?? []) as Table[];
   const inside = list.filter((t) => t.zone === "inside");
@@ -66,6 +68,8 @@ export default async function TablesPage() {
         <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "عرّف طاولاتك الداخلية والخارجية وسعاتها", "Define your indoor & outdoor tables and their seats")}</p>
       </div>
 
+      {scope.multi && scope.active && <BranchPicker branches={scope.branches} activeId={scope.active.id} />}
+
       <div className="mb-6 grid grid-cols-3 gap-3">
         <Kpi label={tr(lang, "إجمالي الطاولات", "Total tables")} value={toAr(list.length)} tone="var(--brand-d)" />
         <Kpi label={tr(lang, "إجمالي المقاعد", "Total seats")} value={toAr(totalSeats)} tone="var(--st-open)" />
@@ -73,8 +77,14 @@ export default async function TablesPage() {
       </div>
 
       <section className="soft-card mb-6 p-5">
-        <h2 className="mb-4 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "طاولة جديدة", "New table")}</h2>
+        <h2 className="mb-1 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "طاولة جديدة", "New table")}</h2>
+        <p className="mb-4 text-xs font-bold text-[color:var(--muted)]">
+          {scope.active
+            ? tr(lang, `تُضاف إلى فرع: ${scope.active.name}`, `Added to branch: ${scope.active.name}`)
+            : tr(lang, "لا يوجد فرع نشِط", "No active branch")}
+        </p>
         <form action={addTable} className="grid gap-3 sm:grid-cols-4">
+          {scope.active && <input type="hidden" name="branch_id" value={scope.active.id} />}
           <input name="label" required placeholder={tr(lang, "الاسم/الرقم", "Label/No.")} className={field} />
           <input name="seats" inputMode="numeric" defaultValue="4" placeholder={tr(lang, "المقاعد", "Seats")} className={field} />
           <select name="zone" className={field} defaultValue="inside">

@@ -1,15 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requirePerm, resolveWriteBranch } from "../guard";
+import { requirePerm, resolveWriteBranch, callerBranchIds } from "../guard";
 
 export async function addRestaurantPhoto(url: string, caption?: string, branchId?: string) {
   const caller = await requirePerm("settings");
   if (!caller || !url) return;
-  const { count } = await caller.supabase
-    .from("restaurant_photos").select("id", { count: "exact", head: true }).eq("restaurant_id", caller.restaurantId);
   const bId = await resolveWriteBranch(caller, branchId);
   if (!bId) return;
+  // الترتيب يُحسب داخل الفرع نفسه — وإلا بدأ ترتيب صور الفرع الثاني من عدد صور الأول
+  const { count } = await caller.supabase
+    .from("restaurant_photos").select("id", { count: "exact", head: true }).eq("branch_id", bId);
   await caller.supabase.from("restaurant_photos").insert({
     restaurant_id: caller.restaurantId,
     branch_id: bId,
@@ -29,6 +30,6 @@ export async function deleteRestaurantPhoto(formData: FormData) {
     .from("restaurant_photos")
     .delete()
     .eq("id", id)
-    .eq("restaurant_id", caller.restaurantId);
+    .in("branch_id", await callerBranchIds(caller));
   revalidatePath("/dashboard/content");
 }

@@ -69,6 +69,8 @@ export async function createStaffAccount(
     if (data.error === "username_taken") return { error: "اسم المستخدم مستخدم بالفعل — جرّب غيره." };
     if (data.error === "forbidden") return { error: "غير مصرّح — المالك أو المدير فقط." };
     if (data.error === "bad_branch") return { error: "الفرع غير صالح." };
+    if (data.error === "forbidden_branch") return { error: "لا تملك صلاحية على هذا الفرع — أنشئ الحساب في فرعك." };
+    if (data.error === "forbidden_owner") return { error: "حساب المالك يُعاد ضبطه من إدارة المنصّة فقط." };
     return { error: "تعذّر إنشاء الحساب. تحقّق من البيانات وحاول مجددًا." };
   }
 

@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import QRCode from "qrcode";
 import { loadOwner } from "../owner-context";
 import { riyadhDayStart } from "@/lib/dates";
-import { resolveBranchScope } from "../branch-scope";
+import { resolveBranchScope, NO_BRANCH } from "../branch-scope";
 import { BranchPicker } from "../branch-picker";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { saveCheckinSettings } from "./actions";
@@ -30,7 +30,7 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
   const proto = host.includes("localhost") ? "http" : "https";
   // الإعدادات والملصق صارا لكل فرع؛ الرابط يحمل الفرع (والملصقات القديمة بلا فرع تبقى تعمل)
   const scope = await resolveBranchScope(load.ctx, (await searchParams).branch);
-  const activeBranchId = scope.active?.id ?? "";
+  const activeBranchId = scope.active?.id ?? NO_BRANCH;
   const link = `${proto}://${host}/g/${restaurant.slug}?b=${activeBranchId}`;
   const svg = await QRCode.toString(link, {
     type: "svg",
@@ -43,7 +43,7 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
     supabase.from("checkin_settings").select("*").eq("branch_id", activeBranchId).maybeSingle(),
     supabase.from("checkins").select("id", { count: "exact", head: true }).eq("branch_id", activeBranchId),
     supabase.from("checkins").select("id", { count: "exact", head: true }).eq("branch_id", activeBranchId).gte("created_at", todayIso),
-    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id),
+    supabase.from("customer_restaurant").select("customer_id, customers!inner(id)", { count: "exact", head: true }).eq("restaurant_id", restaurant.id),
   ]);
 
   const enabled = settings?.welcome_enabled ?? true;

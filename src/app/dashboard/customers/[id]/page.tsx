@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { loadOwner, scopeBranchIds } from "../../owner-context";
+import { NO_BRANCH } from "../../branch-scope";
 import { fmtDate, fmtDateTime, fmtTime } from "@/lib/dates";
 import { RewardForm } from "./reward-form";
 import { revokeReward, redeemReward } from "../actions";
@@ -143,14 +144,14 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
       .from("waitlist_entries")
       .select("id, joined_at, seated_at, status, party_size, zone, branch_id, confirmed_at, distance_m")
       .eq("customer_id", id)
-      .in("branch_id", branchIds)
+      .in("branch_id", branchIds.length ? branchIds : [NO_BRANCH])
       .order("joined_at", { ascending: false })
       .limit(500),
     supabase
       .from("reservations")
       .select("id, reserved_at, party_size, status, notes, branch_id")
       .eq("customer_id", id)
-      .in("branch_id", branchIds)
+      .in("branch_id", branchIds.length ? branchIds : [NO_BRANCH])
       .order("reserved_at", { ascending: false })
       .limit(500),
     supabase
@@ -170,7 +171,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
     supabase
       .from("checkins")
       .select("id, created_at, source, branch_id")
-      .in("branch_id", branchIds.length ? branchIds : ["00000000-0000-0000-0000-000000000000"])
+      .in("branch_id", branchIds.length ? branchIds : [NO_BRANCH])
       .eq("customer_id", id)
       .order("created_at", { ascending: false })
       .limit(300),
@@ -241,7 +242,15 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             </div>
           </div>
 
-          {/* ===== مؤشرات ===== */}
+          {/* ===== مؤشرات — الولاء على مستوى العلامة، والسجلّ على مستوى فرعك ===== */}
+          {load.ctx.branchId && (
+            <p className="mt-5 rounded-2xl px-3 py-2 text-[11px] font-bold"
+               style={{ background: "var(--surface-2)", color: "var(--muted)", border: "1px solid rgba(102,28,10,0.12)" }}>
+              {tr(lang,
+                "الزيارات والنقاط تُحسب على مستوى العلامة (تشمل بقيّة الفروع)، أمّا السجلّ أدناه فزياراته في فرعك وحده.",
+                "Visits and points are counted brand-wide (including other branches); the history below is this branch only.")}
+            </p>
+          )}
           <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Kpi label={tr(lang, "الزيارات", "Visits")} value={toAr(profile?.visits ?? 0)} tone="var(--brand-d)" />
             <Kpi label={tr(lang, "النقاط", "Points")} value={toAr(profile?.points ?? 0)} tone="var(--st-open)" />

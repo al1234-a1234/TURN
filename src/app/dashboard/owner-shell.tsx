@@ -81,16 +81,20 @@ export async function OwnerShell({
 }) {
   const lang = await getLang();
 
-  // هل المطعم يستقبل حجوزات؟ (يخفي تبويب الحجوزات إن أُوقف) — لفرع الحساب إن كان مربوطًا
+  // هل يستقبل حجوزات؟ (يخفي تبويب الحجوزات إن أُوقف). للمربوط بفرع: فرعه.
+  // لغير المربوط: يكفي فرع واحد مفعّل — قراءة الفرع الأقدم وحده كانت تُخفي
+  // التبويب عن مالكٍ فرعُه الثاني يستقبل حجوزات فعلًا.
   const supabase = await createClient();
   let bq = supabase
     .from("branches")
-    .select("branch_settings(accepts_reservations)")
+    .select("id, branch_settings(accepts_reservations)")
     .eq("restaurant_id", restaurant.id);
   if (branchId) bq = bq.eq("id", branchId);
-  const { data: b } = await bq.order("created_at").limit(1).maybeSingle();
-  const bs = Array.isArray(b?.branch_settings) ? b?.branch_settings[0] : b?.branch_settings;
-  const acceptsReservations = bs?.accepts_reservations ?? false;
+  const { data: bRows } = await bq;
+  const acceptsReservations = (bRows ?? []).some((b) => {
+    const bs = Array.isArray(b.branch_settings) ? b.branch_settings[0] : b.branch_settings;
+    return bs?.accepts_reservations ?? false;
+  });
 
   const items: NavItem[] = NAV.filter((n) => {
     if (n.needsReservations && !acceptsReservations) return false;

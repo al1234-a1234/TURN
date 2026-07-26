@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requirePerm, callerBranchIds } from "../guard";
+import { requirePerm, callerBranchIds, resolveWriteBranch } from "../guard";
 import type { TablesInsert } from "@/lib/supabase/database.types";
 
 function intOr(raw: FormDataEntryValue | null, fallback: number): number {
@@ -12,14 +12,9 @@ function intOr(raw: FormDataEntryValue | null, fallback: number): number {
 export async function addTable(formData: FormData) {
   const caller = await requirePerm("settings");
   if (!caller) return;
-  const { data: branch } = await caller.supabase
-    .from("branches")
-    .select("id")
-    .eq("restaurant_id", caller.restaurantId)
-    .order("created_at")
-    .limit(1)
-    .maybeSingle();
-  const branchId = branch?.id ?? null;
+  // الفرع المختار من المبدّل، لا الفرع الأقدم دائمًا — وإلا هبطت طاولات
+  // كل الفروع في الفرع الأوّل ولم يقدر بقيّة الفروع على إضافة طاولة أبدًا.
+  const branchId = await resolveWriteBranch(caller, String(formData.get("branch_id") ?? ""));
   if (!branchId) return;
   const label = String(formData.get("label") ?? "").trim();
   if (!label) return;

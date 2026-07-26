@@ -86,7 +86,8 @@ export default async function ReportsPage({
     supabase.from("reviews").select("rating").eq("restaurant_id", restaurant.id),
     supabase
       .from("customer_restaurant")
-      .select("visits")
+      // !inner: يقصر العملاء على من زار فروع المتصل (لا أرقام العلامة كلها)
+      .select("visits, customers!inner(id)")
       .eq("restaurant_id", restaurant.id),
     branchIds.length
       ? supabase

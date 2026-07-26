@@ -55,6 +55,16 @@ with checks(name, pass) as (
                                 from pg_proc where proname='queue_push_targets')),
   ('branch_guard_in_customer', (select pg_get_functiondef(oid) like '%can_access_branch%'
                                 from pg_proc where proname='staff_can_read_customer')),
+  -- ── مستوى العلامة: ما لا يجوز لمدير فرع أن يمسّه ──
+  ('brand_guard_exists',       exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+                                      where n.nspname='public' and p.proname='is_brand_manager')),
+  ('brand_only_restaurant',    (select qual like '%is_brand_manager%' from pg_policies
+                                where schemaname='public' and tablename='restaurants'
+                                  and policyname='manager or admin updates restaurant')),
+  ('brand_only_insights',      (select bool_and(qual like '%is_brand_manager%') from pg_policies
+                                where schemaname='public' and tablename='owner_insights')),
+  ('campaign_branch_scoped',   (select pg_get_functiondef(oid) like '%caller_branch_id%'
+                                from pg_proc where proname='grant_reward_to_segment')),
   -- ── RLS مفعّل على الجداول الحسّاسة ──
   ('rls_customers',            (select relrowsecurity from pg_class where relname='customers')),
   ('rls_waitlist',             (select relrowsecurity from pg_class where relname='waitlist_entries')),
