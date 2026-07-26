@@ -466,6 +466,10 @@ export type Database = {
       }
       loyalty_programs: {
         Row: {
+          winback_enabled: boolean
+          winback_title: string
+          winback_value: number | null
+          winback_value_kind: string
           is_active: boolean
           points_per_visit: number
           restaurant_id: string
@@ -474,6 +478,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          winback_enabled?: boolean
+          winback_title?: string
+          winback_value?: number | null
+          winback_value_kind?: string
           is_active?: boolean
           points_per_visit?: number
           restaurant_id: string
@@ -482,6 +490,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          winback_enabled?: boolean
+          winback_title?: string
+          winback_value?: number | null
+          winback_value_kind?: string
           is_active?: boolean
           points_per_visit?: number
           restaurant_id?: string
@@ -1515,6 +1527,10 @@ export type Database = {
       confirm_attendance: {
         Args: { p_entry_id: string }
         Returns: boolean
+      }
+      branch_busy_hours: {
+        Args: { p_branch_id: string }
+        Returns: { hour_riyadh: number; joins: number }[]
       }
       tv_queue: {
         Args: { p_branch_id: string }

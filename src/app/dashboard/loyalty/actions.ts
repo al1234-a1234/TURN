@@ -19,6 +19,9 @@ export async function saveLoyaltyProgram(formData: FormData) {
     points_per_visit: intOr(formData.get("points_per_visit"), 1),
     reward_threshold: intOr(formData.get("reward_threshold"), 10),
     reward_description: String(formData.get("reward_description") ?? "").trim() || null,
+    winback_enabled: formData.get("winback_enabled") === "on",
+    winback_title: String(formData.get("winback_title") ?? "").trim() || "اشتقنا لك — هدية عودة 🎁",
+    winback_value: (() => { const v = Number(formData.get("winback_value")); return Number.isFinite(v) && v > 0 ? v : null; })(),
   };
 
   // RLS يفرض staff_has_perm(rid,'loyalty')

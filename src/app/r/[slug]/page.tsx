@@ -81,6 +81,16 @@ export default async function RestaurantPublicPage({
   const photoOf = new Map<string, string>();
   for (const ph of branchPhotos ?? []) if (!photoOf.has(ph.branch_id)) photoOf.set(ph.branch_id, ph.url);
 
+  // ساعات الذروة المعتادة لفرع المحتوى (آخر ٢٨ يومًا) — تُعرض كتلميح تخطيط للعميل
+  const { data: busyRows } = contentBranchId
+    ? await supabase.rpc("branch_busy_hours", { p_branch_id: contentBranchId })
+    : { data: [] };
+  const busyHours = (busyRows ?? []).map((b) => b.hour_riyadh).sort((a, b) => a - b);
+  const hourAr = (h: number) => (h === 0 ? "12 ص" : h === 12 ? "12 م" : h < 12 ? `${h} ص` : `${h - 12} م`);
+  const busyLabel = busyHours.length
+    ? busyHours.map(hourAr).join("، ")
+    : null;
+
   // استدعاء جماعي واحد بدل RPC لكل فرع (كان N+1 — يتضاعف مع كل فرع لكل زيارة)
   const { data: countRows } = branchList.length
     ? await supabase.rpc("waitlist_counts_for", { p_branch_ids: branchList.map((b) => b.id) })
@@ -155,6 +165,12 @@ export default async function RestaurantPublicPage({
       </header>
 
       <main className="mx-auto -mt-11 w-full max-w-2xl flex-1 px-5 pb-14">
+        {busyLabel && (
+          <p className="mb-3 flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-center text-[13px] font-bold"
+             style={{ background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", border: "1px solid rgba(102,28,10,0.14)", color: "var(--brand-d)" }}>
+            ⏰ {tr(lang, `الذروة عادة: ${busyLabel} — خطّط زيارتك أو خذ دورك مبكرًا`, `Usually busiest: ${busyLabel} — plan ahead or take your turn early`)}
+          </p>
+        )}
         <RestaurantTabs
           slug={slug}
           name={restaurant.name}

@@ -74,6 +74,21 @@ export default async function LoyaltyPage() {
               <label className="field-label">{tr(lang, "وصف المكافأة", "Reward description")}</label>
               <input name="reward_description" defaultValue={program?.reward_description ?? ""} placeholder={tr(lang, "مثال: وجبة مجانية عند 10 نقاط", "e.g. Free meal at 10 points")} className={field} />
             </div>
+            {/* استرجاع المنقطعين — يعمل تلقائيًّا كل يوم عبر كرون القاعدة */}
+            <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
+              <label className="flex items-center justify-between">
+                <span>
+                  <span className="block font-bold text-[color:var(--ink)]">{tr(lang, "استرجاع المنقطعين تلقائيًا 🪃", "Auto win-back 🪃")}</span>
+                  <span className="text-xs text-[color:var(--muted)]">{tr(lang, "من انقطع +30 يومًا تصله هدية عودة تلقائيًا (مرة كل 60 يومًا كحد أقصى)", "Guests inactive 30+ days get a comeback gift automatically (at most once per 60 days)")}</span>
+                </span>
+                <input type="checkbox" name="winback_enabled" defaultChecked={program?.winback_enabled ?? false} className="h-6 w-6 accent-[#a3341a]" />
+              </label>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <input name="winback_title" defaultValue={program?.winback_title ?? "اشتقنا لك — هدية عودة 🎁"} placeholder={tr(lang, "عنوان الهدية", "Gift title")} className={field} />
+                <input name="winback_value" inputMode="numeric" defaultValue={program?.winback_value ?? ""} placeholder={tr(lang, "نسبة الخصم ٪ (اختياري)", "Discount % (optional)")} className={field} />
+              </div>
+            </div>
+
             <button className="btn btn-primary w-full">{tr(lang, "حفظ البرنامج", "Save program")}</button>
           </form>
         </section>
