@@ -1479,6 +1479,17 @@ export type Database = {
           auth: string
         }[]
       }
+      queue_push_targets_after_cancel: {
+        Args: { p_entry_id: string; p_phone: string }
+        Returns: {
+          endpoint: string
+          p256dh: string
+          auth: string
+          rank: number
+          venue: string
+          slug: string
+        }[]
+      }
     }
     Enums: {
       notification_channel: "sms" | "whatsapp" | "push" | "email"

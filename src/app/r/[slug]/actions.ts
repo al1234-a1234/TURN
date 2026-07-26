@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { normalizePhone } from "@/lib/format";
+import { pushRankUpdatesAfterSelfCancel } from "@/lib/push";
 
 export type WaitlistState = {
   ok: boolean;
@@ -88,7 +89,12 @@ export async function cancelWaitlistGuest(entryId: string, phone: string): Promi
     p_entry_id: entryId,
     p_phone: phone,
   });
-  return !error && data === true;
+  const ok = !error && data === true;
+
+  // من كان خلف المُلغي تقدّم دوره — أشعِرهم (كان هذا المسار صامتًا)
+  if (ok) await pushRankUpdatesAfterSelfCancel(supabase, entryId, phone);
+
+  return ok;
 }
 
 const ZONES = ["any", "inside", "outside"];

@@ -85,36 +85,73 @@ export async function pushQueueRankUpdates(
     let sent = 0;
     await Promise.all(
       targets.map(async (t) => {
-        const rank = t.rank;
-        const payload: PushPayload =
-          rank === 1
-            ? {
-                title: "أنت التالي 🟢",
-                body: `لم يبقَ أحد أمامك في ${venue} — استعدّ.`,
-                url,
-                tag: "turn-queue",
-                requireInteraction: true,
-              }
-            : rank <= 3
-              ? {
-                  title: `تقدّم دورك — رقمك الآن ${rank} 🔔`,
-                  body: `أمامك ${rank - 1} في ${venue}. اقترب دورك.`,
-                  url,
-                  tag: "turn-queue",
-                }
-              : {
-                  // بعيد عن الدور: تحديث صامت للرقم بلا تنبيه مزعج
-                  title: `تقدّم دورك — رقمك الآن ${rank}`,
-                  body: `أمامك ${rank - 1} في ${venue}.`,
-                  url,
-                  tag: "turn-queue",
-                  silent: true,
-                };
-
-        if (await sendOne(supabase, t, JSON.stringify(payload))) sent += 1;
+        const body = JSON.stringify(rankPayload(t.rank, venue, url));
+        if (await sendOne(supabase, t, body)) sent += 1;
       }),
     );
 
+    return sent;
+  } catch {
+    return 0;
+  }
+}
+
+/** يبني نصّ إشعار «تقدّم دورك» حسب الترتيب الجديد. */
+function rankPayload(rank: number, venue: string, url: string): PushPayload {
+  if (rank === 1) {
+    return {
+      title: "أنت التالي 🟢",
+      body: `لم يبقَ أحد أمامك في ${venue} — استعدّ.`,
+      url,
+      tag: "turn-queue",
+      requireInteraction: true,
+    };
+  }
+  if (rank <= 3) {
+    return {
+      title: `تقدّم دورك — رقمك الآن ${rank} 🔔`,
+      body: `أمامك ${rank - 1} في ${venue}. اقترب دورك.`,
+      url,
+      tag: "turn-queue",
+    };
+  }
+  // بعيد عن الدور: تحديث صامت للرقم بلا تنبيه مزعج
+  return {
+    title: `تقدّم دورك — رقمك الآن ${rank}`,
+    body: `أمامك ${rank - 1} في ${venue}.`,
+    url,
+    tag: "turn-queue",
+    silent: true,
+  };
+}
+
+/**
+ * إشعار من تقدّم دوره بعد أن ألغى عميلٌ **دورَه بنفسه** من التذكرة.
+ * كان هذا المسار صامتًا: الإشعار التلقائي كان معلّقًا على إجراءات الاستقبال فقط.
+ */
+export async function pushRankUpdatesAfterSelfCancel(
+  supabase: SupabaseClient<Database>,
+  entryId: string,
+  phone: string,
+): Promise<number> {
+  if (!pushConfigured) { warnUnconfigured("self-cancel"); return 0; }
+
+  try {
+    const { data: targets, error } = await supabase.rpc("queue_push_targets_after_cancel", {
+      p_entry_id: entryId,
+      p_phone: phone,
+    });
+    if (error || !targets?.length) return 0;
+
+    let sent = 0;
+    await Promise.all(
+      targets.map(async (t) => {
+        const venue = t.venue ?? "المطعم";
+        const url = t.slug ? `/r/${t.slug}` : "/";
+        const body = JSON.stringify(rankPayload(t.rank, venue, url));
+        if (await sendOne(supabase, t, body)) sent += 1;
+      }),
+    );
     return sent;
   } catch {
     return 0;
