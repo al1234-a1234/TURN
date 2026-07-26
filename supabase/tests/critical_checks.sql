@@ -50,11 +50,29 @@ with checks(name, pass) as (
                                                      'offers','restaurant_photos','checkins','checkin_settings',
                                                      'reviews','offer_redemptions','branches','staff')
                                    and (qual like '%is_staff_of%' or qual like '%staff_has_perm%' or qual like '%is_manager_of%')
-                                   and qual not like '%can_access_branch%')),
+                                   and qual not like '%can_access_branch%'
+                                   and qual not like '%my_branch_ids%')),
   ('branch_guard_in_push_rpc', (select pg_get_functiondef(oid) like '%can_access_branch%'
                                 from pg_proc where proname='queue_push_targets')),
-  ('branch_guard_in_customer', (select pg_get_functiondef(oid) like '%can_access_branch%'
+  ('branch_guard_in_customer', (select pg_get_functiondef(oid) like '%my_branch_ids%'
                                 from pg_proc where proname='staff_can_read_customer')),
+  -- ── إغلاق حلقات القيمة: الرموز والاعتماد والعروض ──
+  ('reward_code_trigger',      exists(select 1 from pg_trigger where tgname='trg_reward_code')),
+  ('no_active_reward_no_code', not exists(select 1 from public.customer_rewards
+                                          where status='active' and (code is null or btrim(code)=''))),
+  ('staff_redeem_exists',      exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+                                      where n.nspname='public' and p.proname='staff_redeem_reward')),
+  ('claim_offer_guarded',      (select pg_get_functiondef(oid) like '%check_rate%' and pg_get_functiondef(oid) like '%per_customer_limit%'
+                                from pg_proc where proname='claim_offer')),
+  ('anon_blocked_self_redeem', not has_function_privilege('anon','public.redeem_customer_reward(uuid,text)','EXECUTE')),
+  -- ── يوم الرياض في التجميع والعدّادات ──
+  ('rollup_riyadh_day',        (select pg_get_functiondef(oid) like '%Asia/Riyadh%' from pg_proc where proname='rollup_daily_stats')),
+  ('digest_riyadh_day',        (select pg_get_functiondef(oid) like '%Asia/Riyadh%' from pg_proc where proname='run_daily_digest')),
+  ('counts_riyadh_day',        (select pg_get_functiondef(oid) like '%Asia/Riyadh%' from pg_proc where proname='waitlist_counts')),
+  ('visit_idempotency_col',    exists(select 1 from information_schema.columns
+                                      where table_schema='public' and table_name='waitlist_entries' and column_name='visit_counted_at')),
+  ('uniq_guest_phone',         exists(select 1 from pg_indexes where indexname='uniq_customers_phone_guest')),
+  ('uniq_live_entry',          exists(select 1 from pg_indexes where indexname='uniq_waitlist_live_customer_branch')),
   -- ── مستوى العلامة: ما لا يجوز لمدير فرع أن يمسّه ──
   ('brand_guard_exists',       exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
                                       where n.nspname='public' and p.proname='is_brand_manager')),

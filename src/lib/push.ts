@@ -53,7 +53,8 @@ async function sendOne(
     const code = (err as { statusCode?: number })?.statusCode;
     // 404/410 = اشتراك ميّت (أُلغي التصريح أو حُذف التطبيق) → نظّفه
     if (code === 404 || code === 410) {
-      await supabase.rpc("delete_push_subscription", { p_endpoint: sub.endpoint });
+      // تعمل من مسار الضيف أيضًا (delete_push_subscription محجوبة عن anon)
+      await supabase.rpc("delete_dead_push_subscription", { p_endpoint: sub.endpoint });
     }
     return false;
   }
@@ -78,7 +79,7 @@ export async function pushQueueRankUpdates(
   try {
     const { data: targets, error } = await supabase.rpc("queue_push_targets", {
       p_branch_id: branchId,
-      p_zone: zone,
+      p_zone: zone as unknown as string, // null = قسم غير محدّد (is not distinct from)
     });
     if (error || !targets?.length) return 0;
 

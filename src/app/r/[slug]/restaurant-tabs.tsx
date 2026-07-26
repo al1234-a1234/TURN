@@ -104,6 +104,13 @@ export function RestaurantTabs({
 }) {
   const lang = useLang();
   const [tab, setTab] = useState<Tab>("waitlist");
+  // فتح تبويب من الرابط (?tab=reviews مثلًا) — «قيّم تجربتك» بعد المسح كان
+  // يهبط على نموذج الانضمام ويترك العميل يبحث بنفسه في أعلى لحظة حماس.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const t = new URLSearchParams(window.location.search).get("tab");
+    if (t === "reviews" || t === "menu" || t === "media" || t === "waitlist") setTab(t as Tab);
+  }, []);
   const [openCat, setOpenCat] = useState<string | null>(categories[0]?.id ?? null);
   const hasMenu = categories.length > 0;
 
@@ -233,7 +240,7 @@ export function RestaurantTabs({
         <div className="rq-card flex items-center gap-5 p-5">
           <div className="shrink-0 text-center">
             <p className="font-display text-5xl font-bold text-[color:var(--ink)] leading-none">{rating}</p>
-            <p className="mt-1 text-sm"><Stars n={5} /></p>
+            <p className="mt-1 text-sm"><Stars n={Math.round(Number(rating) || 0)} /></p>
             <p className="mt-1 text-xs text-[color:var(--muted)]">{reviewCount} {tr(lang, "تقييم", "reviews")}</p>
           </div>
           <div className="min-w-0 flex-1 space-y-1.5">
@@ -303,7 +310,7 @@ export function RestaurantTabs({
           <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[color:var(--sage)] text-2xl">🔔</span>
           <p className="font-bold text-[color:var(--ink)]">{tr(lang, "تابع المطعم", "Follow the restaurant")}</p>
           <p className="mt-1 text-sm leading-6 text-[color:var(--muted)]">
-            {tr(lang, "يوصلك جديد العروض والأصناف والأوقات الأقل زحمة أول بأول.", "Get the latest offers, dishes, and quieter times as they happen.")}
+            {tr(lang, "تظهر في مفضّلتك للوصول السريع لعروضه وقائمته وطابوره من جهازك.", "Saved to your favorites for quick access to its offers, menu and queue from this device.")}
           </p>
         </div>
       </div>

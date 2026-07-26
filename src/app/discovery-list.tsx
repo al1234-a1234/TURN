@@ -116,7 +116,7 @@ function ZonePill({ label, count, lang }: { label: string; count: number; lang: 
         </svg>
         {label}
       </span>
-      <span className="font-extrabold">{busy ? toAr(count) : tr(lang, "متاح", "—")}</span>
+      <span className="font-extrabold">{busy ? toAr(count) : tr(lang, "متاح", "Available")}</span>
     </span>
   );
 }

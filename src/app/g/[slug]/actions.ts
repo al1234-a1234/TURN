@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 
 export type Gift = {
   id?: string;
+  /** رمز الاعتماد عند الكاشير — يولَّد تلقائيًّا في القاعدة */
+  code?: string | null;
   title: string;
   kind: string;
   value: number | null;
@@ -51,6 +53,7 @@ export async function checkinAction(_prev: CheckinState, formData: FormData): Pr
     const code = String(r.error ?? "");
     if (code === "invalid_phone") return { ok: false, error: "رقم الجوّال غير صحيح." };
     if (code === "restaurant_not_found") return { ok: false, error: "المطعم غير متاح حاليًا." };
+    if (code === "rate_limited") return { ok: false, error: "محاولات كثيرة اليوم — عد لاحقًا." };
     return { ok: false, error: "تعذّر التسجيل، حاول مرة أخرى." };
   }
 

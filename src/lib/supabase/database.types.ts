@@ -165,9 +165,16 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "checkin_settings_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: true
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "checkin_settings_restaurant_id_fkey"
             columns: ["restaurant_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "restaurants"
             referencedColumns: ["id"]
           },
@@ -466,40 +473,40 @@ export type Database = {
       }
       loyalty_programs: {
         Row: {
-          winback_enabled: boolean
-          winback_title: string
-          winback_value: number | null
-          winback_value_kind: string
           is_active: boolean
           points_per_visit: number
           restaurant_id: string
           reward_description: string | null
           reward_threshold: number
           updated_at: string
+          winback_enabled: boolean
+          winback_title: string
+          winback_value: number | null
+          winback_value_kind: string
         }
         Insert: {
-          winback_enabled?: boolean
-          winback_title?: string
-          winback_value?: number | null
-          winback_value_kind?: string
           is_active?: boolean
           points_per_visit?: number
           restaurant_id: string
           reward_description?: string | null
           reward_threshold?: number
           updated_at?: string
-        }
-        Update: {
           winback_enabled?: boolean
           winback_title?: string
           winback_value?: number | null
           winback_value_kind?: string
+        }
+        Update: {
           is_active?: boolean
           points_per_visit?: number
           restaurant_id?: string
           reward_description?: string | null
           reward_threshold?: number
           updated_at?: string
+          winback_enabled?: boolean
+          winback_title?: string
+          winback_value?: number | null
+          winback_value_kind?: string
         }
         Relationships: [
           {
@@ -537,6 +544,13 @@ export type Database = {
           sort_order?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "menu_categories_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "menu_categories_restaurant_id_fkey"
             columns: ["restaurant_id"]
@@ -590,6 +604,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "menu_items_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "menu_items_category_id_fkey"
             columns: ["category_id"]
@@ -721,8 +742,8 @@ export type Database = {
       }
       offers: {
         Row: {
-          branch_id: string
           audience: string
+          branch_id: string
           code: string | null
           conditions: Json
           created_at: string
@@ -741,8 +762,8 @@ export type Database = {
           value: number | null
         }
         Insert: {
-          branch_id: string
           audience?: string
+          branch_id: string
           code?: string | null
           conditions?: Json
           created_at?: string
@@ -761,8 +782,8 @@ export type Database = {
           value?: number | null
         }
         Update: {
-          branch_id?: string
           audience?: string
+          branch_id?: string
           code?: string | null
           conditions?: Json
           created_at?: string
@@ -781,6 +802,13 @@ export type Database = {
           value?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "offers_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "offers_restaurant_id_fkey"
             columns: ["restaurant_id"]
@@ -843,6 +871,62 @@ export type Database = {
         Update: {
           created_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          customer_id: string
+          endpoint: string
+          id: string
+          last_used_at: string | null
+          p256dh: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          customer_id: string
+          endpoint: string
+          id?: string
+          last_used_at?: string | null
+          p256dh: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          customer_id?: string
+          endpoint?: string
+          id?: string
+          last_used_at?: string | null
+          p256dh?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rate_limits: {
+        Row: {
+          count: number
+          key: string
+          window_start: string
+        }
+        Insert: {
+          count?: number
+          key: string
+          window_start?: string
+        }
+        Update: {
+          count?: number
+          key?: string
+          window_start?: string
         }
         Relationships: []
       }
@@ -984,6 +1068,13 @@ export type Database = {
           url?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "restaurant_photos_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "restaurant_photos_restaurant_id_fkey"
             columns: ["restaurant_id"]
@@ -1245,6 +1336,7 @@ export type Database = {
           status: Database["public"]["Enums"]["waitlist_status"]
           table_id: string | null
           updated_at: string
+          visit_counted_at: string | null
           zone: string
         }
         Insert: {
@@ -1263,6 +1355,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["waitlist_status"]
           table_id?: string | null
           updated_at?: string
+          visit_counted_at?: string | null
           zone?: string
         }
         Update: {
@@ -1281,6 +1374,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["waitlist_status"]
           table_id?: string | null
           updated_at?: string
+          visit_counted_at?: string | null
           zone?: string
         }
         Relationships: [
@@ -1336,11 +1430,30 @@ export type Database = {
           slug: string
         }[]
       }
+      branch_busy_hours: {
+        Args: { p_branch_id: string }
+        Returns: {
+          hour_riyadh: number
+          joins: number
+        }[]
+      }
+      caller_branch_id: { Args: { rest_id: string }; Returns: string }
+      can_access_branch: { Args: { b_id: string }; Returns: boolean }
+      cancel_by_ticket: { Args: { p_entry_id: string }; Returns: boolean }
       cancel_waitlist_guest: {
         Args: { p_entry_id: string; p_phone: string }
         Returns: boolean
       }
+      check_rate: {
+        Args: { p_key: string; p_max: number; p_window: string }
+        Returns: boolean
+      }
+      claim_offer: {
+        Args: { p_name?: string; p_offer_id: string; p_phone: string }
+        Returns: Json
+      }
       claim_restaurant: { Args: { p_code: string }; Returns: string }
+      confirm_attendance: { Args: { p_entry_id: string }; Returns: boolean }
       create_reservation_guest: {
         Args: {
           p_branch_id: string
@@ -1365,7 +1478,16 @@ export type Database = {
         }
         Returns: string
       }
+      delete_dead_push_subscription: {
+        Args: { p_endpoint: string }
+        Returns: undefined
+      }
+      delete_push_subscription: {
+        Args: { p_endpoint: string }
+        Returns: undefined
+      }
       demo_live_activity: { Args: never; Returns: undefined }
+      expire_stale_waitlist: { Args: never; Returns: number }
       gen_claim_code: { Args: never; Returns: string }
       get_customer_loyalty: {
         Args: { p_phone: string }
@@ -1375,6 +1497,8 @@ export type Database = {
           restaurant_slug: string
           reward_description: string
           reward_threshold: number
+          tier: string
+          visits: number
         }[]
       }
       get_customer_rewards: {
@@ -1397,14 +1521,14 @@ export type Database = {
       }
       grant_reward_to_segment: {
         Args: {
-          p_code: string | null
-          p_description: string | null
-          p_expires_at: string | null
+          p_code: string
+          p_description: string
+          p_expires_at: string
           p_kind: string
           p_restaurant_id: string
           p_segment: string
           p_title: string
-          p_value: number | null
+          p_value: number
           p_value_kind: string
         }
         Returns: number
@@ -1413,6 +1537,7 @@ export type Database = {
         Args: { p_module: string; rest_id: string }
         Returns: boolean
       }
+      is_brand_manager: { Args: { rest_id: string }; Returns: boolean }
       is_manager_of: { Args: { rest_id: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
       is_staff_of: { Args: { rest_id: string }; Returns: boolean }
@@ -1429,10 +1554,58 @@ export type Database = {
           queue_pos: number
         }[]
       }
+      my_branch_ids: { Args: never; Returns: string[] }
+      norm_phone_input: { Args: { p: string }; Returns: string }
       public_checkin: {
-        Args: { p_name?: string; p_phone: string; p_slug: string }
+        Args: {
+          p_branch_id?: string
+          p_name?: string
+          p_phone: string
+          p_slug: string
+        }
         Returns: Json
       }
+      push_subs_for_entry: {
+        Args: { p_entry_id: string }
+        Returns: {
+          auth: string
+          endpoint: string
+          p256dh: string
+        }[]
+      }
+      queue_push_targets: {
+        Args: { p_branch_id: string; p_zone: string }
+        Returns: {
+          auth: string
+          endpoint: string
+          entry_id: string
+          p256dh: string
+          rank: number
+        }[]
+      }
+      queue_push_targets_after_cancel: {
+        Args: { p_entry_id: string; p_phone: string }
+        Returns: {
+          auth: string
+          endpoint: string
+          p256dh: string
+          rank: number
+          slug: string
+          venue: string
+        }[]
+      }
+      queue_push_targets_after_ticket_cancel: {
+        Args: { p_entry_id: string }
+        Returns: {
+          auth: string
+          endpoint: string
+          p256dh: string
+          rank: number
+          slug: string
+          venue: string
+        }[]
+      }
+      queue_version: { Args: { p_branch_id: string }; Returns: string }
       redeem_customer_reward: {
         Args: { p_phone: string; p_reward_id: string }
         Returns: boolean
@@ -1443,8 +1616,25 @@ export type Database = {
         Args: { p_branch_id: string; p_date: string }
         Returns: undefined
       }
+      run_auto_winback: { Args: never; Returns: number }
       run_daily_digest: { Args: never; Returns: number }
+      run_retention: { Args: never; Returns: undefined }
       run_slow_hours: { Args: never; Returns: number }
+      run_weekly_digest: { Args: never; Returns: number }
+      save_push_subscription: {
+        Args: {
+          p_auth: string
+          p_endpoint: string
+          p_entry_id: string
+          p_p256dh: string
+          p_phone: string
+        }
+        Returns: boolean
+      }
+      set_entry_distance: {
+        Args: { p_entry_id: string; p_lat: number; p_lng: number }
+        Returns: boolean
+      }
       set_staff_permission: {
         Args: { p_granted: boolean; p_perm: string; p_staff_id: string }
         Returns: undefined
@@ -1453,6 +1643,45 @@ export type Database = {
       staff_has_perm: {
         Args: { p_perm: string; rest_id: string }
         Returns: boolean
+      }
+      staff_lookup_rewards: {
+        Args: { p_query: string }
+        Returns: {
+          code: string
+          created_at: string
+          customer_name: string
+          customer_phone: string
+          expires_at: string
+          id: string
+          kind: string
+          title: string
+          value: number
+          value_kind: string
+        }[]
+      }
+      staff_redeem_reward: { Args: { p_reward_id: string }; Returns: boolean }
+      submit_review: {
+        Args: {
+          p_comment?: string
+          p_phone: string
+          p_rating: number
+          p_slug: string
+        }
+        Returns: Json
+      }
+      tv_queue: {
+        Args: { p_branch_id: string }
+        Returns: {
+          branch_name: string
+          display_name: string
+          rank: number
+          restaurant_logo: string
+          restaurant_name: string
+          restaurant_slug: string
+          served_today: number
+          status: string
+          zone: string
+        }[]
       }
       waitlist_counts: {
         Args: { b_id: string }
@@ -1471,117 +1700,25 @@ export type Database = {
           total: number
         }[]
       }
-      waitlist_ticket_status: {
-        Args: { p_entry_id: string; p_phone: string }
-        Returns: {
-          status: string
-          position: number
-          ahead: number
-          total: number
-        }[]
-      }
-      save_push_subscription: {
-        Args: {
-          p_entry_id: string
-          p_phone: string
-          p_endpoint: string
-          p_p256dh: string
-          p_auth: string
-        }
-        Returns: boolean
-      }
-      push_subs_for_entry: {
-        Args: { p_entry_id: string }
-        Returns: {
-          endpoint: string
-          p256dh: string
-          auth: string
-        }[]
-      }
-      delete_push_subscription: {
-        Args: { p_endpoint: string }
-        Returns: undefined
-      }
-      queue_push_targets: {
-        Args: { p_branch_id: string; p_zone: string | null }
-        Returns: {
-          entry_id: string
-          rank: number
-          endpoint: string
-          p256dh: string
-          auth: string
-        }[]
-      }
       waitlist_ticket_by_id: {
         Args: { p_entry_id: string }
         Returns: {
-          status: string
-          position: number
           ahead: number
-          total: number
           confirmed: boolean
+          position: number
           restaurant: string
           slug: string
+          status: string
+          total: number
         }[]
       }
-      confirm_attendance: {
-        Args: { p_entry_id: string }
-        Returns: boolean
-      }
-      branch_busy_hours: {
-        Args: { p_branch_id: string }
-        Returns: { hour_riyadh: number; joins: number }[]
-      }
-      queue_version: {
-        Args: { p_branch_id: string }
-        Returns: string
-      }
-      tv_queue: {
-        Args: { p_branch_id: string }
-        Returns: {
-          rank: number | null
-          display_name: string | null
-          status: string | null
-          zone: string | null
-          branch_name: string
-          restaurant_name: string
-          restaurant_slug: string
-          restaurant_logo: string | null
-          served_today: number
-        }[]
-      }
-      submit_review: {
-        Args: { p_slug: string; p_phone: string; p_rating: number; p_comment?: string }
-        Returns: Json
-      }
-      set_entry_distance: {
-        Args: { p_entry_id: string; p_lat: number; p_lng: number }
-        Returns: boolean
-      }
-      cancel_by_ticket: {
-        Args: { p_entry_id: string }
-        Returns: boolean
-      }
-      queue_push_targets_after_ticket_cancel: {
-        Args: { p_entry_id: string }
-        Returns: {
-          endpoint: string
-          p256dh: string
-          auth: string
-          rank: number
-          venue: string
-          slug: string
-        }[]
-      }
-      queue_push_targets_after_cancel: {
+      waitlist_ticket_status: {
         Args: { p_entry_id: string; p_phone: string }
         Returns: {
-          endpoint: string
-          p256dh: string
-          auth: string
-          rank: number
-          venue: string
-          slug: string
+          ahead: number
+          position: number
+          status: string
+          total: number
         }[]
       }
     }

@@ -60,15 +60,25 @@ export async function joinWaitlistGuest(
     await supabase.rpc("set_entry_distance", { p_entry_id: row.entry_id, p_lat: lat, p_lng: lng });
   }
 
-  // العدد الحالي في الطابور (لحساب حلقة التقدّم)
-  const { data: counts } = await supabase.rpc("waitlist_counts", { b_id: branchId });
-  const c = Array.isArray(counts) ? counts[0] : counts;
+  // الترتيب الحيّ نفسه الذي سيراه الاستطلاع والاستقبال — لا الرقم المخزَّن،
+  // وإلا رأى العميل «5» ثم صارت «2» بعد أول نبضة (رقمان لمفهوم واحد).
+  let livePos: number | undefined;
+  let liveTotal: number | undefined;
+  if (row?.entry_id) {
+    const { data: st } = await supabase.rpc("waitlist_ticket_status", {
+      p_entry_id: row.entry_id,
+      p_phone: phone,
+    });
+    const t = Array.isArray(st) ? st[0] : st;
+    livePos = t?.position ?? undefined;
+    liveTotal = t?.total ?? undefined;
+  }
 
   if (slug) revalidatePath(`/r/${slug}`);
   return {
     ok: true,
-    position: row?.queue_pos ?? undefined,
-    total: c?.total ?? undefined,
+    position: livePos ?? row?.queue_pos ?? undefined,
+    total: liveTotal ?? undefined,
     entryId: row?.entry_id ?? undefined,
     phone,
   };

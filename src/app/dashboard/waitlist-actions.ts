@@ -29,11 +29,17 @@ export async function updateWaitlistStatus(id: string, action: Action) {
     .in("branch_id", branchIds)
     .maybeSingle();
 
+  // حارس الحالة: صفحة الاستقبال قد تتأخر ١٠ ثوانٍ عن الواقع — لو ألغى الضيف
+  // دوره من تذكرته، ضغطةُ «إجلاس» متأخرة كانت تحييه وتحسب زيارة لمن غادر.
+  const allowedFrom: ("waiting" | "notified" | "seated")[] = action === "cancelled"
+    ? ["waiting", "notified", "seated"]
+    : ["waiting", "notified"];
   const { error } = await caller.supabase
     .from("waitlist_entries")
     .update(patch)
     .eq("id", id)
-    .in("branch_id", branchIds);
+    .in("branch_id", branchIds)
+    .in("status", allowedFrom);
 
   // إشعارات الدفع — تُرسل بعد ردّ الاستجابة (after) كي لا يعلّق زر الإجلاس:
   // إجلاس في طابور ٥٠ شخصًا = ٥٠ استدعاء HTTPS، ولا يصح أن ينتظرها الموظّف.

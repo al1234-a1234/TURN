@@ -107,7 +107,7 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
   const served30 = seated.length;
   const waits = seated
     .map((r) => (r.seated_at ? (new Date(r.seated_at).getTime() - new Date(r.joined_at).getTime()) / 60000 : null))
-    .filter((n): n is number => n != null && n >= 0);
+    .filter((n): n is number => n != null && n >= 0 && n < 600); // نفس سقف الشواذ في اللوحة والتقارير
   const avgWait = waits.length ? Math.round(waits.reduce((a, b) => a + b, 0) / waits.length) : 0;
 
   const inputDark = "rounded-2xl border p-3";

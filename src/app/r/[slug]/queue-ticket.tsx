@@ -23,12 +23,15 @@ export function QueueTicket({
   entryId,
   phone,
   restaurantName,
+  onGone,
 }: {
   position: number;
   total: number;
   entryId?: string;
   phone?: string;
   restaurantName?: string;
+  /** تُستدعى إن تبيّن أن التذكرة المسترجَعة لم تعد موجودة */
+  onGone?: () => void;
 }) {
   const lang = useLang();
   const [pending, start] = useTransition();
@@ -122,7 +125,7 @@ export function QueueTicket({
         });
         if (error) throw error;
         const row = Array.isArray(data) ? data[0] : data;
-        if (!row) { stopped = true; clear(); return; }   // الصف غير موجود → توقّف
+        if (!row) { stopped = true; clear(); onGone?.(); return; }   // الصف غير موجود → توقّف
         fails = 0;
         setStatus(row.status);
         setPos(row.position);
@@ -161,6 +164,7 @@ export function QueueTicket({
       clear();
       document.removeEventListener("visibilitychange", onVis);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entryId, phone, restaurantName, lang]);
 
   // إلغاء يدوي من العميل

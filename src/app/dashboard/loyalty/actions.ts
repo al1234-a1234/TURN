@@ -22,6 +22,8 @@ export async function saveLoyaltyProgram(formData: FormData) {
     winback_enabled: formData.get("winback_enabled") === "on",
     winback_title: String(formData.get("winback_title") ?? "").trim() || "اشتقنا لك — هدية عودة 🎁",
     winback_value: (() => { const v = Number(formData.get("winback_value")); return Number.isFinite(v) && v > 0 ? v : null; })(),
+    // الواجهة تسمّيها «نسبة الخصم ٪» — نثبّت الوحدة كي لا تُفسَّر 20 على أنها ريالات
+    winback_value_kind: "percent",
   };
 
   // RLS يفرض staff_has_perm(rid,'loyalty')

@@ -5,6 +5,7 @@ import { toAr } from "@/lib/format";
 import { tr, pct, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 import { riyadhDayStart, riyadhDayKey, riyadhWeekday, riyadhHour } from "@/lib/dates";
+import { DismissInsight } from "./dismiss-insight";
 
 const AR_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 const EN_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -40,15 +41,15 @@ export default async function OverviewPage() {
     branchIds.length
       ? supabase.from("waitlist_entries").select("joined_at, seated_at, status, zone, party_size").in("branch_id", branchIds).gte("joined_at", since30)
       : Promise.resolve({ data: [] as { joined_at: string; seated_at: string | null; status: string; zone: string; party_size: number }[] }),
-    supabase.from("owner_insights").select("id, kind, title, body, created_at").eq("restaurant_id", restaurant.id).order("created_at", { ascending: false }).limit(4),
+    supabase.from("owner_insights").select("id, kind, title, body, data, created_at").eq("restaurant_id", restaurant.id).eq("is_read", false).order("created_at", { ascending: false }).limit(4),
     // الطابور الحيّ = بلا حدّ زمني (يطابق الاستقبال) — لئلّا يُهمَل من انتظر أكثر من 30 يومًا
     branchIds.length
       ? supabase.from("waitlist_entries").select("zone").in("branch_id", branchIds).in("status", ["waiting", "notified"])
       : Promise.resolve({ data: [] as { zone: string }[] }),
   ]);
 
-  const insights = (insightsRes.data ?? []) as { id: string; kind: string; title: string; body: string | null; created_at: string }[];
-  const INSIGHT_ICON: Record<string, string> = { daily_digest: "📋", walkaway: "🏃", slow_hours: "🌙", smart_alert: "🔔" };
+  const insights = (insightsRes.data ?? []) as { id: string; kind: string; title: string; body: string | null; data: { customer_id?: string } | null; created_at: string }[];
+  const INSIGHT_ICON: Record<string, string> = { daily_digest: "📋", walkaway: "🏃", slow_hours: "🌙", smart_alert: "🔔", weekly_digest: "📊" };
 
   // ===== التقييم =====
   const ratings = (rev.data ?? []).map((r) => r.rating);
@@ -137,7 +138,21 @@ export default async function OverviewPage() {
                 <div className="min-w-0 flex-1">
                   <p className="font-bold text-[color:var(--ink)]">{it.title}</p>
                   {it.body && <p className="text-sm text-[color:var(--muted)]">{it.body}</p>}
+                  {/* بصيرة بلا فعل = نشرة — نعطي كل نوع فعله */}
+                  {it.kind === "walkaway" && it.data?.customer_id && (
+                    <Link href={`/dashboard/customers/${it.data.customer_id}`}
+                          className="mt-1 inline-block text-xs font-extrabold text-[color:var(--brand-d)] underline-offset-2 hover:underline">
+                      {tr(lang, "افتح ملفه وأهدِه هدية عودة ←", "Open profile & grant a come-back gift ←")}
+                    </Link>
+                  )}
+                  {it.kind === "slow_hours" && (
+                    <Link href="/dashboard/offers"
+                          className="mt-1 inline-block text-xs font-extrabold text-[color:var(--brand-d)] underline-offset-2 hover:underline">
+                      {tr(lang, "راجع عروض الركود ←", "Review slow-hours offers ←")}
+                    </Link>
+                  )}
                 </div>
+                <DismissInsight id={it.id} />
               </li>
             ))}
           </ul>

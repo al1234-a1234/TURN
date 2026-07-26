@@ -7,7 +7,11 @@
  */
 
 export type FavRestaurant = { slug: string; name: string; logo?: string | null };
-export type TurnRecord = { slug: string; name: string; logo?: string | null; at: string };
+export type TurnRecord = {
+  slug: string; name: string; logo?: string | null; at: string;
+  /** استرجاع التذكرة بعد إغلاق الصفحة — بدونهما كان الضيف يفقد دوره بمجرد الريلود */
+  entryId?: string; phone?: string;
+};
 
 const FAV_KEY = "turn:favorites";
 const TURNS_KEY = "turn:turns";
@@ -60,7 +64,18 @@ export function getTurns(): TurnRecord[] {
 export function recordTurn(rec: TurnRecord) {
   const list = getTurns();
   const day = rec.at.slice(0, 10);
-  if (list[0] && list[0].slug === rec.slug && list[0].at.slice(0, 10) === day) return;
+  if (list[0] && list[0].slug === rec.slug && list[0].at.slice(0, 10) === day) {
+    // نفس المطعم نفس اليوم: حدّث بيانات الاسترجاع بدل التجاهل
+    if (rec.entryId) { list[0].entryId = rec.entryId; list[0].phone = rec.phone; write(TURNS_KEY, list); }
+    return;
+  }
   list.unshift(rec);
   write(TURNS_KEY, list.slice(0, 200));
+}
+
+/** آخر دور محفوظ لمطعم بعينه اليوم (للاسترجاع بعد الريلود). */
+export function lastTurnFor(slug: string): TurnRecord | null {
+  const today = new Date().toISOString().slice(0, 10);
+  const rec = getTurns().find((t) => t.slug === slug && t.at.slice(0, 10) === today && t.entryId);
+  return rec ?? null;
 }

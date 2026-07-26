@@ -98,11 +98,12 @@ export async function grantRewardToSegment(formData: FormData) {
     p_segment: segment,
     p_kind: kind,
     p_title: title,
-    p_value: value,
+    // القيم الفارغة null مقبولة في الدالة (nullif داخلها) — الأنواع المولَّدة أضيق من الواقع
+    p_value: value as unknown as number,
     p_value_kind: valueKind,
-    p_description: description,
-    p_code: code,
-    p_expires_at: expires_at,
+    p_description: description as unknown as string,
+    p_code: code as unknown as string,
+    p_expires_at: expires_at as unknown as string,
   });
 
   revalidatePath("/dashboard/customers");

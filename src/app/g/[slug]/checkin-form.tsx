@@ -47,6 +47,10 @@ export function CheckinForm({ slug, branchId, lang }: { slug: string; branchId: 
                 {state.is_first_visit ? tr(lang, "أهلًا فيك! هديتك الأولى", "Welcome! Your first gift") : tr(lang, "هديتك", "Your gift")}
               </p>
               <p className="mt-2 font-display text-4xl font-extrabold leading-tight">{giftLabel(g, lang)}</p>
+              {g.code && (
+                <p className="mt-2 inline-block rounded-xl px-3 py-1 font-display text-xl font-extrabold tracking-widest"
+                   style={{ background: "rgba(255,255,255,0.18)" }} dir="ltr">{g.code}</p>
+              )}
               <p className="mt-1 text-sm font-bold text-cream-100/90">{g.title}</p>
               {g.expires_days ? (
                 <p className="mt-3 inline-block rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold ring-1 ring-white/25">
@@ -109,7 +113,7 @@ export function CheckinForm({ slug, branchId, lang }: { slug: string; branchId: 
           <span style={{ color: "var(--brand-d)" }}>←</span>
         </Link>
 
-        <Link href={`/r/${slug}`} className="flex items-center justify-between rounded-2xl px-4 py-3"
+        <Link href={`/r/${slug}?tab=reviews`} className="flex items-center justify-between rounded-2xl px-4 py-3"
           style={{ background: "var(--surface-2)", border: "1px solid rgba(102,28,10,0.12)" }}>
           <span className="flex items-center gap-2 text-sm font-bold" style={{ color: "var(--brand-d)" }}>
             ⭐ {tr(lang, "قيّم تجربتك اليوم", "Rate today's visit")}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { QueueActions } from "../queue-actions";
 import { WalkInForm } from "./walkin-form";
+import { RewardBox } from "./reward-box";
 import { AutoRefresh } from "./auto-refresh";
 import { BranchTabs } from "./branch-tabs";
 import { loadOwner, scopeBranchIds } from "../owner-context";
@@ -48,6 +49,8 @@ export default async function ReceptionPage({
           .select("id, customer_id, position, party_size, zone, status, joined_at, confirmed_at, distance_m, customers(full_name, phone)")
           .eq("branch_id", activeBranch.id)
           .in("status", ["waiting", "notified"])
+          // يوم الرياض فقط — صف منسي من أمس كان يكسر تطابق الرقم مع التذكرة والشاشة
+          .gte("joined_at", startToday)
           .order("position", { nullsFirst: false }),
         supabase.from("waitlist_entries").select("id", { count: "exact", head: true })
           .eq("branch_id", activeBranch.id).eq("status", "seated").gte("seated_at", startToday),
@@ -152,6 +155,8 @@ export default async function ReceptionPage({
             <Stat label={tr(lang, "طابور خارجي", "Outdoor queue")} value={toAr(outside.length)} tone="var(--st-full)" />
             <Stat label={tr(lang, "خدمناهم اليوم", "Served today")} value={toAr(servedToday)} tone="var(--st-open)" />
           </div>
+
+          <RewardBox />
 
           <WalkInForm branchId={activeBranch.id} branchName={multi ? activeBranch.name : undefined} />
 

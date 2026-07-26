@@ -21,7 +21,7 @@ export default async function LoyaltyPage() {
     redirect("/dashboard");
   }
 
-  const [{ data: program }, { data: members }] = await Promise.all([
+  const [{ data: program }, { data: members }, { data: winbackRows }] = await Promise.all([
     supabase.from("loyalty_programs").select("*").eq("restaurant_id", restaurant.id).maybeSingle(),
     supabase
       .from("customer_restaurant")
@@ -30,7 +30,36 @@ export default async function LoyaltyPage() {
       .gt("points", 0)
       .order("points", { ascending: false })
       .limit(20),
+    // هدايا العودة المولّدة تلقائيًّا وما زالت فعّالة — كانت تُمنح ولا يعلم بها أحد:
+    // العميل المنقطع لن يفتح التطبيق ليكتشفها، فنعطي المالك زرّ إرسالها واتساب.
+    supabase
+      .from("customer_rewards")
+      .select("id, title, code, value, value_kind, expires_at, created_at, customers!inner(full_name, phone)")
+      .eq("restaurant_id", restaurant.id)
+      .eq("description", "هدية استرجاع تلقائية")
+      .eq("status", "active")
+      .gte("created_at", new Date(Date.now() - 14 * 864e5).toISOString())
+      .order("created_at", { ascending: false })
+      .limit(50),
   ]);
+
+  type WinbackRow = {
+    id: string; title: string; code: string | null; value: number | null;
+    value_kind: string | null; expires_at: string | null; created_at: string;
+    customers: { full_name: string | null; phone: string | null } | { full_name: string | null; phone: string | null }[] | null;
+  };
+  const winback = ((winbackRows ?? []) as WinbackRow[]).map((w) => {
+    const c = Array.isArray(w.customers) ? w.customers[0] : w.customers;
+    return { ...w, name: c?.full_name ?? null, phone: c?.phone ?? null };
+  }).filter((w) => w.phone);
+
+  const waLink = (w: { phone: string | null; title: string; code: string | null }) => {
+    const digits = (w.phone ?? "").replace(/\D/g, "").replace(/^0/, "966");
+    const msg = `مرحبًا 👋 اشتقنا لك في ${restaurant.name}!\n` +
+      `عندك هدية بانتظارك: ${w.title}${w.code ? ` — رمزها ${w.code}` : ""}.\n` +
+      `اعرض الرمز عند الكاشير وتسعد فيها 🌿`;
+    return `https://wa.me/${digits}?text=${encodeURIComponent(msg)}`;
+  };
 
   const active = program?.is_active ?? false;
   const perVisit = program?.points_per_visit ?? 1;
@@ -47,6 +76,38 @@ export default async function LoyaltyPage() {
           <Kpi label={tr(lang, "أعضاء بنقاط", "Members with points")} value={toAr(list.length)} tone="var(--brand-d)" />
           <Kpi label={tr(lang, "جاهزون للمكافأة", "Ready for reward")} value={toAr(readyToRedeem)} tone="var(--st-full)" />
         </div>
+
+        {/* هدايا العودة الجاهزة للإرسال — بلا هذا الزر كانت تُمنح في صمت تامّ */}
+        {winback.length > 0 && (
+          <section className="soft-card p-5">
+            <h2 className="mb-1 font-display text-lg font-bold text-[color:var(--ink)]">
+              💌 {tr(lang, `هدايا عودة بانتظار الإرسال (${toAr(winback.length)})`, `Win-back gifts awaiting send (${winback.length})`)}
+            </h2>
+            <p className="mb-4 text-sm text-[color:var(--muted)]">
+              {tr(lang,
+                "مُنحت تلقائيًّا لعملاء انقطعوا ٣٠ يومًا. أرسلها واتساب بضغطة — العميل المنقطع لن يكتشفها وحده.",
+                "Granted automatically to customers away 30+ days. Send via WhatsApp — a lapsed customer won't discover it on their own.")}
+            </p>
+            <ul className="space-y-2">
+              {winback.map((w) => (
+                <li key={w.id} className="flex items-center gap-3 rounded-2xl border p-3"
+                    style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-extrabold text-[color:var(--ink)]">{w.name ?? tr(lang, "عميل", "Customer")}</p>
+                    <p className="text-[11px] font-bold text-[color:var(--muted)]">
+                      {w.title}{w.code ? <span dir="ltr"> · {w.code}</span> : null}
+                    </p>
+                  </div>
+                  <a href={waLink(w)} target="_blank" rel="noreferrer"
+                     className="shrink-0 rounded-xl px-4 py-2 text-xs font-extrabold text-white"
+                     style={{ background: "linear-gradient(150deg,#1fa855,#0d7a3c)" }}>
+                    {tr(lang, "أرسل واتساب", "Send WhatsApp")}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* إعداد البرنامج */}
         <section className="soft-card p-5">

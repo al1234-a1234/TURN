@@ -41,9 +41,12 @@ export function QueueActions({
       `أكّد حضورك أو ألغِ دورك بضغطة 👇\n${ticket}\n\n` +
       `ما يحتاج ترد علينا — بس اختر من الرابط 🌿`;
     const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+    // افتح واتساب أولًا — لو أغلق الموظّف نافذة المشاركة لا يُوسَم الضيف
+    // «أُشعِر ✓» وهو لم يستلم شيئًا
+    const win = window.open(url, "_blank");
+    if (!win) return;
     start(async () => {
       await updateWaitlistStatus(id, "notified");
-      window.open(url, "_blank");
     });
   }
 

@@ -6,7 +6,7 @@ import { QueueTicket } from "./queue-ticket";
 import { toAr, normalizePhone } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
-import { recordTurn } from "@/lib/local-store";
+import { recordTurn, lastTurnFor } from "@/lib/local-store";
 
 type Branch = {
   id: string;
@@ -206,6 +206,13 @@ export function WaitlistForm({
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [geo, setGeo] = useState<"idle" | "asking" | "denied" | "unavailable">("idle");
   const formRef = useRef<HTMLFormElement | null>(null);
+  // استرجاع دور اليوم بعد الريلود/إغلاق المتصفح — كان الضيف يفقد تذكرته نهائيًّا
+  const [restored, setRestored] = useState<{ entryId: string; phone: string } | null>(null);
+  useEffect(() => {
+    const rec = lastTurnFor(slug);
+    if (rec?.entryId && rec.phone) setRestored({ entryId: rec.entryId, phone: rec.phone });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug]);
 
   function askLocation(thenSubmit: boolean) {
     if (typeof navigator === "undefined" || !navigator.geolocation) { setGeo("unavailable"); return; }
@@ -224,13 +231,21 @@ export function WaitlistForm({
 
   useEffect(() => {
     if (state.ok) {
-      recordTurn({ slug, name: restaurantName ?? slug, logo: restaurantLogo ?? null, at: new Date().toISOString() });
+      recordTurn({
+        slug, name: restaurantName ?? slug, logo: restaurantLogo ?? null,
+        at: new Date().toISOString(), entryId: state.entryId, phone: state.phone,
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.ok]);
 
   if (state.ok) {
     return <QueueTicket position={state.position ?? 0} total={state.total ?? 0} entryId={state.entryId} phone={state.phone} restaurantName={restaurantName} />;
+  }
+
+  // تذكرة محفوظة من اليوم نفسه → نعرضها مباشرة (الاستطلاع يتحقق أنها ما زالت حيّة)
+  if (restored) {
+    return <QueueTicket position={0} total={0} entryId={restored.entryId} phone={restored.phone} restaurantName={restaurantName} onGone={() => setRestored(null)} />;
   }
 
   // خطوة اختيار الفرع (لمّا فيه أكثر من فرع ولم يُختَر بعد) — كل فرع بطاقة مستقلة
@@ -360,6 +375,12 @@ export function WaitlistForm({
               {tr(lang, "السماح بالموقع", "Allow location")}
             </button>
           )}
+          <button type="button"
+            onClick={() => { setGeo("idle"); setCoords(null); formRef.current?.requestSubmit(); }}
+            className="mt-2 w-full rounded-xl px-3 py-2.5 text-sm font-extrabold"
+            style={{ background: "var(--surface-2)", color: "var(--brand-d)", border: "1px solid rgba(102,28,10,0.16)" }}>
+            {tr(lang, "متابعة بدون الموقع", "Continue without location")}
+          </button>
         </div>
       )}
 
@@ -367,8 +388,9 @@ export function WaitlistForm({
         type="submit"
         disabled={pending || geo === "asking" || !branchId || !/^05\d{8}$/.test(phone)}
         onClick={(e) => {
-          // أول ضغطة بلا موقع → يظهر طلب الإذن، ثم يُرسَل تلقائيًّا بعد السماح
-          if (!coords) { e.preventDefault(); askLocation(true); }
+          // أول ضغطة بلا موقع → يظهر طلب الإذن، ثم يُرسَل تلقائيًّا بعد السماح.
+          // بعد رفضٍ أو تعذّر لا نعترض — «متابعة بدون الموقع» متاحة والخادم لا يشترطه.
+          if (!coords && geo === "idle") { e.preventDefault(); askLocation(true); }
         }}
         className="rq-btn"
       >
