@@ -16,6 +16,7 @@ type Branch = {
   inside: number;
   outside: number;
   accepts: boolean;
+  photo: string | null;
 };
 
 function ZoneStat({ label, count }: { label: string; count: number }) {
@@ -41,44 +42,138 @@ function ZoneStat({ label, count }: { label: string; count: number }) {
   );
 }
 
-/** بطاقة فرع مستقلة بحالتها (نمط ريكيو) — كل فرع قسم منفصل تمامًا */
-function BranchCard({ b, onSelect }: { b: Branch; onSelect: () => void }) {
+/** بطاقة فرع كصورة كبيرة داخل شريط أفقي منزلق (نمط ريكيو) — بهويتنا. */
+function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; onSelect: () => void }) {
   const lang = useLang();
+  const art = b.photo ?? logo ?? null;
+  const initial = (b.name || "م").trim().charAt(0);
+
   return (
-    <button type="button" onClick={onSelect} className="reveal rq-card block w-full overflow-hidden p-3.5 text-right transition active:scale-[0.985]">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate font-display text-[16px] font-bold text-[color:var(--ink)]">{b.name}</p>
-          {b.city && <p className="mt-0.5 truncate text-[13px] font-medium text-[color:var(--muted)]">{b.city}</p>}
-        </div>
-        <span className="shrink-0 text-[color:var(--muted)]">←</span>
+    <button
+      type="button"
+      onClick={onSelect}
+      className="w-[86%] shrink-0 snap-center overflow-hidden rounded-3xl text-right transition active:scale-[0.985] sm:w-[62%]"
+      style={{ background: "var(--surface)", border: "1px solid rgba(102,28,10,0.14)", boxShadow: "0 18px 34px -22px rgba(102,28,10,0.55)" }}
+    >
+      {/* الصورة */}
+      <span className="relative block h-52 w-full overflow-hidden">
+        {art ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={art} alt="" className="h-full w-full object-cover" />
+        ) : (
+          <span className="flex h-full w-full items-center justify-center font-serif text-5xl font-bold text-cream-100"
+                style={{ background: "linear-gradient(155deg,#a8371a,#661c0a)" }}>
+            {initial}
+          </span>
+        )}
+        {/* تدرّج بالهوية أسفل الصورة ليتضح النص */}
+        <span className="pointer-events-none absolute inset-x-0 bottom-0 block h-24"
+              style={{ background: "linear-gradient(to top, rgba(58,18,6,0.86), transparent)" }} />
+        <span className="absolute bottom-3 start-4 end-4 block">
+          <span className="block truncate font-display text-lg font-bold text-white">{b.name}</span>
+          {b.city && <span className="block truncate text-[13px] font-bold text-white/85">{b.city}</span>}
+        </span>
+      </span>
+
+      {/* الحالة + الدعوة */}
+      <span className="block p-3.5">
+        {!b.accepts ? (
+          <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
+                style={{ background: "linear-gradient(160deg,#f3e8df,#e9d7c8)", border: "1px solid rgba(102,28,10,0.14)" }}>
+            <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "#9a6a4c" }}>
+              <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#b98a6a" }} />
+              {tr(lang, "لا يستقبل الآن", "Not accepting now")}
+            </span>
+          </span>
+        ) : b.total > 0 ? (
+          <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
+                style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)", boxShadow: "0 12px 24px -16px rgba(102,28,10,0.72)" }}>
+            <span className="flex items-center gap-2 text-sm font-extrabold text-white">
+              <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
+              {tr(lang, `${toAr(b.total)} بالطابور الآن`, `${toAr(b.total)} in queue now`)}
+            </span>
+            <span className="text-xs font-extrabold text-white/85">{tr(lang, "خذ دورك ←", "Take turn ←")}</span>
+          </span>
+        ) : (
+          <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
+                style={{ background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", border: "1px solid rgba(102,28,10,0.16)" }}>
+            <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--brand-d)" }}>
+              <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--brand-d)", boxShadow: "0 0 0 3px rgba(102,28,10,0.14)" }} />
+              {tr(lang, "متاح الآن · بدون انتظار", "Available now · No wait")}
+            </span>
+            <span className="text-xs font-extrabold" style={{ color: "var(--brand-d)" }}>{tr(lang, "خذ دورك ←", "Take turn ←")}</span>
+          </span>
+        )}
+      </span>
+    </button>
+  );
+}
+
+/** شريط الفروع الأفقي: انزلاق سلس مع التقاط (snap) ومؤشّر نقاط. */
+function BranchCarousel({ branches, logo, onSelect }: { branches: Branch[]; logo?: string | null; onSelect: (id: string) => void }) {
+  const lang = useLang();
+  const railRef = useRef<HTMLDivElement | null>(null);
+  const [active, setActive] = useState(0);
+
+  // المؤشّر يتبع التمرير (بلا مكتبات) — أقرب بطاقة لمنتصف الشريط
+  function onScroll() {
+    const rail = railRef.current;
+    if (!rail) return;
+    const mid = rail.scrollLeft + rail.clientWidth / 2;
+    let best = 0, bestD = Infinity;
+    Array.from(rail.children).forEach((el, i) => {
+      const c = el as HTMLElement;
+      const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid);
+      if (d < bestD) { bestD = d; best = i; }
+    });
+    setActive(best);
+  }
+
+  function go(i: number) {
+    const rail = railRef.current;
+    const el = rail?.children[i] as HTMLElement | undefined;
+    if (!rail || !el) return;
+    rail.scrollTo({ left: el.offsetLeft - (rail.clientWidth - el.offsetWidth) / 2, behavior: "smooth" });
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between px-1">
+        <p className="font-display text-base font-bold text-[color:var(--ink)]">{tr(lang, "اختر الفرع", "Choose a branch")}</p>
+        <span className="text-xs font-bold text-[color:var(--muted)]">
+          {tr(lang, `${toAr(branches.length)} فروع · اسحب`, `${toAr(branches.length)} branches · swipe`)}
+        </span>
       </div>
 
-      {!b.accepts ? (
-        <div className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5" style={{ background: "linear-gradient(160deg,#f3e8df,#e9d7c8)", border: "1px solid rgba(102,28,10,0.14)" }}>
-          <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "#9a6a4c" }}>
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#b98a6a" }} />
-            {tr(lang, "لا يستقبل الآن", "Not accepting now")}
-          </span>
-        </div>
-      ) : b.total > 0 ? (
-        <div className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5" style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)", boxShadow: "0 12px 24px -16px rgba(102,28,10,0.72)" }}>
-          <span className="flex items-center gap-2 text-sm font-extrabold text-white">
-            <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
-            {tr(lang, `${toAr(b.total)} بالطابور الآن`, `${toAr(b.total)} in queue now`)}
-          </span>
-          <span className="text-xs font-extrabold text-white/85">{tr(lang, "خذ دورك ←", "Take your turn ←")}</span>
-        </div>
-      ) : (
-        <div className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5" style={{ background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", border: "1px solid rgba(102,28,10,0.16)" }}>
-          <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--brand-d)" }}>
-            <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--brand-d)", boxShadow: "0 0 0 3px rgba(102,28,10,0.14)" }} />
-            {tr(lang, "متاح الآن · بدون انتظار", "Available now · No wait")}
-          </span>
-          <span className="text-xs font-extrabold" style={{ color: "var(--brand-d)" }}>{tr(lang, "خذ دورك ←", "Take your turn ←")}</span>
+      <div
+        ref={railRef}
+        onScroll={onScroll}
+        className="rq-rail -mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2"
+        style={{ scrollBehavior: "smooth" }}
+      >
+        {branches.map((b) => (
+          <BranchSlide key={b.id} b={b} logo={logo} onSelect={() => onSelect(b.id)} />
+        ))}
+      </div>
+
+      {branches.length > 1 && (
+        <div className="flex justify-center gap-1.5">
+          {branches.map((b, i) => (
+            <button
+              key={b.id}
+              type="button"
+              aria-label={b.name}
+              onClick={() => go(i)}
+              className="h-1.5 rounded-full transition-all"
+              style={{
+                width: i === active ? 18 : 6,
+                background: i === active ? "var(--brand-d)" : "rgba(102,28,10,0.22)",
+              }}
+            />
+          ))}
         </div>
       )}
-    </button>
+    </div>
   );
 }
 
@@ -89,6 +184,7 @@ export function WaitlistForm({
   defaultPhone,
   restaurantName,
   restaurantLogo,
+  logo,
 }: {
   slug: string;
   branches: Branch[];
@@ -96,6 +192,7 @@ export function WaitlistForm({
   defaultPhone: string;
   restaurantName?: string;
   restaurantLogo?: string | null;
+  logo?: string | null;
 }) {
   const lang = useLang();
   const [state, formAction, pending] = useActionState<WaitlistState, FormData>(joinWaitlistGuest, { ok: false });
@@ -139,12 +236,7 @@ export function WaitlistForm({
   // خطوة اختيار الفرع (لمّا فيه أكثر من فرع ولم يُختَر بعد) — كل فرع بطاقة مستقلة
   if (multi && !branchId) {
     return (
-      <div className="space-y-3">
-        <p className="px-1 font-display text-base font-bold text-[color:var(--ink)]">{tr(lang, "اختر الفرع", "Choose a branch")}</p>
-        {branches.map((b) => (
-          <BranchCard key={b.id} b={b} onSelect={() => setBranchId(b.id)} />
-        ))}
-      </div>
+      <BranchCarousel branches={branches} logo={logo} onSelect={setBranchId} />
     );
   }
 

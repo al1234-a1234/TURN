@@ -68,6 +68,17 @@ export default async function RestaurantPublicPage({
   } = await supabase.auth.getUser();
 
   const branchList = branches ?? [];
+
+  // صورة لكل فرع (صارت لكل فرع بعد المرحلة ٢) — يعرضها شريط الفروع
+  const { data: branchPhotos } = await supabase
+    .from("restaurant_photos")
+    .select("url, branch_id")
+    .in("branch_id", branchList.map((b) => b.id).length ? branchList.map((b) => b.id) : ["00000000-0000-0000-0000-000000000000"])
+    .order("sort_order")
+    .order("created_at");
+  const photoOf = new Map<string, string>();
+  for (const ph of branchPhotos ?? []) if (!photoOf.has(ph.branch_id)) photoOf.set(ph.branch_id, ph.url);
+
   const withCounts = await Promise.all(
     branchList.map(async (b) => {
       const { data } = await supabase.rpc("waitlist_counts", { b_id: b.id });
@@ -81,6 +92,7 @@ export default async function RestaurantPublicPage({
         inside: c?.inside ?? 0,
         outside: c?.outside ?? 0,
         accepts: (bs as { accepts_waitlist?: boolean } | null)?.accepts_waitlist ?? true,
+        photo: photoOf.get(b.id) ?? null,
       };
     }),
   );
@@ -122,7 +134,7 @@ export default async function RestaurantPublicPage({
   ) : activeEntry ? (
     <QueueTicket position={activeEntry.position ?? 0} total={total} entryId={activeEntry.id} phone={activeEntry.phone} restaurantName={restaurant.name} />
   ) : (
-    <WaitlistForm slug={slug} branches={withCounts} defaultName={defaultName} defaultPhone={defaultPhone} restaurantName={restaurant.name} restaurantLogo={restaurant.logo_url} />
+    <WaitlistForm slug={slug} branches={withCounts} logo={restaurant.logo_url} defaultName={defaultName} defaultPhone={defaultPhone} restaurantName={restaurant.name} restaurantLogo={restaurant.logo_url} />
   );
 
   return (
