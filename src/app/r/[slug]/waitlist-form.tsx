@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { joinWaitlistGuest, type WaitlistState } from "./actions";
 import { QueueTicket } from "./queue-ticket";
 import { toAr, normalizePhone } from "@/lib/format";
@@ -105,6 +105,24 @@ export function WaitlistForm({
   const [branchId, setBranchId] = useState<string>(multi ? "" : branches[0]?.id ?? "");
   const [zone, setZone] = useState<"inside" | "outside">("inside");
   const [phone, setPhone] = useState<string>(normalizePhone(defaultPhone).slice(0, 10));
+  // بوابة الموقع: لا يُؤخذ الدور إلا بمشاركة الموقع (يمنع الحجز الوهمي من بعيد)
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [geo, setGeo] = useState<"idle" | "asking" | "denied" | "unavailable">("idle");
+  const formRef = useRef<HTMLFormElement | null>(null);
+
+  function askLocation(thenSubmit: boolean) {
+    if (typeof navigator === "undefined" || !navigator.geolocation) { setGeo("unavailable"); return; }
+    setGeo("asking");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setGeo("idle");
+        if (thenSubmit) requestAnimationFrame(() => formRef.current?.requestSubmit());
+      },
+      () => setGeo("denied"),
+      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 60_000 },
+    );
+  }
   const branch = useMemo(() => branches.find((b) => b.id === branchId), [branchId, branches]);
 
   useEffect(() => {
@@ -152,8 +170,10 @@ export function WaitlistForm({
   const outside = branch?.outside ?? 0;
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form ref={formRef} action={formAction} className="space-y-4">
       <input type="hidden" name="slug" value={slug} />
+      <input type="hidden" name="lat" value={coords?.lat ?? ""} />
+      <input type="hidden" name="lng" value={coords?.lng ?? ""} />
       <input type="hidden" name="branch_id" value={branchId} />
       <input type="hidden" name="zone" value={zone} />
 
@@ -229,8 +249,42 @@ export function WaitlistForm({
         </p>
       )}
 
-      <button type="submit" disabled={pending || !branchId || !/^05\d{8}$/.test(phone)} className="rq-btn">
-        {pending ? tr(lang, "جارٍ التسجيل…", "Registering…") : tr(lang, "خذ دورك الآن", "Take your turn now")}
+      {/* حالة الموقع — تظهر فقط عند الرفض أو التعذّر */}
+      {(geo === "denied" || geo === "unavailable") && (
+        <div className="rounded-2xl p-4" style={{ background: "linear-gradient(160deg,#f3e8df,#e9d7c8)", border: "1px solid rgba(102,28,10,0.16)" }}>
+          <p className="text-sm font-extrabold" style={{ color: "var(--brand-d)" }}>
+            {geo === "denied"
+              ? tr(lang, "نحتاج موقعك لإكمال أخذ الدور", "We need your location to take a turn")
+              : tr(lang, "جهازك لا يدعم تحديد الموقع", "Your device doesn't support location")}
+          </p>
+          <p className="mt-1 text-xs font-medium text-[color:var(--muted)]">
+            {tr(lang,
+              "الموقع يؤكّد للمطعم أنك قريب فعلًا. نحسب المسافة فقط ولا نحفظ موقعك.",
+              "Location confirms to the restaurant that you're nearby. We store only the distance, never your location.")}
+          </p>
+          {geo === "denied" && (
+            <button type="button" onClick={() => askLocation(false)} className="mt-3 w-full rounded-xl px-3 py-2.5 text-sm font-extrabold text-white"
+              style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)" }}>
+              {tr(lang, "السماح بالموقع", "Allow location")}
+            </button>
+          )}
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={pending || geo === "asking" || !branchId || !/^05\d{8}$/.test(phone)}
+        onClick={(e) => {
+          // أول ضغطة بلا موقع → يظهر طلب الإذن، ثم يُرسَل تلقائيًّا بعد السماح
+          if (!coords) { e.preventDefault(); askLocation(true); }
+        }}
+        className="rq-btn"
+      >
+        {geo === "asking"
+          ? tr(lang, "جارٍ تحديد موقعك…", "Getting your location…")
+          : pending
+            ? tr(lang, "جارٍ التسجيل…", "Registering…")
+            : tr(lang, "خذ دورك الآن", "Take your turn now")}
       </button>
     </form>
   );

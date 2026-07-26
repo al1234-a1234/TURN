@@ -51,6 +51,13 @@ export async function joinWaitlistGuest(
 
   const row = Array.isArray(data) ? data[0] : data;
 
+  // المسافة عن الفرع: تُحسب على الخادم من إحداثيات أُرسلت مرّة، ولا تُخزَّن الإحداثيات
+  const lat = Number(formData.get("lat"));
+  const lng = Number(formData.get("lng"));
+  if (row?.entry_id && Number.isFinite(lat) && Number.isFinite(lng)) {
+    await supabase.rpc("set_entry_distance", { p_entry_id: row.entry_id, p_lat: lat, p_lng: lng });
+  }
+
   // العدد الحالي في الطابور (لحساب حلقة التقدّم)
   const { data: counts } = await supabase.rpc("waitlist_counts", { b_id: branchId });
   const c = Array.isArray(counts) ? counts[0] : counts;

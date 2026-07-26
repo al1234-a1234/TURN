@@ -1206,6 +1206,7 @@ export type Database = {
           branch_id: string
           confirmed_at: string | null
           customer_id: string
+          distance_m: number | null
           id: string
           joined_at: string
           notes: string | null
@@ -1223,6 +1224,7 @@ export type Database = {
           branch_id: string
           confirmed_at?: string | null
           customer_id: string
+          distance_m?: number | null
           id?: string
           joined_at?: string
           notes?: string | null
@@ -1240,6 +1242,7 @@ export type Database = {
           branch_id?: string
           confirmed_at?: string | null
           customer_id?: string
+          distance_m?: number | null
           id?: string
           joined_at?: string
           notes?: string | null
@@ -1496,6 +1499,10 @@ export type Database = {
       }
       confirm_attendance: {
         Args: { p_entry_id: string }
+        Returns: boolean
+      }
+      set_entry_distance: {
+        Args: { p_entry_id: string; p_lat: number; p_lng: number }
         Returns: boolean
       }
       cancel_by_ticket: {

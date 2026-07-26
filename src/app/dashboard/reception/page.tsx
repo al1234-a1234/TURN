@@ -45,7 +45,7 @@ export default async function ReceptionPage({
     ? await Promise.all([
         supabase
           .from("waitlist_entries")
-          .select("id, customer_id, position, party_size, zone, status, joined_at, confirmed_at, customers(full_name, phone)")
+          .select("id, customer_id, position, party_size, zone, status, joined_at, confirmed_at, distance_m, customers(full_name, phone)")
           .eq("branch_id", activeBranch.id)
           .in("status", ["waiting", "notified"])
           .order("position", { nullsFirst: false }),
@@ -82,6 +82,14 @@ export default async function ReceptionPage({
           <p className="mt-0.5 text-xs text-[color:var(--muted)]">
             {toAr(q.party_size)} {tr(lang, "أشخاص", "guests")} · ⏱ {toAr(waited)} {tr(lang, "دقيقة", "min")}{q.status === "notified" ? tr(lang, " · أُشعِر ✓", " · Notified ✓") : ""}
           </p>
+          {q.distance_m != null && (
+            <span className="mt-1 me-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
+              style={{ background: "var(--surface-2)", border: "1px solid rgba(102,28,10,0.14)", color: q.distance_m > 5000 ? "#9a6a4c" : "var(--brand-d)" }}>
+              📍 {tr(lang,
+                    q.distance_m >= 1000 ? `يبعد ${(q.distance_m / 1000).toFixed(1)} كم` : `يبعد ${q.distance_m} م`,
+                    q.distance_m >= 1000 ? `${(q.distance_m / 1000).toFixed(1)} km away` : `${q.distance_m} m away`)}
+            </span>
+          )}
           {q.confirmed_at && (
             <span className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
               style={{ background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", border: "1px solid rgba(102,28,10,0.16)", color: "var(--brand-d)" }}>
