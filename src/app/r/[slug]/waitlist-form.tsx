@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useMemo, useState } from "react";
 import { joinWaitlistGuest, type WaitlistState } from "./actions";
 import { QueueTicket } from "./queue-ticket";
-import { toAr } from "@/lib/format";
+import { toAr, normalizePhone } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 import { recordTurn } from "@/lib/local-store";
@@ -104,6 +104,7 @@ export function WaitlistForm({
   // فرع واحد → مختار تلقائيًّا؛ عدّة فروع → يختار العميل من البطاقات أولًا
   const [branchId, setBranchId] = useState<string>(multi ? "" : branches[0]?.id ?? "");
   const [zone, setZone] = useState<"inside" | "outside">("inside");
+  const [phone, setPhone] = useState<string>(normalizePhone(defaultPhone).slice(0, 10));
   const branch = useMemo(() => branches.find((b) => b.id === branchId), [branchId, branches]);
 
   useEffect(() => {
@@ -206,7 +207,19 @@ export function WaitlistForm({
         </div>
         <div>
           <label htmlFor="phone" className="field-label">{tr(lang, "رقم الجوّال", "Mobile number")}</label>
-          <input id="phone" name="phone" required dir="ltr" inputMode="tel" defaultValue={defaultPhone} className="field-input text-left" placeholder="05xxxxxxxx" />
+          {/* الأرقام تُطبَّع أثناء الكتابة: عربي/فارسي → لاتيني، وتُقصّ على ١٠ خانات.
+              بدون هذا كانت لوحة المفاتيح العربية تحفظ أرقامًا مشوّهة فيتشظّى العميل. */}
+          <input
+            id="phone" name="phone" required dir="ltr" inputMode="numeric" maxLength={10}
+            value={phone}
+            onChange={(e) => setPhone(normalizePhone(e.target.value).slice(0, 10))}
+            className="field-input text-left" placeholder="05xxxxxxxx"
+          />
+          {phone.length > 0 && !/^05\d{8}$/.test(phone) && (
+            <p className="mt-1.5 text-xs font-bold" style={{ color: "#c0564a" }}>
+              {tr(lang, "الرقم يبدأ بـ 05 ويتكوّن من 10 خانات.", "Number must start with 05 and be 10 digits.")}
+            </p>
+          )}
         </div>
       </div>
 
@@ -216,7 +229,7 @@ export function WaitlistForm({
         </p>
       )}
 
-      <button type="submit" disabled={pending || !branchId} className="rq-btn">
+      <button type="submit" disabled={pending || !branchId || !/^05\d{8}$/.test(phone)} className="rq-btn">
         {pending ? tr(lang, "جارٍ التسجيل…", "Registering…") : tr(lang, "خذ دورك الآن", "Take your turn now")}
       </button>
     </form>

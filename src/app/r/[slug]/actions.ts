@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { normalizePhone } from "@/lib/format";
+import { saudiMobile } from "@/lib/format";
 import { pushRankUpdatesAfterSelfCancel } from "@/lib/push";
 
 export type WaitlistState = {
@@ -24,14 +24,14 @@ export async function joinWaitlistGuest(
   const slug = String(formData.get("slug") ?? "");
   const branchId = String(formData.get("branch_id") ?? "");
   const fullName = String(formData.get("full_name") ?? "").trim();
-  // تطبيع الرقم (عربي/فارسي → لاتيني، وإزالة الفواصل) قبل أي حفظ أو مطابقة
-  const phone = normalizePhone(String(formData.get("phone") ?? ""));
+  // تطبيع + تحقّق: يمنع حفظ عميل برقم مشوّه (كان يتشظّى العميل الواحد لعملاء)
+  const phone = saudiMobile(String(formData.get("phone") ?? ""));
   const zoneRaw = String(formData.get("zone") ?? "inside");
   const zone = zoneRaw === "outside" ? "outside" : "inside";
 
   if (!branchId) return { ok: false, error: "اختر الفرع." };
   if (!fullName) return { ok: false, error: "اكتب اسمك." };
-  if (!phone) return { ok: false, error: "اكتب رقم جوّالك." };
+  if (!phone) return { ok: false, error: "رقم الجوّال غير صحيح — يبدأ بـ 05 ويتكوّن من 10 خانات." };
 
   const { data, error } = await supabase.rpc("join_waitlist_guest", {
     p_branch_id: branchId,

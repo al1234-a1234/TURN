@@ -33,3 +33,16 @@ export function normalizePhone(input: string): string {
     .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
     .replace(/\D/g, "");
 }
+
+/**
+ * يحوّل أي صيغة سعودية إلى الصيغة المعيارية 05XXXXXXXX (١٠ خانات).
+ * يقبل: 0501234567 · 501234567 · 966501234567 · +966501234567 · 00966...
+ * يعيد "" إن كان الرقم غير صالح — فلا يُحفظ عميل برقم مشوّه.
+ */
+export function saudiMobile(input: string): string {
+  let d = normalizePhone(input);
+  if (d.startsWith("00")) d = d.slice(2);
+  if (d.startsWith("966")) d = d.slice(3);
+  if (d.startsWith("5") && d.length === 9) d = "0" + d;
+  return /^05\d{8}$/.test(d) ? d : "";
+}
