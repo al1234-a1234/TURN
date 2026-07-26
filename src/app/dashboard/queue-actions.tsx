@@ -38,8 +38,8 @@ export function QueueActions({
     const msg =
       `مرحبًا ${name} 👋\n` +
       `قرب دورك في ${restaurant} — رقمك ${position ?? ""}.\n\n` +
-      `أكّد حضورك من هنا 👇\n${ticket}\n\n` +
-      `لو تأخّرت أو غيّرت رأيك، أخبرنا لطفًا 🌿`;
+      `أكّد حضورك أو ألغِ دورك بضغطة 👇\n${ticket}\n\n` +
+      `ما يحتاج ترد علينا — بس اختر من الرابط 🌿`;
     const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
     start(async () => {
       await updateWaitlistStatus(id, "notified");

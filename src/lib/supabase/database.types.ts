@@ -1498,6 +1498,21 @@ export type Database = {
         Args: { p_entry_id: string }
         Returns: boolean
       }
+      cancel_by_ticket: {
+        Args: { p_entry_id: string }
+        Returns: boolean
+      }
+      queue_push_targets_after_ticket_cancel: {
+        Args: { p_entry_id: string }
+        Returns: {
+          endpoint: string
+          p256dh: string
+          auth: string
+          rank: number
+          venue: string
+          slug: string
+        }[]
+      }
       queue_push_targets_after_cancel: {
         Args: { p_entry_id: string; p_phone: string }
         Returns: {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useTransition } from "react";
-import { confirmAttendance } from "./actions";
+import { confirmAttendance, cancelByTicket } from "./actions";
 import { createClient } from "@/lib/supabase/client";
 import { toAr, peopleAhead } from "@/lib/format";
 import { tr } from "@/lib/i18n";
@@ -29,6 +29,7 @@ type Row = {
 export function TicketView({ entryId, initial }: { entryId: string; initial: Row }) {
   const lang = useLang();
   const [row, setRow] = useState<Row>(initial);
+  const [askCancel, setAskCancel] = useState(false);
   const [pending, start] = useTransition();
 
   const poll = useCallback(async () => {
@@ -90,24 +91,63 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
         <p className="mt-1 text-sm text-[color:var(--muted)]">{row.restaurant}</p>
       </div>
 
-      {/* تأكيد الحضور — جوهر الرسالة التي أرسلها الاستقبال */}
-      {row.confirmed ? (
-        <p className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-extrabold"
-           style={{ background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", border: "1px solid rgba(102,28,10,0.16)", color: "var(--brand-d)" }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          {tr(lang, "أكّدت حضورك — ننتظرك", "Attendance confirmed — see you soon")}
-        </p>
-      ) : (
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() => start(async () => { if (await confirmAttendance(entryId)) setRow((r) => ({ ...r, confirmed: true })); })}
-          className="w-full rounded-2xl px-4 py-3.5 text-sm font-extrabold text-white transition active:scale-[0.985] disabled:opacity-60"
-          style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)", boxShadow: "0 14px 26px -16px rgba(102,28,10,0.72)" }}
-        >
-          {pending ? tr(lang, "جارٍ التأكيد…", "Confirming…") : tr(lang, "أكّد حضوري ✓", "Confirm I'm coming ✓")}
-        </button>
-      )}
+      {/* خياران بضغطة — يردّ العميل بلا كتابة في واتساب */}
+      <div className="w-full space-y-2.5">
+        {row.confirmed ? (
+          <p className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-extrabold"
+             style={{ background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", border: "1px solid rgba(102,28,10,0.16)", color: "var(--brand-d)" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            {tr(lang, "أكّدت حضورك — ننتظرك", "Attendance confirmed — see you soon")}
+          </p>
+        ) : (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => start(async () => { if (await confirmAttendance(entryId)) setRow((r) => ({ ...r, confirmed: true })); })}
+            className="w-full rounded-2xl px-4 py-3.5 text-sm font-extrabold text-white transition active:scale-[0.985] disabled:opacity-60"
+            style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)", boxShadow: "0 14px 26px -16px rgba(102,28,10,0.72)" }}
+          >
+            {pending ? tr(lang, "جارٍ التأكيد…", "Confirming…") : tr(lang, "أكّد حضوري ✓", "Confirm I'm coming ✓")}
+          </button>
+        )}
+
+        {/* الإلغاء بخطوتين — كي لا تُلغى بلمسة عابرة */}
+        {!askCancel ? (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => setAskCancel(true)}
+            className="w-full rounded-2xl border px-4 py-3 text-sm font-bold text-[color:var(--muted)] transition disabled:opacity-60"
+            style={{ borderColor: "rgba(102,28,10,0.20)" }}
+          >
+            {tr(lang, "ألغِ دوري", "Cancel my turn")}
+          </button>
+        ) : (
+          <div className="rounded-2xl p-3" style={{ background: "var(--surface-2)", border: "1px solid rgba(102,28,10,0.16)" }}>
+            <p className="mb-2.5 text-sm font-bold text-[color:var(--ink)]">{tr(lang, "متأكّد أنك تريد إلغاء دورك؟", "Cancel your turn?")}</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => start(async () => { if (await cancelByTicket(entryId)) setRow((r) => ({ ...r, status: "cancelled" })); })}
+                className="rounded-xl px-3 py-2.5 text-sm font-extrabold text-white transition active:scale-[0.97] disabled:opacity-60"
+                style={{ background: "linear-gradient(150deg,#c0564a,#8d2f22)" }}
+              >
+                {pending ? tr(lang, "جارٍ…", "Working…") : tr(lang, "نعم، ألغِ", "Yes, cancel")}
+              </button>
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => setAskCancel(false)}
+                className="rounded-xl border px-3 py-2.5 text-sm font-bold text-[color:var(--ink)] transition disabled:opacity-60"
+                style={{ borderColor: "rgba(102,28,10,0.20)", background: "#fff" }}
+              >
+                {tr(lang, "تراجع", "Keep it")}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

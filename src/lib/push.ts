@@ -125,6 +125,34 @@ function rankPayload(rank: number, venue: string, url: string): PushPayload {
   };
 }
 
+/** إشعار من تقدّم دوره بعد إلغاءٍ من رابط التذكرة (بلا رقم جوّال). */
+export async function pushRankUpdatesAfterTicketCancel(
+  supabase: SupabaseClient<Database>,
+  entryId: string,
+): Promise<number> {
+  if (!pushConfigured) { warnUnconfigured("ticket-cancel"); return 0; }
+
+  try {
+    const { data: targets, error } = await supabase.rpc(
+      "queue_push_targets_after_ticket_cancel",
+      { p_entry_id: entryId },
+    );
+    if (error || !targets?.length) return 0;
+
+    let sent = 0;
+    await Promise.all(
+      targets.map(async (t) => {
+        const url = t.slug ? `/r/${t.slug}` : "/";
+        const body = JSON.stringify(rankPayload(t.rank, t.venue ?? "المطعم", url));
+        if (await sendOne(supabase, t, body)) sent += 1;
+      }),
+    );
+    return sent;
+  } catch {
+    return 0;
+  }
+}
+
 /**
  * إشعار من تقدّم دوره بعد أن ألغى عميلٌ **دورَه بنفسه** من التذكرة.
  * كان هذا المسار صامتًا: الإشعار التلقائي كان معلّقًا على إجراءات الاستقبال فقط.
