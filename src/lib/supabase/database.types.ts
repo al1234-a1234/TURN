@@ -1447,6 +1447,28 @@ export type Database = {
           total: number
         }[]
       }
+      save_push_subscription: {
+        Args: {
+          p_entry_id: string
+          p_phone: string
+          p_endpoint: string
+          p_p256dh: string
+          p_auth: string
+        }
+        Returns: boolean
+      }
+      push_subs_for_entry: {
+        Args: { p_entry_id: string }
+        Returns: {
+          endpoint: string
+          p256dh: string
+          auth: string
+        }[]
+      }
+      delete_push_subscription: {
+        Args: { p_endpoint: string }
+        Returns: undefined
+      }
     }
     Enums: {
       notification_channel: "sms" | "whatsapp" | "push" | "email"

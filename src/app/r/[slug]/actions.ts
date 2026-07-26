@@ -62,6 +62,24 @@ export async function joinWaitlistGuest(
   };
 }
 
+/** حفظ اشتراك إشعارات الدفع للعميل (يُتحقّق من الصف + الرقم داخل الدالة). */
+export async function savePushSubscription(
+  entryId: string,
+  phone: string,
+  sub: { endpoint: string; p256dh: string; auth: string },
+): Promise<boolean> {
+  if (!entryId || !phone || !sub?.endpoint) return false;
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("save_push_subscription", {
+    p_entry_id: entryId,
+    p_phone: phone,
+    p_endpoint: sub.endpoint,
+    p_p256dh: sub.p256dh,
+    p_auth: sub.auth,
+  });
+  return !error && data === true;
+}
+
 export async function cancelWaitlistGuest(entryId: string, phone: string): Promise<boolean> {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("cancel_waitlist_guest", {

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { cancelWaitlistGuest } from "./actions";
+import { cancelWaitlistGuest, savePushSubscription } from "./actions";
 import { createClient } from "@/lib/supabase/client";
+import { pushSupport, subscribeToPush } from "@/lib/push-client";
 import { toAr, peopleAhead } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
@@ -56,14 +57,33 @@ export function QueueTicket({
     }
   }
 
-  // اطلب إذن الإشعار مرة واحدة بعد أخذ الدور (إيماءة المستخدم)
+  // حالة إشعارات الدفع: تُفعَّل بضغطة من العميل (المتصفّحات تشترط إيماءة)
+  const [pushOn, setPushOn] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [canPush, setCanPush] = useState(false);
+
   useEffect(() => {
-    try {
-      if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
-        void Notification.requestPermission();
-      }
-    } catch { /* تجاهُل */ }
+    if (pushSupport() !== "ready") return;
+    setCanPush(true);
+    // مُفعّل مسبقًا على هذا الجهاز؟
+    if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+      navigator.serviceWorker?.getRegistration().then(async (reg) => {
+        const sub = await reg?.pushManager.getSubscription();
+        if (sub) setPushOn(true);
+      }).catch(() => {});
+    }
   }, []);
+
+  async function enablePush() {
+    if (!entryId || !phone) return;
+    setPushBusy(true);
+    const sub = await subscribeToPush();
+    if (sub) {
+      const ok = await savePushSubscription(entryId, phone, sub);
+      setPushOn(ok);
+    }
+    setPushBusy(false);
+  }
 
   // استطلاع خفيف بلا Realtime: setTimeout متكيّف + إيقاف عند الخمول + تنظيف + تباعد عند الفشل
   useEffect(() => {
@@ -215,6 +235,31 @@ export function QueueTicket({
           <p className="mt-1 text-xs text-[color:var(--muted)]">{tr(lang, "إجمالي الطابور", "Total in queue")}</p>
         </div>
       </div>
+
+      {/* تنبيه الدور — يصل والتطبيق مُغلق */}
+      {entryId && phone && canPush && (
+        pushOn ? (
+          <p className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold"
+             style={{ background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", border: "1px solid rgba(102,28,10,0.16)", color: "var(--brand-d)" }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            {tr(lang, "بننبّهك على جوّالك قبل دورك", "We'll alert your phone before your turn")}
+          </p>
+        ) : (
+          <button
+            type="button"
+            onClick={enablePush}
+            disabled={pushBusy}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-extrabold text-white transition active:scale-[0.985] disabled:opacity-60"
+            style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)", boxShadow: "0 14px 26px -16px rgba(102,28,10,0.72)" }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+              <path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M13.7 21a2 2 0 0 1-3.4 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            {pushBusy ? tr(lang, "جارٍ التفعيل…", "Enabling…") : tr(lang, "نبّهني قبل دوري", "Alert me before my turn")}
+          </button>
+        )
+      )}
 
       {entryId && phone && (
         <button
