@@ -45,7 +45,7 @@ export default async function ReceptionPage({
     ? await Promise.all([
         supabase
           .from("waitlist_entries")
-          .select("id, customer_id, position, party_size, zone, status, joined_at, customers(full_name, phone)")
+          .select("id, customer_id, position, party_size, zone, status, joined_at, confirmed_at, customers(full_name, phone)")
           .eq("branch_id", activeBranch.id)
           .in("status", ["waiting", "notified"])
           .order("position", { nullsFirst: false }),
@@ -82,6 +82,13 @@ export default async function ReceptionPage({
           <p className="mt-0.5 text-xs text-[color:var(--muted)]">
             {toAr(q.party_size)} {tr(lang, "أشخاص", "guests")} · ⏱ {toAr(waited)} {tr(lang, "دقيقة", "min")}{q.status === "notified" ? tr(lang, " · أُشعِر ✓", " · Notified ✓") : ""}
           </p>
+          {q.confirmed_at && (
+            <span className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
+              style={{ background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", border: "1px solid rgba(102,28,10,0.16)", color: "var(--brand-d)" }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              {tr(lang, "أكّد حضوره", "Confirmed")}
+            </span>
+          )}
         </div>
         <QueueActions id={q.id} name={cust?.full_name ?? tr(lang, "عميلنا", "our guest")} phone={cust?.phone ?? ""} restaurant={restaurant.name} position={rank} />
       </li>

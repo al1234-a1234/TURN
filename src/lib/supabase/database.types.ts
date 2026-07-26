@@ -1204,6 +1204,7 @@ export type Database = {
       waitlist_entries: {
         Row: {
           branch_id: string
+          confirmed_at: string | null
           customer_id: string
           id: string
           joined_at: string
@@ -1220,6 +1221,7 @@ export type Database = {
         }
         Insert: {
           branch_id: string
+          confirmed_at?: string | null
           customer_id: string
           id?: string
           joined_at?: string
@@ -1236,6 +1238,7 @@ export type Database = {
         }
         Update: {
           branch_id?: string
+          confirmed_at?: string | null
           customer_id?: string
           id?: string
           joined_at?: string
@@ -1478,6 +1481,22 @@ export type Database = {
           p256dh: string
           auth: string
         }[]
+      }
+      waitlist_ticket_by_id: {
+        Args: { p_entry_id: string }
+        Returns: {
+          status: string
+          position: number
+          ahead: number
+          total: number
+          confirmed: boolean
+          restaurant: string
+          slug: string
+        }[]
+      }
+      confirm_attendance: {
+        Args: { p_entry_id: string }
+        Returns: boolean
       }
       queue_push_targets_after_cancel: {
         Args: { p_entry_id: string; p_phone: string }

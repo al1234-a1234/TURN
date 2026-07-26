@@ -32,8 +32,14 @@ export function QueueActions({
 
   function remind() {
     const num = waNumber(phone);
+    // رابط التذكرة: يفتحها العميل فيؤكّد حضوره بضغطة، فيظهر ✓ للاستقبال
+    const ticket = typeof window !== "undefined" ? `${window.location.origin}/t/${id}` : "";
     // رسالة العميل تبقى عربية دائمًا (العميل عربي)، بصرف النظر عن لغة لوحة الموظف
-    const msg = `مرحبًا ${name} 👋\nدورك رقم ${position ?? ""} في ${restaurant} أوشك أن يحين. نتشرّف بك — تفضّل للحضور 🌿`;
+    const msg =
+      `مرحبًا ${name} 👋\n` +
+      `قرب دورك في ${restaurant} — رقمك ${position ?? ""}.\n\n` +
+      `أكّد حضورك من هنا 👇\n${ticket}\n\n` +
+      `لو تأخّرت أو غيّرت رأيك، أخبرنا لطفًا 🌿`;
     const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
     start(async () => {
       await updateWaitlistStatus(id, "notified");
