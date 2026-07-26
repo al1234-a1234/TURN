@@ -1,5 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
-import { getDiscovery } from "@/lib/supabase/public-cache";
+import { getDiscovery, getHomeQueueCounts } from "@/lib/supabase/public-cache";
 import { CustomerShell } from "@/components/customer-shell";
 import { DiscoveryList } from "./discovery-list";
 import { getLang } from "@/lib/i18n-server";
@@ -9,17 +8,16 @@ export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const lang = await getLang();
-  const supabase = await createClient();
 
   // قائمة الاكتشاف + التقييمات + العروض الحيّة — مكاشة (٣٠ث) لا تضرب القاعدة في كل زيارة
   const { list, ratings, offers } = await getDiscovery();
   const ratingAgg = new Map(Object.entries(ratings));
 
-  // عدّاد الطوابير حيّ (خارج الكاش) ومحصور بفروع الصفحة فقط
+  // عدّادات الطوابير: كاش قصير (١٠ث) — الرئيسية أعلى الصفحات زيارةً، وبدونه
+  // كل زيارة تضرب القاعدة باستدعاء حيّ. ١٠ثوانٍ تقادمٍ مقبولة لعدّادٍ استكشافي؛
+  // الأرقام الدقيقة لحظيًّا تبقى في صفحة المطعم والتذكرة.
   const pageBranchIds = list.flatMap((r) => r.branches.map((b) => b.id));
-  const { data: countsData } = pageBranchIds.length
-    ? await supabase.rpc("waitlist_counts_for", { p_branch_ids: pageBranchIds })
-    : { data: [] as { branch_id: string; total: number; inside: number; outside: number }[] };
+  const countsData = await getHomeQueueCounts(pageBranchIds);
   const counts = new Map(
     (countsData ?? []).map((c) => [c.branch_id, { total: c.total, inside: c.inside, outside: c.outside }]),
   );

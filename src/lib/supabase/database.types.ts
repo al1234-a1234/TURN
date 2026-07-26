@@ -1532,6 +1532,10 @@ export type Database = {
         Args: { p_branch_id: string }
         Returns: { hour_riyadh: number; joins: number }[]
       }
+      queue_version: {
+        Args: { p_branch_id: string }
+        Returns: string
+      }
       tv_queue: {
         Args: { p_branch_id: string }
         Returns: {

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import type { TablesUpdate } from "@/lib/supabase/database.types";
 import { requirePerm, callerBranchIds } from "./guard";
 import { pushToWaitlistEntry, pushQueueRankUpdates } from "@/lib/push";
@@ -34,8 +35,9 @@ export async function updateWaitlistStatus(id: string, action: Action) {
     .eq("id", id)
     .in("branch_id", branchIds);
 
-  // إشعارات الدفع — تصل والتطبيق مُغلق. لا تُفشل الإجراء إن تعذّر الإرسال.
-  if (!error) {
+  // إشعارات الدفع — تُرسل بعد ردّ الاستجابة (after) كي لا يعلّق زر الإجلاس:
+  // إجلاس في طابور ٥٠ شخصًا = ٥٠ استدعاء HTTPS، ولا يصح أن ينتظرها الموظّف.
+  if (!error) after(async () => {
     const { data: rest } = await caller.supabase
       .from("restaurants")
       .select("name, slug")
@@ -59,7 +61,7 @@ export async function updateWaitlistStatus(id: string, action: Action) {
     if ((action === "seated" || action === "cancelled") && before?.branch_id) {
       await pushQueueRankUpdates(caller.supabase, before.branch_id, before.zone ?? null, venue, url);
     }
-  }
+  });
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/reception");

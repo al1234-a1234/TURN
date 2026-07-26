@@ -105,3 +105,19 @@ export const getDiscovery = unstable_cache(
   ["discovery-v3"],
   { revalidate: 30, tags: ["discovery"] },
 );
+
+
+/**
+ * عدّادات الطوابير للرئيسية — كاش ١٠ثوانٍ.
+ * الرئيسية أعلى الصفحات زيارةً؛ بدون الكاش كل زيارة تستدعي القاعدة حيًّا.
+ * تقادمُ ١٠ثوانٍ مقبول لعدّادٍ استكشافي — الدقّة اللحظية في صفحة المطعم والتذكرة.
+ */
+export const getHomeQueueCounts = unstable_cache(
+  async (ids: string[]) => {
+    if (!ids.length) return [] as { branch_id: string; total: number; inside: number; outside: number }[];
+    const { data } = await anon().rpc("waitlist_counts_for", { p_branch_ids: ids });
+    return (data ?? []) as { branch_id: string; total: number; inside: number; outside: number }[];
+  },
+  ["home-queue-counts"],
+  { revalidate: 10, tags: ["discovery"] },
+);

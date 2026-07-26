@@ -122,8 +122,8 @@ export default async function ReceptionPage({
 
   return (
     <>
-      {/* تحديث تلقائي كل 10ث (بلا Realtime، بلا إعادة تحميل كامل) */}
-      <AutoRefresh intervalMs={10_000} />
+      {/* تحديث ذكي: نبضة خفيفة، وريندر كامل فقط عند تغيّر الطابور */}
+      {activeBranch && <AutoRefresh branchId={activeBranch.id} intervalMs={10_000} />}
 
       <div className="mb-5 hidden items-center justify-between lg:flex">
         <div>

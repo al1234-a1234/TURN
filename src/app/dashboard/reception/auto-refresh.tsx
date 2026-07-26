@@ -2,25 +2,35 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 /**
- * تحديث تلقائي للوحة الاستقبال بلا Realtime وبلا إعادة تحميل كامل.
- * يستدعي router.refresh() (تحديث ناعم للـServer Component، ليس revalidatePath)
- * كل intervalMs، ويتوقف عند خمول التبويب ويستأنف عند العودة، مع تنظيف كامل.
+ * تحديث ذكي للوحة الاستقبال — حاسم للسعة عند ١٠٠٠ مطعم:
+ * كان router.refresh() يعيد ريندر SSR كاملًا (عدة استعلامات) كل ١٠ثوانٍ لكل
+ * فرع (٨٦٤ ريندر/فرع/يوم). الآن نستطلع نبضة queue_version الخفيفة المفهرسة،
+ * ولا نعيد الريندر إلا عند تغيّر فعلي في الطابور — خفض الحمل ~٩٠٪.
+ * نفس ضمانات التذكرة: إيقاف عند الخمول، تنظيف كامل، تباعد عند الفشل.
  */
-export function AutoRefresh({ intervalMs = 10_000 }: { intervalMs?: number }) {
+export function AutoRefresh({ branchId, intervalMs = 10_000 }: { branchId: string; intervalMs?: number }) {
   const router = useRouter();
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
     let fails = 0;
+    let lastVersion: string | null = null;
+    const supabase = createClient();
+
     const clear = () => { if (timer) { clearTimeout(timer); timer = null; } };
     const schedule = (ms: number) => { clear(); timer = setTimeout(tick, ms); };
 
-    const tick = () => {
+    const tick = async () => {
       if (typeof document !== "undefined" && document.hidden) return;
       try {
-        router.refresh();
+        const { data, error } = await supabase.rpc("queue_version", { p_branch_id: branchId });
+        if (error) throw error;
+        const v = String(data ?? "");
+        if (lastVersion !== null && v !== lastVersion) router.refresh();
+        lastVersion = v;
         fails = 0;
         schedule(intervalMs);
       } catch {
@@ -32,7 +42,7 @@ export function AutoRefresh({ intervalMs = 10_000 }: { intervalMs?: number }) {
     const onVis = () => {
       if (typeof document === "undefined") return;
       if (document.hidden) clear();
-      else schedule(intervalMs);
+      else { lastVersion = null; router.refresh(); schedule(intervalMs); } // عودة من الخمول → مزامنة فورية
     };
 
     document.addEventListener("visibilitychange", onVis);
@@ -42,7 +52,7 @@ export function AutoRefresh({ intervalMs = 10_000 }: { intervalMs?: number }) {
       clear();
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, [router, intervalMs]);
+  }, [router, branchId, intervalMs]);
 
   return null;
 }

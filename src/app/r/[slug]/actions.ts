@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { saudiMobile } from "@/lib/format";
 import { pushRankUpdatesAfterSelfCancel } from "@/lib/push";
@@ -99,8 +100,8 @@ export async function cancelWaitlistGuest(entryId: string, phone: string): Promi
   });
   const ok = !error && data === true;
 
-  // من كان خلف المُلغي تقدّم دوره — أشعِرهم (كان هذا المسار صامتًا)
-  if (ok) await pushRankUpdatesAfterSelfCancel(supabase, entryId, phone);
+  // من كان خلف المُلغي تقدّم دوره — أشعِرهم بعد ردّ الاستجابة (لا يعلّق زر الإلغاء)
+  if (ok) after(async () => { await pushRankUpdatesAfterSelfCancel(supabase, entryId, phone); });
 
   return ok;
 }
