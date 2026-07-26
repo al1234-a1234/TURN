@@ -62,17 +62,33 @@ export function QueueTicket({
   const [pushBusy, setPushBusy] = useState(false);
   const [canPush, setCanPush] = useState(false);
 
+  // الجهاز قد يكون مشتركًا من دورٍ سابق، لكن الاشتراك في القاعدة مربوط بعميل ذلك
+  // الدور. فنعيد ربطه بصاحب الدور الحالي دائمًا — وإلا ظهر «مفعّل» ولا يصل شيء.
   useEffect(() => {
     if (pushSupport() !== "ready") return;
     setCanPush(true);
-    // مُفعّل مسبقًا على هذا الجهاز؟
-    if (typeof Notification !== "undefined" && Notification.permission === "granted") {
-      navigator.serviceWorker?.getRegistration().then(async (reg) => {
+    if (!entryId || !phone) return;
+    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+
+    (async () => {
+      try {
+        const reg = await navigator.serviceWorker.getRegistration();
         const sub = await reg?.pushManager.getSubscription();
-        if (sub) setPushOn(true);
-      }).catch(() => {});
-    }
-  }, []);
+        if (!sub) return;
+        const j = sub.toJSON() as { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
+        if (!j.endpoint || !j.keys?.p256dh || !j.keys?.auth) return;
+        // upsert على endpoint ⇒ يُعاد توجيه الاشتراك لعميل هذا الدور
+        const ok = await savePushSubscription(entryId, phone, {
+          endpoint: j.endpoint,
+          p256dh: j.keys.p256dh,
+          auth: j.keys.auth,
+        });
+        setPushOn(ok);
+      } catch {
+        /* تجاهُل: الإشعارات لا تُعطّل الطابور */
+      }
+    })();
+  }, [entryId, phone]);
 
   async function enablePush() {
     if (!entryId || !phone) return;
