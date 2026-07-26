@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { loadOwner } from "../owner-context";
 import { PermToggle } from "./perm-toggle";
+import { StaffProvision, ResetCode } from "./staff-provision";
 import {
   staffHasPermission,
   STAFF_PERMISSIONS,
@@ -68,6 +69,9 @@ export default async function StaffPage() {
   // إدارة الفريق للمالك/المدير فقط
   if (!staffHasPermission(role, permissions, "team")) redirect("/dashboard");
 
+  const { data: branchRows } = await supabase
+    .from("branches").select("id, name").eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at");
+
   const { data } = await supabase
     .from("staff")
     .select("id, name, role, permissions, is_active")
@@ -122,13 +126,16 @@ export default async function StaffPage() {
                   ))}
                 </div>
               )}
+              {m.role !== "owner" && <ResetCode staffId={m.id} />}
             </section>
           );
         })}
 
-        <div className="rounded-2xl p-4 text-center text-sm text-[color:var(--muted)]" style={{ background: "var(--surface)", border: "1px dashed var(--border)" }}>
-          {tr(lang, "لإضافة موظف جديد تواصل مع إدارة دور — نُنشئ له حساب دخول ثم تتحكّم بصلاحياته من هنا.", "To add a new staff member, contact the Turn team — we'll create a login account, then you control their permissions here.")}
-        </div>
+        <StaffProvision restaurantId={restaurant.id} branches={branchRows ?? []} />
+
+        <p className="text-center text-xs text-[color:var(--muted)]">
+          {tr(lang, "الموظّف يدخل من صفحة الاستقبال /reception باسم المستخدم والرمز.", "Staff sign in at /reception with their username and code.")}
+        </p>
       </div>
     </>
   );
