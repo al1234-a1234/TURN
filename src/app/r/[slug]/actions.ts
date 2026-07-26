@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { normalizePhone } from "@/lib/format";
 
 export type WaitlistState = {
   ok: boolean;
@@ -22,7 +23,8 @@ export async function joinWaitlistGuest(
   const slug = String(formData.get("slug") ?? "");
   const branchId = String(formData.get("branch_id") ?? "");
   const fullName = String(formData.get("full_name") ?? "").trim();
-  const phone = String(formData.get("phone") ?? "").trim();
+  // تطبيع الرقم (عربي/فارسي → لاتيني، وإزالة الفواصل) قبل أي حفظ أو مطابقة
+  const phone = normalizePhone(String(formData.get("phone") ?? ""));
   const zoneRaw = String(formData.get("zone") ?? "inside");
   const zone = zoneRaw === "outside" ? "outside" : "inside";
 

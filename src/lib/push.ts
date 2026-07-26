@@ -20,6 +20,13 @@ if (pushConfigured) {
   webpush.setVapidDetails(SUBJECT, PUBLIC_KEY, PRIVATE_KEY);
 }
 
+/** تشخيص: يظهر في سجلّات Vercel بدل الفشل الصامت عند نقص المفاتيح. */
+function warnUnconfigured(where: string) {
+  console.warn(
+    `[push] skipped (${where}): missing ${!PUBLIC_KEY ? "NEXT_PUBLIC_VAPID_PUBLIC_KEY" : ""}${!PUBLIC_KEY && !PRIVATE_KEY ? " and " : ""}${!PRIVATE_KEY ? "VAPID_PRIVATE_KEY" : ""}. Set it in Vercel and REDEPLOY.`,
+  );
+}
+
 export type PushPayload = {
   title: string;
   body: string;
@@ -66,7 +73,7 @@ export async function pushQueueRankUpdates(
   venue: string,
   url: string,
 ): Promise<number> {
-  if (!pushConfigured) return 0;
+  if (!pushConfigured) { warnUnconfigured("rank-updates"); return 0; }
 
   try {
     const { data: targets, error } = await supabase.rpc("queue_push_targets", {
@@ -124,7 +131,7 @@ export async function pushToWaitlistEntry(
   entryId: string,
   payload: PushPayload,
 ): Promise<number> {
-  if (!pushConfigured) return 0;
+  if (!pushConfigured) { warnUnconfigured("entry"); return 0; }
 
   try {
     const { data: subs, error } = await supabase.rpc("push_subs_for_entry", {
