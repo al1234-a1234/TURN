@@ -1,16 +1,21 @@
 import { redirect } from "next/navigation";
 import { loadOwner } from "../owner-context";
+import { resolveBranchScope } from "../branch-scope";
+import { BranchPicker } from "../branch-picker";
 import { staffHasPermission } from "@/lib/features";
 import { saveLinks } from "./actions";
 import { GalleryManager } from "./gallery-manager";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 
-export default async function ContentPage() {
+export default async function ContentPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
   const lang = await getLang();
   const load = await loadOwner();
   if (load.state !== "ok") return null;
   const { supabase, restaurant, modules, role, permissions } = load.ctx;
+  // الصور صارت لكل فرع على حدة
+  const scope = await resolveBranchScope(load.ctx, (await searchParams).branch);
+  const activeBranchId = scope.active?.id ?? "";
 
   if (!staffHasPermission(role, permissions, "settings")) redirect("/dashboard");
 
@@ -24,7 +29,7 @@ export default async function ContentPage() {
   const { data: photos } = await supabase
     .from("restaurant_photos")
     .select("id, url, caption")
-    .eq("restaurant_id", restaurant.id)
+    .eq("branch_id", activeBranchId)
     .order("sort_order")
     .order("created_at");
 
@@ -62,7 +67,10 @@ export default async function ContentPage() {
       <section className="soft-card mt-6 p-5">
         <h2 className="mb-1 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "معرض الصور", "Photo gallery")}</h2>
         <p className="mb-4 text-sm text-[color:var(--muted)]">{tr(lang, "صور مطعمك (شعار، واجهة، أجواء) — يتصفّحها العميل في صفحتك.", "Your restaurant photos (logo, storefront, ambiance) — customers browse them on your page.")}</p>
-        <GalleryManager restaurantId={restaurant.id} photos={photos ?? []} />
+        {scope.multi && scope.active && (
+          <BranchPicker branches={scope.branches} activeId={scope.active.id} label={tr(lang, "صور الفرع", "Branch photos")} />
+        )}
+        <GalleryManager restaurantId={restaurant.id} branchId={activeBranchId} photos={photos ?? []} />
       </section>
     </>
   );

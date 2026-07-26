@@ -1,0 +1,3 @@
+-- public_checkin أصبحت تعرف الفرع؛ المعامل الرابع اختياري كي تبقى ملصقات QR المطبوعة (/g/{slug}) تعمل.
+-- (نص الدالة الكامل مطبَّق على الإنتاج؛ يُنسخ هنا للتوثيق ومنع الانحراف)
+-- راجع: drop function public.public_checkin(text,text,text); ثم إنشاؤها بـ p_branch_id uuid default null

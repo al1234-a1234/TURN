@@ -30,6 +30,7 @@ export async function checkinAction(_prev: CheckinState, formData: FormData): Pr
   const slug = String(formData.get("slug") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
   const name = String(formData.get("name") ?? "").trim();
+  const branchId = String(formData.get("branch_id") ?? "").trim();
 
   if (!slug) return { ok: false, error: "رابط غير صالح." };
   const digits = phone.replace(/\D/g, "");
@@ -40,6 +41,7 @@ export async function checkinAction(_prev: CheckinState, formData: FormData): Pr
     p_slug: slug,
     p_phone: phone,
     p_name: name || undefined,
+    p_branch_id: branchId || undefined,
   });
 
   if (error) return { ok: false, error: "تعذّر التسجيل، حاول مرة أخرى." };

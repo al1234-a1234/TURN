@@ -131,6 +131,7 @@ export type Database = {
       }
       checkin_settings: {
         Row: {
+          branch_id: string
           restaurant_id: string
           updated_at: string
           welcome_enabled: boolean
@@ -141,6 +142,7 @@ export type Database = {
           welcome_value_kind: string
         }
         Insert: {
+          branch_id: string
           restaurant_id: string
           updated_at?: string
           welcome_enabled?: boolean
@@ -151,6 +153,7 @@ export type Database = {
           welcome_value_kind?: string
         }
         Update: {
+          branch_id?: string
           restaurant_id?: string
           updated_at?: string
           welcome_enabled?: boolean

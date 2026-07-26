@@ -9,7 +9,7 @@ import { useLang } from "@/components/lang-provider";
 
 type Photo = { id: string; url: string; caption: string | null };
 
-export function GalleryManager({ restaurantId, photos }: { restaurantId: string; photos: Photo[] }) {
+export function GalleryManager({ restaurantId, branchId, photos }: { restaurantId: string; branchId: string; photos: Photo[] }) {
   const lang = useLang();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -46,7 +46,7 @@ export function GalleryManager({ restaurantId, photos }: { restaurantId: string;
           continue;
         }
         const { data } = supabase.storage.from("media").getPublicUrl(path);
-        await addRestaurantPhoto(data.publicUrl);
+        await addRestaurantPhoto(data.publicUrl, undefined, branchId);
       }
       router.refresh();
     } finally {

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requirePerm } from "../guard";
+import { requirePerm, resolveWriteBranch } from "../guard";
 
 // حفظ إعدادات هدية الترحيب لـ«امسح خذ هديتك»
 export async function saveCheckinSettings(formData: FormData) {
@@ -17,8 +17,12 @@ export async function saveCheckinSettings(formData: FormData) {
   const daysRaw = String(formData.get("welcome_expires_days") ?? "").trim();
   const welcome_expires_days = Math.min(365, Math.max(1, daysRaw ? Number(daysRaw) : 14));
 
+  const branchId = await resolveWriteBranch(caller, formData.get("branch_id") as string);
+  if (!branchId) return;
+
   await caller.supabase.from("checkin_settings").upsert({
     restaurant_id: caller.restaurantId,
+    branch_id: branchId,
     welcome_enabled,
     welcome_kind,
     welcome_title,

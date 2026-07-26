@@ -14,7 +14,7 @@ function giftLabel(g: Gift, lang: Lang): string {
   return g.title;
 }
 
-export function CheckinForm({ slug, lang }: { slug: string; lang: Lang }) {
+export function CheckinForm({ slug, branchId, lang }: { slug: string; branchId: string; lang: Lang }) {
   const [state, action, pending] = useActionState<CheckinState, FormData>(checkinAction, { ok: false });
   const [phone, setPhone] = useState("");
 
@@ -118,6 +118,7 @@ export function CheckinForm({ slug, lang }: { slug: string; lang: Lang }) {
   return (
     <form action={action} className="space-y-3">
       <input type="hidden" name="slug" value={slug} />
+      <input type="hidden" name="branch_id" value={branchId} />
       <div className="rq-card p-4">
         <label className="block text-[13px] font-bold text-[color:var(--ink)]">{tr(lang, "رقم جوّالك", "Your mobile")}</label>
         <input

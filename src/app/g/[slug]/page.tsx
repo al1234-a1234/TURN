@@ -6,7 +6,7 @@ import { tr } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
-export default async function CheckinPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function CheckinPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ b?: string }> }) {
   const { slug } = await params;
   const lang = await getLang();
   const supabase = await createClient();
@@ -48,7 +48,7 @@ export default async function CheckinPage({ params }: { params: Promise<{ slug: 
           </p>
         </div>
 
-        <CheckinForm slug={slug} lang={lang} />
+        <CheckinForm slug={slug} branchId={(await searchParams).b ?? ""} lang={lang} />
 
         <p className="mt-8 text-center text-[11px] font-bold tracking-widest text-[color:var(--muted)]">
           {tr(lang, "مقدّم من دور", "Powered by Turn")}

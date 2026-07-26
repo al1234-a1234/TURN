@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import QRCode from "qrcode";
 import { loadOwner } from "../owner-context";
+import { resolveBranchScope } from "../branch-scope";
+import { BranchPicker } from "../branch-picker";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { saveCheckinSettings } from "./actions";
 import { CheckinPoster } from "./checkin-poster";
@@ -11,7 +13,7 @@ import { getLang } from "@/lib/i18n-server";
 
 export const dynamic = "force-dynamic";
 
-export default async function CheckinPage() {
+export default async function CheckinPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
   const lang = await getLang();
   const load = await loadOwner();
   if (load.state !== "ok") return null;
@@ -25,7 +27,10 @@ export default async function CheckinPage() {
   const h = await headers();
   const host = h.get("host") ?? "turn-alpha.vercel.app";
   const proto = host.includes("localhost") ? "http" : "https";
-  const link = `${proto}://${host}/g/${restaurant.slug}`;
+  // الإعدادات والملصق صارا لكل فرع؛ الرابط يحمل الفرع (والملصقات القديمة بلا فرع تبقى تعمل)
+  const scope = await resolveBranchScope(load.ctx, (await searchParams).branch);
+  const activeBranchId = scope.active?.id ?? "";
+  const link = `${proto}://${host}/g/${restaurant.slug}?b=${activeBranchId}`;
   const svg = await QRCode.toString(link, {
     type: "svg",
     margin: 1,
@@ -34,9 +39,9 @@ export default async function CheckinPage() {
 
   const todayIso = new Date(new Date().toDateString()).toISOString();
   const [{ data: settings }, totalRes, todayRes, custRes] = await Promise.all([
-    supabase.from("checkin_settings").select("*").eq("restaurant_id", restaurant.id).maybeSingle(),
-    supabase.from("checkins").select("id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id),
-    supabase.from("checkins").select("id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).gte("created_at", todayIso),
+    supabase.from("checkin_settings").select("*").eq("branch_id", activeBranchId).maybeSingle(),
+    supabase.from("checkins").select("id", { count: "exact", head: true }).eq("branch_id", activeBranchId),
+    supabase.from("checkins").select("id", { count: "exact", head: true }).eq("branch_id", activeBranchId).gte("created_at", todayIso),
     supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id),
   ]);
 
@@ -51,6 +56,9 @@ export default async function CheckinPage() {
 
   return (
     <div className="space-y-6">
+      {scope.multi && scope.active && (
+        <BranchPicker branches={scope.branches} activeId={scope.active.id} label="ملصق الفرع" />
+      )}
       {/* شرح مختصر */}
       <div className="soft-card p-5">
         <h1 className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "امسح خذ هديتك", "Scan & get your gift")}</h1>
@@ -91,6 +99,7 @@ export default async function CheckinPage() {
         <h2 className="mb-1 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "هدية الترحيب", "Welcome gift")}</h2>
         <p className="mb-4 text-sm text-[color:var(--muted)]">{tr(lang, "تُمنح تلقائيًا لأول مسح لكل عميل — سبب يخليه يمسح.", "Auto-granted on each customer's first scan — the reason they scan.")}</p>
         <form action={saveCheckinSettings} className="space-y-4">
+          <input type="hidden" name="branch_id" value={activeBranchId} />
           <label className="flex items-center justify-between rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
             <span>
               <span className="block font-bold text-[color:var(--ink)]">{tr(lang, "تفعيل هدية الترحيب", "Enable welcome gift")}</span>
