@@ -70,10 +70,15 @@ const TIER_META: Record<string, { label: string; labelEn: string; color: string;
   regular: { label: "عادي", labelEn: "Regular", color: "var(--muted)", bg: "var(--surface-2)" },
 };
 
+// الصفحة تُرسم على الخادم (UTC على Vercel)، فبلا تثبيت المنطقة تظهر الأوقات
+// ناقصة ٣ ساعات عن توقيت السعودية. نثبّتها على الرياض في كل الدوال.
+const TZ = "Asia/Riyadh";
+
 function fmtDateTime(iso: string | null, lang: "ar" | "en"): string {
   if (!iso) return "—";
   // أرقام لاتينية دائمًا
   return new Date(iso).toLocaleString(lang === "en" ? "en-US" : "ar-SA-u-nu-latn", {
+    timeZone: TZ,
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -85,6 +90,7 @@ function fmtDateTime(iso: string | null, lang: "ar" | "en"): string {
 function fmtDate(iso: string | null, lang: "ar" | "en"): string {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString(lang === "en" ? "en-US" : "ar-SA-u-nu-latn", {
+    timeZone: TZ,
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -94,6 +100,7 @@ function fmtDate(iso: string | null, lang: "ar" | "en"): string {
 function fmtTime(iso: string | null, lang: "ar" | "en"): string {
   if (!iso) return "—";
   return new Date(iso).toLocaleTimeString(lang === "en" ? "en-US" : "ar-SA-u-nu-latn", {
+    timeZone: TZ,
     hour: "numeric",
     minute: "2-digit",
   });
@@ -173,35 +180,35 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
       .eq("customer_id", id)
       .in("branch_id", branchIds)
       .order("joined_at", { ascending: false })
-      .limit(100),
+      .limit(500),
     supabase
       .from("reservations")
       .select("id, reserved_at, party_size, status, notes, branch_id")
       .eq("customer_id", id)
       .in("branch_id", branchIds)
       .order("reserved_at", { ascending: false })
-      .limit(100),
+      .limit(500),
     supabase
       .from("customer_rewards")
       .select("id, kind, title, value, value_kind, description, code, status, expires_at, created_at")
       .eq("restaurant_id", restaurant.id)
       .eq("customer_id", id)
       .order("created_at", { ascending: false })
-      .limit(50),
+      .limit(300),
     supabase
       .from("reviews")
       .select("id, rating, comment, created_at, is_published")
       .eq("restaurant_id", restaurant.id)
       .eq("customer_id", id)
       .order("created_at", { ascending: false })
-      .limit(50),
+      .limit(300),
     supabase
       .from("checkins")
       .select("id, created_at, source, branch_id")
       .in("branch_id", branchIds.length ? branchIds : ["00000000-0000-0000-0000-000000000000"])
       .eq("customer_id", id)
       .order("created_at", { ascending: false })
-      .limit(50),
+      .limit(300),
   ]);
 
   const customer = customerRes.data as CustomerRow | null;
@@ -305,7 +312,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-bold text-[color:var(--ink)]">
-              {tr(lang, "المكافآت والهدايا", "Rewards & gifts")}
+              {tr(lang, "المكافآت والهدايا", "Rewards & gifts")} <span className="text-sm font-bold text-[color:var(--muted)]">({toAr(rewards.length)})</span>
             </h2>
             <span className="text-xs text-[color:var(--muted)]">{tr(lang, "يصل العميل عبر رقمه", "Reaches the customer via their phone")}</span>
           </div>
@@ -349,7 +356,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         {/* ===== سجل الزيارات ===== */}
         <section className="space-y-3">
           <h2 className="font-display text-lg font-bold text-[color:var(--ink)]">
-            {tr(lang, "سجل الزيارات", "Visit history")}
+            {tr(lang, "سجل الزيارات", "Visit history")} <span className="text-sm font-bold text-[color:var(--muted)]">({toAr(visits.length)})</span>
           </h2>
           {visits.length === 0 ? (
             <div className="soft-card py-8 text-center">
@@ -394,7 +401,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         {/* ===== الحجوزات السابقة ===== */}
         <section className="space-y-3">
           <h2 className="font-display text-lg font-bold text-[color:var(--ink)]">
-            {tr(lang, "الحجوزات السابقة", "Reservations")}
+            {tr(lang, "الحجوزات السابقة", "Reservations")} <span className="text-sm font-bold text-[color:var(--muted)]">({toAr(reservations.length)})</span>
           </h2>
           {reservations.length === 0 ? (
             <div className="soft-card py-8 text-center">
@@ -439,7 +446,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         {/* ===== التقييمات ===== */}
         <section>
           <h2 className="mb-3 font-display text-lg font-bold text-[color:var(--ink)]">
-            {tr(lang, "تقييماته", "Their reviews")}
+            {tr(lang, "تقييماته", "Their reviews")} <span className="text-sm font-bold text-[color:var(--muted)]">({toAr(reviews.length)})</span>
           </h2>
           {reviews.length === 0 ? (
             <div className="soft-card p-6 text-center text-sm text-[color:var(--muted)]">
@@ -471,7 +478,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         {/* ===== تسجيلات «امسح خذ هديتك» ===== */}
         <section>
           <h2 className="mb-3 font-display text-lg font-bold text-[color:var(--ink)]">
-            {tr(lang, "تسجيلات المسح", "Scan check-ins")}
+            {tr(lang, "تسجيلات المسح", "Scan check-ins")} <span className="text-sm font-bold text-[color:var(--muted)]">({toAr(checkins.length)})</span>
           </h2>
           {checkins.length === 0 ? (
             <div className="soft-card p-6 text-center text-sm text-[color:var(--muted)]">
