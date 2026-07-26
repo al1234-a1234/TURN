@@ -9,6 +9,7 @@ import { ShareButton } from "./share-button";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
+import { fmtDate, fmtDayShort } from "@/lib/dates";
 
 export default async function RestaurantPublicPage({
   params,
@@ -58,7 +59,7 @@ export default async function RestaurantPublicPage({
     return {
       name: c?.full_name?.trim() || tr(lang, "عميل", "Customer"),
       stars: r.rating,
-      when: new Date(r.created_at).toLocaleDateString(lang === "en" ? "en-GB" : "ar-SA-u-nu-latn", { day: "2-digit", month: "short", year: "numeric" }),
+      when: fmtDate(r.created_at, lang),
       text: r.comment ?? "",
     };
   });
@@ -79,23 +80,25 @@ export default async function RestaurantPublicPage({
   const photoOf = new Map<string, string>();
   for (const ph of branchPhotos ?? []) if (!photoOf.has(ph.branch_id)) photoOf.set(ph.branch_id, ph.url);
 
-  const withCounts = await Promise.all(
-    branchList.map(async (b) => {
-      const { data } = await supabase.rpc("waitlist_counts", { b_id: b.id });
-      const c = Array.isArray(data) ? data[0] : undefined;
-      const bs = Array.isArray(b.branch_settings) ? b.branch_settings[0] : b.branch_settings;
-      return {
-        id: b.id,
-        name: b.name,
-        city: (b as { city?: string | null }).city ?? "",
-        total: c?.total ?? 0,
-        inside: c?.inside ?? 0,
-        outside: c?.outside ?? 0,
-        accepts: (bs as { accepts_waitlist?: boolean } | null)?.accepts_waitlist ?? true,
-        photo: photoOf.get(b.id) ?? null,
-      };
-    }),
-  );
+  // استدعاء جماعي واحد بدل RPC لكل فرع (كان N+1 — يتضاعف مع كل فرع لكل زيارة)
+  const { data: countRows } = branchList.length
+    ? await supabase.rpc("waitlist_counts_for", { p_branch_ids: branchList.map((b) => b.id) })
+    : { data: [] };
+  const countOf = new Map((countRows ?? []).map((c) => [c.branch_id, c]));
+  const withCounts = branchList.map((b) => {
+    const c = countOf.get(b.id);
+    const bs = Array.isArray(b.branch_settings) ? b.branch_settings[0] : b.branch_settings;
+    return {
+      id: b.id,
+      name: b.name,
+      city: (b as { city?: string | null }).city ?? "",
+      total: Number(c?.total ?? 0),
+      inside: Number(c?.inside ?? 0),
+      outside: Number(c?.outside ?? 0),
+      accepts: (bs as { accepts_waitlist?: boolean } | null)?.accepts_waitlist ?? true,
+      photo: photoOf.get(b.id) ?? null,
+    };
+  });
 
   let defaultName = "";
   let defaultPhone = "";
@@ -219,7 +222,7 @@ function OffersSection({ offers, lang }: { offers: OfferLite[]; lang: "ar" | "en
                 {o.description && <p className="mt-0.5 truncate text-[13px] text-[color:var(--muted)]">{o.description}</p>}
                 {o.ends_at && (
                   <p className="mt-0.5 text-[11px] font-bold text-[color:var(--muted)]">
-                    {tr(lang, "ينتهي", "Ends")} {new Date(o.ends_at).toLocaleDateString(lang === "en" ? "en-GB" : "ar-SA-u-nu-latn", { day: "2-digit", month: "short" })}
+                    {tr(lang, "ينتهي", "Ends")} {fmtDayShort(o.ends_at, lang)}
                   </p>
                 )}
               </div>

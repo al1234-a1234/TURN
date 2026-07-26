@@ -4,6 +4,7 @@ import { ColumnChart, SplitBars, ChartCard } from "./manage/charts";
 import { toAr } from "@/lib/format";
 import { tr, pct, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
+import { riyadhDayStart, riyadhDayKey, riyadhWeekday, riyadhHour } from "@/lib/dates";
 
 const AR_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 const EN_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -24,8 +25,7 @@ export default async function OverviewPage() {
   const { data: branches } = await supabase.from("branches").select("id, name").eq("restaurant_id", restaurant.id).order("created_at");
   const branchIds = scopeBranchIds(load.ctx, (branches ?? []).map((b) => b.id));
 
-  const now = new Date();
-  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startToday = riyadhDayStart();
   const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
 
   const [rev, profiles, analytics, insightsRes, liveRes] = await Promise.all([
@@ -86,19 +86,18 @@ export default async function OverviewPage() {
 
   // مخدومون آخر 7 أيام
   const dayBuckets = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (6 - i));
-    return { key: `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`, label: tr(lang, AR_DAYS[d.getDay()], EN_DAYS[d.getDay()]), value: 0 };
+    const d = riyadhDayStart(6 - i);
+    return { key: riyadhDayKey(d), label: tr(lang, AR_DAYS[riyadhWeekday(d)], EN_DAYS[riyadhWeekday(d)]), value: 0 };
   });
   const bucketByKey = new Map(dayBuckets.map((b) => [b.key, b]));
   for (const r of seated) {
-    const d = new Date(r.seated_at as string);
-    const b = bucketByKey.get(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+    const b = bucketByKey.get(riyadhDayKey(r.seated_at as string));
     if (b) b.value += 1;
   }
 
   // ساعات الذروة
   const byHour = new Map<number, number>();
-  for (const r of rows) byHour.set(new Date(r.joined_at).getHours(), (byHour.get(new Date(r.joined_at).getHours()) ?? 0) + 1);
+  for (const r of rows) { const h = riyadhHour(r.joined_at); byHour.set(h, (byHour.get(h) ?? 0) + 1); }
   const maxHour = Math.max(1, ...HOURS.map((h) => byHour.get(h) ?? 0));
 
   // تنبيهات ذكية

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import QRCode from "qrcode";
 import { loadOwner } from "../owner-context";
+import { riyadhDayStart } from "@/lib/dates";
 import { resolveBranchScope } from "../branch-scope";
 import { BranchPicker } from "../branch-picker";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
@@ -37,7 +38,7 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
     color: { dark: "#661c0a", light: "#00000000" },
   });
 
-  const todayIso = new Date(new Date().toDateString()).toISOString();
+  const todayIso = riyadhDayStart().toISOString();
   const [{ data: settings }, totalRes, todayRes, custRes] = await Promise.all([
     supabase.from("checkin_settings").select("*").eq("branch_id", activeBranchId).maybeSingle(),
     supabase.from("checkins").select("id", { count: "exact", head: true }).eq("branch_id", activeBranchId),

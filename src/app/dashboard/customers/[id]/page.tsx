@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { loadOwner, scopeBranchIds } from "../../owner-context";
+import { fmtDate, fmtDateTime, fmtTime } from "@/lib/dates";
 import { RewardForm } from "./reward-form";
 import { revokeReward, redeemReward } from "../actions";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
@@ -69,42 +70,6 @@ const TIER_META: Record<string, { label: string; labelEn: string; color: string;
   silver: { label: "فضي", labelEn: "Silver", color: "#5b6470", bg: "#eef1f4" },
   regular: { label: "عادي", labelEn: "Regular", color: "var(--muted)", bg: "var(--surface-2)" },
 };
-
-// الصفحة تُرسم على الخادم (UTC على Vercel)، فبلا تثبيت المنطقة تظهر الأوقات
-// ناقصة ٣ ساعات عن توقيت السعودية. نثبّتها على الرياض في كل الدوال.
-const TZ = "Asia/Riyadh";
-
-function fmtDateTime(iso: string | null, lang: "ar" | "en"): string {
-  if (!iso) return "—";
-  // أرقام لاتينية دائمًا
-  return new Date(iso).toLocaleString(lang === "en" ? "en-US" : "ar-SA-u-nu-latn", {
-    timeZone: TZ,
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-function fmtDate(iso: string | null, lang: "ar" | "en"): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleDateString(lang === "en" ? "en-US" : "ar-SA-u-nu-latn", {
-    timeZone: TZ,
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
-function fmtTime(iso: string | null, lang: "ar" | "en"): string {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleTimeString(lang === "en" ? "en-US" : "ar-SA-u-nu-latn", {
-    timeZone: TZ,
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
 
 function rewardValueLabel(r: RewardRow, lang: "ar" | "en"): string {
   if (r.kind !== "discount" || r.value == null) return "";

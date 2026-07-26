@@ -7,6 +7,7 @@ import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { toAr } from "@/lib/format";
 import { tr, pct, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
+import { riyadhDayStart, riyadhHour, riyadhDayKey, riyadhWeekday } from "@/lib/dates";
 
 const AR_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 const EN_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -70,7 +71,7 @@ export default async function ReportsPage({
 
   // ===== نافذة الفترة =====
   const now = new Date();
-  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startToday = riyadhDayStart();
   const sinceDate =
     period === "day"
       ? startToday
@@ -136,7 +137,7 @@ export default async function ReportsPage({
   // ساعات الذروة + أكثر الساعات ازدحامًا
   const byHour = new Map<number, number>();
   for (const r of rows) {
-    const h = new Date(r.joined_at).getHours();
+    const h = riyadhHour(r.joined_at);
     byHour.set(h, (byHour.get(h) ?? 0) + 1);
   }
   const maxHour = Math.max(1, ...HOURS.map((h) => byHour.get(h) ?? 0));
@@ -156,24 +157,23 @@ export default async function ReportsPage({
   if (period === "day") {
     const hourServed = new Map<number, number>();
     for (const r of seated) {
-      const h = new Date(r.seated_at as string).getHours();
+      const h = riyadhHour(r.seated_at as string);
       hourServed.set(h, (hourServed.get(h) ?? 0) + 1);
     }
     breakdown = HOURS.map((h) => ({ label: hourLabel(h, lang), value: hourServed.get(h) ?? 0 }));
     breakdownTitle = tr(lang, "المخدومون حسب الساعة", "Served by hour");
   } else if (period === "week") {
     const dayBuckets = Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (6 - i));
+      const d = riyadhDayStart(6 - i);
       return {
-        key: `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`,
-        label: tr(lang, AR_DAYS[d.getDay()], EN_DAYS[d.getDay()]),
+        key: riyadhDayKey(d),
+        label: tr(lang, AR_DAYS[riyadhWeekday(d)], EN_DAYS[riyadhWeekday(d)]),
         value: 0,
       };
     });
     const byKey = new Map(dayBuckets.map((b) => [b.key, b]));
     for (const r of seated) {
-      const d = new Date(r.seated_at as string);
-      const b = byKey.get(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+      const b = byKey.get(riyadhDayKey(r.seated_at as string));
       if (b) b.value += 1;
     }
     breakdown = dayBuckets.map((b) => ({ label: b.label, value: b.value }));
@@ -191,18 +191,23 @@ export default async function ReportsPage({
     breakdown = weekBuckets;
     breakdownTitle = tr(lang, "المخدومون حسب الأسبوع", "Served by week");
   } else {
+    // مفتاح الشهر بتوقيت الرياض (إزاحة +3 ثم قراءة UTC)
+    const monthKey = (d: Date) => {
+      const r = new Date(d.getTime() + 3 * 3600_000);
+      return `${r.getUTCFullYear()}-${r.getUTCMonth()}`;
+    };
+    const nowR = new Date(now.getTime() + 3 * 3600_000);
     const monthBuckets = Array.from({ length: 12 }, (_, i) => {
-      const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1);
+      const m = new Date(Date.UTC(nowR.getUTCFullYear(), nowR.getUTCMonth() - (11 - i), 1));
       return {
-        key: `${d.getFullYear()}-${d.getMonth()}`,
-        label: tr(lang, AR_MONTHS[d.getMonth()], EN_MONTHS[d.getMonth()]),
+        key: `${m.getUTCFullYear()}-${m.getUTCMonth()}`,
+        label: tr(lang, AR_MONTHS[m.getUTCMonth()], EN_MONTHS[m.getUTCMonth()]),
         value: 0,
       };
     });
     const byKey = new Map(monthBuckets.map((b) => [b.key, b]));
     for (const r of seated) {
-      const d = new Date(r.seated_at as string);
-      const b = byKey.get(`${d.getFullYear()}-${d.getMonth()}`);
+      const b = byKey.get(monthKey(new Date(r.seated_at as string)));
       if (b) b.value += 1;
     }
     breakdown = monthBuckets.map((b) => ({ label: b.label, value: b.value }));
@@ -211,6 +216,7 @@ export default async function ReportsPage({
 
   const pLabel = periodLabel(period, lang);
   const generatedAt = now.toLocaleDateString(lang === "en" ? "en-US" : "ar-SA", {
+    timeZone: "Asia/Riyadh",
     year: "numeric",
     month: "long",
     day: "numeric",

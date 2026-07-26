@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { loadOwner } from "../owner-context";
+import { fmtDate } from "@/lib/dates";
 import { resolveBranchScope } from "../branch-scope";
 import { BranchPicker } from "../branch-picker";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
@@ -187,7 +188,7 @@ export default async function OffersPage({ searchParams }: { searchParams: Promi
                   <div className="mt-3 flex items-center justify-between border-t pt-3" style={{ borderColor: "var(--border)" }}>
                     <span className="text-xs text-[color:var(--muted)]">
                       {o.ends_at
-                        ? tr(lang, `ينتهي ${new Date(o.ends_at).toLocaleDateString("ar-SA-u-nu-latn")}`, `Ends ${new Date(o.ends_at).toLocaleDateString("en-US")}`)
+                        ? tr(lang, `ينتهي ${fmtDate(o.ends_at, lang)}`, `Ends ${fmtDate(o.ends_at, lang)}`)
                         : tr(lang, "بلا تاريخ انتهاء", "No end date")}
                     </span>
                     <form action={deleteOffer}>

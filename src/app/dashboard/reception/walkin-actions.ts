@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requirePerm } from "../guard";
+import { saudiMobile } from "@/lib/format";
 
 /** إضافة عميل حاضر (walk-in) للطابور من الاستقبال. */
 export async function addWalkIn(formData: FormData) {
@@ -21,7 +22,8 @@ export async function addWalkIn(formData: FormData) {
   if (!branch) return;
 
   const name = String(formData.get("full_name") ?? "").trim() || "ضيف";
-  const phone = String(formData.get("phone") ?? "").trim();
+  // تطبيع وتحقّق الرقم — نفس قاعدة العميل، وإلا تشظّى العميل الواحد من مسار الموظّف
+  const phone = saudiMobile(String(formData.get("phone") ?? ""));
   if (!phone) return;
   const party = Math.max(1, Number(String(formData.get("party_size") ?? "2")) || 2);
   const zone = String(formData.get("zone") ?? "inside") === "outside" ? "outside" : "inside";

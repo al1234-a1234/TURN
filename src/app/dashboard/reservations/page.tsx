@@ -4,6 +4,7 @@ import { staffHasPermission } from "@/lib/features";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
 import { toAr } from "@/lib/format";
+import { riyadhDayStart } from "@/lib/dates";
 import { createReservation } from "./actions";
 import { ReservationActions } from "./reservation-actions";
 import type { Database } from "@/lib/supabase/database.types";
@@ -60,8 +61,8 @@ export default async function ReservationsPage() {
   const list = (data ?? []) as Reservation[];
 
   const now = Date.now();
-  const startToday = new Date(); startToday.setHours(0, 0, 0, 0);
-  const endToday = new Date(); endToday.setHours(23, 59, 59, 999);
+  const startToday = riyadhDayStart();
+  const endToday = new Date(riyadhDayStart(-1).getTime() - 1);
   const active = list.filter((r) => r.status === "pending" || r.status === "confirmed");
   const todayCount = list.filter((r) => {
     const t = new Date(r.reserved_at).getTime();
@@ -71,6 +72,7 @@ export default async function ReservationsPage() {
 
   const dtFmt = (iso: string) =>
     new Date(iso).toLocaleString(lang === "en" ? "en-US" : "ar-SA-u-nu-latn", {
+      timeZone: "Asia/Riyadh",
       day: "numeric", month: "short", hour: "numeric", minute: "2-digit",
     });
 

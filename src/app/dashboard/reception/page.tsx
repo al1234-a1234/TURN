@@ -9,6 +9,7 @@ import { staffHasPermission } from "@/lib/features";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
+import { riyadhDayStart } from "@/lib/dates";
 
 function minutesSince(iso: string): number {
   return Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
@@ -38,8 +39,7 @@ export default async function ReceptionPage({
   const activeBranch =
     branchList.find((b) => b.id === requested) ?? branchList[0] ?? null;
 
-  const now = new Date();
-  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+  const startToday = riyadhDayStart().toISOString();
 
   const [{ data: queue }, todayRes] = activeBranch
     ? await Promise.all([

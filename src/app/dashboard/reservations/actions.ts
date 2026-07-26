@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { Database } from "@/lib/supabase/database.types";
 import { requirePerm, callerBranchIds } from "../guard";
+import { saudiMobile } from "@/lib/format";
 
 type ResStatus = Database["public"]["Enums"]["reservation_status"];
 const STATUSES: ResStatus[] = ["pending", "confirmed", "seated", "completed", "cancelled", "no_show"];
@@ -21,7 +22,8 @@ export async function createReservation(formData: FormData) {
   if (!branch) return;
 
   const name = String(formData.get("full_name") ?? "").trim();
-  const phone = String(formData.get("phone") ?? "").trim();
+  // تطبيع وتحقّق الرقم — نفس قاعدة العميل، وإلا تشظّى العميل الواحد من مسار الموظّف
+  const phone = saudiMobile(String(formData.get("phone") ?? ""));
   const when = String(formData.get("reserved_at") ?? "").trim();
   if (!phone || !when) return;
   const party = Math.max(1, Number(String(formData.get("party_size") ?? "2")) || 2);

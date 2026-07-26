@@ -4,7 +4,8 @@ import { loadOwner } from "../owner-context";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { CustomerControls } from "./customer-controls";
 import { CampaignForm } from "./campaign-form";
-import { toAr } from "@/lib/format";
+import { toAr, normalizePhone } from "@/lib/format";
+import { daysAgoLabel } from "@/lib/dates";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 import type { Database } from "@/lib/supabase/database.types";
@@ -19,20 +20,28 @@ const TIER_META: Record<string, { label: string; color: string; bg: string }> = 
   silver: { label: "فضي", color: "#5b6470", bg: "#eef1f4" },
   regular: { label: "عادي", color: "var(--muted)", bg: "var(--surface-2)" },
 };
-const TIER_LABEL_EN: Record<string, string> = {
-  vip: "VIP",
-  gold: "Gold",
-  silver: "Silver",
-  regular: "Regular",
+const TIER_LABEL_EN: Record<string, string> = { vip: "VIP", gold: "Gold", silver: "Silver", regular: "Regular" };
+
+// الشرائح المتاحة للفلترة — تجيب على أسئلة المالك الفعلية:
+// من المميّز؟ من عنده هدية لم تُستخدم؟ من اقترب من مكافأة الولاء؟ من يتغيّب؟ من انقطع؟
+const SEGMENTS = ["all", "vip", "gifts", "near", "noshow", "inactive", "blocked"] as const;
+type Segment = (typeof SEGMENTS)[number];
+
+const SEG_LABEL: Record<Segment, { ar: string; en: string }> = {
+  all: { ar: "الكل", en: "All" },
+  vip: { ar: "VIP", en: "VIP" },
+  gifts: { ar: "لهم هدايا", en: "Have gifts" },
+  near: { ar: "قريبون من مكافأة", en: "Near reward" },
+  noshow: { ar: "متغيّبون", en: "No-shows" },
+  inactive: { ar: "منقطعون +30 يوم", en: "Inactive 30d+" },
+  blocked: { ar: "محظورون", en: "Blocked" },
 };
 
-function fmtDate(iso: string | null, lang: "ar" | "en"): string {
-  if (!iso) return "—";
-  // أرقام لاتينية دائمًا؛ أسماء شهور عربية في الوضع العربي
-  return new Date(iso).toLocaleDateString(lang === "en" ? "en-US" : "ar-SA-u-nu-latn", { day: "numeric", month: "short" });
-}
-
-export default async function CustomersPage() {
+export default async function CustomersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; seg?: string }>;
+}) {
   const lang = await getLang();
   const load = await loadOwner();
   if (load.state !== "ok") return null;
@@ -42,45 +51,123 @@ export default async function CustomersPage() {
     redirect("/dashboard");
   }
 
-  const { data } = await supabase
+  const sp = await searchParams;
+  const q = (sp.q ?? "").trim();
+  const seg: Segment = (SEGMENTS as readonly string[]).includes(sp.seg ?? "") ? (sp.seg as Segment) : "all";
+
+  // البحث يُنفَّذ في القاعدة (لا في الذاكرة): اسم أو رقم — الرقم يُطبَّع أولًا
+  let query = supabase
     .from("customer_restaurant")
-    .select("*, customers(full_name, phone)")
-    .eq("restaurant_id", restaurant.id)
+    .select("*, customers!inner(full_name, phone)")
+    .eq("restaurant_id", restaurant.id);
+  if (q) {
+    const digits = normalizePhone(q);
+    const parts = [`full_name.ilike.%${q.replace(/[%,()]/g, "")}%`];
+    if (digits.length >= 3) parts.push(`phone.like.%${digits}%`);
+    query = query.or(parts.join(","), { referencedTable: "customers" });
+  }
+  const { data } = await query
     .order("is_vip", { ascending: false })
     .order("visits", { ascending: false })
-    .limit(200);
+    .limit(500);
+  let list = (data ?? []) as Profile[];
 
-  const list = (data ?? []) as Profile[];
-  const vips = list.filter((p) => p.is_vip).length;
+  // من لديهم هدايا فعّالة + عتبة الولاء (لشريحتي «لهم هدايا» و«قريبون من مكافأة»)
+  const [{ data: activeRewards }, { data: loyalty }] = await Promise.all([
+    supabase.from("customer_rewards").select("customer_id").eq("restaurant_id", restaurant.id).eq("status", "active"),
+    supabase.from("loyalty_programs").select("reward_threshold").eq("restaurant_id", restaurant.id).eq("is_active", true).maybeSingle(),
+  ]);
+  const giftedIds = new Set((activeRewards ?? []).map((r) => r.customer_id));
+  const threshold = loyalty?.reward_threshold ?? 0;
+  const cutoff30 = Date.now() - 30 * 864e5;
+
+  const matches = (p: Profile, s: Segment): boolean => {
+    switch (s) {
+      case "vip": return p.is_vip;
+      case "gifts": return giftedIds.has(p.customer_id);
+      case "near": return threshold > 0 && !p.is_blocked && p.points >= Math.ceil(threshold * 0.7) && p.points < threshold;
+      case "noshow": return p.no_shows >= 2;
+      case "inactive": return !!p.last_visit && new Date(p.last_visit).getTime() < cutoff30;
+      case "blocked": return p.is_blocked;
+      default: return true;
+    }
+  };
+
+  // عدّادات الشرائح تُحسب على نتائج البحث الحالي (فتبقى متسقة مع ما يراه المستخدم)
+  const segCounts = Object.fromEntries(SEGMENTS.map((s) => [s, list.filter((p) => matches(p, s)).length])) as Record<Segment, number>;
+  if (seg !== "all") list = list.filter((p) => matches(p, seg));
+
+  const vips = segCounts.vip;
   const totalVisits = list.reduce((a, p) => a + p.visits, 0);
   const avgVisits = list.length ? Math.round((totalVisits / list.length) * 10) / 10 : 0;
-  const segmentCounts = {
-    all: list.length,
+  const campaignCounts = {
+    all: segCounts.all,
     vip: vips,
     gold: list.filter((p) => p.tier === "gold").length,
     silver: list.filter((p) => p.tier === "silver").length,
     returning: list.filter((p) => p.visits >= 2).length,
   };
 
+  const hrefFor = (s: Segment) => `/dashboard/customers?seg=${s}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
+
   return (
     <div className="space-y-6">
         <div className="grid grid-cols-3 gap-3">
-          <Kpi label={tr(lang, "عملاؤك", "Your customers")} value={toAr(list.length)} tone="var(--brand-d)" />
+          <Kpi label={tr(lang, "عملاؤك", "Your customers")} value={toAr(segCounts.all)} tone="var(--brand-d)" />
           <Kpi label={tr(lang, "مميّزون (VIP)", "VIPs")} value={toAr(vips)} tone="var(--st-open)" />
           <Kpi label={tr(lang, "متوسط الزيارات", "Avg. visits")} value={toAr(avgVisits)} tone="var(--st-full)" />
         </div>
 
-        <p className="text-sm text-[color:var(--muted)]">
-          {tr(lang, "كل عميل زار مطعمك عبر دور — وصولك الكامل له: زياراته، شريحته، ووسمه كـVIP مع ملاحظاتك الخاصة.", "Every customer who visited your restaurant through Turn — full access: their visits, tier, VIP tag, and your private notes.")}
-        </p>
+        {/* بحث بالاسم أو الرقم — يُنفَّذ في القاعدة */}
+        <form method="get" className="flex gap-2">
+          {seg !== "all" && <input type="hidden" name="seg" value={seg} />}
+          <input
+            name="q"
+            defaultValue={q}
+            placeholder={tr(lang, "ابحث بالاسم أو رقم الجوّال…", "Search by name or phone…")}
+            className="field-input flex-1"
+          />
+          <button className="btn btn-primary shrink-0 px-5">{tr(lang, "بحث", "Search")}</button>
+          {q && (
+            <Link href={hrefFor(seg)} className="btn btn-secondary shrink-0 px-4">{tr(lang, "مسح", "Clear")}</Link>
+          )}
+        </form>
 
-        <CampaignForm counts={segmentCounts} />
+        {/* شرائح جاهزة بعدّاداتها */}
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          {SEGMENTS.map((s) => {
+            const active = s === seg;
+            return (
+              <Link
+                key={s}
+                href={hrefFor(s)}
+                className="shrink-0 rounded-2xl px-3.5 py-2 text-sm font-extrabold transition active:scale-[0.97]"
+                style={active
+                  ? { background: "linear-gradient(150deg,#b23c1d,#661c0a)", color: "#fff", boxShadow: "0 10px 20px -14px rgba(102,28,10,0.7)" }
+                  : { background: "var(--surface-2)", color: "var(--ink)", border: "1px solid rgba(102,28,10,0.12)" }}
+              >
+                {tr(lang, SEG_LABEL[s].ar, SEG_LABEL[s].en)}
+                <span className="ms-1.5 rounded-full px-1.5 text-xs" style={{ background: active ? "rgba(255,255,255,0.2)" : "rgba(102,28,10,0.08)" }}>
+                  {toAr(segCounts[s])}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+
+        <CampaignForm counts={campaignCounts} />
 
         {list.length === 0 ? (
           <div className="soft-card py-10 text-center">
             <p className="text-2xl">👥</p>
-            <p className="mt-2 font-bold text-[color:var(--ink)]">{tr(lang, "لا يوجد عملاء بعد", "No customers yet")}</p>
-            <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "تظهر الملفّات تلقائيًا عند إجلاس العملاء من الطابور.", "Profiles appear automatically when customers are seated from the queue.")}</p>
+            <p className="mt-2 font-bold text-[color:var(--ink)]">
+              {q || seg !== "all" ? tr(lang, "لا نتائج مطابقة", "No matching results") : tr(lang, "لا يوجد عملاء بعد", "No customers yet")}
+            </p>
+            <p className="mt-1 text-sm text-[color:var(--muted)]">
+              {q || seg !== "all"
+                ? tr(lang, "جرّب بحثًا آخر أو شريحة أخرى.", "Try another search or segment.")
+                : tr(lang, "تظهر الملفّات تلقائيًا عند إجلاس العملاء من الطابور.", "Profiles appear automatically when customers are seated from the queue.")}
+            </p>
           </div>
         ) : (
           <ul className="space-y-3">
@@ -101,13 +188,17 @@ export default async function CustomersPage() {
                       <div className="flex items-center gap-2">
                         <p className="truncate font-bold text-[color:var(--ink)]">{name}</p>
                         {p.is_vip && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold" style={{ background: "#f8e9e3", color: "#661c0a" }}>VIP</span>}
+                        {giftedIds.has(p.customer_id) && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold" style={{ background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", color: "var(--brand-d)" }}>🎁 {tr(lang, "هدية فعّالة", "Active gift")}</span>}
                         {p.is_blocked && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold text-white" style={{ background: "var(--st-closed)" }}>{tr(lang, "محظور", "Blocked")}</span>}
                       </div>
                       <p className="text-sm text-[color:var(--muted)]" dir="ltr">{c?.phone ?? "—"}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-[color:var(--muted)]">
                         <span className="rounded-full px-2 py-0.5 font-bold" style={{ background: tm.bg, color: tm.color }}>{tr(lang, tm.label, TIER_LABEL_EN[p.tier] ?? tm.label)}</span>
                         <span>{tr(lang, `${toAr(p.visits)} زيارة`, `${toAr(p.visits)} visits`)}</span>
-                        <span>· {tr(lang, `آخر زيارة ${fmtDate(p.last_visit, "ar")}`, `Last visit ${fmtDate(p.last_visit, "en")}`)}</span>
+                        <span>· {tr(lang, `آخر زيارة ${daysAgoLabel(p.last_visit, "ar")}`, `Last visit ${daysAgoLabel(p.last_visit, "en")}`)}</span>
+                        {threshold > 0 && p.points > 0 && (
+                          <span style={{ color: "var(--brand-d)" }}>· {tr(lang, `${toAr(p.points)}/${toAr(threshold)} نقطة`, `${toAr(p.points)}/${toAr(threshold)} pts`)}</span>
+                        )}
                         {p.no_shows > 0 && <span className="text-[color:var(--st-closed)]">· {tr(lang, `${toAr(p.no_shows)} تغيّب`, `${toAr(p.no_shows)} no-shows`)}</span>}
                       </div>
                       {p.tags && p.tags.length > 0 && (

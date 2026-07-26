@@ -15,7 +15,7 @@ function stars(n: number): string {
   return "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n);
 }
 function fmtDate(iso: string, lang: "ar" | "en"): string {
-  return new Date(iso).toLocaleDateString(lang === "en" ? "en-US" : "ar-SA-u-nu-latn", { day: "numeric", month: "short" });
+  return new Date(iso).toLocaleDateString(lang === "en" ? "en-US" : "ar-SA-u-nu-latn", { timeZone: "Asia/Riyadh", day: "numeric", month: "short" });
 }
 
 export default async function ReviewsPage() {

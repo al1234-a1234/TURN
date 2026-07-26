@@ -9,6 +9,7 @@ import { ColumnChart, SplitBars, ChartCard } from "./charts";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
+import { riyadhDayStart, riyadhDayKey, riyadhWeekday, riyadhHour } from "@/lib/dates";
 import { staffHasPermission } from "@/lib/features";
 
 const AR_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
@@ -59,17 +60,14 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
   const rows = analytics ?? [];
 
   // مخدومون آخر 7 أيام
-  const now = new Date();
   const dayBuckets = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (6 - i));
-    return { key: `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`, label: (lang === "en" ? EN_DAYS : AR_DAYS)[d.getDay()], value: 0 };
+    const d = riyadhDayStart(6 - i);
+    return { key: riyadhDayKey(d), label: (lang === "en" ? EN_DAYS : AR_DAYS)[riyadhWeekday(d)], value: 0 };
   });
   const bucketByKey = new Map(dayBuckets.map((b) => [b.key, b]));
   const seated = rows.filter((r) => r.status === "seated" && r.seated_at);
   for (const r of seated) {
-    const d = new Date(r.seated_at as string);
-    const k = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-    const b = bucketByKey.get(k);
+    const b = bucketByKey.get(riyadhDayKey(r.seated_at as string));
     if (b) b.value += 1;
   }
 
@@ -78,7 +76,7 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
   const hourLabels = ["12", "2", "4", "6", "8", "10"];
   const peak = hourWindows.map((h, i) => ({ label: hourLabels[i], value: 0 }));
   for (const r of rows) {
-    const hr = new Date(r.joined_at).getHours();
+    const hr = riyadhHour(r.joined_at);
     const idx = hourWindows.findIndex((w) => hr >= w && hr < w + 2);
     if (idx >= 0) peak[idx].value += 1;
   }
