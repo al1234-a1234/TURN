@@ -46,6 +46,7 @@ export async function joinWaitlistGuest(
       return { ok: false, error: "هذا الفرع لا يستقبل قائمة انتظار حاليًا." };
     }
     if (error.code === "P0002") return { ok: false, error: "الفرع غير متاح." };
+    if (error.code === "P0429") return { ok: false, error: "محاولات كثيرة — انتظر دقائق ثم حاول مجددًا." };
     return { ok: false, error: "تعذّر الانضمام. حاول مرة أخرى." };
   }
 
@@ -214,6 +215,7 @@ export async function submitReview(
   const r = (data ?? {}) as { ok?: boolean; error?: string };
   if (!r.ok) {
     if (r.error === "no_visit") return { ok: false, error: "التقييم لمن زار فعلًا — خذ دورك أو سجّل مسحك أولًا، والتقييم متاح ٧ أيام بعد الزيارة." };
+    if (r.error === "rate_limited") return { ok: false, error: "وصلت حدّ التقييمات اليوم — عد غدًا." };
     return { ok: false, error: "تعذّر إرسال التقييم." };
   }
   if (slug) revalidatePath(`/r/${slug}`);
