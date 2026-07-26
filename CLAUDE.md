@@ -29,6 +29,31 @@
 عمود مُولّد مع دوال زمنية غير ثابتة (immutable) يسبب خطأ `42P17`
 (generation expression is not immutable).
 
+## إشعارات الدفع (Web Push)
+
+تنبيه العميل بدوره يصل **والتطبيق مُغلق** عبر Service Worker + VAPID.
+
+- `public/sw.js` — معالِجا `push` و `notificationclick` (لا يعترض الطلبات).
+- `src/lib/push.ts` — الإرسال من الخادم؛ ينظّف الاشتراكات الميّتة (404/410).
+- `src/lib/push-client.ts` — التسجيل والاشتراك في المتصفّح.
+- الجدول `push_subscriptions` + دوال `save_push_subscription` /
+  `push_subs_for_entry` / `delete_push_subscription` (migration 0017).
+- يُرسَل من `updateWaitlistStatus` عند `notified` أو `seated`.
+
+### متغيّرات البيئة
+
+| المتغيّر | أين يُضبط |
+|---|---|
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | `.env.production` (عام، آمن للعلن) |
+| `VAPID_PRIVATE_KEY` | **إعدادات Vercel فقط** — سرّ، لا يُكتب في git |
+| `VAPID_SUBJECT` | اختياري (`mailto:`)، الافتراضي مضبوط في الكود |
+
+> المستودع **عام**، فلا يجوز إطلاقًا وضع المفتاح الخاص في أي ملف متتبَّع.
+> إن غاب المفتاح الخاص تتحوّل الإشعارات إلى «لا شيء» بهدوء ولا يتعطّل الطابور.
+
+> iOS/Safari: لا يصل الدفع إلا بعد **إضافة التطبيق للشاشة الرئيسية**
+> (Add to Home Screen) — قيد من آبل لا حيلة فيه.
+
 ## أوامر التطوير
 
 ```bash
