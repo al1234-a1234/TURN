@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { loadOwner } from "../../owner-context";
+import { loadOwner, scopeBranchIds } from "../../owner-context";
 import { RewardForm } from "./reward-form";
 import { revokeReward, redeemReward } from "../actions";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
@@ -36,10 +36,14 @@ type VisitRow = {
   status: "waiting" | "notified" | "seated" | "cancelled" | "no_show" | "expired";
   party_size: number;
   zone: string;
+  branch_id: string;
+  confirmed_at: string | null;
+  distance_m: number | null;
 };
 
 type ReservationRow = {
   id: string;
+  branch_id: string;
   reserved_at: string;
   party_size: number;
   status: "pending" | "confirmed" | "seated" | "completed" | "cancelled" | "no_show";
@@ -149,10 +153,13 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
 
   if (!isModuleOn(modules, "crm") || !staffHasPermission(role, permissions, "customers")) redirect("/dashboard");
 
-  const { data: branchRows } = await supabase.from("branches").select("id").eq("restaurant_id", restaurant.id);
-  const branchIds = (branchRows ?? []).map((b) => b.id);
+  const { data: branchRows } = await supabase.from("branches").select("id, name").eq("restaurant_id", restaurant.id);
+  // عزل الفرانشايز: حساب مربوط بفرع يرى سجلّ العميل في فرعه فقط
+  const branchIds = scopeBranchIds(load.ctx, (branchRows ?? []).map((b) => b.id));
+  // اسم الفرع لكل سطر — بعد فصل الفروع صار ضروريًّا معرفة أي فرع زاره
+  const branchName = new Map((branchRows ?? []).map((b) => [b.id, b.name]));
 
-  const [customerRes, profileRes, visitsRes, reservationsRes, rewardsRes] = await Promise.all([
+  const [customerRes, profileRes, visitsRes, reservationsRes, rewardsRes, reviewsRes, checkinsRes] = await Promise.all([
     supabase.from("customers").select("id, full_name, phone, email, created_at").eq("id", id).maybeSingle(),
     supabase
       .from("customer_restaurant")
@@ -162,14 +169,14 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
       .maybeSingle(),
     supabase
       .from("waitlist_entries")
-      .select("id, joined_at, seated_at, status, party_size, zone")
+      .select("id, joined_at, seated_at, status, party_size, zone, branch_id, confirmed_at, distance_m")
       .eq("customer_id", id)
       .in("branch_id", branchIds)
       .order("joined_at", { ascending: false })
       .limit(100),
     supabase
       .from("reservations")
-      .select("id, reserved_at, party_size, status, notes")
+      .select("id, reserved_at, party_size, status, notes, branch_id")
       .eq("customer_id", id)
       .in("branch_id", branchIds)
       .order("reserved_at", { ascending: false })
@@ -178,6 +185,20 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
       .from("customer_rewards")
       .select("id, kind, title, value, value_kind, description, code, status, expires_at, created_at")
       .eq("restaurant_id", restaurant.id)
+      .eq("customer_id", id)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("reviews")
+      .select("id, rating, comment, created_at, is_published")
+      .eq("restaurant_id", restaurant.id)
+      .eq("customer_id", id)
+      .order("created_at", { ascending: false })
+      .limit(50),
+    supabase
+      .from("checkins")
+      .select("id, created_at, source, branch_id")
+      .in("branch_id", branchIds.length ? branchIds : ["00000000-0000-0000-0000-000000000000"])
       .eq("customer_id", id)
       .order("created_at", { ascending: false })
       .limit(50),
@@ -190,6 +211,8 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   const visits = (visitsRes.data ?? []) as VisitRow[];
   const reservations = (reservationsRes.data ?? []) as ReservationRow[];
   const rewards = (rewardsRes.data ?? []) as RewardRow[];
+  const reviews = (reviewsRes.data ?? []) as { id: string; rating: number; comment: string | null; created_at: string; is_published: boolean }[];
+  const checkins = (checkinsRes.data ?? []) as { id: string; created_at: string; source: string; branch_id: string | null }[];
 
   const tm = TIER_META[profile?.tier ?? "regular"] ?? TIER_META.regular;
   const name = customer.full_name?.trim() || tr(lang, "عميل", "Customer");
@@ -344,9 +367,15 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                     <div className="min-w-0">
                       <p className="font-bold text-[color:var(--ink)]">{fmtDateTime(v.joined_at, lang)}</p>
                       <p className="mt-0.5 text-xs text-[color:var(--muted)]">
-                        {zoneLabel(v.zone, lang)} ·{" "}
+                        {branchName.get(v.branch_id) ?? tr(lang, "فرع", "Branch")} · {zoneLabel(v.zone, lang)} ·{" "}
                         {tr(lang, `${toAr(v.party_size)} أشخاص`, `${toAr(v.party_size)} guests`)}
                         {v.seated_at ? tr(lang, ` · جلس ${fmtTime(v.seated_at, lang)}`, ` · Seated ${fmtTime(v.seated_at, lang)}`) : ""}
+                        {v.confirmed_at ? tr(lang, " · أكّد الحضور ✓", " · Confirmed ✓") : ""}
+                        {v.distance_m != null
+                          ? (v.distance_m >= 1000
+                              ? tr(lang, ` · كان يبعد ${(v.distance_m / 1000).toFixed(1)} كم`, ` · was ${(v.distance_m / 1000).toFixed(1)} km away`)
+                              : tr(lang, ` · كان يبعد ${v.distance_m} م`, ` · was ${v.distance_m} m away`))
+                          : ""}
                       </p>
                     </div>
                     <span
@@ -384,6 +413,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                       <div className="min-w-0">
                         <p className="font-bold text-[color:var(--ink)]">{fmtDateTime(r.reserved_at, lang)}</p>
                         <p className="mt-0.5 text-xs text-[color:var(--muted)]">
+                          {branchName.get(r.branch_id) ?? tr(lang, "فرع", "Branch")} ·{" "}
                           {tr(lang, `${toAr(r.party_size)} أشخاص`, `${toAr(r.party_size)} guests`)}
                         </p>
                       </div>
@@ -402,6 +432,67 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                   </li>
                 );
               })}
+            </ul>
+          )}
+        </section>
+
+        {/* ===== التقييمات ===== */}
+        <section>
+          <h2 className="mb-3 font-display text-lg font-bold text-[color:var(--ink)]">
+            {tr(lang, "تقييماته", "Their reviews")}
+          </h2>
+          {reviews.length === 0 ? (
+            <div className="soft-card p-6 text-center text-sm text-[color:var(--muted)]">
+              {tr(lang, "لم يقيّم بعد.", "No reviews yet.")}
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {reviews.map((rv) => (
+                <li key={rv.id} className="soft-card p-3.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-extrabold" style={{ color: "var(--brand-d)" }}>
+                      {"★".repeat(rv.rating)}<span className="text-[color:var(--muted)]">{"★".repeat(Math.max(0, 5 - rv.rating))}</span>
+                    </span>
+                    <span className="shrink-0 text-xs text-[color:var(--muted)]">{fmtDateTime(rv.created_at, lang)}</span>
+                  </div>
+                  {rv.comment && <p className="mt-1.5 text-sm text-[color:var(--ink)]">{rv.comment}</p>}
+                  {!rv.is_published && (
+                    <span className="mt-1.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-bold"
+                          style={{ background: "var(--surface-2)", color: "var(--muted)" }}>
+                      {tr(lang, "غير منشور", "Unpublished")}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* ===== تسجيلات «امسح خذ هديتك» ===== */}
+        <section>
+          <h2 className="mb-3 font-display text-lg font-bold text-[color:var(--ink)]">
+            {tr(lang, "تسجيلات المسح", "Scan check-ins")}
+          </h2>
+          {checkins.length === 0 ? (
+            <div className="soft-card p-6 text-center text-sm text-[color:var(--muted)]">
+              {tr(lang, "لم يسجّل عبر المسح بعد.", "No scan check-ins yet.")}
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {checkins.map((ci) => (
+                <li key={ci.id} className="soft-card flex items-center justify-between gap-3 p-3.5">
+                  <div className="min-w-0">
+                    <p className="font-bold text-[color:var(--ink)]">{fmtDateTime(ci.created_at, lang)}</p>
+                    <p className="mt-0.5 text-xs text-[color:var(--muted)]">
+                      {ci.branch_id ? (branchName.get(ci.branch_id) ?? tr(lang, "فرع", "Branch")) : tr(lang, "غير محدّد", "Unspecified")}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-full px-2.5 py-1 text-xs font-bold"
+                        style={{ background: "var(--surface-2)", color: "var(--brand-d)" }}>
+                    📷 {tr(lang, "مسح", "Scan")}
+                  </span>
+                </li>
+              ))}
             </ul>
           )}
         </section>
