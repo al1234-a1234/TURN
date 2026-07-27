@@ -74,9 +74,13 @@ export default async function ReceptionPage({
           {toAr(rank)}
         </span>
         <div className="min-w-0 flex-1">
+          {/* خطّ دائم لا عند التحويم فقط: الاستقبال يعمل على جوال/آيباد بلا مؤشّر،
+              فما كان أحد يعرف أن اسم العميل يفتح ملفّه */}
           {canViewCustomers ? (
-            <Link href={`/dashboard/customers/${q.customer_id}`} className="truncate font-bold text-brand-700 underline-offset-2 hover:underline">
-              {cust?.full_name ?? tr(lang, "عميل", "Customer")}
+            <Link href={`/dashboard/customers/${q.customer_id}`}
+              className="inline-flex max-w-full items-center gap-1 truncate font-bold text-brand-700 underline decoration-brand-700/40 decoration-2 underline-offset-4">
+              <span className="truncate">{cust?.full_name ?? tr(lang, "عميل", "Customer")}</span>
+              <span aria-hidden className="shrink-0 text-[11px] opacity-70">↗</span>
             </Link>
           ) : (
             <p className="truncate font-bold text-[color:var(--ink)]">{cust?.full_name ?? tr(lang, "عميل", "Customer")}</p>

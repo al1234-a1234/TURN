@@ -7,7 +7,7 @@ import { QueueTicket } from "./queue-ticket";
 import { toAr, normalizePhone } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
-import { recordTurn, lastTurnFor } from "@/lib/local-store";
+import { recordTurn, lastTurnFor, clearTurnRecovery } from "@/lib/local-store";
 
 type Branch = {
   id: string;
@@ -225,6 +225,8 @@ export function WaitlistForm({
   const formRef = useRef<HTMLFormElement | null>(null);
   // استرجاع دور اليوم بعد الريلود/إغلاق المتصفح — كان الضيف يفقد تذكرته نهائيًّا
   const [restored, setRestored] = useState<{ entryId: string; phone: string } | null>(null);
+  // بعد «خذ دورًا جديدًا» نتجاوز تذكرة الجلسة السابقة ونعود للنموذج
+  const [startedOver, setStartedOver] = useState(false);
   useEffect(() => {
     const rec = lastTurnFor(slug);
     if (rec?.entryId && rec.phone) setRestored({ entryId: rec.entryId, phone: rec.phone });
@@ -255,13 +257,26 @@ export function WaitlistForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.ok]);
 
-  if (state.ok) {
-    return <QueueTicket position={state.position ?? 0} total={state.total ?? 0} entryId={state.entryId} phone={state.phone} restaurantName={restaurantName} />;
+  if (state.ok && !startedOver) {
+    return (
+      <QueueTicket
+        position={state.position ?? 0} total={state.total ?? 0}
+        entryId={state.entryId} phone={state.phone} restaurantName={restaurantName}
+        onGone={() => { clearTurnRecovery(slug); setStartedOver(true); setRestored(null); }}
+      />
+    );
   }
 
-  // تذكرة محفوظة من اليوم نفسه → نعرضها مباشرة (الاستطلاع يتحقق أنها ما زالت حيّة)
+  // تذكرة محفوظة من اليوم نفسه → نعرضها (الاستطلاع يتحقّق أنها ما زالت حيّة،
+  // وإن كانت حالتها نهائية يعيدنا QueueTicket للنموذج تلقائيًّا)
   if (restored) {
-    return <QueueTicket position={0} total={0} entryId={restored.entryId} phone={restored.phone} restaurantName={restaurantName} onGone={() => setRestored(null)} />;
+    return (
+      <QueueTicket
+        position={0} total={0} entryId={restored.entryId} phone={restored.phone}
+        restaurantName={restaurantName} restored
+        onGone={() => { clearTurnRecovery(slug); setRestored(null); }}
+      />
+    );
   }
 
   // خطوة اختيار الفرع (لمّا فيه أكثر من فرع ولم يُختَر بعد) — كل فرع بطاقة مستقلة

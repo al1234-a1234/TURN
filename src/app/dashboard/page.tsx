@@ -141,13 +141,13 @@ export default async function OverviewPage() {
                   {/* بصيرة بلا فعل = نشرة — نعطي كل نوع فعله */}
                   {it.kind === "walkaway" && it.data?.customer_id && (
                     <Link href={`/dashboard/customers/${it.data.customer_id}`}
-                          className="mt-1 inline-block text-xs font-extrabold text-[color:var(--brand-d)] underline-offset-2 hover:underline">
+                          className="mt-1 inline-block text-xs font-extrabold text-[color:var(--brand-d)] underline decoration-2 underline-offset-4">
                       {tr(lang, "افتح ملفه وأهدِه هدية عودة ←", "Open profile & grant a come-back gift ←")}
                     </Link>
                   )}
                   {it.kind === "slow_hours" && (
                     <Link href="/dashboard/offers"
-                          className="mt-1 inline-block text-xs font-extrabold text-[color:var(--brand-d)] underline-offset-2 hover:underline">
+                          className="mt-1 inline-block text-xs font-extrabold text-[color:var(--brand-d)] underline decoration-2 underline-offset-4">
                       {tr(lang, "راجع عروض الركود ←", "Review slow-hours offers ←")}
                     </Link>
                   )}

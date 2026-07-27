@@ -73,6 +73,16 @@ export function recordTurn(rec: TurnRecord) {
   write(TURNS_KEY, list.slice(0, 200));
 }
 
+/** ينسى بيانات استرجاع دور انتهى — وإلا علق العميل على شاشة نهائية بلا مخرج. */
+export function clearTurnRecovery(slug: string) {
+  const list = getTurns();
+  let touched = false;
+  for (const t of list) {
+    if (t.slug === slug && t.entryId) { delete t.entryId; delete t.phone; touched = true; }
+  }
+  if (touched) write(TURNS_KEY, list);
+}
+
 /** آخر دور محفوظ لمطعم بعينه اليوم (للاسترجاع بعد الريلود). */
 export function lastTurnFor(slug: string): TurnRecord | null {
   const today = new Date().toISOString().slice(0, 10);

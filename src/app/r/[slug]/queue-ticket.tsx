@@ -24,14 +24,17 @@ export function QueueTicket({
   phone,
   restaurantName,
   onGone,
+  restored,
 }: {
   position: number;
   total: number;
   entryId?: string;
   phone?: string;
   restaurantName?: string;
-  /** تُستدعى إن تبيّن أن التذكرة المسترجَعة لم تعد موجودة */
+  /** تُستدعى لإنهاء التذكرة والعودة لنموذج الانضمام (انتهت أو أراد دورًا جديدًا) */
   onGone?: () => void;
+  /** تذكرة مسترجَعة من التخزين: لو كانت حالتها نهائية لا نعرضها أصلًا */
+  restored?: boolean;
 }) {
   const lang = useLang();
   const [pending, start] = useTransition();
@@ -167,6 +170,21 @@ export function QueueTicket({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entryId, phone, restaurantName, lang]);
 
+  // تذكرة مسترجَعة انتهت حالتها → لا نحبس العميل على شاشة قديمة، نعيده للنموذج
+  useEffect(() => {
+    if (restored && TERMINAL.has(status)) onGone?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restored, status]);
+
+  /** المخرج من أي حالة نهائية — كان غيابه يمنع أخذ دور جديد نهائيًّا */
+  const RestartButton = () => (
+    <button type="button" onClick={() => onGone?.()}
+      className="mt-1 w-full rounded-2xl px-4 py-3 text-sm font-extrabold text-white"
+      style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)" }}>
+      {tr(lang, "خذ دورًا جديدًا", "Take a new turn")}
+    </button>
+  );
+
   // إلغاء يدوي من العميل
   const cancelled = status === "cancelled";
   const expired = status === "expired" || status === "no_show";
@@ -178,6 +196,7 @@ export function QueueTicket({
         <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--sage)] text-3xl text-brand-700">✓</span>
         <p className="text-lg font-extrabold text-[color:var(--ink)]">{tr(lang, "تم إلغاء دورك", "Your turn was cancelled")}</p>
         <p className="text-sm text-[color:var(--muted)]">{tr(lang, "تقدر تأخذ دورك من جديد وقت ما تحب.", "You can take a new turn whenever you like.")}</p>
+        <RestartButton />
       </div>
     );
   }
@@ -188,6 +207,7 @@ export function QueueTicket({
         <span className="flex h-16 w-16 items-center justify-center rounded-full" style={{ background: "rgba(102,28,10,0.10)", color: "var(--brand-d)" }}>⌛</span>
         <p className="text-lg font-extrabold text-[color:var(--ink)]">{tr(lang, "انتهى دورك", "Your turn expired")}</p>
         <p className="text-sm text-[color:var(--muted)]">{tr(lang, "تقدر تأخذ دورك من جديد وقت ما تحب.", "You can take a new turn whenever you like.")}</p>
+        <RestartButton />
       </div>
     );
   }
@@ -198,6 +218,7 @@ export function QueueTicket({
         <span className="flex h-16 w-16 items-center justify-center rounded-full text-3xl text-white" style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}>🎉</span>
         <p className="font-display text-2xl font-extrabold text-[color:var(--ink)]">{tr(lang, "تفضّل، دورك جاهز", "You're up — please come in")}</p>
         <p className="text-sm text-[color:var(--muted)]">{tr(lang, "توجّه إلى الاستقبال. بالهناء والشفاء 🌿", "Head to the reception. Enjoy your visit 🌿")}</p>
+        <RestartButton />
       </div>
     );
   }
