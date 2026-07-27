@@ -22,7 +22,10 @@ with checks(name, pass) as (
   ('guard_confirm_unknown',    public.confirm_attendance('00000000-0000-0000-0000-000000000000') = false),
   ('guard_cancel_unknown',     public.cancel_by_ticket('00000000-0000-0000-0000-000000000000') = false),
   ('guard_review_bad_rating',  public.submit_review('eficto','0506089164',9,null)->>'error' = 'invalid_rating'),
-  ('guard_review_no_visit',    public.submit_review('eficto','0500000001',5,null)->>'error' = 'no_visit'),
+  -- رقم عشوائي كل تشغيل: الفحص لا يستهلك ميزانية حدٍّ ثابتة فيسقط بعد ٥ تشغيلات
+  ('guard_review_no_visit',    public.submit_review('eficto',
+                                 '05' || lpad((floor(random()*100000000))::bigint::text, 8, '0'),
+                                 5, null)->>'error' = 'no_visit'),
   ('guard_checkin_bad_phone',  public.public_checkin('eficto','123',null,null)->>'error' = 'invalid_phone'),
   ('guard_push_wrong_phone',   public.save_push_subscription('00000000-0000-0000-0000-000000000000','0500000000','https://x.invalid/e','k','a') = false),
   -- ── تطبيع الرقم: كل الصيغ تتساوى ──
@@ -65,6 +68,9 @@ with checks(name, pass) as (
   ('claim_offer_guarded',      (select pg_get_functiondef(oid) like '%check_rate%' and pg_get_functiondef(oid) like '%per_customer_limit%'
                                 from pg_proc where proname='claim_offer')),
   ('anon_blocked_self_redeem', not has_function_privilege('anon','public.redeem_customer_reward(uuid,text)','EXECUTE')),
+  ('validate_before_limit',    (select position('invalid_rating' in pg_get_functiondef(oid))
+                                     < position('check_rate' in pg_get_functiondef(oid))
+                                from pg_proc where proname='submit_review')),
   -- ── يوم الرياض في التجميع والعدّادات ──
   ('rollup_riyadh_day',        (select pg_get_functiondef(oid) like '%Asia/Riyadh%' from pg_proc where proname='rollup_daily_stats')),
   ('digest_riyadh_day',        (select pg_get_functiondef(oid) like '%Asia/Riyadh%' from pg_proc where proname='run_daily_digest')),
