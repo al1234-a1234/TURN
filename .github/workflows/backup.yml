@@ -1,0 +1,81 @@
+# ============================================================================
+#  النسخة الاحتياطية اليومية الآلية — تعمل على GitHub Actions بلا يد بشرية.
+#
+#  لماذا هنا؟ استقلال حقيقي: النسخة تُحفظ عند GitHub لا عند Supabase،
+#  فمشكلة مع المزوّد (حساب، سياسات، انقطاع) لا تمسّ نسختك. والفشل يصل
+#  للمالك بريدًا تلقائيًّا من GitHub بلا أي إعداد إضافي.
+#
+#  الأمان — اقرأ هذا جيدًا:
+#  المستودع عامّ، وأرشيفات Actions في المستودعات العامة يمكن لأي حساب
+#  تنزيلها. لذلك النسخة تُشفَّر AES-256 قبل الرفع، ومفتاح فكّها
+#  (BACKUP_PASSPHRASE) لا يعرفه إلا صاحب المستودع — بلا المفتاح الملف
+#  حثالة بايتات لا تنفع أحدًا. لا تفقد المفتاح: نسخة بلا مفتاحها = لا نسخة.
+#
+#  يتطلّب سرّين في Settings → Secrets and variables → Actions:
+#    SUPABASE_DB_URL    رابط الاتصال (Session pooler) من إعدادات Supabase
+#    BACKUP_PASSPHRASE  عبارة سرّية طويلة تخترعها — اكتبها في «خزنة الشركة»
+#
+#  فكّ النسخة على أي جهاز:
+#    openssl enc -d -aes-256-cbc -pbkdf2 -in turn-backup-<تاريخ>.tar.enc \
+#      -pass pass:'<العبارة>' | tar -x
+#    ثم اتبع docs/RESTORE.md.
+# ============================================================================
+name: نسخة احتياطية يومية
+
+on:
+  schedule:
+    - cron: "30 1 * * *"   # ٠٤:٣٠ فجرًا بتوقيت الرياض — بعد هدوء الليل
+  workflow_dispatch: {}     # وتشغيل يدوي من تبويب Actions للاختبار
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: جلب المستودع
+        uses: actions/checkout@v4
+
+      - name: التحقق من وجود السرّين
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          [ -n "$DB" ]   || { echo "::error::السرّ SUPABASE_DB_URL غير مضبوط — أضِفه في Settings → Secrets → Actions"; exit 1; }
+          [ -n "$PASS" ] || { echo "::error::السرّ BACKUP_PASSPHRASE غير مضبوط — أضِفه في Settings → Secrets → Actions"; exit 1; }
+
+      - name: تثبيت عميل Postgres 17 (إصدار الخادم)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -qq postgresql-client-17
+          pg_dump --version
+
+      - name: تشغيل النسخة (نفس سكربت الاستقلال اليدوي)
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          chmod +x scripts/backup.sh
+          ./scripts/backup.sh ./backups
+
+      - name: تشفير AES-256 ثم إزالة النص الصريح
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          STAMP="$(ls ./backups | head -1)"
+          tar -C ./backups -cf - "$STAMP" \
+            | openssl enc -aes-256-cbc -pbkdf2 -salt -pass env:BACKUP_PASSPHRASE \
+            -out "turn-backup-$STAMP.tar.enc"
+          rm -rf ./backups
+          ls -lh turn-backup-*.tar.enc
+
+      - name: رفع النسخة المشفَّرة (تُحفظ ٩٠ يومًا)
+        uses: actions/upload-artifact@v4
+        with:
+          name: turn-backup-${{ github.run_id }}
+          path: turn-backup-*.tar.enc
+          retention-days: 90
+          if-no-files-found: error
