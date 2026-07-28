@@ -499,6 +499,7 @@ export type Database = {
           restaurant_id: string
           reward_description: string | null
           reward_threshold: number
+          tier_config: Json
           updated_at: string
           winback_enabled: boolean
           winback_title: string
@@ -511,6 +512,7 @@ export type Database = {
           restaurant_id: string
           reward_description?: string | null
           reward_threshold?: number
+          tier_config?: Json
           updated_at?: string
           winback_enabled?: boolean
           winback_title?: string
@@ -523,6 +525,7 @@ export type Database = {
           restaurant_id?: string
           reward_description?: string | null
           reward_threshold?: number
+          tier_config?: Json
           updated_at?: string
           winback_enabled?: boolean
           winback_title?: string
@@ -1693,6 +1696,10 @@ export type Database = {
           p_slug: string
         }
         Returns: Json
+      }
+      tier_for_visits: {
+        Args: { p_rid: string; p_visits: number }
+        Returns: string
       }
       tv_queue: {
         Args: { p_branch_id: string }

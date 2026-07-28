@@ -82,6 +82,15 @@ with checks(name, pass) as (
                                  select 1 from public.branches b
                                  where not exists (select 1 from public.checkin_settings cs where cs.branch_id = b.id))),
   ('scan_settings_trigger',    exists(select 1 from pg_trigger where tgname='trg_default_checkin_settings')),
+  -- ── الطبقات المعرَّفة من المالك (0047): مصدر ترقية واحد للمسارين ──
+  ('tier_fn_exists',           exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+                                      where n.nspname='public' and p.proname='tier_for_visits')),
+  ('tier_in_scan_path',        (select pg_get_functiondef(oid) like '%tier_for_visits%'
+                                from pg_proc where proname='public_checkin')),
+  ('tier_in_seat_path',        (select pg_get_functiondef(oid) like '%tier_for_visits%'
+                                from pg_proc where proname='on_waitlist_status_change')),
+  ('tier_config_col',          exists(select 1 from information_schema.columns
+                                      where table_schema='public' and table_name='loyalty_programs' and column_name='tier_config')),
   -- ── يوم الرياض في التجميع والعدّادات ──
   ('rollup_riyadh_day',        (select pg_get_functiondef(oid) like '%Asia/Riyadh%' from pg_proc where proname='rollup_daily_stats')),
   ('digest_riyadh_day',        (select pg_get_functiondef(oid) like '%Asia/Riyadh%' from pg_proc where proname='run_daily_digest')),

@@ -5,8 +5,25 @@ import { requirePerm } from "../guard";
 import type { TablesInsert } from "@/lib/supabase/database.types";
 
 function intOr(raw: FormDataEntryValue | null, fallback: number): number {
-  const n = Number(String(raw ?? "").trim());
+  const s = String(raw ?? "").trim().replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
+  const n = Number(s);
   return Number.isFinite(n) && n > 0 ? Math.round(n) : fallback;
+}
+
+/**
+ * الطبقات: المفاتيح ثابتة (تخزَّن في customer_restaurant.tier وتُصفّى بها
+ * اللوحات)، والمالك يملك الاسم والعتبة والميزة. عتبة الذهبي تُجبَر أعلى من
+ * الفضّي — إعداد مقلوب يجعل الترقية عشوائية.
+ */
+function tierConfig(formData: FormData) {
+  const silverVisits = intOr(formData.get("tier_silver_visits"), 5);
+  const goldVisits = Math.max(silverVisits + 1, intOr(formData.get("tier_gold_visits"), 15));
+  return [
+    { key: "silver", name: String(formData.get("tier_silver_name") ?? "").trim() || "فضّي",
+      visits: silverVisits, perk: String(formData.get("tier_silver_perk") ?? "").trim() },
+    { key: "gold", name: String(formData.get("tier_gold_name") ?? "").trim() || "ذهبي",
+      visits: goldVisits, perk: String(formData.get("tier_gold_perk") ?? "").trim() },
+  ];
 }
 
 export async function saveLoyaltyProgram(formData: FormData) {
@@ -24,6 +41,7 @@ export async function saveLoyaltyProgram(formData: FormData) {
     winback_value: (() => { const v = Number(formData.get("winback_value")); return Number.isFinite(v) && v > 0 ? v : null; })(),
     // الواجهة تسمّيها «نسبة الخصم ٪» — نثبّت الوحدة كي لا تُفسَّر 20 على أنها ريالات
     winback_value_kind: "percent",
+    tier_config: tierConfig(formData),
   };
 
   // RLS يفرض staff_has_perm(rid,'loyalty')

@@ -79,6 +79,15 @@ export default async function LoyaltyPage() {
   const active = program?.is_active ?? false;
   const perVisit = progPerVisit;
   const threshold = progThreshold;
+
+  // إعداد الطبقات — الافتراضي مطابق لافتراضي القاعدة (0047)
+  type TierCfg = { key: string; name: string; visits: number; perk: string };
+  const tiersRaw = (program as (typeof program & { tier_config?: unknown }) | null)?.tier_config;
+  const tiers: TierCfg[] = Array.isArray(tiersRaw)
+    ? (tiersRaw as TierCfg[])
+    : [{ key: "silver", name: "فضّي", visits: 5, perk: "" }, { key: "gold", name: "ذهبي", visits: 15, perk: "" }];
+  const tierSilver = tiers.find((t) => t.key === "silver") ?? { key: "silver", name: "فضّي", visits: 5, perk: "" };
+  const tierGold = tiers.find((t) => t.key === "gold") ?? { key: "gold", name: "ذهبي", visits: 15, perk: "" };
   const list = (members ?? []) as Member[];
   const readyToRedeem = list.filter((m) => m.points >= threshold).length;
 
@@ -200,6 +209,36 @@ export default async function LoyaltyPage() {
               <label className="field-label">{tr(lang, "وصف المكافأة", "Reward description")}</label>
               <input name="reward_description" defaultValue={program?.reward_description ?? ""} placeholder={tr(lang, "مثال: وجبة مجانية عند 10 نقاط", "e.g. Free meal at 10 points")} className={field} />
             </div>
+            {/* الطبقات: الاسم والعتبة والميزة للمالك — المفاتيح ثابتة للنظام */}
+            <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
+              <p className="font-bold text-[color:var(--ink)]">{tr(lang, "طبقات عملائك 👑", "Customer tiers 👑")}</p>
+              <p className="mt-0.5 text-xs text-[color:var(--muted)]">
+                {tr(lang,
+                  "سمّها بأسلوبك وحدّد عدد الزيارات — تظهر للعميل على شاشته وتقدر تصفّي بها في قائمة العملاء.",
+                  "Name them your way and set the visit counts — shown to the customer and filterable in your customer list.")}
+              </p>
+              {([
+                ["silver", tr(lang, "الطبقة الأولى", "First tier"), tierSilver],
+                ["gold", tr(lang, "الطبقة الثانية", "Second tier"), tierGold],
+              ] as const).map(([key, label, t]) => (
+                <div key={key} className="mt-3 grid gap-3 sm:grid-cols-3">
+                  <div>
+                    <label className="field-label">{label} — {tr(lang, "الاسم", "Name")}</label>
+                    <input name={`tier_${key}_name`} defaultValue={t.name} className={field} />
+                  </div>
+                  <div>
+                    <label className="field-label">{tr(lang, "من كم زيارة؟", "From how many visits?")}</label>
+                    <input name={`tier_${key}_visits`} inputMode="numeric" defaultValue={toAr(t.visits)} className={field} />
+                  </div>
+                  <div>
+                    <label className="field-label">{tr(lang, "ميزتها (اختياري)", "Its perk (optional)")}</label>
+                    <input name={`tier_${key}_perk`} defaultValue={t.perk}
+                           placeholder={tr(lang, "مثال: مشروب مجاني كل زيارة", "e.g. Free drink every visit")} className={field} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
             {/* استرجاع المنقطعين — يعمل تلقائيًّا كل يوم عبر كرون القاعدة */}
             <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
               <label className="flex items-center justify-between">

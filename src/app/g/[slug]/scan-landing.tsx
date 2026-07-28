@@ -23,6 +23,9 @@ type Status = {
   visits?: number;
   points?: number;
   tier?: string | null;
+  /** اسم الطبقة وميزتها كما سمّاهما المالك (0047) — المفتاح للنظام فقط */
+  tier_name?: string | null;
+  tier_perk?: string | null;
   loyalty?: { points_per_visit: number; threshold: number; reward: string | null } | null;
   rewards?: Array<{
     id: string; kind: string; title: string; value: number | null;
@@ -30,10 +33,9 @@ type Status = {
   }>;
 };
 
-const TIER_LABEL: Record<string, [string, string, string]> = {
-  gold:   ["ذهبي", "Gold", "#b8860b"],
-  silver: ["فضّي", "Silver", "#7d7d85"],
-};
+// لون الطبقة بالمفتاح الثابت؛ الاسم المعروض يأتي من إعداد المالك
+const TIER_COLOR: Record<string, string> = { gold: "#b8860b", silver: "#7d7d85" };
+const TIER_FALLBACK: Record<string, [string, string]> = { gold: ["ذهبي", "Gold"], silver: ["فضّي", "Silver"] };
 
 export function ScanLanding({ slug, branchId, lang }: { slug: string; branchId: string; lang: Lang }) {
   const [phase, setPhase] = useState<"loading" | "form" | "status">("loading");
@@ -95,7 +97,10 @@ export function ScanLanding({ slug, branchId, lang }: { slug: string; branchId: 
   }
 
   const firstName = (status.name ?? "").trim().split(/\s+/)[0] || null;
-  const tier = status.tier && TIER_LABEL[status.tier] ? TIER_LABEL[status.tier] : null;
+  const tierKey = status.tier && TIER_COLOR[status.tier] ? status.tier : null;
+  const tierName = tierKey
+    ? (status.tier_name || tr(lang, TIER_FALLBACK[tierKey][0], TIER_FALLBACK[tierKey][1]))
+    : null;
   const loyal = status.loyalty ?? null;
   const points = status.points ?? 0;
 
@@ -113,12 +118,18 @@ export function ScanLanding({ slug, branchId, lang }: { slug: string; branchId: 
               {tr(lang, `${toAr(status.visits ?? 0)} زيارة معنا`, `${toAr(status.visits ?? 0)} visits with us`)}
             </p>
           </div>
-          {tier && (
-            <span className="rounded-full px-3 py-1 text-xs font-extrabold text-white" style={{ background: tier[2] }}>
-              {tr(lang, tier[0], tier[1])}
+          {tierKey && (
+            <span className="rounded-full px-3 py-1 text-xs font-extrabold text-white" style={{ background: TIER_COLOR[tierKey] }}>
+              {tierName}
             </span>
           )}
         </div>
+        {tierKey && status.tier_perk && (
+          <p className="mt-2 rounded-xl px-3 py-2 text-[12px] font-bold"
+             style={{ background: "rgba(184,134,11,0.1)", color: "#8a6508" }}>
+            👑 {tr(lang, `ميزة ${tierName}: ${status.tier_perk}`, `${tierName} perk: ${status.tier_perk}`)}
+          </p>
+        )}
 
         {/* زر الزيارة — قلب الشاشة */}
         {checkin?.ok ? (
