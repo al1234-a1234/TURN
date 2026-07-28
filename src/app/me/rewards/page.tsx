@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { CustomerShell } from "@/components/customer-shell";
+import { RewardQr } from "@/components/reward-qr";
 import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/components/lang-provider";
 import { tr } from "@/lib/i18n";
@@ -36,6 +37,8 @@ export default function MyRewardsPage() {
   const [loyalty, setLoyalty] = useState<Loyalty[]>([]);
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
+  // الهدية المفتوح باركودها — ضغطة على الرمز تعرضه، وثانية تخفيه
+  const [qrOpen, setQrOpen] = useState<string | null>(null);
 
   const runLookup = useCallback(async (p: string) => {
     if (!p) return;
@@ -147,11 +150,28 @@ export default function MyRewardsPage() {
                       {r.restaurant}{r.expires_at ? ` · ${tr(lang, "ينتهي", "ends")} ${fmtDate(r.expires_at)}` : ""}
                     </p>
                   </div>
-                  {r.code && <span dir="ltr" className="shrink-0 rounded-lg bg-brand-800 px-2.5 py-1 text-xs font-extrabold text-cream-100">{r.code}</span>}
+                  {r.code && (
+                    <button
+                      type="button"
+                      onClick={() => setQrOpen((v) => (v === r.id ? null : r.id))}
+                      dir="ltr"
+                      className="shrink-0 rounded-lg bg-brand-800 px-2.5 py-1 text-xs font-extrabold text-cream-100"
+                    >
+                      {r.code} <span aria-hidden>▾</span>
+                    </button>
+                  )}
                 </div>
                 {r.description && <p className="mt-2 rounded-2xl bg-[color:var(--surface-2)] px-3 py-2 text-sm text-[color:var(--ink)]">{r.description}</p>}
+                {r.code && qrOpen === r.id && (
+                  <div className="mt-3 rounded-2xl bg-white p-4" style={{ border: "1px solid rgba(102,28,10,0.14)" }}>
+                    <RewardQr code={r.code} />
+                    <p dir="ltr" className="mt-2 text-center font-display text-lg font-extrabold tracking-widest text-brand-800">{r.code}</p>
+                  </div>
+                )}
                 <div className="mt-3 rounded-2xl bg-[color:var(--sage)] px-3 py-2 text-center text-xs font-bold text-brand-800">
-                  {tr(lang, "قدّمها عند الطلب — يعتمدها الموظف", "Show it when ordering — staff will redeem it")}
+                  {qrOpen === r.id
+                    ? tr(lang, "خلّ الموظف يمسح الباركود — أو يكتب الرمز", "Let staff scan the barcode — or type the code")
+                    : tr(lang, "اضغط الرمز يطلع الباركود — يمسحه الموظف ويعتمدها", "Tap the code to show its barcode — staff scan & redeem")}
                 </div>
               </div>
             ))}
@@ -176,10 +196,27 @@ export default function MyRewardsPage() {
                       {r.restaurant}{r.expires_at ? ` · ${tr(lang, "ينتهي", "ends")} ${fmtDate(r.expires_at)}` : ""}
                     </p>
                   </div>
-                  {r.code && <span dir="ltr" className="shrink-0 rounded-lg bg-brand-800 px-2.5 py-1 text-xs font-extrabold text-cream-100">{r.code}</span>}
+                  {r.code && (
+                    <button
+                      type="button"
+                      onClick={() => setQrOpen((v) => (v === r.id ? null : r.id))}
+                      dir="ltr"
+                      className="shrink-0 rounded-lg bg-brand-800 px-2.5 py-1 text-xs font-extrabold text-cream-100"
+                    >
+                      {r.code} <span aria-hidden>▾</span>
+                    </button>
+                  )}
                 </div>
+                {r.code && qrOpen === r.id && (
+                  <div className="mt-3 rounded-2xl bg-white p-4" style={{ border: "1px solid rgba(102,28,10,0.14)" }}>
+                    <RewardQr code={r.code} />
+                    <p dir="ltr" className="mt-2 text-center font-display text-lg font-extrabold tracking-widest text-brand-800">{r.code}</p>
+                  </div>
+                )}
                 <div className="mt-3 rounded-2xl bg-[color:var(--sage)] px-3 py-2 text-center text-xs font-bold text-brand-800">
-                  {tr(lang, "اعرض الرمز عند الطلب", "Show the code when ordering")}
+                  {qrOpen === r.id
+                    ? tr(lang, "خلّ الموظف يمسح الباركود — أو يكتب الرمز", "Let staff scan the barcode — or type the code")
+                    : tr(lang, "اضغط الرمز يطلع الباركود — يمسحه الموظف ويعتمدها", "Tap the code to show its barcode — staff scan & redeem")}
                 </div>
               </div>
             ))}

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { lookupRewards, redeemAtCounter, type CounterReward } from "./reward-actions";
+import { RewardScanner } from "./reward-scanner";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 import { toAr, normalizePhone } from "@/lib/format";
@@ -27,6 +28,15 @@ export function RewardBox() {
       setDone({});
     });
   }
+
+  // مسح الكاميرا: الرمز يتعبّأ ويُبحث عنه فورًا — بلا ضغطة إضافية
+  const onScanned = useCallback((code: string) => {
+    setQ(code);
+    start(async () => {
+      setRows(await lookupRewards(code));
+      setDone({});
+    });
+  }, []);
 
   function redeem(id: string) {
     start(async () => {
@@ -64,6 +74,7 @@ export function RewardBox() {
         <button onClick={search} disabled={pending || !q.trim()} className="btn btn-primary shrink-0 px-5">
           {pending ? "…" : tr(lang, "بحث", "Find")}
         </button>
+        <RewardScanner lang={lang} onCode={onScanned} />
       </div>
 
       {rows !== null && (
