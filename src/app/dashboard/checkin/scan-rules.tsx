@@ -14,6 +14,7 @@ import { tr, type Lang } from "@/lib/i18n";
  */
 
 export type ScanRules = {
+  scan_hourly_limit: number;
   welcome_enabled: boolean;
   welcome_kind: string;
   welcome_title: string;
@@ -213,6 +214,18 @@ export function ScanRulesForm({ initial, branchId, lang }: { initial: ScanRules;
           </p>
         </div>
       </RuleCard>
+
+      {/* درع الإغراق — إعداد تشغيلي، يُرفع للفروع الكبيرة */}
+      <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
+        <label className="field-label">{tr(lang, "أقصى مسحات بالساعة لهذا الفرع", "Max scans per hour for this branch")}</label>
+        <input name="scan_hourly_limit" inputMode="numeric" value={toAr(r.scan_hourly_limit)}
+               onChange={(e) => { const d = e.target.value.replace(/[٠-٩]/g, (x) => String("٠١٢٣٤٥٦٧٨٩".indexOf(x))).replace(/\D/g, ""); set({ scan_hourly_limit: d ? Number(d) : 120 }); }}
+               className={field} />
+        <p className="mt-1 text-[11px] font-medium text-[color:var(--muted)]">
+          {tr(lang, "درع ضد الإغراق. الافتراضي ١٢٠ يكفي أغلب الفروع — ارفعه لو فرعك يستقبل مئات العملاء بالليلة.",
+                   "Flood shield. The default 120 suits most branches — raise it if yours serves hundreds a night.")}
+        </p>
+      </div>
 
       <button className="btn btn-primary w-full">{tr(lang, "حفظ قواعد المسح", "Save scan rules")}</button>
       {saved && (

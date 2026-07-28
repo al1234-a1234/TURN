@@ -140,6 +140,7 @@ export type Database = {
           instant_value_kind: string
           preset_key: string | null
           restaurant_id: string
+          scan_hourly_limit: number
           updated_at: string
           welcome_enabled: boolean
           welcome_expires_days: number
@@ -158,6 +159,7 @@ export type Database = {
           instant_value_kind?: string
           preset_key?: string | null
           restaurant_id: string
+          scan_hourly_limit?: number
           updated_at?: string
           welcome_enabled?: boolean
           welcome_expires_days?: number
@@ -176,6 +178,7 @@ export type Database = {
           instant_value_kind?: string
           preset_key?: string | null
           restaurant_id?: string
+          scan_hourly_limit?: number
           updated_at?: string
           welcome_enabled?: boolean
           welcome_expires_days?: number

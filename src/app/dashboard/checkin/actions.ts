@@ -50,6 +50,8 @@ export async function saveCheckinSettings(formData: FormData) {
     instant_value_kind: unit("instant_value_kind"),
     instant_expires_days: days("instant_expires_days", 1),
     preset_key: String(formData.get("preset_key") ?? "").trim() || null,
+    // درع الإغراق: بين ١٠ و٥٠٠٠ — الافتراضي ١٢٠ يكفي أغلب الفروع
+    scan_hourly_limit: Math.min(5000, Math.max(10, num("scan_hourly_limit") ?? 120)),
     updated_at: new Date().toISOString(),
   });
 

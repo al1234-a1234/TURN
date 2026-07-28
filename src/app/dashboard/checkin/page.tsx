@@ -67,6 +67,7 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
     instant_value_kind: s?.instant_value_kind ?? "percent",
     instant_expires_days: s?.instant_expires_days ?? 1,
     preset_key: s?.preset_key ?? null,
+    scan_hourly_limit: (s as { scan_hourly_limit?: number } | null)?.scan_hourly_limit ?? 120,
   };
 
   return (

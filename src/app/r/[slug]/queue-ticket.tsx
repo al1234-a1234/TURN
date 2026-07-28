@@ -11,10 +11,14 @@ import { useLang } from "@/components/lang-provider";
 const TERMINAL = new Set(["seated", "cancelled", "expired", "no_show"]);
 
 // الوتيرة المتدرّجة حسب موقع العميل (عدد من أمامه)
+// مع عشوائية ±٢٠٪: ذروة الخليج متزامنة (٧–١٠ مساء بنفس الساعة تقريبًا)،
+// وبلا jitter كل من انضم بنفس اللحظة يسأل بنفس اللحظة فتضرب الخادمَ موجاتٌ
+// متطابقة بدل تيار منتظم — نفس عدد الطلبات، لكن توزيعها هو الفرق.
 function intervalFor(ahead: number): number {
-  if (ahead <= 2) return 10_000;   // ضمن أول ٣
-  if (ahead <= 9) return 30_000;   // من ٤ إلى ١٠
-  return 60_000;                    // أبعد من ١٠
+  const base = ahead <= 2 ? 10_000   // ضمن أول ٣
+             : ahead <= 9 ? 30_000   // من ٤ إلى ١٠
+             : 60_000;               // أبعد من ١٠
+  return Math.round(base * (0.8 + Math.random() * 0.4));
 }
 
 export function QueueTicket({

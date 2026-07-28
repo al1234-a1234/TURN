@@ -91,6 +91,12 @@ with checks(name, pass) as (
                                 from pg_proc where proname='on_waitlist_status_change')),
   ('tier_config_col',          exists(select 1 from information_schema.columns
                                       where table_schema='public' and table_name='loyalty_programs' and column_name='tier_config')),
+  -- ── المرحلة أ (0048): جهاز الحماية بلا WAL وسقف الفرع من إعداداته ──
+  ('rate_limits_unlogged',     (select relpersistence = 'u' from pg_class c
+                                join pg_namespace n on n.oid=c.relnamespace
+                                where n.nspname='public' and c.relname='rate_limits')),
+  ('branch_limit_configurable',(select pg_get_functiondef(oid) like '%scan_hourly_limit%'
+                                from pg_proc where proname='public_checkin')),
   -- ── يوم الرياض في التجميع والعدّادات ──
   ('rollup_riyadh_day',        (select pg_get_functiondef(oid) like '%Asia/Riyadh%' from pg_proc where proname='rollup_daily_stats')),
   ('digest_riyadh_day',        (select pg_get_functiondef(oid) like '%Asia/Riyadh%' from pg_proc where proname='run_daily_digest')),
