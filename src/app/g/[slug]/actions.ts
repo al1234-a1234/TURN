@@ -24,6 +24,8 @@ export type CheckinState = {
   points?: number;
   loyalty?: { points_per_visit: number; threshold: number } | null;
   gift?: Gift | null;
+  /** المكافأة الفورية لكل مسح (0045) — غير هدية الترحيب ذات المرّة الواحدة */
+  instant?: Gift | null;
   loyalty_reward?: { title: string } | null;
 };
 
@@ -67,6 +69,7 @@ export async function checkinAction(_prev: CheckinState, formData: FormData): Pr
     points: Number(r.points ?? 0),
     loyalty: (r.loyalty as CheckinState["loyalty"]) ?? null,
     gift: (r.gift as Gift | null) ?? null,
+    instant: (r.instant as Gift | null) ?? null,
     loyalty_reward: (r.loyalty_reward as { title: string } | null) ?? null,
   };
 }

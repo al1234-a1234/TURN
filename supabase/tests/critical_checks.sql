@@ -71,6 +71,13 @@ with checks(name, pass) as (
   ('validate_before_limit',    (select position('invalid_rating' in pg_get_functiondef(oid))
                                      < position('check_rate' in pg_get_functiondef(oid))
                                 from pg_proc where proname='submit_review')),
+  -- ── قواعد المسح (0045): الفوري موجود، وصف لكل فرع، والتريغر يخلقه ──
+  ('scan_grants_instant',      (select pg_get_functiondef(oid) like '%instant_enabled%'
+                                from pg_proc where proname='public_checkin')),
+  ('scan_settings_every_branch', not exists(
+                                 select 1 from public.branches b
+                                 where not exists (select 1 from public.checkin_settings cs where cs.branch_id = b.id))),
+  ('scan_settings_trigger',    exists(select 1 from pg_trigger where tgname='trg_default_checkin_settings')),
   -- ── يوم الرياض في التجميع والعدّادات ──
   ('rollup_riyadh_day',        (select pg_get_functiondef(oid) like '%Asia/Riyadh%' from pg_proc where proname='rollup_daily_stats')),
   ('digest_riyadh_day',        (select pg_get_functiondef(oid) like '%Asia/Riyadh%' from pg_proc where proname='run_daily_digest')),

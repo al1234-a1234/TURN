@@ -6,8 +6,8 @@ import { riyadhDayStart } from "@/lib/dates";
 import { resolveBranchScope, NO_BRANCH } from "../branch-scope";
 import { BranchPicker } from "../branch-picker";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
-import { saveCheckinSettings } from "./actions";
 import { CheckinPoster } from "./checkin-poster";
+import { ScanRulesForm } from "./scan-rules";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
@@ -46,14 +46,28 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
     supabase.from("customer_restaurant").select("customer_id, customers!inner(id)", { count: "exact", head: true }).eq("restaurant_id", restaurant.id),
   ]);
 
-  const enabled = settings?.welcome_enabled ?? true;
-  const kind = settings?.welcome_kind ?? "discount";
-  const title = settings?.welcome_title ?? "خصم ترحيب";
-  const valueKind = settings?.welcome_value_kind ?? "percent";
-  const value = settings?.welcome_value ?? null;
-  const days = settings?.welcome_expires_days ?? 14;
-
-  const field = "field-input";
+  // القيم من القاعدة مباشرة — الترحيل 0045 يضمن صفًّا لكل فرع، فلا نعرض
+  // «مفعّلة» افتراضيًّا بينما القاعدة لا تمنح شيئًا (كذبة الواجهة السابقة)
+  const s = settings as (typeof settings & {
+    instant_enabled?: boolean; instant_kind?: string; instant_title?: string;
+    instant_value?: number | null; instant_value_kind?: string; instant_expires_days?: number;
+    preset_key?: string | null;
+  }) | null;
+  const rules = {
+    welcome_enabled: s?.welcome_enabled ?? false,
+    welcome_kind: s?.welcome_kind ?? "discount",
+    welcome_title: s?.welcome_title ?? "خصم ترحيب ٢٠٪",
+    welcome_value: s?.welcome_value ?? null,
+    welcome_value_kind: s?.welcome_value_kind ?? "percent",
+    welcome_expires_days: s?.welcome_expires_days ?? 14,
+    instant_enabled: s?.instant_enabled ?? false,
+    instant_kind: s?.instant_kind ?? "discount",
+    instant_title: s?.instant_title ?? "خصم اليوم",
+    instant_value: s?.instant_value ?? null,
+    instant_value_kind: s?.instant_value_kind ?? "percent",
+    instant_expires_days: s?.instant_expires_days ?? 1,
+    preset_key: s?.preset_key ?? null,
+  };
 
   return (
     <div className="space-y-6">
@@ -95,53 +109,15 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
         />
       </section>
 
-      {/* إعداد هدية الترحيب */}
+      {/* ماذا يفعل الباركود؟ — التحكّم الكامل + مكتبة القوالب */}
       <section className="soft-card p-5">
-        <h2 className="mb-1 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "هدية الترحيب", "Welcome gift")}</h2>
-        <p className="mb-4 text-sm text-[color:var(--muted)]">{tr(lang, "تُمنح تلقائيًا لأول مسح لكل عميل — سبب يخليه يمسح.", "Auto-granted on each customer's first scan — the reason they scan.")}</p>
-        <form action={saveCheckinSettings} className="space-y-4">
-          <input type="hidden" name="branch_id" value={activeBranchId} />
-          <label className="flex items-center justify-between rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
-            <span>
-              <span className="block font-bold text-[color:var(--ink)]">{tr(lang, "تفعيل هدية الترحيب", "Enable welcome gift")}</span>
-              <span className="text-xs text-[color:var(--muted)]">{tr(lang, "عند الإطفاء يظل المسح يسجّل الزيارة بدون هدية", "When off, scanning still records the visit without a gift")}</span>
-            </span>
-            <input type="checkbox" name="welcome_enabled" defaultChecked={enabled} className="h-6 w-6 accent-[#a3341a]" />
-          </label>
-
-          <div>
-            <label className="field-label">{tr(lang, "عنوان الهدية", "Gift title")}</label>
-            <input name="welcome_title" defaultValue={title} placeholder={tr(lang, "مثال: خصم ترحيب ٢٠٪", "e.g. 20% welcome discount")} className={field} />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div>
-              <label className="field-label">{tr(lang, "النوع", "Type")}</label>
-              <select name="welcome_kind" defaultValue={kind} className={field}>
-                <option value="discount">{tr(lang, "خصم", "Discount")}</option>
-                <option value="gift">{tr(lang, "هديّة", "Gift")}</option>
-              </select>
-            </div>
-            <div>
-              <label className="field-label">{tr(lang, "القيمة", "Value")}</label>
-              <input name="welcome_value" inputMode="numeric" defaultValue={value != null ? toAr(value) : ""} placeholder={tr(lang, "٢٠", "20")} className={field} />
-            </div>
-            <div>
-              <label className="field-label">{tr(lang, "الوحدة", "Unit")}</label>
-              <select name="welcome_value_kind" defaultValue={valueKind} className={field}>
-                <option value="percent">{tr(lang, "٪ نسبة", "% percent")}</option>
-                <option value="amount">{tr(lang, "ر.س مبلغ", "SAR amount")}</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="field-label">{tr(lang, "صلاحية الهدية (أيام)", "Gift validity (days)")}</label>
-            <input name="welcome_expires_days" inputMode="numeric" defaultValue={toAr(days)} className={field} />
-          </div>
-
-          <button className="btn btn-primary w-full">{tr(lang, "حفظ", "Save")}</button>
-        </form>
+        <h2 className="mb-1 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "ماذا يفعل الباركود؟", "What does the barcode do?")}</h2>
+        <p className="mb-4 text-sm text-[color:var(--muted)]">
+          {tr(lang,
+            "أنت تقرّر: هدية لأول مسح، مكافأة مع كل مسح، الاثنان معًا، أو تسجيل صامت. والمسح دائمًا يسجّل الزيارة ويبني قاعدة عملائك.",
+            "You decide: a first-scan gift, a reward on every scan, both, or silent check-in. Scanning always records the visit and builds your customer base.")}
+        </p>
+        <ScanRulesForm initial={rules} branchId={activeBranchId} lang={lang} />
       </section>
     </div>
   );

@@ -132,6 +132,13 @@ export type Database = {
       checkin_settings: {
         Row: {
           branch_id: string
+          instant_enabled: boolean
+          instant_expires_days: number
+          instant_kind: string
+          instant_title: string
+          instant_value: number | null
+          instant_value_kind: string
+          preset_key: string | null
           restaurant_id: string
           updated_at: string
           welcome_enabled: boolean
@@ -143,6 +150,13 @@ export type Database = {
         }
         Insert: {
           branch_id: string
+          instant_enabled?: boolean
+          instant_expires_days?: number
+          instant_kind?: string
+          instant_title?: string
+          instant_value?: number | null
+          instant_value_kind?: string
+          preset_key?: string | null
           restaurant_id: string
           updated_at?: string
           welcome_enabled?: boolean
@@ -154,6 +168,13 @@ export type Database = {
         }
         Update: {
           branch_id?: string
+          instant_enabled?: boolean
+          instant_expires_days?: number
+          instant_kind?: string
+          instant_title?: string
+          instant_value?: number | null
+          instant_value_kind?: string
+          preset_key?: string | null
           restaurant_id?: string
           updated_at?: string
           welcome_enabled?: boolean

@@ -32,7 +32,10 @@ export function CheckinForm({ slug, branchId, lang }: { slug: string; branchId: 
   }, [state.ok, state.phone]);
 
   if (state.ok) {
-    const g = state.gift;
+    // البطاقة الكبرى: هدية الترحيب إن وُجدت، وإلا المكافأة الفورية.
+    // ولو اجتمعتا (زيارة أولى ومطعم مفعّل الاثنتين) تظهر الفورية بطاقةً ثانية.
+    const g = state.gift ?? state.instant;
+    const second = state.gift && state.instant ? state.instant : null;
     const loyal = state.loyalty;
     return (
       <div className="space-y-4">
@@ -69,6 +72,19 @@ export function CheckinForm({ slug, branchId, lang }: { slug: string; branchId: 
             </>
           )}
         </div>
+
+        {/* المكافأة الفورية حين تجتمع مع هدية الترحيب */}
+        {second && (
+          <div className="rq-card p-4 text-center">
+            <p className="font-display text-base font-bold text-[color:var(--brand-d)]">⚡ {tr(lang, "ومكافأة مسحك اليوم", "Plus today's scan reward")}</p>
+            <p className="mt-1 text-sm font-bold text-[color:var(--ink)]">{giftLabel(second, lang)} — {second.title}</p>
+            {second.expires_days ? (
+              <p className="mt-1 text-[11px] font-bold text-[color:var(--muted)]">
+                {tr(lang, `صالحة ${toAr(second.expires_days)} يوم`, `Valid ${toAr(second.expires_days)} days`)}
+              </p>
+            ) : null}
+          </div>
+        )}
 
         {/* مكافأة الولاء (لو تحقّقت) */}
         {state.loyalty_reward && (
