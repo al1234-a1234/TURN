@@ -73,6 +73,7 @@ with checks(name, pass) as (
                                 from pg_proc where proname='submit_review')),
   -- ── «وضعي مع هذا المطعم» (0046): متاح للضيف ومحروس بحدّ المعدّل ──
   ('anon_can_status',          has_function_privilege('anon','public.my_restaurant_status(text,text)','EXECUTE')),
+  ('anon_can_health',          has_function_privilege('anon','public.health_snapshot()','EXECUTE')),
   ('status_rate_guarded',      (select pg_get_functiondef(oid) like '%check_rate%'
                                 from pg_proc where proname='my_restaurant_status')),
   -- ── قواعد المسح (0045): الفوري موجود، وصف لكل فرع، والتريغر يخلقه ──

@@ -17,18 +17,25 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const started = Date.now();
   let db: "ok" | "fail" = "fail";
+  // العين العميقة: هل الوظائف الليلية حية؟ (0049 — تتساهل يومًا كاملًا
+  // عمدًا فلا إنذارات كاذبة). راصد خارجي بكلمة مفتاحية cron_fresh":false
+  // يكشف موت الكرونات خلال ٤٨ ساعة بلا أي وكيل.
+  let cron_fresh = true;
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       { auth: { persistSession: false } },
     );
-    // أرخص استعلام ممكن يثبت أن PostgREST والقاعدة يستجيبان
-    const { error } = await supabase.from("restaurants").select("id", { count: "exact", head: true }).limit(1);
-    if (!error) db = "ok";
+    const { data, error } = await supabase.rpc("health_snapshot");
+    if (!error) {
+      db = "ok";
+      cron_fresh = Boolean((data as { cron_fresh?: boolean } | null)?.cron_fresh ?? true);
+    }
   } catch { /* db تبقى fail */ }
 
-  const body = { ok: db === "ok", db, db_ms: Date.now() - started };
+  const body = { ok: db === "ok", db, cron_fresh, db_ms: Date.now() - started };
+  // 503 فقط عند سقوط القاعدة — كرونات راكدة إنذار كلمة مفتاحية لا «الموقع ساقط»
   return NextResponse.json(body, {
     status: body.ok ? 200 : 503,
     headers: { "Cache-Control": "no-store" },

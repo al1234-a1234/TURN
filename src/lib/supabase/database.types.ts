@@ -1564,6 +1564,7 @@ export type Database = {
         Args: { p_module: string; rest_id: string }
         Returns: boolean
       }
+      health_snapshot: { Args: never; Returns: Json }
       is_brand_manager: { Args: { rest_id: string }; Returns: boolean }
       is_manager_of: { Args: { rest_id: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
