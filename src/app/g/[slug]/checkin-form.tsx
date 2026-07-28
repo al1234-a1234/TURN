@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { checkinAction, type CheckinState, type Gift } from "./actions";
+import { StampCard } from "@/components/stamp-card";
 import { toAr } from "@/lib/format";
 import { normalizePhone } from "@/lib/format";
 import { tr, type Lang } from "@/lib/i18n";
@@ -94,26 +95,11 @@ export function CheckinForm({ slug, branchId, lang }: { slug: string; branchId: 
           </div>
         )}
 
-        {/* تقدّم الولاء */}
+        {/* بطاقة الأختام — الزيارة التي سُجّلت الآن محسوبة فيها */}
         {loyal && loyal.threshold > 0 && (
           <div className="rq-card p-4">
-            <div className="flex items-center justify-between text-[13px] font-bold text-[color:var(--ink)]">
-              <span>{tr(lang, "نقاطك", "Your points")}</span>
-              <span dir="ltr">{toAr(state.points ?? 0)} / {toAr(loyal.threshold)}</span>
-            </div>
-            <div className="mt-2 h-2.5 overflow-hidden rounded-full" style={{ background: "rgba(102,28,10,0.12)" }}>
-              <div
-                className="h-full rounded-full"
-                style={{
-                  width: `${Math.min(100, Math.round(((state.points ?? 0) / loyal.threshold) * 100))}%`,
-                  background: "linear-gradient(90deg,#b23c1d,#661c0a)",
-                }}
-              />
-            </div>
-            <p className="mt-2 text-[12px] font-bold text-[color:var(--muted)]">
-              {tr(lang, `كل زيارة +${toAr(loyal.points_per_visit)} نقطة — ${toAr(Math.max(0, loyal.threshold - (state.points ?? 0)))} للمكافأة`,
-                       `+${toAr(loyal.points_per_visit)} points each visit — ${toAr(Math.max(0, loyal.threshold - (state.points ?? 0)))} to reward`)}
-            </p>
+            <StampCard points={state.points ?? 0} threshold={loyal.threshold}
+                       perVisit={loyal.points_per_visit} reward={null} lang={lang} />
           </div>
         )}
 

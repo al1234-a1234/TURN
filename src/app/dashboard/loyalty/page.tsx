@@ -21,8 +21,12 @@ export default async function LoyaltyPage() {
     redirect("/dashboard");
   }
 
-  const [{ data: program }, { data: members }, { data: winbackRows }] = await Promise.all([
-    supabase.from("loyalty_programs").select("*").eq("restaurant_id", restaurant.id).maybeSingle(),
+  const { data: program } = await supabase
+    .from("loyalty_programs").select("*").eq("restaurant_id", restaurant.id).maybeSingle();
+  const progThreshold = program?.reward_threshold ?? 10;
+  const progPerVisit = Math.max(1, program?.points_per_visit ?? 1);
+
+  const [{ data: members }, { data: nearRows }, { data: winbackRows }] = await Promise.all([
     supabase
       .from("customer_restaurant")
       .select("customer_id, points, visits, tier, customers!inner(full_name, phone)")
@@ -30,6 +34,17 @@ export default async function LoyaltyPage() {
       .gt("points", 0)
       .order("points", { ascending: false })
       .limit(20),
+    // «باقي زيارة واحدة» ثم انقطع أسبوعًا: أثمن دفعة في البرنامج كله —
+    // من زار أمس رأى الاحتفاء على شاشته، أما هذا فيحتاج من يذكّره
+    supabase
+      .from("customer_restaurant")
+      .select("customer_id, points, visits, last_visit, customers!inner(full_name, phone)")
+      .eq("restaurant_id", restaurant.id)
+      .gte("points", progThreshold - progPerVisit)
+      .lt("points", progThreshold)
+      .lt("last_visit", new Date(Date.now() - 7 * 864e5).toISOString())
+      .order("last_visit", { ascending: true })
+      .limit(30),
     // هدايا العودة المولّدة تلقائيًّا وما زالت فعّالة — كانت تُمنح ولا يعلم بها أحد:
     // العميل المنقطع لن يفتح التطبيق ليكتشفها، فنعطي المالك زرّ إرسالها واتساب.
     supabase
@@ -62,10 +77,27 @@ export default async function LoyaltyPage() {
   };
 
   const active = program?.is_active ?? false;
-  const perVisit = program?.points_per_visit ?? 1;
-  const threshold = program?.reward_threshold ?? 10;
+  const perVisit = progPerVisit;
+  const threshold = progThreshold;
   const list = (members ?? []) as Member[];
   const readyToRedeem = list.filter((m) => m.points >= threshold).length;
+
+  type NearRow = {
+    customer_id: string; points: number; visits: number; last_visit: string | null;
+    customers: { full_name: string | null; phone: string | null } | { full_name: string | null; phone: string | null }[] | null;
+  };
+  const near = ((nearRows ?? []) as NearRow[]).map((n) => {
+    const c = Array.isArray(n.customers) ? n.customers[0] : n.customers;
+    return { ...n, name: c?.full_name ?? null, phone: c?.phone ?? null };
+  }).filter((n) => n.phone);
+
+  const nearWaLink = (n: { phone: string | null; name: string | null }) => {
+    const digits = (n.phone ?? "").replace(/\D/g, "").replace(/^0/, "966");
+    const msg = `${n.name ? `مرحبًا ${n.name.split(/\s+/)[0]} 👋` : "مرحبًا 👋"}\n` +
+      `باقي لك زيارة واحدة فقط في ${restaurant.name} وتاخذ ${program?.reward_description || "مكافأتك"} 🎁\n` +
+      `نشوفك قريب!`;
+    return `https://wa.me/${digits}?text=${encodeURIComponent(msg)}`;
+  };
 
   const field = "field-input";
 
@@ -76,6 +108,39 @@ export default async function LoyaltyPage() {
           <Kpi label={tr(lang, "أعضاء بنقاط", "Members with points")} value={toAr(list.length)} tone="var(--brand-d)" />
           <Kpi label={tr(lang, "جاهزون للمكافأة", "Ready for reward")} value={toAr(readyToRedeem)} tone="var(--st-full)" />
         </div>
+
+        {/* على بُعد زيارة واحدة ثم انقطعوا — أثمن تذكير في البرنامج كله */}
+        {active && near.length > 0 && (
+          <section className="soft-card p-5">
+            <h2 className="mb-1 font-display text-lg font-bold text-[color:var(--ink)]">
+              🔥 {tr(lang, `على بُعد زيارة واحدة (${toAr(near.length)})`, `One visit away (${near.length})`)}
+            </h2>
+            <p className="mb-4 text-sm text-[color:var(--muted)]">
+              {tr(lang,
+                "وصلوا لآخر ختم ثم انقطعوا أسبوعًا أو أكثر. رسالة واحدة تعيدهم — المكافأة التي كادوا يأخذونها أقوى حافز يملكه مطعمك.",
+                "They reached the last stamp then went quiet for a week+. One message brings them back — the reward they almost earned is the strongest incentive you have.")}
+            </p>
+            <ul className="space-y-2">
+              {near.map((n) => (
+                <li key={n.customer_id} className="flex items-center gap-3 rounded-2xl border p-3"
+                    style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-extrabold text-[color:var(--ink)]">{n.name ?? tr(lang, "عميل", "Customer")}</p>
+                    <p className="text-[11px] font-bold text-[color:var(--muted)]">
+                      {tr(lang, `${toAr(n.points)}/${toAr(threshold)} نقطة · ${toAr(n.visits)} زيارة`,
+                               `${toAr(n.points)}/${toAr(threshold)} pts · ${toAr(n.visits)} visits`)}
+                    </p>
+                  </div>
+                  <a href={nearWaLink(n)} target="_blank" rel="noreferrer"
+                     className="shrink-0 rounded-xl px-4 py-2 text-xs font-extrabold text-white"
+                     style={{ background: "linear-gradient(150deg,#1fa855,#0d7a3c)" }}>
+                    {tr(lang, "ذكّره واتساب", "Nudge on WhatsApp")}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* هدايا العودة الجاهزة للإرسال — بلا هذا الزر كانت تُمنح في صمت تامّ */}
         {winback.length > 0 && (

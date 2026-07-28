@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CheckinForm } from "./checkin-form";
 import { checkinAction, type CheckinState } from "./actions";
 import { RewardQr } from "@/components/reward-qr";
+import { StampCard } from "@/components/stamp-card";
 import { createClient } from "@/lib/supabase/client";
 import { toAr, normalizePhone } from "@/lib/format";
 import { tr, type Lang } from "@/lib/i18n";
@@ -154,24 +155,11 @@ export function ScanLanding({ slug, branchId, lang }: { slug: string; branchId: 
         )}
       </div>
 
-      {/* تقدّم الولاء */}
+      {/* بطاقة الأختام (أو الشريط للبرامج النقاطية الحرّة) */}
       {loyal && loyal.threshold > 0 && (
         <div className="rq-card p-4">
-          <div className="flex items-center justify-between text-[13px] font-bold text-[color:var(--ink)]">
-            <span>{tr(lang, "نقاطك هنا", "Your points here")}</span>
-            <span dir="ltr">{toAr(points)} / {toAr(loyal.threshold)}</span>
-          </div>
-          <div className="mt-2 h-2.5 overflow-hidden rounded-full" style={{ background: "rgba(102,28,10,0.12)" }}>
-            <div className="h-full rounded-full"
-                 style={{ width: `${Math.min(100, Math.round((points / loyal.threshold) * 100))}%`,
-                          background: "linear-gradient(90deg,#b23c1d,#661c0a)" }} />
-          </div>
-          <p className="mt-2 text-[12px] font-bold text-[color:var(--muted)]">
-            {points >= loyal.threshold
-              ? tr(lang, "🎉 وصلت! مكافأتك تنزل مع زيارتك", "🎉 You made it! Your reward lands with your visit")
-              : tr(lang, `باقي ${toAr(loyal.threshold - points)} نقطة على ${loyal.reward || "مكافأتك"}`,
-                       `${toAr(loyal.threshold - points)} points to ${loyal.reward || "your reward"}`)}
-          </p>
+          <StampCard points={points} threshold={loyal.threshold} perVisit={loyal.points_per_visit}
+                     reward={loyal.reward} lang={lang} />
         </div>
       )}
 
