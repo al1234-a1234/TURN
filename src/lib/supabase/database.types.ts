@@ -1576,6 +1576,10 @@ export type Database = {
         }[]
       }
       my_branch_ids: { Args: never; Returns: string[] }
+      my_restaurant_status: {
+        Args: { p_phone: string; p_slug: string }
+        Returns: Json
+      }
       norm_phone_input: { Args: { p: string }; Returns: string }
       public_checkin: {
         Args: {

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { CheckinForm } from "./checkin-form";
+import { ScanLanding } from "./scan-landing";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
 
@@ -41,14 +41,8 @@ export default async function CheckinPage({ params, searchParams }: { params: Pr
       </header>
 
       <main className="mx-auto -mt-10 w-full max-w-md px-5 pb-16">
-        <div className="mb-4 text-center">
-          <h2 className="font-display text-xl font-bold text-[color:var(--ink)]">{tr(lang, "امسح خذ هديتك 🎁", "Scan & get your gift 🎁")}</h2>
-          <p className="mt-1 text-sm font-medium text-[color:var(--muted)]">
-            {tr(lang, "اكتب رقمك واستلم هديتك — بدون تطبيق ولا تسجيل", "Enter your number and get your gift — no app, no signup")}
-          </p>
-        </div>
-
-        <CheckinForm slug={slug} branchId={(await searchParams).b ?? ""} lang={lang} />
+        {/* التوجيه الذكي: معروف ← وضعه مع المطعم، جديد ← نموذج الخطوة الواحدة */}
+        <ScanLanding slug={slug} branchId={(await searchParams).b ?? ""} lang={lang} />
 
         <p className="mt-8 text-center text-[11px] font-bold tracking-widest text-[color:var(--muted)]">
           {tr(lang, "مقدّم من دور", "Powered by Turn")}

@@ -71,6 +71,10 @@ with checks(name, pass) as (
   ('validate_before_limit',    (select position('invalid_rating' in pg_get_functiondef(oid))
                                      < position('check_rate' in pg_get_functiondef(oid))
                                 from pg_proc where proname='submit_review')),
+  -- ── «وضعي مع هذا المطعم» (0046): متاح للضيف ومحروس بحدّ المعدّل ──
+  ('anon_can_status',          has_function_privilege('anon','public.my_restaurant_status(text,text)','EXECUTE')),
+  ('status_rate_guarded',      (select pg_get_functiondef(oid) like '%check_rate%'
+                                from pg_proc where proname='my_restaurant_status')),
   -- ── قواعد المسح (0045): الفوري موجود، وصف لكل فرع، والتريغر يخلقه ──
   ('scan_grants_instant',      (select pg_get_functiondef(oid) like '%instant_enabled%'
                                 from pg_proc where proname='public_checkin')),
