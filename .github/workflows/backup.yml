@@ -52,6 +52,11 @@ jobs:
           sudo apt-get install -y -qq postgresql-common
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
           sudo apt-get install -y -qq postgresql-client-17
+          # عامل التشغيل يأتي بنسخة عميل قديمة على /usr/bin مسبقًا (عادة v16)،
+          # والتثبيت أعلاه لا يستبدلها تلقائيًّا — نضيف مسار v17 الحقيقي
+          # أول PATH لبقية الخطوات كي تُستخدم نسخته لا نسخة النظام الافتراضية.
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+          export PATH="/usr/lib/postgresql/17/bin:$PATH"
           pg_dump --version
 
       - name: تشغيل النسخة (نفس سكربت الاستقلال اليدوي)
