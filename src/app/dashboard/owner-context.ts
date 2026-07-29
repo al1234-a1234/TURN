@@ -54,39 +54,46 @@ export async function loadOwner(): Promise<OwnerLoad> {
   } = await supabase.auth.getUser();
   if (!user) return { state: "no_user" };
 
+  // مشرف المنصّة يُفحص أولًا ومرّة واحدة: هويته الإدارية لا يجوز أن تُبتلع
+  // بصفّ staff عرَضي قديم (مثلًا مطعم تجريبي أُنشئ يومًا بلا owner_email فصار
+  // هو مالكه المؤقت افتراضيًّا — migration 0010). بلا هذا الفحص المبكر، مشرف
+  // له صفّ staff متروك في أي مطعم يُسجَّل دخوله فيه مباشرة كأنه مالكه الحقيقي.
+  const { data: adminCheck } = await supabase.rpc("is_platform_admin");
+  const isAdmin = !!adminCheck;
+
   // أولوية «عرض المشرف»: عند وجود كوكي admin_rid وكان المستخدم مشرف منصّة،
   // نعرض المطعم المختار حتمًا (حتى لو كان المشرف موظفًا في مطاعم أخرى).
   const store = await cookies();
   const adminRid = store.get(ADMIN_RID_COOKIE)?.value;
-  let isAdmin = false;
-  if (adminRid) {
-    const { data } = await supabase.rpc("is_platform_admin");
-    isAdmin = !!data;
-    if (isAdmin) {
-      const { data: rest } = await supabase
-        .from("restaurants")
-        .select("id, name, slug")
-        .eq("id", adminRid)
-        .maybeSingle();
-      if (rest) {
-        const modules = await getEnabledModules(supabase, rest.id);
-        return {
-          state: "ok",
-          ctx: {
-            supabase,
-            userId: user.id,
-            email: user.email ?? null,
-            restaurant: rest as OwnerRestaurant,
-            role: "owner",
-            permissions: {},
-            modules,
-            branchId: null,
-            branchName: null,
-            isAdminView: true,
-          },
-        };
-      }
+  if (adminRid && isAdmin) {
+    const { data: rest } = await supabase
+      .from("restaurants")
+      .select("id, name, slug")
+      .eq("id", adminRid)
+      .maybeSingle();
+    if (rest) {
+      const modules = await getEnabledModules(supabase, rest.id);
+      return {
+        state: "ok",
+        ctx: {
+          supabase,
+          userId: user.id,
+          email: user.email ?? null,
+          restaurant: rest as OwnerRestaurant,
+          role: "owner",
+          permissions: {},
+          modules,
+          branchId: null,
+          branchName: null,
+          isAdminView: true,
+        },
+      };
     }
+  }
+
+  // مشرف بلا كوكي اختيار مطعم → لوحة الأدمِن دائمًا، لا صفّ staff عرَضي
+  if (isAdmin) {
+    return { state: "no_restaurant", email: user.email ?? null, isAdmin, supabase };
   }
 
   const { data: staffRows } = await supabase
@@ -103,11 +110,6 @@ export async function loadOwner(): Promise<OwnerLoad> {
   const boundBranch = staff?.branches as { id: string; name: string } | null | undefined;
 
   if (!staff || !restaurant) {
-    // نتفادى تكرار استدعاء is_platform_admin إن سبق فحصه أعلاه
-    if (!adminRid) {
-      const { data } = await supabase.rpc("is_platform_admin");
-      isAdmin = !!data;
-    }
     return { state: "no_restaurant", email: user.email ?? null, isAdmin, supabase };
   }
 
