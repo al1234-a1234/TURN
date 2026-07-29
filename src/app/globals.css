@@ -240,11 +240,3 @@ h1, h2, h3, h4 {
 /* شريط منزلق بلا شريط تمرير ظاهر (شريط الفروع) */
 .rq-rail { scrollbar-width: none; -ms-overflow-style: none; }
 .rq-rail::-webkit-scrollbar { display: none; }
-
-/* انتقال شعار المطعم المشترك: الرئيسية ← صفحة المطعم (Card ← LogoBox shared).
-   السرعة الافتراضية للمتصفح سريعة جدًّا (٠.٢٥ث) — نبطّئها قليلًا لإحساس أنعم.
-   بلا دعم المتصفح للـView Transitions هذا القسم لا يُستدعى أصلًا. */
-::view-transition-group(*) {
-  animation-duration: 420ms;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}

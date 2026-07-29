@@ -152,12 +152,8 @@ export default async function RestaurantPublicPage({
       <SharedHeader
         overlap={
           <div className="absolute inset-x-0 bottom-0 flex justify-center">
-            {/* نفس اسم الانتقال في بطاقة الرئيسية (discovery-list.tsx) — الشعار
-                "يهبط" هنا بالضبط بدل ظهوره فجأة. نصفه داخل الهيدر ونصفه خارجه. */}
-            <span
-              className="flex h-20 w-20 shrink-0 translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-white/15 font-serif text-2xl font-bold text-white ring-4 ring-[var(--background)] backdrop-blur-sm"
-              style={{ viewTransitionName: `restaurant-logo-${slug}` } as React.CSSProperties}
-            >
+            {/* نصفه داخل الهيدر ونصفه خارجه — على الحافة السفلية بالضبط. */}
+            <span className="flex h-20 w-20 shrink-0 translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-white/15 font-serif text-2xl font-bold text-white ring-4 ring-[var(--background)] backdrop-blur-sm">
               {restaurant.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={restaurant.logo_url} alt="" className="h-full w-full object-cover" />
