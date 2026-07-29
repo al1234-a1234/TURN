@@ -26,12 +26,17 @@ export default async function RestaurantPublicPage({
   const lang = await getLang();
   const supabase = await createClient();
 
-  const { data: restaurant } = await supabase
-    .from("restaurants")
-    .select("id, name, name_en, description, is_active, logo_url, cover_url, links, cuisine, cuisine_en")
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .maybeSingle();
+  // المطعم وحالة الدخول لا يعتمد أحدهما على الآخر — يُجلبان معًا. كل موجة
+  // تسلسلية هنا رحلة شبكة إضافية كاملة بين الخادم وفرانكفورت تُحسّ بطئًا حقيقيًّا.
+  const [{ data: restaurant }, { data: { user } }] = await Promise.all([
+    supabase
+      .from("restaurants")
+      .select("id, name, name_en, description, is_active, logo_url, cover_url, links, cuisine, cuisine_en")
+      .eq("slug", slug)
+      .eq("is_active", true)
+      .maybeSingle(),
+    supabase.auth.getUser(),
+  ]);
 
   if (!restaurant) notFound();
 
@@ -42,8 +47,14 @@ export default async function RestaurantPublicPage({
   const requestedBranch = (await searchParams).branch;
   const contentBranchId =
     (branches ?? []).find((b) => b.id === requestedBranch)?.id ?? branches?.[0]?.id ?? "";
+  const branchList = branches ?? [];
+  const branchIdsOrPlaceholder = branchList.map((b) => b.id).length ? branchList.map((b) => b.id) : ["00000000-0000-0000-0000-000000000000"];
 
-  const [{ data: categories }, { data: items }, { data: photos }, { data: offers }, { data: reviewRows }] = await Promise.all([
+  // سبعة استعلامات مستقلة (لا يحتاج أحدها نتيجة الآخر) — موجة واحدة بدل سبع
+  const [
+    { data: categories }, { data: items }, { data: photos }, { data: offers }, { data: reviewRows },
+    { data: branchPhotos }, { data: countRows },
+  ] = await Promise.all([
     supabase.from("menu_categories").select("id, name").eq("branch_id", contentBranchId).order("sort_order").order("created_at"),
     supabase.from("menu_items").select("id, name, price, description, image_url, category_id").eq("branch_id", contentBranchId).eq("is_available", true).order("created_at"),
     supabase.from("restaurant_photos").select("id, url, caption").eq("branch_id", contentBranchId).order("sort_order").order("created_at"),
@@ -51,6 +62,12 @@ export default async function RestaurantPublicPage({
     supabase.from("offers").select("id, title, description, kind, value, code, ends_at").eq("branch_id", contentBranchId).eq("is_active", true) .in("audience", ["all", "new", "slow_hours"]).order("created_at", { ascending: false }),
     // تقييمات حقيقية منشورة (بدل بيانات وهمية)
     supabase.from("reviews").select("rating, comment, created_at, customers(full_name)").eq("restaurant_id", restaurant.id).eq("is_published", true).order("created_at", { ascending: false }).limit(200),
+    // صورة لكل فرع (صارت لكل فرع بعد المرحلة ٢) — يعرضها شريط الفروع
+    supabase.from("restaurant_photos").select("url, branch_id").in("branch_id", branchIdsOrPlaceholder).order("sort_order").order("created_at"),
+    // استدعاء جماعي واحد بدل RPC لكل فرع (كان N+1 — يتضاعف مع كل فرع لكل زيارة)
+    branchList.length
+      ? supabase.rpc("waitlist_counts_for", { p_branch_ids: branchList.map((b) => b.id) })
+      : Promise.resolve({ data: [] as { branch_id: string; total: number; inside: number; outside: number }[] }),
   ]);
 
   // تجميع التقييمات الحقيقية
@@ -68,26 +85,9 @@ export default async function RestaurantPublicPage({
     };
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const branchList = branches ?? [];
-
-  // صورة لكل فرع (صارت لكل فرع بعد المرحلة ٢) — يعرضها شريط الفروع
-  const { data: branchPhotos } = await supabase
-    .from("restaurant_photos")
-    .select("url, branch_id")
-    .in("branch_id", branchList.map((b) => b.id).length ? branchList.map((b) => b.id) : ["00000000-0000-0000-0000-000000000000"])
-    .order("sort_order")
-    .order("created_at");
   const photoOf = new Map<string, string>();
   for (const ph of branchPhotos ?? []) if (!photoOf.has(ph.branch_id)) photoOf.set(ph.branch_id, ph.url);
 
-  // استدعاء جماعي واحد بدل RPC لكل فرع (كان N+1 — يتضاعف مع كل فرع لكل زيارة)
-  const { data: countRows } = branchList.length
-    ? await supabase.rpc("waitlist_counts_for", { p_branch_ids: branchList.map((b) => b.id) })
-    : { data: [] };
   const countOf = new Map((countRows ?? []).map((c) => [c.branch_id, c]));
   const withCounts = branchList.map((b) => {
     const c = countOf.get(b.id);

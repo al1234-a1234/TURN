@@ -107,7 +107,7 @@ function ZonePill({ label, count, lang }: { label: string; count: number; lang: 
       style={
         busy
           ? { background: "linear-gradient(150deg,#b23c1d,#661c0a)", color: "#fff" }
-          : { background: "linear-gradient(160deg,#faefe8,#f4ddd0)", color: "var(--brand-d)", border: "1px solid rgba(102,28,10,0.14)" }
+          : { background: "var(--sage)", color: "var(--brand-d)", border: "1px solid rgba(102,28,10,0.14)" }
       }
     >
       <span className="inline-flex items-center gap-1.5">
@@ -169,18 +169,7 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
         )}
       </div>
 
-      {!r.accepts ? (
-        <div
-          className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-          style={{ background: "linear-gradient(160deg, #b23c1d 0%, #8a2a14 58%, #661c0a 100%)", boxShadow: "0 12px 24px -18px rgba(72,18,7,0.7)" }}
-        >
-          <span className="flex items-center gap-2 text-sm font-extrabold text-white">
-            <span className="h-2.5 w-2.5 rounded-full bg-white/70" />
-            {tr(lang, "استقبال مباشر — بلا حجز دور", "Walk-in — no queue")}
-          </span>
-          <span className="text-xs font-extrabold text-white/80">{tr(lang, "تفضّل ←", "Come in ←")}</span>
-        </div>
-      ) : r.waiting > 0 && r.inside + r.outside > 0 ? (
+      {r.waiting > 0 && r.inside + r.outside > 0 ? (
         <div className="mt-2.5 flex flex-col items-end gap-1.5">
           <ZonePill label={tr(lang, "داخلي", "Indoor")} count={r.inside} lang={lang} />
           <ZonePill label={tr(lang, "خارجي", "Outdoor")} count={r.outside} lang={lang} />
@@ -199,7 +188,7 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
       ) : (
         <div
           className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-          style={{ background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", border: "1px solid rgba(102,28,10,0.16)" }}
+          style={{ background: "var(--sage)", border: "1px solid rgba(102,28,10,0.16)" }}
         >
           <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--brand-d)" }}>
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--brand-d)", boxShadow: "0 0 0 3px rgba(102,28,10,0.14)" }} />
@@ -252,17 +241,16 @@ export function DiscoveryList({ items, offers = [], lang }: { items: DiscoveryIt
     [items, cuisine],
   );
 
-  // تجميع ذكي: متاح الآن · فيه طابور (الأقل ازدحامًا أولًا) · لا يستقبل
+  // تجميع بقسمين بس: متاح الآن (يشمل مين ما عليه طابور، ومن لا يستخدم نظام
+  // الطابور أصلًا — كلاهما يعني «ادخل على طول» للعميل) · فيه طابور الآن.
   const groups = useMemo(() => {
-    const available = filtered.filter((r) => r.accepts && r.waiting === 0);
-    const queued = filtered.filter((r) => r.accepts && r.waiting > 0).sort((a, b) => a.waiting - b.waiting);
-    const closed = filtered.filter((r) => !r.accepts);
+    const available = filtered.filter((r) => r.waiting === 0);
+    const queued = filtered.filter((r) => r.waiting > 0).sort((a, b) => a.waiting - b.waiting);
     // متاح: الأعلى تقييمًا أولًا
     available.sort((a, b) => Number(b.rating ?? 0) - Number(a.rating ?? 0));
     return [
       { key: "available", label: tr(lang, "متاح الآن · بدون انتظار", "Available now · No wait"), rows: available },
       { key: "queued", label: tr(lang, "فيه طابور الآن", "Queue running now"), rows: queued },
-      { key: "closed", label: tr(lang, "استقبال مباشر · بلا حجز دور", "Walk-in · no queue"), rows: closed },
     ].filter((g) => g.rows.length > 0);
   }, [filtered, lang]);
 
@@ -272,7 +260,7 @@ export function DiscoveryList({ items, offers = [], lang }: { items: DiscoveryIt
   const chip = (active: boolean) =>
     active
       ? { background: "linear-gradient(160deg,#a8371a,#661c0a)", color: "#fff", border: "1px solid transparent" }
-      : { background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", color: "var(--brand-d)", border: "1px solid rgba(102,28,10,0.14)" };
+      : { background: "var(--sage)", color: "var(--brand-d)", border: "1px solid rgba(102,28,10,0.14)" };
 
   let delay = 0;
 
