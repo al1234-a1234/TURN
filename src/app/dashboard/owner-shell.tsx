@@ -146,6 +146,9 @@ export async function OwnerShell({
           <Link href={`/r/${restaurant.slug}`} className="mb-2 flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-bold text-[color:var(--muted)] transition hover:text-brand-700">
             <span>🌐</span> {tr(lang, "الصفحة العامة", "Public page")}
           </Link>
+          <Link href="/account" className="mb-2 flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-bold text-[color:var(--muted)] transition hover:text-brand-700">
+            <span>🔑</span> {tr(lang, "حسابي — تغيير كلمة المرور", "My account — change password")}
+          </Link>
           <LogoutButton />
         </div>
       </aside>
@@ -162,6 +165,9 @@ export async function OwnerShell({
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
                   <path d="M14 3h7v7M21 3l-9 9M10 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
+              </Link>
+              <Link href="/account" className="icon-btn" title={tr(lang, "حسابي", "My account")}>
+                <span aria-hidden>🔑</span>
               </Link>
               <LogoutButton />
             </div>
