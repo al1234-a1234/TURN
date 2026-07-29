@@ -167,7 +167,7 @@ export default async function RestaurantPublicPage({
           {/* نفس اسم الانتقال في بطاقة الرئيسية (discovery-list.tsx) — الشعار
               "يهبط" هنا بالضبط بدل ظهوره فجأة، ويحلّ محلّ اسم المطعم نصًّا. */}
           <span
-            className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-[26px] bg-white/15 font-serif text-3xl font-bold text-white ring-2 ring-white/35 backdrop-blur-sm"
+            className="flex h-32 w-32 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15 font-serif text-4xl font-bold text-white ring-2 ring-white/35 backdrop-blur-sm"
             style={{ viewTransitionName: `restaurant-logo-${slug}` } as React.CSSProperties}
           >
             {restaurant.logo_url ? (
