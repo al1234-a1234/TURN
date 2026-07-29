@@ -107,7 +107,7 @@ export function CheckinForm({ slug, branchId, lang }: { slug: string; branchId: 
         <Link
           href={`/me/rewards${state.phone ? `?phone=${encodeURIComponent(state.phone)}` : ""}`}
           className="flex items-center justify-between rounded-2xl px-4 py-3.5"
-          style={{ background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", border: "1px solid rgba(102,28,10,0.16)" }}
+          style={{ background: "var(--sage)", border: "1px solid rgba(102,28,10,0.16)" }}
         >
           <span className="flex items-center gap-2 text-sm font-bold" style={{ color: "var(--brand-d)" }}>
             🎁 {tr(lang, "شوف كل هداياك وعروضك", "See all your gifts & offers")}

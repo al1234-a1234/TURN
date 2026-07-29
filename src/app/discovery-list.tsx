@@ -190,7 +190,7 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
       {!r.accepts ? (
         <div
           className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-          style={{ background: "linear-gradient(160deg,#5c2412,#3a1206)", boxShadow: "0 12px 24px -18px rgba(72,18,7,0.7)" }}
+          style={{ background: "linear-gradient(160deg, #b23c1d 0%, #8a2a14 58%, #661c0a 100%)", boxShadow: "0 12px 24px -18px rgba(72,18,7,0.7)" }}
         >
           <span className="flex items-center gap-2 text-sm font-extrabold text-white">
             <span className="h-2.5 w-2.5 rounded-full bg-white/70" />

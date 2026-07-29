@@ -269,7 +269,7 @@ function OffersSection({ offers, lang }: { offers: OfferLite[]; lang: "ar" | "en
       )}
 
       {/* منفذ الهدايا الشخصية (بلا حساب — عبر الرقم) */}
-      <Link href="/me/rewards" className="mt-2.5 flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: "linear-gradient(160deg,#faefe8,#f4ddd0)", border: "1px solid rgba(102,28,10,0.14)" }}>
+      <Link href="/me/rewards" className="mt-2.5 flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: "var(--sage)", border: "1px solid rgba(102,28,10,0.14)" }}>
         <span className="flex items-center gap-2 text-sm font-bold" style={{ color: "var(--brand-d)" }}>
           <span>🎁</span> {tr(lang, "عندك هديّة خاصة؟ اعرفها برقمك", "Got a personal reward? Check with your number")}
         </span>

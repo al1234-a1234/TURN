@@ -389,7 +389,7 @@ export function WaitlistForm({
 
       {/* حالة الموقع — تظهر فقط عند الرفض أو التعذّر */}
       {(geo === "denied" || geo === "unavailable") && (
-        <div className="rounded-2xl p-4" style={{ background: "linear-gradient(160deg,#f3e8df,#e9d7c8)", border: "1px solid rgba(102,28,10,0.16)" }}>
+        <div className="rounded-2xl p-4" style={{ background: "var(--sage)", border: "1px solid rgba(102,28,10,0.16)" }}>
           <p className="text-sm font-extrabold" style={{ color: "var(--brand-d)" }}>
             {geo === "denied"
               ? tr(lang, "نحتاج موقعك لإكمال أخذ الدور", "We need your location to take a turn")

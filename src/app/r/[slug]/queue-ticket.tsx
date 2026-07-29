@@ -285,7 +285,7 @@ export function QueueTicket({
       {entryId && phone && canPush && (
         pushOn ? (
           <p className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold"
-             style={{ background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", border: "1px solid rgba(102,28,10,0.16)", color: "var(--brand-d)" }}>
+             style={{ background: "var(--sage)", border: "1px solid rgba(102,28,10,0.16)", color: "var(--brand-d)" }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
             {tr(lang, "بننبّهك على جوّالك قبل دورك", "We'll alert your phone before your turn")}
           </p>

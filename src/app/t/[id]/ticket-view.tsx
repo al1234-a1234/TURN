@@ -95,7 +95,7 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
       <div className="w-full space-y-2.5">
         {row.confirmed ? (
           <p className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-extrabold"
-             style={{ background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", border: "1px solid rgba(102,28,10,0.16)", color: "var(--brand-d)" }}>
+             style={{ background: "var(--sage)", border: "1px solid rgba(102,28,10,0.16)", color: "var(--brand-d)" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
             {tr(lang, "أكّدت حضورك — ننتظرك", "Attendance confirmed — see you soon")}
           </p>
