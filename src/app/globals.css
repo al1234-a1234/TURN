@@ -98,7 +98,7 @@ h1, h2, h3, h4 {
 
 /* ===== هيدر أخضر بحواف سفلية دائرية (نمط ريكيو) ===== */
 .rq-header {
-  background: linear-gradient(160deg, #b23c1d 0%, #8a2a14 58%, #661c0a 100%);
+  background: var(--brand-d);
   color: #fff;
   border-end-start-radius: 34px;
   border-end-end-radius: 34px;

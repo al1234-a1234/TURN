@@ -10,7 +10,7 @@ export default function RestaurantLoading() {
           <div className={`${bar} h-11 w-11`} style={{ background: "rgba(255,255,255,0.2)" }} />
           <div className={`${bar} h-11 w-11`} style={{ background: "rgba(255,255,255,0.2)" }} />
         </div>
-        <div className="absolute inset-x-0 bottom-0 flex justify-center">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center">
           <div className={`${bar} h-20 w-20 translate-y-1/2`} style={{ background: "rgba(255,255,255,0.25)" }} />
         </div>
       </div>

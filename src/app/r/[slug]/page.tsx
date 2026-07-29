@@ -151,7 +151,9 @@ export default async function RestaurantPublicPage({
           (زاوية الصفّ العلوي)، وشعار المطعم يتجاوز الحافة السفلية (overlap). */}
       <SharedHeader
         overlap={
-          <div className="absolute inset-x-0 bottom-0 flex justify-center">
+          // pointer-events-none: بلا هذا، هذا الغلاف الشفاف (عرض كامل الهيدر)
+          // يبتلع ضغطات زرّي الرجوع/المشاركة تحته لأنه يُرسَم بعدهما بالـDOM
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center">
             {/* نصفه داخل الهيدر ونصفه خارجه — على الحافة السفلية بالضبط. */}
             <span className="flex h-20 w-20 shrink-0 translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-white/15 font-serif text-2xl font-bold text-white ring-4 ring-[var(--background)] backdrop-blur-sm">
               {restaurant.logo_url ? (
@@ -265,7 +267,7 @@ function OffersSection({ offers, lang }: { offers: OfferLite[]; lang: "ar" | "en
       )}
 
       {/* منفذ الهدايا الشخصية (بلا حساب — عبر الرقم) */}
-      <Link href="/me/rewards" className="mt-2.5 flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: "#fff", border: "1.5px solid var(--brand-d)" }}>
+      <Link href="/me/rewards" className="mt-2.5 flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: "rgba(102,28,10,0.08)", border: "1.5px solid var(--brand-d)" }}>
         <span className="flex items-center gap-2 text-sm font-bold" style={{ color: "var(--brand-d)" }}>
           <span>🎁</span> {tr(lang, "عندك هديّة خاصة؟ اعرفها برقمك", "Got a personal reward? Check with your number")}
         </span>

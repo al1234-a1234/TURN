@@ -85,7 +85,7 @@ export default async function MePage() {
             <Link key={it.href} href={it.href} className="flex items-center gap-3.5 px-5 py-4 transition active:bg-[color:var(--surface-2)]">
               <span
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-brand-800"
-                style={{ background: "#fff", border: "1.5px solid var(--brand-d)" }}
+                style={{ background: "rgba(102,28,10,0.08)", border: "1.5px solid var(--brand-d)" }}
               >
                 <it.Icon />
               </span>

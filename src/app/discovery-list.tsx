@@ -108,7 +108,7 @@ function ZonePill({ label, count, lang }: { label: string; count: number; lang: 
       style={
         busy
           ? { background: "linear-gradient(150deg,#b23c1d,#661c0a)", color: "#fff" }
-          : { background: "#fff", color: "var(--brand-d)", border: "1.5px solid var(--brand-d)" }
+          : { background: "rgba(102,28,10,0.08)", color: "var(--brand-d)", border: "1.5px solid var(--brand-d)" }
       }
     >
       <span className="inline-flex items-center gap-1.5">
@@ -155,7 +155,7 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
             {r.branchCount > 1 && (
               <span
                 className="inline-flex shrink-0 items-center justify-center rounded-md px-1.5 py-0.5 text-[10px] font-extrabold"
-                style={{ background: "#fff", color: "var(--brand-d)", border: "1px solid var(--brand-d)" }}
+                style={{ background: "rgba(102,28,10,0.08)", color: "var(--brand-d)", border: "1px solid var(--brand-d)" }}
               >
                 {tr(lang, `${toAr(r.branchCount)} فرع`, `${r.branchCount} branches`)}
               </span>
@@ -199,7 +199,7 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
       ) : (
         <div
           className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-          style={{ background: "#fff", border: "1.5px solid var(--brand-d)" }}
+          style={{ background: "rgba(102,28,10,0.08)", border: "1.5px solid var(--brand-d)" }}
         >
           <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--brand-d)" }}>
             <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--brand-d)", boxShadow: "0 0 0 3px rgba(102,28,10,0.14)" }} />
@@ -271,7 +271,7 @@ export function DiscoveryList({ items, offers = [], lang }: { items: DiscoveryIt
   const chip = (active: boolean) =>
     active
       ? { background: "linear-gradient(160deg,#a8371a,#661c0a)", color: "#fff", border: "1px solid transparent" }
-      : { background: "#fff", color: "var(--brand-d)", border: "1.5px solid var(--brand-d)" };
+      : { background: "rgba(102,28,10,0.08)", color: "var(--brand-d)", border: "1.5px solid var(--brand-d)" };
 
   let delay = 0;
 
