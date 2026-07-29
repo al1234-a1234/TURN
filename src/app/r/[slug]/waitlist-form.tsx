@@ -221,7 +221,7 @@ export function WaitlistForm({
   const [phone, setPhone] = useState<string>(normalizePhone(defaultPhone).slice(0, 10));
   // بوابة الموقع: لا يُؤخذ الدور إلا بمشاركة الموقع (يمنع الحجز الوهمي من بعيد)
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [geo, setGeo] = useState<"idle" | "asking" | "denied" | "unavailable" | "skipped">("idle");
+  const [geo, setGeo] = useState<"idle" | "asking" | "denied" | "unavailable">("idle");
   const formRef = useRef<HTMLFormElement | null>(null);
   // استرجاع دور اليوم بعد الريلود/إغلاق المتصفح — كان الضيف يفقد تذكرته نهائيًّا
   const [restored, setRestored] = useState<{ entryId: string; phone: string } | null>(null);
@@ -387,13 +387,13 @@ export function WaitlistForm({
         </p>
       )}
 
-      {/* حالة الموقع — تظهر فقط عند الرفض أو التعذّر */}
+      {/* حالة الموقع — تظهر عند الرفض أو التعذّر. الموقع إلزامي الآن — لا تجاوز. */}
       {(geo === "denied" || geo === "unavailable") && (
         <div className="rounded-2xl p-4" style={{ background: "var(--sage)", border: "1px solid rgba(102,28,10,0.16)" }}>
           <p className="text-sm font-extrabold" style={{ color: "var(--brand-d)" }}>
             {geo === "denied"
-              ? tr(lang, "نحتاج موقعك لإكمال أخذ الدور", "We need your location to take a turn")
-              : tr(lang, "جهازك لا يدعم تحديد الموقع", "Your device doesn't support location")}
+              ? tr(lang, "لازم موقعك لأخذ دورك — فعّله من إعدادات المتصفح", "Your location is required to take a turn — enable it in your browser settings")
+              : tr(lang, "جهازك لا يدعم تحديد الموقع، فلا يمكن أخذ الدور حاليًا", "Your device doesn't support location, so a turn can't be taken right now")}
           </p>
           <p className="mt-1 text-xs font-medium text-[color:var(--muted)]">
             {tr(lang,
@@ -406,21 +406,15 @@ export function WaitlistForm({
               {tr(lang, "السماح بالموقع", "Allow location")}
             </button>
           )}
-          <button type="button"
-            onClick={() => { setGeo("skipped"); formRef.current?.requestSubmit(); }}
-            className="mt-2 w-full rounded-xl px-3 py-2.5 text-sm font-extrabold"
-            style={{ background: "var(--surface-2)", color: "var(--brand-d)", border: "1px solid rgba(102,28,10,0.16)" }}>
-            {tr(lang, "متابعة بدون الموقع", "Continue without location")}
-          </button>
         </div>
       )}
 
       <button
         type="submit"
-        disabled={pending || geo === "asking" || !branchId || !/^05\d{8}$/.test(phone)}
+        disabled={pending || geo === "asking" || geo === "denied" || geo === "unavailable" || !branchId || !/^05\d{8}$/.test(phone)}
         onClick={(e) => {
           // أول ضغطة بلا موقع → يظهر طلب الإذن، ثم يُرسَل تلقائيًّا بعد السماح.
-          // بعد رفضٍ أو تعذّر لا نعترض — «متابعة بدون الموقع» متاحة والخادم لا يشترطه.
+          // الموقع إلزامي — رفضٌ أو تعذّر يعطّل الزر، لا تجاوز.
           if (!coords && geo === "idle") { e.preventDefault(); askLocation(true); }
         }}
         className="rq-btn"

@@ -34,6 +34,14 @@ export async function joinWaitlistGuest(
   if (!fullName) return { ok: false, error: "اكتب اسمك." };
   if (!phone) return { ok: false, error: "رقم الجوّال غير صحيح — يبدأ بـ 05 ويتكوّن من 10 خانات." };
 
+  // الموقع إلزامي (قرار محدَّث) — لا نثق بحارس الواجهة وحده، فحساب مباشر
+  // للـRPC (بلا المتصفح) كان يتجاوزه ويأخذ دورًا بلا موقع مطلقًا.
+  const lat = Number(formData.get("lat"));
+  const lng = Number(formData.get("lng"));
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return { ok: false, error: "لازم مشاركة موقعك لأخذ دورك." };
+  }
+
   const { data, error } = await supabase.rpc("join_waitlist_guest", {
     p_branch_id: branchId,
     p_full_name: fullName,
@@ -53,10 +61,8 @@ export async function joinWaitlistGuest(
 
   const row = Array.isArray(data) ? data[0] : data;
 
-  // المسافة عن الفرع: تُحسب على الخادم من إحداثيات أُرسلت مرّة، ولا تُخزَّن الإحداثيات
-  const lat = Number(formData.get("lat"));
-  const lng = Number(formData.get("lng"));
-  if (row?.entry_id && Number.isFinite(lat) && Number.isFinite(lng)) {
+  // المسافة عن الفرع: تُحسب على الخادم من الإحداثيات المتحقَّق منها أعلاه، ولا تُخزَّن الإحداثيات
+  if (row?.entry_id) {
     await supabase.rpc("set_entry_distance", { p_entry_id: row.entry_id, p_lat: lat, p_lng: lng });
   }
 
