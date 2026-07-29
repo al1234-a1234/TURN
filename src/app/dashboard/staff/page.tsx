@@ -70,15 +70,15 @@ export default async function StaffPage() {
   // إدارة الفريق للمالك/المدير فقط
   if (!staffHasPermission(role, permissions, "team")) redirect("/dashboard");
 
-  const { data: branchRows } = await supabase
-    .from("branches").select("id, name").eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at");
-
-  const { data } = await supabase
-    .from("staff")
-    .select("id, name, role, permissions, is_active, branch_id")
-    .eq("restaurant_id", restaurant.id)
-    .eq("is_active", true)
-    .order("role");
+  const [{ data: branchRows }, { data }] = await Promise.all([
+    supabase.from("branches").select("id, name").eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at"),
+    supabase
+      .from("staff")
+      .select("id, name, role, permissions, is_active, branch_id")
+      .eq("restaurant_id", restaurant.id)
+      .eq("is_active", true)
+      .order("role"),
+  ]);
 
   const team = (data ?? []) as StaffRow[];
   const branchName = new Map((branchRows ?? []).map((b) => [b.id, b.name]));

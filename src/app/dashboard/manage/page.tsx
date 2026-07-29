@@ -20,17 +20,20 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
   const load = await loadOwner();
   if (load.state !== "ok") return null;
   const { supabase, restaurant: base, role, permissions } = load.ctx;
-  // القائمة صارت لكل فرع على حدة (فرانشايز) — نحدّد الفرع النشِط أولًا
-  const scope = await resolveBranchScope(load.ctx, (await searchParams).branch);
-  const activeBranchId = scope.active?.id ?? "";
   // بوابة الصلاحية: صفحة الإدارة تعدّل إعدادات المطعم والمنيو → تتطلب صلاحية «الإعدادات»
   if (!staffHasPermission(role, permissions, "settings")) redirect("/dashboard");
 
-  const { data: full } = await supabase
-    .from("restaurants")
-    .select("id, name, slug, description, logo_url, cover_url, cuisine, cuisine_en")
-    .eq("id", base.id)
-    .maybeSingle();
+  // الفرع النشِط ومعلومات المطعم الكاملة لا يعتمد أحدهما على نتيجة الآخر — يُجلبان معًا
+  // بدل التسلسل (كل موجة انتظار شبكة إضافية بين خادم الموقع وفرانكفورت تُحسّ بطئًا حقيقيًّا).
+  const [scope, { data: full }] = await Promise.all([
+    resolveBranchScope(load.ctx, (await searchParams).branch),
+    supabase
+      .from("restaurants")
+      .select("id, name, slug, description, logo_url, cover_url, cuisine, cuisine_en")
+      .eq("id", base.id)
+      .maybeSingle(),
+  ]);
+  const activeBranchId = scope.active?.id ?? "";
   const restaurant = full ?? { ...base, description: null, logo_url: null, cover_url: null, cuisine: null, cuisine_en: null };
 
   // فرع نشِط مفقود (حساب مربوط بفرع معطَّل) → لا نمرّر "" لعمود uuid فيفشل الاستعلام صامتًا
@@ -60,16 +63,20 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
   // فلا تُعرض أرقام كل الفروع فوق إعدادات فرع واحد.
   const branchIds = settingsBranch ? [settingsBranch.id] : [];
 
-  const { data: settings } = settingsBranch
-    ? await supabase.from("branch_settings").select("accepts_waitlist, accepts_reservations, max_party_size, opening_hours").eq("branch_id", settingsBranch.id).maybeSingle()
-    : { data: null };
-  const hours = (settings?.opening_hours ?? {}) as { open?: string; close?: string };
-
-  // ===== تحليلات (آخر 30 يوم) =====
+  // ثلاثة استعلامات مستقلة (لا يحتاج أحدها نتيجة الآخر) — موجة واحدة بدل ثلاث
   const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
-  const { data: analytics } = branchIds.length
-    ? await supabase.from("waitlist_entries").select("joined_at, seated_at, zone, status").in("branch_id", branchIds).gte("joined_at", since30)
-    : { data: [] };
+  const [{ data: settings }, { data: analytics }, { data: liveRows }] = await Promise.all([
+    settingsBranch
+      ? supabase.from("branch_settings").select("accepts_waitlist, accepts_reservations, max_party_size, opening_hours").eq("branch_id", settingsBranch.id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    branchIds.length
+      ? supabase.from("waitlist_entries").select("joined_at, seated_at, zone, status").in("branch_id", branchIds).gte("joined_at", since30)
+      : Promise.resolve({ data: [] as { joined_at: string; seated_at: string | null; zone: string; status: string }[] }),
+    branchIds.length
+      ? supabase.from("waitlist_entries").select("zone").in("branch_id", branchIds).in("status", ["waiting", "notified"])
+      : Promise.resolve({ data: [] as { zone: string }[] }),
+  ]);
+  const hours = (settings?.opening_hours ?? {}) as { open?: string; close?: string };
   const rows = analytics ?? [];
 
   // مخدومون آخر 7 أيام
@@ -95,9 +102,7 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
   }
 
   // توزيع الطابور الحالي داخلي/خارجي — استعلام حيّ بلا حدّ زمني (يطابق الاستقبال والنظرة العامة)
-  const { data: liveRows } = branchIds.length
-    ? await supabase.from("waitlist_entries").select("zone").in("branch_id", branchIds).in("status", ["waiting", "notified"])
-    : { data: [] as { zone: string }[] };
+  // (جُلب أعلاه ضمن الموجة المتوازية مع الإعدادات والتحليلات)
   const live = (liveRows ?? []) as { zone: string }[];
   const waiting = live;
   const insideNow = live.filter((r) => r.zone === "inside").length;
