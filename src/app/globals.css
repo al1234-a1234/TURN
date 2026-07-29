@@ -29,7 +29,7 @@
 
   /* جسم النص: المسيري — مقروء وهادئ، يخلي العناوين البارزة (Almarai) تبرز
      فعلًا بدل ما يكون كل النص بخط واحد فيصير التطبيق شكله متطابقًا مسطّحًا. */
-  --font-sans: var(--font-elmessiri), "El Messiri", system-ui, sans-serif;
+  --font-sans: var(--font-tajawal), "Tajawal", system-ui, sans-serif;
   --font-display: var(--font-almarai), "Almarai", system-ui, sans-serif;
   --font-serif: var(--font-almarai), "Almarai", system-ui, sans-serif;
 

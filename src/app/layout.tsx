@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { El_Messiri, Almarai, Playfair_Display, Libre_Baskerville } from "next/font/google";
+import { Tajawal, Almarai, Playfair_Display, Libre_Baskerville } from "next/font/google";
 import "./globals.css";
 import { getLang } from "@/lib/i18n-server";
 import { dirOf } from "@/lib/i18n";
@@ -12,10 +12,12 @@ const baskerville = Libre_Baskerville({
   display: "swap",
 });
 
-const elmessiri = El_Messiri({
-  variable: "--font-elmessiri",
+// خط الواجهة الرسمي — نمط UI عربي معروف (تستخدمه تطبيقات سعودية كثيرة)،
+// بديل El Messiri الزخرفي الذي بدا "غريبًا" لعميل حقيقي جرّبه.
+const tajawal = Tajawal({
+  variable: "--font-tajawal",
   subsets: ["arabic", "latin"],
-  weight: ["500", "600", "700"],
+  weight: ["400", "500", "700", "800"],
   display: "swap",
 });
 
@@ -64,7 +66,7 @@ export default async function RootLayout({
     <html
       lang={lang}
       dir={dirOf(lang)}
-      className={`${elmessiri.variable} ${almarai.variable} ${playfair.variable} ${baskerville.variable} h-full antialiased`}
+      className={`${tajawal.variable} ${almarai.variable} ${playfair.variable} ${baskerville.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
         <LangProvider lang={lang}>{children}</LangProvider>
