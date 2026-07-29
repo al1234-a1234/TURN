@@ -80,6 +80,7 @@ export type DiscoveryItem = {
   outside: number;
   accepts: boolean;
   rating: string | null;
+  branchCount: number;
 };
 
 // مسافة هافرساين بالمتر
@@ -147,8 +148,18 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
 
         <div className="min-w-0 flex-1">
           <p className="truncate font-display text-[15px] font-bold text-[color:var(--ink)]">{r.name}</p>
-          <p className="mt-0.5 truncate text-[12px] font-medium text-[color:var(--muted)]">
-            {tr(lang, r.cuisine ?? "مطعم", r.cuisine_en ?? "Restaurant")}{r.city ? ` · ${r.city}` : ""}
+          <p className="mt-0.5 flex items-center gap-1.5 truncate text-[12px] font-medium text-[color:var(--muted)]">
+            <span className="truncate">
+              {tr(lang, r.cuisine ?? "مطعم", r.cuisine_en ?? "Restaurant")}{r.city ? ` · ${r.city}` : ""}
+            </span>
+            {r.branchCount > 1 && (
+              <span
+                className="inline-flex shrink-0 items-center justify-center rounded-md px-1.5 py-0.5 text-[10px] font-extrabold"
+                style={{ background: "var(--sage)", color: "var(--brand-d)" }}
+              >
+                {tr(lang, `${toAr(r.branchCount)} فرع`, `${r.branchCount} branches`)}
+              </span>
+            )}
           </p>
           {dist && (
             <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold" style={{ color: "var(--brand-d)" }}>

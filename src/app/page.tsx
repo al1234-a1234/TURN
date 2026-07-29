@@ -41,6 +41,7 @@ export default async function Home() {
       outside: c?.outside ?? 0,
       accepts,
       rating,
+      branchCount: (r.branches ?? []).length,
     };
   });
 
