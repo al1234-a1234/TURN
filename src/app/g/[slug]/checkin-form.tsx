@@ -107,12 +107,12 @@ export function CheckinForm({ slug, branchId, lang }: { slug: string; branchId: 
         <Link
           href={`/me/rewards${state.phone ? `?phone=${encodeURIComponent(state.phone)}` : ""}`}
           className="flex items-center justify-between rounded-2xl px-4 py-3.5"
-          style={{ background: "rgba(102,28,10,0.08)", border: "1.5px solid var(--brand-d)" }}
+          style={{ background: "var(--brand)" }}
         >
-          <span className="flex items-center gap-2 text-sm font-bold" style={{ color: "var(--brand-d)" }}>
+          <span className="flex items-center gap-2 text-sm font-bold text-white">
             🎁 {tr(lang, "شوف كل هداياك وعروضك", "See all your gifts & offers")}
           </span>
-          <span style={{ color: "var(--brand-d)" }}>←</span>
+          <span className="text-white">←</span>
         </Link>
 
         <Link href={`/r/${slug}?tab=reviews`} className="flex items-center justify-between rounded-2xl px-4 py-3"

@@ -45,10 +45,10 @@ export function StatusToggle({
         style={
           closed
             ? { background: "linear-gradient(150deg,#c0564a,#8d2f22)", color: "#fff" }
-            : { background: "rgba(102,28,10,0.08)", border: "1.5px solid var(--brand-d)", color: "var(--brand-d)" }
+            : { background: "var(--brand)", color: "#fff" }
         }
       >
-        <span className="h-2.5 w-2.5 rounded-full" style={{ background: closed ? "#fff" : "var(--brand-d)" }} />
+        <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
         {closed ? tr(lang, "الفرع مُغلق يدويًا — اضغط للفتح", "Manually closed — tap to reopen") : tr(lang, "أغلق الفرع الآن", "Close branch now")}
       </button>
 
@@ -62,10 +62,10 @@ export function StatusToggle({
         style={
           busy
             ? { background: "linear-gradient(150deg,#b23c1d,#661c0a)", color: "#fff" }
-            : { background: "rgba(102,28,10,0.08)", border: "1.5px solid var(--brand-d)", color: "var(--brand-d)" }
+            : { background: "var(--brand)", color: "#fff" }
         }
       >
-        <span className="h-2.5 w-2.5 rounded-full" style={{ background: busy ? "#fff" : "var(--brand-d)" }} />
+        <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
         {busy ? tr(lang, "مزدحم الآن — اضغط للإلغاء", "Busy now — tap to clear") : tr(lang, "علّم الفرع مزدحمًا الآن", "Mark branch busy now")}
       </button>
 

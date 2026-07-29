@@ -31,14 +31,14 @@ function ZoneStat({ label, count }: { label: string; count: number }) {
       style={
         busy
           ? { background: "linear-gradient(155deg,#b23c1d,#661c0a)", boxShadow: "0 14px 26px -16px rgba(102,28,10,0.72)" }
-          : { background: "rgba(102,28,10,0.08)", border: "1.5px solid var(--brand-d)" }
+          : { background: "var(--brand)" }
       }
     >
-      <p className="font-display text-3xl font-bold" style={{ color: busy ? "#fff" : "var(--brand-d)" }}>
+      <p className="font-display text-3xl font-bold text-white">
         {busy ? toAr(count) : "0"}
       </p>
-      <p className="mt-1 text-xs font-bold" style={{ color: busy ? "rgba(255,255,255,0.9)" : "var(--muted)" }}>{label}</p>
-      <p className="mt-0.5 text-[11px] font-bold" style={{ color: busy ? "#fff" : "var(--brand-d)" }}>
+      <p className="mt-1 text-xs font-bold text-white/90">{label}</p>
+      <p className="mt-0.5 text-[11px] font-bold text-white">
         {busy ? tr(lang, "بالطابور", "In queue") : tr(lang, "متاح الآن", "Available now")}
       </p>
     </div>
@@ -82,17 +82,17 @@ function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; o
       <span className="block p-3.5">
         {b.closedNow ? (
           <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-                style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
-            <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--muted)" }}>
-              <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--muted)" }} />
+                style={{ background: "#6b6b6b" }}>
+            <span className="flex items-center gap-2 text-sm font-extrabold text-white">
+              <span className="h-2.5 w-2.5 rounded-full bg-white/80" />
               {tr(lang, "مغلق حاليًا", "Closed now")}
             </span>
           </span>
         ) : !b.accepts ? (
           <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-                style={{ background: "rgba(102,28,10,0.08)", border: "1.5px solid var(--brand-d)" }}>
-            <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--brand-d)" }}>
-              <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--brand-d)" }} />
+                style={{ background: "var(--brand)" }}>
+            <span className="flex items-center gap-2 text-sm font-extrabold text-white">
+              <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
               {tr(lang, "استقبال مباشر — بلا حجز دور", "Walk-in — no queue")}
             </span>
           </span>
@@ -107,12 +107,12 @@ function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; o
           </span>
         ) : (
           <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-                style={{ background: "rgba(102,28,10,0.08)", border: "1.5px solid var(--brand-d)" }}>
-            <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--brand-d)" }}>
-              <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--brand-d)", boxShadow: "0 0 0 3px rgba(102,28,10,0.14)" }} />
+                style={{ background: "var(--brand)" }}>
+            <span className="flex items-center gap-2 text-sm font-extrabold text-white">
+              <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
               {tr(lang, "متاح الآن · بدون انتظار", "Available now · No wait")}
             </span>
-            <span className="text-xs font-extrabold" style={{ color: "var(--brand-d)" }}>{tr(lang, "خذ دورك ←", "Take turn ←")}</span>
+            <span className="text-xs font-extrabold text-white/85">{tr(lang, "خذ دورك ←", "Take turn ←")}</span>
           </span>
         )}
       </span>
@@ -305,7 +305,7 @@ export function WaitlistForm({
           <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
         )}
         <div className="rq-card p-7 text-center">
-          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full" style={{ background: "var(--surface-2)", color: "var(--muted)" }}>
+          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full text-white" style={{ background: "#6b6b6b" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" /><path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
           </span>
           <p className="text-lg font-bold text-[color:var(--ink)]">{tr(lang, "هذا الفرع مغلق حاليًا", "This branch is closed right now")}</p>
@@ -391,7 +391,7 @@ export function WaitlistForm({
       <div className="rq-card space-y-4 p-5">
         <div className="text-right">
           <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "سجّل بياناتك وخذ دورك", "Enter your details and take your turn")}</p>
-          <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-brand-800" style={{ background: "rgba(102,28,10,0.08)", border: "1px solid var(--brand-d)" }}>
+          <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-white" style={{ background: "var(--brand)" }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
             {tr(lang, "بلا حساب ولا كلمة مرور", "No account, no password")}
           </span>
@@ -426,20 +426,20 @@ export function WaitlistForm({
 
       {/* حالة الموقع — تظهر عند الرفض أو التعذّر. الموقع إلزامي الآن — لا تجاوز. */}
       {(geo === "denied" || geo === "unavailable") && (
-        <div className="rounded-2xl p-4" style={{ background: "rgba(102,28,10,0.08)", border: "1.5px solid var(--brand-d)" }}>
-          <p className="text-sm font-extrabold" style={{ color: "var(--brand-d)" }}>
+        <div className="rounded-2xl p-4" style={{ background: "var(--brand)" }}>
+          <p className="text-sm font-extrabold text-white">
             {geo === "denied"
               ? tr(lang, "لازم موقعك لأخذ دورك — فعّله من إعدادات المتصفح", "Your location is required to take a turn — enable it in your browser settings")
               : tr(lang, "جهازك لا يدعم تحديد الموقع، فلا يمكن أخذ الدور حاليًا", "Your device doesn't support location, so a turn can't be taken right now")}
           </p>
-          <p className="mt-1 text-xs font-medium text-[color:var(--muted)]">
+          <p className="mt-1 text-xs font-medium text-white/80">
             {tr(lang,
               "الموقع يؤكّد للمطعم أنك قريب فعلًا. نحسب المسافة فقط ولا نحفظ موقعك.",
               "Location confirms to the restaurant that you're nearby. We store only the distance, never your location.")}
           </p>
           {geo === "denied" && (
             <button type="button" onClick={() => askLocation(false)} className="mt-3 w-full rounded-xl px-3 py-2.5 text-sm font-extrabold text-white"
-              style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)" }}>
+              style={{ background: "#661c0a" }}>
               {tr(lang, "السماح بالموقع", "Allow location")}
             </button>
           )}

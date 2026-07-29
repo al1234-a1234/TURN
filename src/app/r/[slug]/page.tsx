@@ -270,11 +270,11 @@ function OffersSection({ offers, lang }: { offers: OfferLite[]; lang: "ar" | "en
       )}
 
       {/* منفذ الهدايا الشخصية (بلا حساب — عبر الرقم) */}
-      <Link href="/me/rewards" className="mt-2.5 flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: "rgba(102,28,10,0.08)", border: "1.5px solid var(--brand-d)" }}>
-        <span className="flex items-center gap-2 text-sm font-bold" style={{ color: "var(--brand-d)" }}>
+      <Link href="/me/rewards" className="mt-2.5 flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: "var(--brand)" }}>
+        <span className="flex items-center gap-2 text-sm font-bold text-white">
           <span>🎁</span> {tr(lang, "عندك هديّة خاصة؟ اعرفها برقمك", "Got a personal reward? Check with your number")}
         </span>
-        <span className="text-[color:var(--brand-d)]">←</span>
+        <span className="text-white">←</span>
       </Link>
     </div>
   );

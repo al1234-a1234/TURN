@@ -197,7 +197,7 @@ export function QueueTicket({
   if (cancelled) {
     return (
       <div className="rq-card flex flex-col items-center gap-3 p-8 text-center">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full text-3xl text-brand-700" style={{ background: "rgba(102,28,10,0.08)", border: "1.5px solid var(--brand-d)" }}>✓</span>
+        <span className="flex h-16 w-16 items-center justify-center rounded-full text-3xl text-white" style={{ background: "var(--brand)" }}>✓</span>
         <p className="text-lg font-extrabold text-[color:var(--ink)]">{tr(lang, "تم إلغاء دورك", "Your turn was cancelled")}</p>
         <p className="text-sm text-[color:var(--muted)]">{tr(lang, "تقدر تأخذ دورك من جديد وقت ما تحب.", "You can take a new turn whenever you like.")}</p>
         <RestartButton />
@@ -284,8 +284,8 @@ export function QueueTicket({
       {/* تنبيه الدور — يصل والتطبيق مُغلق */}
       {entryId && phone && canPush && (
         pushOn ? (
-          <p className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold"
-             style={{ background: "rgba(102,28,10,0.08)", border: "1.5px solid var(--brand-d)", color: "var(--brand-d)" }}>
+          <p className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold text-white"
+             style={{ background: "var(--brand)" }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
             {tr(lang, "بننبّهك على جوّالك قبل دورك", "We'll alert your phone before your turn")}
           </p>
