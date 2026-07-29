@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BrandMark } from "@/components/brand";
+import { SharedHeader } from "@/components/page-header";
 import { WaitlistForm } from "./waitlist-form";
 import { OfferClaim } from "./offer-claim";
 import { RestaurantTabs } from "./restaurant-tabs";
@@ -145,35 +146,45 @@ export default async function RestaurantPublicPage({
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      {/* هيدر المطعم — مضغوط، والشعار هو الهوية المركزية هنا لا اسم نصّي */}
-      <header className="rq-header px-5 pb-6 pt-5">
-        <div className="mx-auto flex max-w-2xl items-center justify-between">
+      {/* هيدر المطعم — نفس هيدر الرئيسية حرفيًّا (SharedHeader): الارتفاع واللون
+          والانحناءات مصدر واحد. شعار دور بنفس مقاسه وموضعه بالرئيسية تمامًا
+          (زاوية الصفّ العلوي)، وشعار المطعم يتجاوز الحافة السفلية (overlap). */}
+      <SharedHeader
+        overlap={
+          <div className="absolute inset-x-0 bottom-0 flex justify-center">
+            {/* نفس اسم الانتقال في بطاقة الرئيسية (discovery-list.tsx) — الشعار
+                "يهبط" هنا بالضبط بدل ظهوره فجأة. نصفه داخل الهيدر ونصفه خارجه. */}
+            <span
+              className="flex h-20 w-20 shrink-0 translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-white/15 font-serif text-2xl font-bold text-white ring-4 ring-[var(--background)] backdrop-blur-sm"
+              style={{ viewTransitionName: `restaurant-logo-${slug}` } as React.CSSProperties}
+            >
+              {restaurant.logo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={restaurant.logo_url} alt="" className="h-full w-full object-cover" />
+              ) : (
+                initial
+              )}
+            </span>
+          </div>
+        }
+      >
+        <Link
+          href="/"
+          aria-label={tr(lang, "الصفحة الرئيسية", "Home")}
+          className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-white/15 ring-1 ring-white/25 transition active:scale-95"
+        >
+          <BrandMark size={30} />
+        </Link>
+        <h1 className="sr-only">{restaurant.name}</h1>
+        <div className="flex items-center gap-2">
           <ShareButton title={restaurant.name} />
-          <h1 className="sr-only">{restaurant.name}</h1>
           <Link href="/" className="rq-circle" aria-label={tr(lang, "رجوع", "Back")}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </Link>
         </div>
-        <div className="mx-auto mt-2 flex max-w-2xl flex-col items-center gap-1.5">
-          {/* هويتنا نحن — فوق شعار المطعم، تمييزًا بسيطًا لا يزاحمه */}
-          <BrandMark size={26} />
-          {/* نفس اسم الانتقال في بطاقة الرئيسية (discovery-list.tsx) — الشعار
-              "يهبط" هنا بالضبط بدل ظهوره فجأة، ويحلّ محلّ اسم المطعم نصًّا. */}
-          <span
-            className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15 font-serif text-2xl font-bold text-white ring-2 ring-white/35 backdrop-blur-sm"
-            style={{ viewTransitionName: `restaurant-logo-${slug}` } as React.CSSProperties}
-          >
-            {restaurant.logo_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={restaurant.logo_url} alt="" className="h-full w-full object-cover" />
-            ) : (
-              initial
-            )}
-          </span>
-        </div>
-      </header>
+      </SharedHeader>
 
-      <main className="mx-auto -mt-11 w-full max-w-2xl flex-1 px-5 pb-14">
+      <main className="mx-auto w-full max-w-2xl flex-1 px-5 pb-14 pt-16">
         <RestaurantTabs
           slug={slug}
           name={restaurant.name}

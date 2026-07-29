@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { BrandMark } from "@/components/brand";
+import { SharedHeader } from "@/components/page-header";
 import { useLang } from "@/components/lang-provider";
 import { tr } from "@/lib/i18n";
 import { LangToggle } from "@/components/lang-toggle";
@@ -81,39 +82,37 @@ export function CustomerShell({
   return (
     <div className="flex min-h-full flex-1 flex-col">
       {/* الهيدر — يمين: الشعار (يفتح القائمة) · وسط: TURN · يسار: بحث */}
-      <header className="rq-header px-5 pb-5 pt-5">
-        <div className="mx-auto flex max-w-2xl items-center justify-between">
-          <button
-            onClick={() => setOpen(true)}
-            aria-label={tr(lang, "القائمة", "Menu")}
-            className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-white/15 ring-1 ring-white/25 transition active:scale-95"
-          >
-            <BrandMark size={30} />
-          </button>
+      <SharedHeader>
+        <button
+          onClick={() => setOpen(true)}
+          aria-label={tr(lang, "القائمة", "Menu")}
+          className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-white/15 ring-1 ring-white/25 transition active:scale-95"
+        >
+          <BrandMark size={30} />
+        </button>
 
-          <span
-            dir="ltr"
-            className="select-none text-white"
-            style={{
-              fontFamily: "var(--font-baskerville), Baskerville, Georgia, serif",
-              fontWeight: 700,
-              fontSize: "1.4rem",
-              letterSpacing: "0.34em",
-              paddingInlineStart: "0.34em",
-            }}
-          >
-            TURN
-          </span>
+        <span
+          dir="ltr"
+          className="select-none text-white"
+          style={{
+            fontFamily: "var(--font-baskerville), Baskerville, Georgia, serif",
+            fontWeight: 700,
+            fontSize: "1.4rem",
+            letterSpacing: "0.34em",
+            paddingInlineStart: "0.34em",
+          }}
+        >
+          TURN
+        </span>
 
-          {search ? (
-            <Link href="/search" className="rq-circle" aria-label={tr(lang, "بحث", "Search")}>
-              <IcSearch />
-            </Link>
-          ) : (
-            <span className="h-11 w-11" />
-          )}
-        </div>
-      </header>
+        {search ? (
+          <Link href="/search" className="rq-circle" aria-label={tr(lang, "بحث", "Search")}>
+            <IcSearch />
+          </Link>
+        ) : (
+          <span className="h-11 w-11" />
+        )}
+      </SharedHeader>
 
       {/* المحتوى */}
       <main className="mx-auto w-full max-w-2xl flex-1 px-5 pb-28 pt-4">{children}</main>
