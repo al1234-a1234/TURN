@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { BrandMark } from "@/components/brand";
 import { WaitlistForm } from "./waitlist-form";
 import { OfferClaim } from "./offer-claim";
 import { RestaurantTabs } from "./restaurant-tabs";
@@ -144,8 +145,8 @@ export default async function RestaurantPublicPage({
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      {/* هيدر المطعم — الشعار هو الهوية المركزية هنا، لا اسم نصّي */}
-      <header className="rq-header px-5 pb-16 pt-5">
+      {/* هيدر المطعم — مضغوط، والشعار هو الهوية المركزية هنا لا اسم نصّي */}
+      <header className="rq-header px-5 pb-6 pt-5">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
           <ShareButton title={restaurant.name} />
           <h1 className="sr-only">{restaurant.name}</h1>
@@ -153,11 +154,13 @@ export default async function RestaurantPublicPage({
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </Link>
         </div>
-        <div className="mx-auto mt-3 flex max-w-2xl justify-center">
+        <div className="mx-auto mt-2 flex max-w-2xl flex-col items-center gap-1.5">
+          {/* هويتنا نحن — فوق شعار المطعم، تمييزًا بسيطًا لا يزاحمه */}
+          <BrandMark size={26} />
           {/* نفس اسم الانتقال في بطاقة الرئيسية (discovery-list.tsx) — الشعار
               "يهبط" هنا بالضبط بدل ظهوره فجأة، ويحلّ محلّ اسم المطعم نصًّا. */}
           <span
-            className="flex h-32 w-32 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15 font-serif text-4xl font-bold text-white ring-2 ring-white/35 backdrop-blur-sm"
+            className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15 font-serif text-2xl font-bold text-white ring-2 ring-white/35 backdrop-blur-sm"
             style={{ viewTransitionName: `restaurant-logo-${slug}` } as React.CSSProperties}
           >
             {restaurant.logo_url ? (

@@ -29,7 +29,7 @@ function ZoneStat({ label, count }: { label: string; count: number }) {
       style={
         busy
           ? { background: "linear-gradient(155deg,#b23c1d,#661c0a)", boxShadow: "0 14px 26px -16px rgba(102,28,10,0.72)" }
-          : { background: "linear-gradient(160deg,#faefe8,#f4ddd0)", border: "1px solid rgba(102,28,10,0.14)" }
+          : { background: "var(--sage)", border: "1px solid rgba(102,28,10,0.14)" }
       }
     >
       <p className="font-display text-3xl font-bold" style={{ color: busy ? "#fff" : "var(--brand-d)" }}>
@@ -80,9 +80,9 @@ function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; o
       <span className="block p-3.5">
         {!b.accepts ? (
           <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-                style={{ background: "linear-gradient(160deg,#f3e8df,#e9d7c8)", border: "1px solid rgba(102,28,10,0.14)" }}>
-            <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "#9a6a4c" }}>
-              <span className="h-2.5 w-2.5 rounded-full" style={{ background: "#b98a6a" }} />
+                style={{ background: "var(--sage)", border: "1px solid rgba(102,28,10,0.14)" }}>
+            <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--brand-d)" }}>
+              <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--brand-d)" }} />
               {tr(lang, "استقبال مباشر — بلا حجز دور", "Walk-in — no queue")}
             </span>
           </span>
@@ -97,7 +97,7 @@ function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; o
           </span>
         ) : (
           <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-                style={{ background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", border: "1px solid rgba(102,28,10,0.16)" }}>
+                style={{ background: "var(--sage)", border: "1px solid rgba(102,28,10,0.16)" }}>
             <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--brand-d)" }}>
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--brand-d)", boxShadow: "0 0 0 3px rgba(102,28,10,0.14)" }} />
               {tr(lang, "متاح الآن · بدون انتظار", "Available now · No wait")}
