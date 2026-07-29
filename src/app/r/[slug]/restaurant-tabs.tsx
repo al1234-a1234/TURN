@@ -268,7 +268,7 @@ export function RestaurantTabs({
             {reviews.map((rv, i) => (
               <li key={i} className="rq-card p-5">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[color:var(--sage)] font-display text-base font-bold text-brand-800">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white font-display text-base font-bold text-brand-800" style={{ border: "1.5px solid var(--brand-d)" }}>
                     {rv.name.charAt(0)}
                   </span>
                   <div className="min-w-0 flex-1 text-right">
@@ -309,7 +309,7 @@ export function RestaurantTabs({
           <p className="text-center text-sm text-[color:var(--muted)]" dir="ltr">{nameEn}</p>
         )}
         <div className="rq-card p-8 text-center">
-          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-[color:var(--sage)] text-2xl">🔔</span>
+          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white text-2xl" style={{ border: "1.5px solid var(--brand-d)" }}>🔔</span>
           <p className="font-bold text-[color:var(--ink)]">{tr(lang, "تابع المطعم", "Follow the restaurant")}</p>
           <p className="mt-1 text-sm leading-6 text-[color:var(--muted)]">
             {tr(lang, "تظهر في مفضّلتك للوصول السريع لعروضه وقائمته وطابوره من جهازك.", "Saved to your favorites for quick access to its offers, menu and queue from this device.")}

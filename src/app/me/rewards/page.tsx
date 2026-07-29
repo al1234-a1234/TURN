@@ -168,7 +168,7 @@ export default function MyRewardsPage() {
                     <p dir="ltr" className="mt-2 text-center font-display text-lg font-extrabold tracking-widest text-brand-800">{r.code}</p>
                   </div>
                 )}
-                <div className="mt-3 rounded-2xl bg-[color:var(--sage)] px-3 py-2 text-center text-xs font-bold text-brand-800">
+                <div className="mt-3 rounded-2xl bg-white px-3 py-2 text-center text-xs font-bold text-brand-800" style={{ border: "1px solid var(--brand-d)" }}>
                   {qrOpen === r.id
                     ? tr(lang, "خلّ الموظف يمسح الباركود — أو يكتب الرمز", "Let staff scan the barcode — or type the code")
                     : tr(lang, "اضغط الرمز يطلع الباركود — يمسحه الموظف ويعتمدها", "Tap the code to show its barcode — staff scan & redeem")}
@@ -213,7 +213,7 @@ export default function MyRewardsPage() {
                     <p dir="ltr" className="mt-2 text-center font-display text-lg font-extrabold tracking-widest text-brand-800">{r.code}</p>
                   </div>
                 )}
-                <div className="mt-3 rounded-2xl bg-[color:var(--sage)] px-3 py-2 text-center text-xs font-bold text-brand-800">
+                <div className="mt-3 rounded-2xl bg-white px-3 py-2 text-center text-xs font-bold text-brand-800" style={{ border: "1px solid var(--brand-d)" }}>
                   {qrOpen === r.id
                     ? tr(lang, "خلّ الموظف يمسح الباركود — أو يكتب الرمز", "Let staff scan the barcode — or type the code")
                     : tr(lang, "اضغط الرمز يطلع الباركود — يمسحه الموظف ويعتمدها", "Tap the code to show its barcode — staff scan & redeem")}
