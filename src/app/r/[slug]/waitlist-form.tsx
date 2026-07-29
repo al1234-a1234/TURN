@@ -221,7 +221,7 @@ export function WaitlistForm({
   const [phone, setPhone] = useState<string>(normalizePhone(defaultPhone).slice(0, 10));
   // بوابة الموقع: لا يُؤخذ الدور إلا بمشاركة الموقع (يمنع الحجز الوهمي من بعيد)
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [geo, setGeo] = useState<"idle" | "asking" | "denied" | "unavailable">("idle");
+  const [geo, setGeo] = useState<"idle" | "asking" | "denied" | "unavailable" | "skipped">("idle");
   const formRef = useRef<HTMLFormElement | null>(null);
   // استرجاع دور اليوم بعد الريلود/إغلاق المتصفح — كان الضيف يفقد تذكرته نهائيًّا
   const [restored, setRestored] = useState<{ entryId: string; phone: string } | null>(null);
@@ -407,7 +407,7 @@ export function WaitlistForm({
             </button>
           )}
           <button type="button"
-            onClick={() => { setGeo("idle"); setCoords(null); formRef.current?.requestSubmit(); }}
+            onClick={() => { setGeo("skipped"); formRef.current?.requestSubmit(); }}
             className="mt-2 w-full rounded-xl px-3 py-2.5 text-sm font-extrabold"
             style={{ background: "var(--surface-2)", color: "var(--brand-d)", border: "1px solid rgba(102,28,10,0.16)" }}>
             {tr(lang, "متابعة بدون الموقع", "Continue without location")}
