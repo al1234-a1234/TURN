@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toAr } from "@/lib/format";
 import { tr, type Lang } from "@/lib/i18n";
@@ -122,19 +123,38 @@ function ZonePill({ label, count, lang }: { label: string; count: number; lang: 
 }
 
 function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay: number; coords: { lat: number; lng: number } | null }) {
+  const router = useRouter();
   const initial = (r.name ?? "").trim().charAt(0) || "م";
   const dist =
     coords && r.lat != null && r.lng != null
       ? distanceLabel(distanceMeters(coords, { lat: r.lat, lng: r.lng }), lang)
       : null;
+  const href = `/r/${r.slug}`;
+
+  // انتقال الشعار المشترك — يحرّكه المتصفّح بصريًّا من هنا لمكانه بصفحة المطعم
+  // بدل قفزة مفاجئة. ميزة منصّة قياسية (View Transitions) وليست مكتبة إضافية؛
+  // بلا دعمها (سفاري قديم مثلًا) يبقى تنقّلًا عاديًا بلا أي كسر أو فرق محسوس.
+  function handleClick(e: React.MouseEvent) {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return; // فتح بتبويب جديد يبقى طبيعيًّا
+    if (typeof document === "undefined" || !("startViewTransition" in document)) return;
+    e.preventDefault();
+    (document as Document & { startViewTransition: (cb: () => void) => void }).startViewTransition(() => {
+      router.push(href);
+    });
+  }
+
   return (
     <Link
-      href={`/r/${r.slug}`}
+      href={href}
+      onClick={handleClick}
       className="reveal rq-card block overflow-hidden p-3 transition active:scale-[0.985]"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-center gap-3">
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-800 font-serif text-xl font-bold text-cream-100">
+        <span
+          className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-800 font-serif text-xl font-bold text-cream-100"
+          style={{ viewTransitionName: `restaurant-logo-${r.slug}` } as React.CSSProperties}
+        >
           {r.logo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={r.logo_url} alt="" className="h-full w-full object-cover" />

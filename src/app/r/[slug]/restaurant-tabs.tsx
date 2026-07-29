@@ -119,8 +119,15 @@ export function RestaurantTabs({
   useEffect(() => setFav(isFavorite(slug)), [slug]);
   const onFollow = () => setFav(toggleFavorite({ slug, name, logo }));
 
-  const LogoBox = ({ size }: { size: string }) => (
-    <span className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-800 font-serif text-2xl font-bold text-cream-100`}>
+  // اسم انتقال مشترك مع بطاقة الرئيسية (Card في discovery-list.tsx) — المتصفح
+  // يحرّك الشعار بصريًّا من مكانه بالقائمة لمكانه هنا بدل ظهور مفاجئ. يُعطى
+  // لنسخة واحدة فقط (بطاقة تبويب الانتظار، المعروضة افتراضيًّا) — الاسم يجب
+  // أن يكون فريدًا بالصفحة، والنسخة الثانية بتبويب الميديا مخفية عنه أصلًا.
+  const LogoBox = ({ size, shared = false }: { size: string; shared?: boolean }) => (
+    <span
+      className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-800 font-serif text-2xl font-bold text-cream-100`}
+      style={shared ? ({ viewTransitionName: `restaurant-logo-${slug}` } as React.CSSProperties) : undefined}
+    >
       {logo ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={logo} alt="" className="h-full w-full object-cover" />
@@ -152,7 +159,7 @@ export function RestaurantTabs({
       <div className={tab === "waitlist" ? "space-y-4" : "hidden"}>
         {/* بطاقة تعريف */}
         <div className="rq-card flex items-center gap-4 p-4">
-          <LogoBox size="h-[92px] w-[92px]" />
+          <LogoBox size="h-[92px] w-[92px]" shared />
           <div className="min-w-0 flex-1 text-right">
             <p className="truncate font-display text-xl font-bold text-[color:var(--ink)]">{name}</p>
             <p className="mt-0.5 text-sm text-[color:var(--muted)]">{cuisine}</p>
