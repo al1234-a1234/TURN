@@ -13,7 +13,7 @@ import { ReviewForm } from "./review-form";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
-import { fmtDate, fmtDayShort } from "@/lib/dates";
+import { fmtDate, fmtDayShort, isWithinOpeningHours } from "@/lib/dates";
 
 export default async function RestaurantPublicPage({
   params,
@@ -42,7 +42,7 @@ export default async function RestaurantPublicPage({
 
   // الفروع أولًا: القائمة والعروض والصور صارت لكل فرع على حدة (فرانشايز)
   const { data: branches } = await supabase
-    .from("branches").select("id, name, city, address, branch_settings(accepts_waitlist)")
+    .from("branches").select("id, name, city, address, branch_settings(accepts_waitlist, manually_closed, busy_now, opening_hours)")
     .eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at");
   const requestedBranch = (await searchParams).branch;
   const contentBranchId =
@@ -92,6 +92,7 @@ export default async function RestaurantPublicPage({
   const withCounts = branchList.map((b) => {
     const c = countOf.get(b.id);
     const bs = Array.isArray(b.branch_settings) ? b.branch_settings[0] : b.branch_settings;
+    const settings = bs as { accepts_waitlist?: boolean; manually_closed?: boolean; busy_now?: boolean; opening_hours?: { open?: string; close?: string } | null } | null;
     return {
       id: b.id,
       name: b.name,
@@ -99,7 +100,9 @@ export default async function RestaurantPublicPage({
       total: Number(c?.total ?? 0),
       inside: Number(c?.inside ?? 0),
       outside: Number(c?.outside ?? 0),
-      accepts: (bs as { accepts_waitlist?: boolean } | null)?.accepts_waitlist ?? true,
+      accepts: settings?.accepts_waitlist ?? true,
+      closedNow: (settings?.manually_closed ?? false) || !isWithinOpeningHours(settings?.opening_hours ?? null),
+      busyNow: settings?.busy_now ?? false,
       photo: photoOf.get(b.id) ?? null,
     };
   });

@@ -96,3 +96,31 @@ export function riyadhWeekday(iso: string | Date): number {
   const d = typeof iso === "string" ? new Date(iso) : iso;
   return new Date(d.getTime() + 3 * 3600_000).getUTCDay();
 }
+
+function parseHHMM(s: string | null | undefined): number | null {
+  if (!s) return null;
+  const m = /^(\d{1,2}):(\d{2})$/.exec(s.trim());
+  if (!m) return null;
+  const h = Number(m[1]);
+  const mi = Number(m[2]);
+  if (h < 0 || h > 23 || mi < 0 || mi > 59) return null;
+  return h * 60 + mi;
+}
+
+/**
+ * هل الوقت الآن (بتوقيت الرياض) ضمن ساعات الدوام [open, close)؟ يدعم النطاق
+ * الليلي (يفتح مساءً ويقفل بعد منتصف الليل). بلا ساعات مضبوطة أو بقيمة
+ * تالفة = مفتوح دائمًا — لا نغلق فرعًا لم يضبط ساعاته أصلًا. يطابق دالة
+ * branch_open_by_hours في القاعدة (نفس المنطق على الطرفين).
+ */
+export function isWithinOpeningHours(
+  hours: { open?: string | null; close?: string | null } | null | undefined,
+): boolean {
+  const open = parseHHMM(hours?.open);
+  const close = parseHHMM(hours?.close);
+  if (open == null || close == null) return true;
+  if (open === close) return true;
+  const nowRiyadh = new Date(Date.now() + 3 * 3600_000);
+  const cur = nowRiyadh.getUTCHours() * 60 + nowRiyadh.getUTCMinutes();
+  return open < close ? cur >= open && cur < close : cur >= open || cur < close;
+}

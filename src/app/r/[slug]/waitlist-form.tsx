@@ -17,6 +17,8 @@ type Branch = {
   inside: number;
   outside: number;
   accepts: boolean;
+  closedNow: boolean;
+  busyNow: boolean;
   photo: string | null;
 };
 
@@ -78,7 +80,15 @@ function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; o
 
       {/* الحالة + الدعوة */}
       <span className="block p-3.5">
-        {!b.accepts ? (
+        {b.closedNow ? (
+          <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
+                style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+            <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--muted)" }}>
+              <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--muted)" }} />
+              {tr(lang, "مغلق حاليًا", "Closed now")}
+            </span>
+          </span>
+        ) : !b.accepts ? (
           <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
                 style={{ background: "rgba(102,28,10,0.08)", border: "1.5px solid var(--brand-d)" }}>
             <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--brand-d)" }}>
@@ -286,6 +296,25 @@ export function WaitlistForm({
     );
   }
 
+  // مغلق فعليًّا الآن (يدويًا من الاستقبال أو خارج أوقات الدوام) — يسبق حالة
+  // «استقبال مباشر» لأنه يعني لا أحد يُستقبَل إطلاقًا، لا حتى بلا حجز دور.
+  if (branch && branch.closedNow) {
+    return (
+      <div className="space-y-3">
+        {multi && (
+          <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
+        )}
+        <div className="rq-card p-7 text-center">
+          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full" style={{ background: "var(--surface-2)", color: "var(--muted)" }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" /><path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+          </span>
+          <p className="text-lg font-bold text-[color:var(--ink)]">{tr(lang, "هذا الفرع مغلق حاليًا", "This branch is closed right now")}</p>
+          <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "جرّب لاحقًا ضمن أوقات الدوام.", "Please try again during opening hours.")}</p>
+        </div>
+      </div>
+    );
+  }
+
   // مغلق / لا يستقبل الآن (لهذا الفرع)
   if (branch && !branch.accepts) {
     return (
@@ -323,6 +352,14 @@ export function WaitlistForm({
           </p>
           <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
         </div>
+      )}
+
+      {branch?.busyNow && (
+        <p className="flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold text-white"
+           style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)" }}>
+          <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
+          {tr(lang, "الفرع مزدحم الآن — قد يطول الانتظار قليلًا", "The branch is busy now — expect a slightly longer wait")}
+        </p>
       )}
 
       {/* طابور القسم (لهذا الفرع) */}

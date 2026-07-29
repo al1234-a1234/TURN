@@ -79,6 +79,8 @@ export type DiscoveryItem = {
   inside: number;
   outside: number;
   accepts: boolean;
+  closedNow: boolean;
+  busyNow: boolean;
   rating: string | null;
   branchCount: number;
 };
@@ -133,7 +135,7 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
   return (
     <Link
       href={href}
-      className="reveal rq-card block overflow-hidden p-3 transition active:scale-[0.985]"
+      className={`reveal rq-card block overflow-hidden p-3 transition active:scale-[0.985]${r.closedNow ? " opacity-70" : ""}`}
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-center gap-3">
@@ -160,6 +162,14 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
                 {tr(lang, `${toAr(r.branchCount)} فرع`, `${r.branchCount} branches`)}
               </span>
             )}
+            {r.busyNow && !r.closedNow && (
+              <span
+                className="inline-flex shrink-0 items-center justify-center rounded-md px-1.5 py-0.5 text-[10px] font-extrabold text-white"
+                style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)" }}
+              >
+                {tr(lang, "مزدحم الآن", "Busy now")}
+              </span>
+            )}
           </p>
           {dist && (
             <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold" style={{ color: "var(--brand-d)" }}>
@@ -180,7 +190,18 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
         )}
       </div>
 
-      {r.waiting > 0 && r.inside + r.outside > 0 ? (
+      {r.closedNow ? (
+        <div
+          className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
+          style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
+        >
+          <span className="flex items-center gap-2 text-sm font-extrabold" style={{ color: "var(--muted)" }}>
+            <span className="h-2.5 w-2.5 rounded-full" style={{ background: "var(--muted)" }} />
+            {tr(lang, "مغلق حاليًا", "Closed now")}
+          </span>
+          <span className="text-xs font-extrabold" style={{ color: "var(--muted)" }}>{tr(lang, "التفاصيل ←", "Details ←")}</span>
+        </div>
+      ) : r.waiting > 0 && r.inside + r.outside > 0 ? (
         <div className="mt-2.5 flex flex-col items-end gap-1.5">
           <ZonePill label={tr(lang, "داخلي", "Indoor")} count={r.inside} lang={lang} />
           <ZonePill label={tr(lang, "خارجي", "Outdoor")} count={r.outside} lang={lang} />
@@ -252,16 +273,21 @@ export function DiscoveryList({ items, offers = [], lang }: { items: DiscoveryIt
     [items, cuisine],
   );
 
-  // تجميع بقسمين بس: متاح الآن (يشمل مين ما عليه طابور، ومن لا يستخدم نظام
-  // الطابور أصلًا — كلاهما يعني «ادخل على طول» للعميل) · فيه طابور الآن.
+  // تجميع بثلاثة أقسام: متاح الآن (يشمل مين ما عليه طابور، ومن لا يستخدم نظام
+  // الطابور أصلًا — كلاهما يعني «ادخل على طول» للعميل) · فيه طابور الآن ·
+  // مغلق حاليًا (يدويًا من الاستقبال أو خارج أوقات الدوام) — يظهر أخيرًا فقط
+  // للتصفّح، بلا دعوة لأخذ دور.
   const groups = useMemo(() => {
-    const available = filtered.filter((r) => r.waiting === 0);
-    const queued = filtered.filter((r) => r.waiting > 0).sort((a, b) => a.waiting - b.waiting);
+    const open = filtered.filter((r) => !r.closedNow);
+    const closed = filtered.filter((r) => r.closedNow);
+    const available = open.filter((r) => r.waiting === 0);
+    const queued = open.filter((r) => r.waiting > 0).sort((a, b) => a.waiting - b.waiting);
     // متاح: الأعلى تقييمًا أولًا
     available.sort((a, b) => Number(b.rating ?? 0) - Number(a.rating ?? 0));
     return [
       { key: "available", label: tr(lang, "متاح الآن · بدون انتظار", "Available now · No wait"), rows: available },
       { key: "queued", label: tr(lang, "فيه طابور الآن", "Queue running now"), rows: queued },
+      { key: "closed", label: tr(lang, "مغلق حاليًا", "Closed now"), rows: closed },
     ].filter((g) => g.rows.length > 0);
   }, [filtered, lang]);
 

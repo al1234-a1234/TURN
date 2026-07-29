@@ -55,6 +55,7 @@ export async function joinWaitlistGuest(
       return { ok: false, error: "هذا الفرع لا يستقبل قائمة انتظار حاليًا." };
     }
     if (error.code === "P0002") return { ok: false, error: "الفرع غير متاح." };
+    if (error.code === "P0003") return { ok: false, error: "الفرع مغلق حاليًا." };
     if (error.code === "P0429") return { ok: false, error: "محاولات كثيرة — انتظر دقائق ثم حاول مجددًا." };
     return { ok: false, error: "تعذّر الانضمام. حاول مرة أخرى." };
   }

@@ -3,6 +3,7 @@ import { CustomerShell } from "@/components/customer-shell";
 import { DiscoveryList } from "./discovery-list";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
+import { isWithinOpeningHours } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -23,12 +24,12 @@ export default async function Home() {
   );
 
   const withStatus = list.map((r) => {
-    const b = (r.branches ?? [])[0] as
-      | { id: string; city: string | null; lat: number | null; lng: number | null; is_active: boolean; branch_settings: { accepts_waitlist: boolean } | { accepts_waitlist: boolean }[] | null }
-      | undefined;
+    const b = (r.branches ?? [])[0];
     const c = b?.id ? counts.get(b.id) : undefined;
     const settings = Array.isArray(b?.branch_settings) ? b?.branch_settings[0] : b?.branch_settings;
     const accepts = settings?.accepts_waitlist ?? true;
+    const closedNow = (settings?.manually_closed ?? false) || !isWithinOpeningHours(settings?.opening_hours ?? null);
+    const busyNow = settings?.busy_now ?? false;
     const ra = ratingAgg.get(r.id);
     const rating = ra && ra.n > 0 ? (Math.round((ra.sum / ra.n) * 10) / 10).toFixed(1) : null;
     return {
@@ -40,6 +41,8 @@ export default async function Home() {
       inside: c?.inside ?? 0,
       outside: c?.outside ?? 0,
       accepts,
+      closedNow,
+      busyNow,
       rating,
       branchCount: (r.branches ?? []).length,
     };

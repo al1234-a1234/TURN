@@ -5,12 +5,13 @@ import { WalkInForm } from "./walkin-form";
 import { RewardBox } from "./reward-box";
 import { AutoRefresh } from "./auto-refresh";
 import { BranchTabs } from "./branch-tabs";
+import { StatusToggle } from "./status-toggle";
 import { loadOwner, scopeBranchIds } from "../owner-context";
 import { staffHasPermission } from "@/lib/features";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
-import { riyadhDayStart } from "@/lib/dates";
+import { riyadhDayStart, isWithinOpeningHours } from "@/lib/dates";
 
 function minutesSince(iso: string): number {
   return Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
@@ -42,7 +43,7 @@ export default async function ReceptionPage({
 
   const startToday = riyadhDayStart().toISOString();
 
-  const [{ data: queue }, todayRes] = activeBranch
+  const [{ data: queue }, todayRes, statusRes] = activeBranch
     ? await Promise.all([
         supabase
           .from("waitlist_entries")
@@ -54,14 +55,17 @@ export default async function ReceptionPage({
           .order("position", { nullsFirst: false }),
         supabase.from("waitlist_entries").select("id", { count: "exact", head: true })
           .eq("branch_id", activeBranch.id).eq("status", "seated").gte("seated_at", startToday),
+        supabase.from("branch_settings").select("manually_closed, busy_now, opening_hours").eq("branch_id", activeBranch.id).maybeSingle(),
       ])
-    : [{ data: [] }, { count: 0 }];
+    : [{ data: [] }, { count: 0 }, { data: null }];
 
   const list = queue ?? [];
   const inside = list.filter((q) => q.zone === "inside");
   const outside = list.filter((q) => q.zone === "outside");
   const other = list.filter((q) => q.zone !== "inside" && q.zone !== "outside");
   const servedToday = todayRes?.count ?? 0;
+  const status = statusRes?.data as { manually_closed: boolean; busy_now: boolean; opening_hours: { open?: string; close?: string } | null } | null;
+  const closedByHours = status ? !isWithinOpeningHours(status.opening_hours) : false;
 
   type Row = (typeof list)[number];
   // rank = الترتيب الحيّ داخل القسم (1،2،3…) لا الرقم المخزَّن — ينضغط عند الإجلاس
@@ -153,6 +157,15 @@ export default async function ReceptionPage({
 
       {activeBranch ? (
         <>
+          {status && (
+            <StatusToggle
+              branchId={activeBranch.id}
+              closedNow={status.manually_closed}
+              busyNow={status.busy_now}
+              closedByHours={closedByHours}
+            />
+          )}
+
           <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Stat label={tr(lang, "في الطابور الآن", "In queue now")} value={toAr(list.length)} tone="var(--brand-d)" />
             <Stat label={tr(lang, "طابور داخلي", "Indoor queue")} value={toAr(inside.length)} tone="var(--st-full)" />

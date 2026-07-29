@@ -20,10 +20,12 @@ export type Database = {
           accepts_waitlist: boolean
           booking_window_days: number
           branch_id: string
+          busy_now: boolean
           charge_customer: boolean
           custom: Json | null
           default_duration_min: number
           grace_period_min: number
+          manually_closed: boolean
           max_party_size: number
           notification_channels:
             | Database["public"]["Enums"]["notification_channel"][]
@@ -36,10 +38,12 @@ export type Database = {
           accepts_waitlist?: boolean
           booking_window_days?: number
           branch_id: string
+          busy_now?: boolean
           charge_customer?: boolean
           custom?: Json | null
           default_duration_min?: number
           grace_period_min?: number
+          manually_closed?: boolean
           max_party_size?: number
           notification_channels?:
             | Database["public"]["Enums"]["notification_channel"][]
@@ -52,10 +56,12 @@ export type Database = {
           accepts_waitlist?: boolean
           booking_window_days?: number
           branch_id?: string
+          busy_now?: boolean
           charge_customer?: boolean
           custom?: Json | null
           default_duration_min?: number
           grace_period_min?: number
+          manually_closed?: boolean
           max_party_size?: number
           notification_channels?:
             | Database["public"]["Enums"]["notification_channel"][]
@@ -1464,6 +1470,10 @@ export type Database = {
           joins: number
         }[]
       }
+      branch_open_by_hours: {
+        Args: { p_hours: Json; p_now?: string }
+        Returns: boolean
+      }
       caller_branch_id: { Args: { rest_id: string }; Returns: string }
       can_access_branch: { Args: { b_id: string }; Returns: boolean }
       cancel_by_ticket: { Args: { p_entry_id: string }; Returns: boolean }
@@ -1660,6 +1670,14 @@ export type Database = {
           p_entry_id: string
           p_p256dh: string
           p_phone: string
+        }
+        Returns: boolean
+      }
+      set_branch_status: {
+        Args: {
+          p_branch_id: string
+          p_busy_now: boolean
+          p_manually_closed: boolean
         }
         Returns: boolean
       }
