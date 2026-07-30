@@ -1,0 +1,77 @@
+# ============================================================================
+#  التقرير الأسبوعي الآلي لمالك دور — كل أحد صباحًا بلا يد بشرية.
+#
+#  لماذا GitHub Actions؟ استقلال كامل: يعمل للأبد حتى بلا أي مساعد ذكاء
+#  اصطناعي، ويستخدم نفس سرّ الاتصال الموجود أصلًا للنسخ الاحتياطي
+#  (SUPABASE_DB_URL) — صفر إعداد إضافي. التقرير يُنشأ كـIssue في المستودع،
+#  وGitHub يرسله للمالك بريدًا تلقائيًّا (إشعارات المستودع الافتراضية).
+#
+#  قراءة فقط: كل الاستعلامات SELECT — لا يكتب ولا يعدّل شيئًا في القاعدة.
+# ============================================================================
+name: التقرير الأسبوعي
+
+on:
+  schedule:
+    - cron: "7 4 * * 0"    # الأحد ٠٧:٠٧ صباحًا بتوقيت الرياض
+  workflow_dispatch: {}     # وتشغيل يدوي للتجربة من تبويب Actions
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DB: ${{ secrets.SUPABASE_DB_URL }}
+    steps:
+      - name: جمع الأرقام وكتابة التقرير
+        run: |
+          q() { psql "$DB" -tAc "$1" 2>/dev/null | tr -d '[:space:]'; }
+
+          J1=$(q "select count(*) from waitlist_entries where joined_at >= now()-interval '7 days'")
+          J0=$(q "select count(*) from waitlist_entries where joined_at >= now()-interval '14 days' and joined_at < now()-interval '7 days'")
+          SEATED=$(q "select count(*) from waitlist_entries where joined_at >= now()-interval '7 days' and status='seated'")
+          CANCEL=$(q "select count(*) from waitlist_entries where joined_at >= now()-interval '7 days' and status in ('cancelled','expired','no_show')")
+          AVGWAIT=$(q "select coalesce(round(avg(extract(epoch from (seated_at-joined_at))/60)),0) from waitlist_entries where joined_at >= now()-interval '7 days' and seated_at is not null")
+          SCANS=$(q "select count(*) from checkins where created_at >= now()-interval '7 days'")
+          REVS=$(q "select count(*) from reviews where created_at >= now()-interval '7 days'")
+          STARS=$(q "select coalesce(round(avg(rating)::numeric,1),0) from reviews where created_at >= now()-interval '7 days'")
+          NEWC=$(q "select count(*) from customers where created_at >= now()-interval '7 days'")
+          TOP=$(psql "$DB" -tAc "select r.name from waitlist_entries w join branches b on b.id=w.branch_id join restaurants r on r.id=b.restaurant_id where w.joined_at >= now()-interval '7 days' group by r.name order by count(*) desc limit 1" 2>/dev/null | sed 's/^ *//;s/ *$//')
+          BUSYDAY=$(q "select case extract(dow from joined_at + interval '3 hours') when 0 then 'الأحد' when 1 then 'الإثنين' when 2 then 'الثلاثاء' when 3 then 'الأربعاء' when 4 then 'الخميس' when 5 then 'الجمعة' else 'السبت' end from waitlist_entries where joined_at >= now()-interval '7 days' group by 1 order by count(*) desc limit 1")
+          BUSYHOUR=$(q "select extract(hour from joined_at + interval '3 hours')::int from waitlist_entries where joined_at >= now()-interval '7 days' group by 1 order by count(*) desc limit 1")
+          STUCK=$(q "select count(*) from waitlist_entries where status in ('waiting','notified') and joined_at < now()-interval '6 hours'")
+
+          {
+            echo "## 📊 تقريرك الأسبوعي — دور"
+            echo ""
+            echo "| المقياس | هذا الأسبوع | الأسبوع الماضي |"
+            echo "|---|---|---|"
+            echo "| الانضمامات للطوابير | **${J1:-0}** | ${J0:-0} |"
+            echo "| أُجلسوا فعلًا | ${SEATED:-0} | — |"
+            echo "| ألغوا أو لم يحضروا | ${CANCEL:-0} | — |"
+            echo "| متوسط الانتظار حتى الإجلاس | ${AVGWAIT:-0} دقيقة | — |"
+            echo "| مسحات الهدايا | ${SCANS:-0} | — |"
+            echo "| تقييمات جديدة | ${REVS:-0} (متوسط ⭐ ${STARS:-0}) | — |"
+            echo "| عملاء جدد | ${NEWC:-0} | — |"
+            echo ""
+            if [ -n "$TOP" ]; then echo "**الأنشط:** ${TOP} · **أكثر يوم ضغطًا:** ${BUSYDAY:-—} · **أكثر ساعة:** ${BUSYHOUR:-—}:00 بتوقيت الرياض"; fi
+            if [ "${STUCK:-0}" != "0" ]; then echo ""; echo "⚠️ يوجد ${STUCK} دور معلّق أكثر من ٦ ساعات — افتح الاستقبال ونظّفها."; fi
+            if [ "${J1:-0}" = "0" ]; then echo ""; echo "لا نشاط هذا الأسبوع — طبيعي قبل الإطلاق."; fi
+            echo ""
+            echo "_تقرير آلي — يصدر كل أحد صباحًا. الأرقام من قاعدة البيانات مباشرة._"
+          } > report.md
+
+          cat report.md
+
+      - name: نشر التقرير (يصل المالك بريدًا من GitHub)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh issue create \
+            --title "📊 التقرير الأسبوعي — $(date +%Y-%m-%d)" \
+            --body-file report.md \
+            --label "تقرير"  || gh issue create --title "📊 التقرير الأسبوعي — $(date +%Y-%m-%d)" --body-file report.md
