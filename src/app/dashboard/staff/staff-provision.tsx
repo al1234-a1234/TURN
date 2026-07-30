@@ -9,7 +9,7 @@ import { useLang } from "@/components/lang-provider";
 function Credentials({ username, code, onDone }: { username: string; code: string; onDone: () => void }) {
   const lang = useLang();
   return (
-    <div className="rounded-2xl p-4" style={{ background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", border: "1px solid rgba(102,28,10,0.18)" }}>
+    <div className="rounded-2xl p-4" style={{ background: "var(--surface-2)", border: "1px solid rgba(102,28,10,0.18)" }}>
       <p className="mb-3 font-display text-base font-bold" style={{ color: "var(--brand-d)" }}>
         ✅ {tr(lang, "جاهز — سلّمه هذه البيانات", "Ready — hand over these details")}
       </p>

@@ -190,7 +190,7 @@ export default async function CustomersPage({
                         <p className="truncate font-bold text-brand-700 underline decoration-brand-700/40 decoration-2 underline-offset-4">{name}</p>
                         <span aria-hidden className="shrink-0 text-[11px] text-brand-700 opacity-70">↗</span>
                         {p.is_vip && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold" style={{ background: "#f8e9e3", color: "#661c0a" }}>VIP</span>}
-                        {giftedIds.has(p.customer_id) && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold" style={{ background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", color: "var(--brand-d)" }}>🎁 {tr(lang, "هدية فعّالة", "Active gift")}</span>}
+                        {giftedIds.has(p.customer_id) && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold" style={{ background: "var(--brand)", color: "#fff" }}>🎁 {tr(lang, "هدية فعّالة", "Active gift")}</span>}
                         {p.is_blocked && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold text-white" style={{ background: "var(--st-closed)" }}>{tr(lang, "محظور", "Blocked")}</span>}
                       </div>
                       <p className="text-sm text-[color:var(--muted)]" dir="ltr">{c?.phone ?? "—"}</p>

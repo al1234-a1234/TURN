@@ -103,7 +103,7 @@ export default async function ReceptionPage({
           )}
           {q.confirmed_at && (
             <span className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
-              style={{ background: "linear-gradient(160deg,#fbf1ea,#f4ddd0)", border: "1px solid rgba(102,28,10,0.16)", color: "var(--brand-d)" }}>
+              style={{ background: "var(--brand)", color: "#fff" }}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
               {tr(lang, "أكّد حضوره", "Confirmed")}
             </span>
@@ -168,9 +168,9 @@ export default async function ReceptionPage({
 
           <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Stat label={tr(lang, "في الطابور الآن", "In queue now")} value={toAr(list.length)} tone="var(--brand-d)" />
-            <Stat label={tr(lang, "طابور داخلي", "Indoor queue")} value={toAr(inside.length)} tone="var(--st-full)" />
-            <Stat label={tr(lang, "طابور خارجي", "Outdoor queue")} value={toAr(outside.length)} tone="var(--st-full)" />
-            <Stat label={tr(lang, "خدمناهم اليوم", "Served today")} value={toAr(servedToday)} tone="var(--st-open)" />
+            <Stat label={tr(lang, "طابور داخلي", "Indoor queue")} value={toAr(inside.length)} tone="var(--brand-d)" />
+            <Stat label={tr(lang, "طابور خارجي", "Outdoor queue")} value={toAr(outside.length)} tone="var(--brand)" />
+            <Stat label={tr(lang, "خدمناهم اليوم", "Served today")} value={toAr(servedToday)} tone="var(--brand)" />
           </div>
 
           <RewardBox />
@@ -178,8 +178,8 @@ export default async function ReceptionPage({
           <WalkInForm branchId={activeBranch.id} branchName={multi ? activeBranch.name : undefined} />
 
           <div className="grid gap-6 sm:grid-cols-2">
-            <ZoneColumn title={tr(lang, "طاولات داخلية", "Indoor tables")} rows={inside} tone="var(--st-full)" />
-            <ZoneColumn title={tr(lang, "طاولات خارجية", "Outdoor tables")} rows={outside} tone="var(--st-full)" />
+            <ZoneColumn title={tr(lang, "طاولات داخلية", "Indoor tables")} rows={inside} tone="var(--brand-d)" />
+            <ZoneColumn title={tr(lang, "طاولات خارجية", "Outdoor tables")} rows={outside} tone="var(--brand)" />
           </div>
           {other.length > 0 && (
             <div className="mt-6"><ZoneColumn title={tr(lang, "غير محدّد", "Unspecified")} rows={other} tone="var(--muted)" /></div>

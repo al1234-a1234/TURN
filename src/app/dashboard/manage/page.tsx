@@ -129,9 +129,9 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
           </p>
         )}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <Kpi label={tr(lang, "خدمناهم (30 يوم)", "Served (30 days)")} value={toAr(served30)} tone="var(--st-open)" />
+          <Kpi label={tr(lang, "خدمناهم (30 يوم)", "Served (30 days)")} value={toAr(served30)} tone="var(--brand)" />
           <Kpi label={tr(lang, "متوسط الانتظار", "Avg. wait")} value={`${toAr(avgWait)} ${tr(lang, "د", "min")}`} tone="var(--brand-d)" />
-          <Kpi label={tr(lang, "بالطابور الآن", "In queue now")} value={toAr(waiting.length)} tone="var(--st-full)" />
+          <Kpi label={tr(lang, "بالطابور الآن", "In queue now")} value={toAr(waiting.length)} tone="var(--brand-d)" />
           <Kpi label={tr(lang, "التقييم", "Rating")} value={avgRating ?? tr(lang, "—", "—")} tone="var(--star)" />
         </div>
 
@@ -140,13 +140,13 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
             <ColumnChart data={dayBuckets} color="var(--brand)" />
           </ChartCard>
           <ChartCard title={tr(lang, "ساعات الذروة", "Peak hours")} hint={tr(lang, "مساءً", "PM")}>
-            <ColumnChart data={peak} color="var(--st-full)" />
+            <ColumnChart data={peak} color="var(--brand)" />
           </ChartCard>
         </div>
         <ChartCard title={tr(lang, "توزيع الطابور الآن", "Current queue split")} hint={tr(lang, "داخلي مقابل خارجي", "inside vs. outside")}>
           <SplitBars
             rows={[
-              { label: tr(lang, "طاولات داخلية", "Indoor tables"), value: insideNow, color: "var(--st-full)" },
+              { label: tr(lang, "طاولات داخلية", "Indoor tables"), value: insideNow, color: "var(--brand-d)" },
               { label: tr(lang, "طاولات خارجية", "Outdoor tables"), value: outsideNow, color: "var(--brand)" },
             ]}
           />
