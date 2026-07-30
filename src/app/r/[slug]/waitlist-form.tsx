@@ -216,11 +216,11 @@ export function WaitlistForm({
   // فرع واحد → مختار تلقائيًّا؛ عدّة فروع → يختار العميل من البطاقات أولًا
   // (إلا إذا جاء الفرع من الرابط — QR داخل الفرع)
   const [branchId, setBranchIdRaw] = useState<string>(initialBranchId ?? (multi ? "" : branches[0]?.id ?? ""));
-  // اختيار الفرع يحدَّث في الرابط أيضًا كي تتبعه القائمة والعروض والصور —
+  // اختيار الفرع يحدَّث في الرابط أيضًا كي تتبعه القائمة والصور —
   // كان العميل يختار فرعًا ويقرأ منيو فرعٍ آخر
   function setBranchId(id: string) {
     setBranchIdRaw(id);
-    // router.replace يعيد جلب محتوى الفرع (منيو/عروض/صور) من الخادم بلا قفزة
+    // router.replace يعيد جلب محتوى الفرع (منيو/صور) من الخادم بلا قفزة
     if (typeof window !== "undefined") {
       const u = new URL(window.location.href);
       if (id) u.searchParams.set("branch", id); else u.searchParams.delete("branch");

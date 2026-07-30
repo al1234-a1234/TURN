@@ -127,7 +127,7 @@ export default async function OverviewPage() {
         </div>
       )}
 
-      {/* رؤى تلقائية (ملخّص يومي / منصرفون / عروض ركود) */}
+      {/* رؤى تلقائية (ملخّص يومي / منصرفون) */}
       {insights.length > 0 && (
         <section className="soft-card mb-5 p-5">
           <h2 className="mb-3 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "رؤى وتنبيهات", "Insights & alerts")}</h2>

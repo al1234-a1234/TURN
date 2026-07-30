@@ -86,7 +86,7 @@ export default function MyRewardsPage() {
     <CustomerShell active="other" search={false}>
       <div className="space-y-5">
         <div className="rq-card p-5">
-          <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "هداياك وخصوماتك", "Your gifts & discounts")}</p>
+          <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "هداياك", "Your gifts")}</p>
           <p className="mt-0.5 text-sm text-[color:var(--muted)]">{tr(lang, "محفوظة عندك برقم جوّالك — أدخله لعرضها.", "Saved to your number — enter it to view.")}</p>
           <form onSubmit={(e) => { e.preventDefault(); runLookup(phone.trim()); }} className="mt-3 flex gap-2">
             <input dir="ltr" inputMode="tel" value={phone} onChange={(e) => setPhone(normalizePhone(e.target.value).slice(0, 10))} placeholder="05xxxxxxxx" className="field-input flex-1 text-left" />
@@ -129,7 +129,7 @@ export default function MyRewardsPage() {
         {myGifts.length > 0 && (
           <div className="space-y-2.5">
             <p className="px-1 font-display text-base font-bold text-[color:var(--ink)]">
-              🎁 {tr(lang, "هداياي", "My gifts")}
+              🎁 {tr(lang, "الهدايا", "Gifts")}
               <span className="ms-2 text-xs font-bold text-[color:var(--muted)]">{toAr(myGifts.length)}</span>
             </p>
             {myGifts.map((r) => (

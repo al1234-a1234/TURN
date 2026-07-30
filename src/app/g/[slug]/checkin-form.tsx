@@ -104,7 +104,7 @@ export function CheckinForm({ slug, branchId, lang }: { slug: string; branchId: 
           </div>
         )}
 
-        {/* محفظة العروض عبر كل المطاعم */}
+        {/* محفظة الهدايا عبر كل المطاعم */}
         <Link
           href={`/me/rewards${state.phone ? `?phone=${encodeURIComponent(state.phone)}` : ""}`}
           className="flex items-center justify-between rounded-2xl px-4 py-3.5"

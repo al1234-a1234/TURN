@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     .maybeSingle();
   if (!r) return { title: "دور | Turn" };
   const title = `${r.name} | دور`;
-  const description = `خذ دورك في ${r.name}${r.cuisine ? ` — ${r.cuisine}` : ""} بلا انتظار على الباب. شوف الطابور الحيّ والقائمة والعروض.`;
+  const description = `خذ دورك في ${r.name}${r.cuisine ? ` — ${r.cuisine}` : ""} بلا انتظار على الباب. شوف الطابور الحيّ والقائمة والهدايا.`;
   const image = r.cover_url ?? r.logo_url;
   return {
     title,
@@ -65,7 +65,7 @@ export default async function RestaurantPublicPage({
 
   if (!restaurant) notFound();
 
-  // الفروع أولًا: القائمة والعروض والصور صارت لكل فرع على حدة (فرانشايز)
+  // الفروع أولًا: القائمة والصور صارت لكل فرع على حدة (فرانشايز)
   const { data: branches } = await supabase
     .from("branches").select("id, name, city, address, branch_settings(accepts_waitlist, manually_closed, busy_now, opening_hours)")
     .eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at");
