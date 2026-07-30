@@ -231,8 +231,10 @@ export function WaitlistForm({
   const [phone, setPhone] = useState<string>(normalizePhone(defaultPhone).slice(0, 10));
   // بوابة الموقع: لا يُؤخذ الدور إلا بمشاركة الموقع (يمنع الحجز الوهمي من بعيد)
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const [geo, setGeo] = useState<"idle" | "asking" | "denied" | "unavailable">("idle");
+  // failed = تعذّر مؤقت (GPS/مهلة) يختلف عن الرفض الصريح — لكلٍّ رسالته وعلاجه
+  const [geo, setGeo] = useState<"idle" | "asking" | "denied" | "failed" | "unavailable">("idle");
   const formRef = useRef<HTMLFormElement | null>(null);
+  const geoBoxRef = useRef<HTMLDivElement | null>(null);
   // استرجاع دور اليوم بعد الريلود/إغلاق المتصفح — كان الضيف يفقد تذكرته نهائيًّا
   const [restored, setRestored] = useState<{ entryId: string; phone: string } | null>(null);
   // بعد «خذ دورًا جديدًا» نتجاوز تذكرة الجلسة السابقة ونعود للنموذج
@@ -251,7 +253,12 @@ export function WaitlistForm({
         setGeo("idle");
         if (thenSubmit) requestAnimationFrame(() => formRef.current?.requestSubmit());
       },
-      () => setGeo("denied"),
+      (err) => {
+        // رفض صريح (code 1) غير التعذّر المؤقت (GPS/مهلة) — رسالتان مختلفتان.
+        // وأيًّا كان: نُبرز الصندوق فورًا كي لا تبدو الضغطة «ميتة».
+        setGeo(err.code === 1 ? "denied" : "failed");
+        requestAnimationFrame(() => geoBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
+      },
       { enableHighAccuracy: true, timeout: 10_000, maximumAge: 60_000 },
     );
   }
@@ -424,35 +431,57 @@ export function WaitlistForm({
         </p>
       )}
 
-      {/* حالة الموقع — تظهر عند الرفض أو التعذّر. الموقع إلزامي الآن — لا تجاوز. */}
-      {(geo === "denied" || geo === "unavailable") && (
-        <div className="rounded-2xl p-4" style={{ background: "var(--brand-solid)" }}>
+      {/* حالة الموقع — تظهر عند الرفض أو التعذّر، مع خطوات الحل لا مجرد الخبر */}
+      {(geo === "denied" || geo === "failed" || geo === "unavailable") && (
+        <div ref={geoBoxRef} className="rounded-2xl p-4" style={{ background: "var(--brand-solid)" }}>
           <p className="text-sm font-extrabold text-white">
             {geo === "denied"
-              ? tr(lang, "لازم موقعك لأخذ دورك — فعّله من إعدادات المتصفح", "Your location is required to take a turn — enable it in your browser settings")
-              : tr(lang, "جهازك لا يدعم تحديد الموقع، فلا يمكن أخذ الدور حاليًا", "Your device doesn't support location, so a turn can't be taken right now")}
+              ? tr(lang, "يلزم السماح بالموقع لإكمال حجزك", "Location permission is required to complete your booking")
+              : geo === "failed"
+                ? tr(lang, "تعذّر تحديد موقعك", "We couldn't get your location")
+                : tr(lang, "جهازك لا يدعم تحديد الموقع، فلا يمكن أخذ الدور حاليًا", "Your device doesn't support location, so a turn can't be taken right now")}
           </p>
-          <p className="mt-1 text-xs font-medium text-white/80">
+          {geo === "denied" && (
+            <p className="mt-1.5 text-xs font-medium leading-relaxed text-white/90">
+              {tr(lang,
+                "متصفحك حافظ الرفض السابق، ففعّله يدويًا: آيفون: الإعدادات ← سفاري (أو التطبيق) ← الموقع ← أثناء الاستخدام. أندرويد/كروم: أيقونة القفل بجانب الرابط ← الأذونات ← الموقع ← السماح. ثم اضغط «حاول مرة أخرى».",
+                "Your browser saved the earlier denial — enable it manually: iPhone: Settings → Safari (or the app) → Location → While Using. Android/Chrome: the lock icon by the address → Permissions → Location → Allow. Then tap “Try again”.")}
+            </p>
+          )}
+          {geo === "failed" && (
+            <p className="mt-1.5 text-xs font-medium text-white/90">
+              {tr(lang, "تأكّد أن تحديد الموقع (GPS) شغّال في جهازك وحاول مرة أخرى.", "Make sure GPS is on, then try again.")}
+            </p>
+          )}
+          <p className="mt-1.5 text-xs font-medium text-white/75">
             {tr(lang,
               "الموقع يؤكّد للمطعم أنك قريب فعلًا. نحسب المسافة فقط ولا نحفظ موقعك.",
               "Location confirms to the restaurant that you're nearby. We store only the distance, never your location.")}
           </p>
-          {geo === "denied" && (
-            <button type="button" onClick={() => askLocation(false)} className="mt-3 w-full rounded-xl px-3 py-2.5 text-sm font-extrabold text-white"
+          {geo !== "unavailable" && (
+            <button type="button" onClick={() => askLocation(true)} className="mt-3 w-full rounded-xl px-3 py-2.5 text-sm font-extrabold text-white"
               style={{ background: "#661c0a" }}>
-              {tr(lang, "السماح بالموقع", "Allow location")}
+              {tr(lang, "حاول مرة أخرى", "Try again")}
             </button>
           )}
         </div>
       )}
 
+      {/* لا مفاجآت: نخبره قبل الضغط أن الموقع سيُطلب */}
+      {geo === "idle" && !coords && (
+        <p className="text-center text-[11px] font-bold text-[color:var(--muted)]">
+          {tr(lang, "عند الضغط سنطلب موقعك — يؤكّد للمطعم أنك قريب فعلًا", "We'll ask for your location — it confirms you're really nearby")}
+        </p>
+      )}
+
       <button
         type="submit"
-        disabled={pending || geo === "asking" || geo === "denied" || geo === "unavailable" || !branchId || !/^05\d{8}$/.test(phone)}
+        disabled={pending || geo === "asking" || !branchId || !/^05\d{8}$/.test(phone)}
         onClick={(e) => {
-          // أول ضغطة بلا موقع → يظهر طلب الإذن، ثم يُرسَل تلقائيًّا بعد السماح.
-          // الموقع إلزامي — رفضٌ أو تعذّر يعطّل الزر، لا تجاوز.
-          if (!coords && geo === "idle") { e.preventDefault(); askLocation(true); }
+          // الزر لا «يموت» أبدًا: بلا موقع نطلب الإذن ثم نُرسل تلقائيًّا بعد
+          // السماح؛ ومع رفضٍ محفوظ تفشل المحاولة فورًا فيبرز صندوق التعليمات
+          // — كل ضغطة لها ردّ فعل مرئي.
+          if (!coords) { e.preventDefault(); askLocation(true); }
         }}
         className="rq-btn"
       >
