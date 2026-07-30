@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { joinWaitlistGuest, type WaitlistState } from "./actions";
 import { QueueTicket } from "./queue-ticket";
@@ -239,6 +240,8 @@ export function WaitlistForm({
   // أنيقًا (نافذة سفلية بالهوية) بدل رسالة يتيمة، ونراقب الإذن: أول ما
   // يفعّله ويرجع للصفحة نكمل دوره تلقائيًّا بلا أي ضغطة.
   const [geoSheet, setGeoSheet] = useState(false);
+  // سمح بالإذن لكن جهازه عاجز عن التحديد (شبكة/GPS) — ندخله بلا مسافة
+  const geoWaivedRef = useRef(false);
   const isIOS = typeof navigator !== "undefined" && /iPhone|iPad|iPod/i.test(navigator.userAgent);
   // استرجاع دور اليوم بعد الريلود/إغلاق المتصفح — كان الضيف يفقد تذكرته نهائيًّا
   const [restored, setRestored] = useState<{ entryId: string; phone: string } | null>(null);
@@ -249,30 +252,55 @@ export function WaitlistForm({
     if (rec?.entryId && rec.phone) setRestored({ entryId: rec.entryId, phone: rec.phone });
   }, [slug]);
 
-  function askLocation(thenSubmit: boolean) {
+  function askLocation(thenSubmit: boolean, attempt = 1) {
     if (typeof navigator === "undefined" || !navigator.geolocation) { setGeo("unavailable"); return; }
     setGeo("asking");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setGeo("idle");
-        if (thenSubmit) requestAnimationFrame(() => formRef.current?.requestSubmit());
+        // flushSync: الإرسال كان يسبق كتابة الإحداثيات في الحقول أحيانًا
+        // فيرفضه الخادم وكأن الموقع لم يُشارك — الآن الرسم يكتمل قبل الإرسال.
+        flushSync(() => {
+          setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          setGeo("idle");
+        });
+        if (thenSubmit) formRef.current?.requestSubmit();
       },
       (err) => {
-        // رفض صريح (code 1) غير التعذّر المؤقت (GPS/مهلة) — رسالتان مختلفتان.
-        // وأيًّا كان: نُبرز الرسالة فورًا كي لا تبدو الضغطة «ميتة».
-        setGeo(err.code === 1 ? "denied" : "failed");
-        // إن كان الحظر محفوظًا في المتصفح (النافذة لن تعود) → دليل التفعيل
-        if (err.code === 1 && typeof navigator !== "undefined" && navigator.permissions?.query) {
-          navigator.permissions.query({ name: "geolocation" })
-            .then((s) => { if (s.state === "denied") setGeoSheet(true); })
-            .catch(() => {});
+        if (err.code !== 1 && attempt === 1) {
+          // تعذّر بلا رفض (شبكة لا تحدد الموقع): محاولة ثانية تلقائية بالـGPS
+          // الدقيق — كثير من الأجهزة ينجح فيها حيث تفشل الشبكة.
+          askLocation(thenSubmit, 2);
+          return;
         }
+        if (err.code !== 1) {
+          // فشلت المحاولتان والعميل سامح بالإذن أصلًا — جهازُه عاجز عن التحديد
+          // لا هو رافض. لا نحبس عميلًا واقفًا على باب المطعم: ندخله بلا مسافة.
+          navigator.permissions?.query?.({ name: "geolocation" })
+            .then((s) => {
+              if (s.state === "granted") {
+                geoWaivedRef.current = true;
+                flushSync(() => setGeo("idle"));
+                if (thenSubmit) formRef.current?.requestSubmit();
+              } else {
+                setGeo("failed");
+              }
+            })
+            .catch(() => setGeo("failed"));
+          return;
+        }
+        // رفض صريح — الرسالة القصيرة، وكل ضغطة تعيد نافذة النظام
+        setGeo("denied");
+        // إن كان الحظر محفوظًا في المتصفح (النافذة لن تعود) → دليل التفعيل
+        navigator.permissions?.query?.({ name: "geolocation" })
+          .then((s) => { if (s.state === "denied") setGeoSheet(true); })
+          .catch(() => {});
         requestAnimationFrame(() => geoBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
       },
-      // موقع تقريبي عمدًا (بلا GPS دقيق): يكفينا حساب مسافة بالكيلو/المتر،
-      // وأسرع استجابةً وأخف على خصوصية العميل.
-      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
+      // المحاولة ١: موقع تقريبي سريع (يكفينا كم كيلو/متر).
+      // المحاولة ٢: دقّة عالية بلا كاش — طوق نجاة للأجهزة التي فشلت شبكيًّا.
+      attempt === 1
+        ? { enableHighAccuracy: false, timeout: 8_000, maximumAge: 300_000 }
+        : { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 },
     );
   }
   // عين على الإذن ما دام الدليل مفتوحًا: تغيّر إلى «مسموح» (من الإعدادات أو
@@ -511,7 +539,7 @@ export function WaitlistForm({
           // الزر لا «يموت» أبدًا: بلا موقع نطلب الإذن ثم نُرسل تلقائيًّا بعد
           // السماح؛ ومع رفضٍ محفوظ تفشل المحاولة فورًا فيبرز صندوق التعليمات
           // — كل ضغطة لها ردّ فعل مرئي.
-          if (!coords) { e.preventDefault(); askLocation(true); }
+          if (!coords && !geoWaivedRef.current) { e.preventDefault(); askLocation(true); }
         }}
         className="rq-btn"
       >

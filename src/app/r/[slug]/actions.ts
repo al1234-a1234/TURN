@@ -34,13 +34,13 @@ export async function joinWaitlistGuest(
   if (!fullName) return { ok: false, error: "اكتب اسمك." };
   if (!phone) return { ok: false, error: "رقم الجوّال غير صحيح — يبدأ بـ 05 ويتكوّن من 10 خانات." };
 
-  // الموقع إلزامي (قرار محدَّث) — لا نثق بحارس الواجهة وحده، فحساب مباشر
-  // للـRPC (بلا المتصفح) كان يتجاوزه ويأخذ دورًا بلا موقع مطلقًا.
+  // الموقع مطلوب في الواجهة (نافذة السماح إلزامية)، لكن الخادم لا يرفض
+  // غيابه: جهازٌ سمح بالإذن وعجز عن التحديد (شبكة/GPS) يدخل بلا مسافة —
+  // حبس عميل واقف على باب المطعم أسوأ من سطر مسافة ناقص. علمًا أن الرفض
+  // الخادمي لم يكن حماية حقيقية أصلًا: أي نداء مباشر يرسل إحداثيات مزيفة.
   const lat = Number(formData.get("lat"));
   const lng = Number(formData.get("lng"));
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-    return { ok: false, error: "لازم مشاركة موقعك لأخذ دورك." };
-  }
+  const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0);
 
   const { data, error } = await supabase.rpc("join_waitlist_guest", {
     p_branch_id: branchId,
@@ -62,8 +62,8 @@ export async function joinWaitlistGuest(
 
   const row = Array.isArray(data) ? data[0] : data;
 
-  // المسافة عن الفرع: تُحسب على الخادم من الإحداثيات المتحقَّق منها أعلاه، ولا تُخزَّن الإحداثيات
-  if (row?.entry_id) {
+  // المسافة عن الفرع: تُحسب على الخادم من الإحداثيات، ولا تُخزَّن الإحداثيات
+  if (row?.entry_id && hasCoords) {
     await supabase.rpc("set_entry_distance", { p_entry_id: row.entry_id, p_lat: lat, p_lng: lng });
   }
 
