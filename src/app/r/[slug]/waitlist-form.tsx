@@ -235,6 +235,11 @@ export function WaitlistForm({
   const [geo, setGeo] = useState<"idle" | "asking" | "denied" | "failed" | "unavailable">("idle");
   const formRef = useRef<HTMLFormElement | null>(null);
   const geoBoxRef = useRef<HTMLDivElement | null>(null);
+  // حظر دائم من المتصفح: نافذة النظام لن تعود مهما ضغط — نعرض دليل تفعيل
+  // أنيقًا (نافذة سفلية بالهوية) بدل رسالة يتيمة، ونراقب الإذن: أول ما
+  // يفعّله ويرجع للصفحة نكمل دوره تلقائيًّا بلا أي ضغطة.
+  const [geoSheet, setGeoSheet] = useState(false);
+  const isIOS = typeof navigator !== "undefined" && /iPhone|iPad|iPod/i.test(navigator.userAgent);
   // استرجاع دور اليوم بعد الريلود/إغلاق المتصفح — كان الضيف يفقد تذكرته نهائيًّا
   const [restored, setRestored] = useState<{ entryId: string; phone: string } | null>(null);
   // بعد «خذ دورًا جديدًا» نتجاوز تذكرة الجلسة السابقة ونعود للنموذج
@@ -257,6 +262,12 @@ export function WaitlistForm({
         // رفض صريح (code 1) غير التعذّر المؤقت (GPS/مهلة) — رسالتان مختلفتان.
         // وأيًّا كان: نُبرز الرسالة فورًا كي لا تبدو الضغطة «ميتة».
         setGeo(err.code === 1 ? "denied" : "failed");
+        // إن كان الحظر محفوظًا في المتصفح (النافذة لن تعود) → دليل التفعيل
+        if (err.code === 1 && typeof navigator !== "undefined" && navigator.permissions?.query) {
+          navigator.permissions.query({ name: "geolocation" })
+            .then((s) => { if (s.state === "denied") setGeoSheet(true); })
+            .catch(() => {});
+        }
         requestAnimationFrame(() => geoBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
       },
       // موقع تقريبي عمدًا (بلا GPS دقيق): يكفينا حساب مسافة بالكيلو/المتر،
@@ -264,6 +275,35 @@ export function WaitlistForm({
       { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
     );
   }
+  // عين على الإذن ما دام الدليل مفتوحًا: تغيّر إلى «مسموح» (من الإعدادات أو
+  // من نافذة النظام) أو رجوع للصفحة بعد التفعيل → نأخذ الدور تلقائيًّا.
+  useEffect(() => {
+    if (!geoSheet || typeof navigator === "undefined") return;
+    let status: PermissionStatus | null = null;
+    let cancelled = false;
+    const finish = () => { setGeoSheet(false); askLocation(true); };
+    navigator.permissions?.query?.({ name: "geolocation" })
+      .then((s) => {
+        if (cancelled) return;
+        status = s;
+        s.onchange = () => { if (s.state === "granted") finish(); };
+      })
+      .catch(() => {});
+    const onVisible = () => {
+      if (document.hidden) return;
+      navigator.permissions?.query?.({ name: "geolocation" })
+        .then((s) => { if (!cancelled && s.state === "granted") finish(); })
+        .catch(() => {});
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      cancelled = true;
+      if (status) status.onchange = null;
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geoSheet]);
+
   const branch = useMemo(() => branches.find((b) => b.id === branchId), [branchId, branches]);
 
   useEffect(() => {
@@ -481,6 +521,62 @@ export function WaitlistForm({
             ? tr(lang, "جارٍ التسجيل…", "Registering…")
             : tr(lang, "خذ دورك الآن", "Take your turn now")}
       </button>
+
+      {/* دليل تفعيل الموقع — نافذة سفلية بالهوية تظهر فقط عند الحظر الدائم */}
+      {geoSheet && (
+        <div className="fixed inset-0 z-50 flex items-end" role="dialog" aria-modal>
+          <button type="button" aria-label={tr(lang, "إغلاق", "Close")} className="absolute inset-0 cursor-default bg-black/45" onClick={() => setGeoSheet(false)} />
+          <div className="relative w-full rounded-t-[30px] bg-white px-6 pb-8 pt-3 shadow-2xl">
+            <span className="mx-auto mb-5 block h-1 w-11 rounded-full bg-[rgba(102,28,10,0.18)]" />
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full text-white" style={{ background: "var(--brand-solid)" }}>
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M12 21s7-6.3 7-11a7 7 0 10-14 0c0 4.7 7 11 7 11z" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
+                <circle cx="12" cy="10" r="2.4" stroke="currentColor" strokeWidth="1.9" />
+              </svg>
+            </span>
+            <p className="mt-3 text-center font-display text-lg font-extrabold text-[color:var(--ink)]">
+              {tr(lang, "باقي خطوة وحدة على دورك", "One step left to your turn")}
+            </p>
+            <p className="mt-1 text-center text-[13px] font-medium text-[color:var(--muted)]">
+              {tr(lang, "متصفحك حاظر مشاركة الموقع — فعّله وارجع لنا، وبنكمل دورك تلقائيًا.", "Your browser has location blocked — enable it and come back; we'll finish your turn automatically.")}
+            </p>
+
+            <ol className="mx-auto mt-5 max-w-xs space-y-3">
+              {(isIOS
+                ? [
+                    tr(lang, "افتح «الإعدادات» في جوالك", "Open your phone's Settings"),
+                    tr(lang, "الخصوصية والأمان ← خدمات الموقع ← سفاري", "Privacy & Security → Location Services → Safari"),
+                    tr(lang, "اختر «أثناء استخدام التطبيق» وارجع لنا", "Choose “While Using” and come back"),
+                  ]
+                : [
+                    tr(lang, "اضغط رمز القفل بجانب رابط الصفحة", "Tap the lock icon next to the address"),
+                    tr(lang, "الأذونات ← الموقع", "Permissions → Location"),
+                    tr(lang, "اختر «السماح» وارجع لنا", "Choose “Allow” and come back"),
+                  ]
+              ).map((step, i) => (
+                <li key={i} className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-extrabold text-white" style={{ background: "var(--brand-solid)" }}>
+                    {toAr(i + 1)}
+                  </span>
+                  <span className="text-[13.5px] font-bold text-[color:var(--ink)]">{step}</span>
+                </li>
+              ))}
+            </ol>
+
+            <button
+              type="button"
+              onClick={() => askLocation(true)}
+              className="mt-6 w-full rounded-2xl px-4 py-3.5 text-sm font-extrabold text-white transition active:scale-[0.985]"
+              style={{ background: "var(--brand-sheen), var(--brand-solid)", boxShadow: "0 14px 26px -14px rgba(58,18,6,0.7)" }}
+            >
+              {geo === "asking" ? tr(lang, "جارٍ التحقق…", "Checking…") : tr(lang, "فعّلته — خذ دوري ✓", "Enabled — take my turn ✓")}
+            </button>
+            <p className="mt-2.5 text-center text-[11px] font-medium text-[color:var(--muted)]">
+              {tr(lang, "موقعك التقريبي فقط، ولا نحفظه", "Approximate location only — never stored")}
+            </p>
+          </div>
+        </div>
+      )}
     </form>
   );
 }
