@@ -17,23 +17,6 @@ function IcSearch() {
     </svg>
   );
 }
-function IcPeople() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <circle cx="8.5" cy="8" r="3" />
-      <circle cx="16" cy="9.5" r="2.4" />
-      <path d="M2.5 19c0-3 2.7-5 6-5s6 2 6 5v.5h-12V19z" />
-      <path d="M15 14.4c2.7.2 4.5 2 4.5 4.6v.5H17" />
-    </svg>
-  );
-}
-function IcMenuBars() {
-  return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M5 7h14M5 12h14M5 17h9" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-    </svg>
-  );
-}
 function IcRestaurants() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
