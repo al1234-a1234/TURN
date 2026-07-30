@@ -85,13 +85,14 @@ const PRESETS: Preset[] = [
 export function ScanRulesForm({ initial, branchId, lang }: { initial: ScanRules; branchId: string; lang: Lang }) {
   const [r, setR] = useState<ScanRules>(initial);
   const [saved, setSaved] = useState(false);
+  const [saveErr, setSaveErr] = useState(false);
   const set = (patch: Partial<ScanRules>) => { setR((p) => ({ ...p, ...patch })); setSaved(false); };
 
   const field = "field-input";
 
   return (
     <form
-      action={async (fd) => { await saveCheckinSettings(fd); setSaved(true); }}
+      action={async (fd) => { const ok = await saveCheckinSettings(fd); setSaved(ok); setSaveErr(!ok); }}
       className="space-y-5"
     >
       <input type="hidden" name="branch_id" value={branchId} />
@@ -228,6 +229,9 @@ export function ScanRulesForm({ initial, branchId, lang }: { initial: ScanRules;
       </div>
 
       <button className="btn btn-primary w-full">{tr(lang, "حفظ قواعد المسح", "Save scan rules")}</button>
+      {saveErr && (
+        <p className="rounded-xl px-3 py-2 text-sm font-bold text-red-600" style={{ background: "rgba(200,70,70,0.08)" }}>تعذّر الحفظ — تأكد من صلاحيتك وحاول ثانية</p>
+      )}
       {saved && (
         <p className="text-center text-sm font-bold" style={{ color: "var(--brand-d)" }}>
           {tr(lang, "انحفظت ✓ — الباركود الآن يطبّق هذه القواعد", "Saved ✓ — the barcode now follows these rules")}

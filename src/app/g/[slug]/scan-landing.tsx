@@ -192,7 +192,7 @@ export function ScanLanding({ slug, branchId, lang }: { slug: string; branchId: 
         <button
           type="button"
           className="text-[color:var(--muted)] underline decoration-2 underline-offset-4"
-          onClick={() => { setStatus(null); setCheckin(null); setPhase("form"); }}
+          onClick={() => { try { localStorage.removeItem("turn:phone"); } catch {} { setStatus(null); setCheckin(null); setPhase("form"); ; }}}
         >
           {tr(lang, "مو أنت؟ غيّر الرقم", "Not you? Change number")}
         </button>

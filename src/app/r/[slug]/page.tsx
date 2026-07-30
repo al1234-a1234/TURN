@@ -165,7 +165,7 @@ export default async function RestaurantPublicPage({
       <p className="mt-3 text-sm">{tr(lang, "لا توجد فروع متاحة حاليًا.", "No branches available right now.")}</p>
     </div>
   ) : activeEntry ? (
-    <QueueTicket position={activeEntry.position ?? 0} total={total} entryId={activeEntry.id} phone={activeEntry.phone} restaurantName={restaurant.name} />
+    <QueueTicket position={0} total={0} entryId={activeEntry.id} phone={activeEntry.phone} restaurantName={restaurant.name} restored />
   ) : (
     <WaitlistForm slug={slug} branches={withCounts} logo={restaurant.logo_url} defaultName={defaultName} defaultPhone={defaultPhone} restaurantName={restaurant.name} restaurantLogo={restaurant.logo_url} initialBranchId={requestedBranch && (branches ?? []).some((b) => b.id === requestedBranch) ? requestedBranch : undefined} />
   );

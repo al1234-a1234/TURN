@@ -27,7 +27,9 @@ export async function createReservation(formData: FormData) {
     p_branch_id: branchId,
     p_full_name: name,
     p_phone: phone,
-    p_reserved_at: new Date(when).toISOString(),
+    // datetime-local بلا منطقة زمنية — على خادم UTC كان يُفسَّر UTC فيُحفظ
+    // الحجز متأخرًا ٣ ساعات. الرياض ثابتة +03:00 (بلا توقيت صيفي).
+    p_reserved_at: new Date(`${when.length === 16 ? `${when}:00` : when}+03:00`).toISOString(),
     p_party_size: party,
     p_notes: notes,
   });

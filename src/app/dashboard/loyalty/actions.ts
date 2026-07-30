@@ -38,7 +38,7 @@ export async function saveLoyaltyProgram(formData: FormData) {
     reward_description: String(formData.get("reward_description") ?? "").trim() || null,
     winback_enabled: formData.get("winback_enabled") === "on",
     winback_title: String(formData.get("winback_title") ?? "").trim() || "اشتقنا لك — هدية عودة 🎁",
-    winback_value: (() => { const v = Number(formData.get("winback_value")); return Number.isFinite(v) && v > 0 ? v : null; })(),
+    winback_value: (() => { const raw = String(formData.get("winback_value") ?? "").replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))); const v = Number(raw); return Number.isFinite(v) && v > 0 ? v : null; })(),
     // الواجهة تسمّيها «نسبة الخصم ٪» — نثبّت الوحدة كي لا تُفسَّر 20 على أنها ريالات
     winback_value_kind: "percent",
     tier_config: tierConfig(formData),

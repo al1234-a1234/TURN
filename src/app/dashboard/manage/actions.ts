@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import type { TablesUpdate } from "@/lib/supabase/database.types";
 import { requirePerm, resolveWriteBranch, callerBranchIds } from "../guard";
 
@@ -51,6 +51,9 @@ export async function updateBranchSettings(formData: FormData) {
 
   revalidatePath("/dashboard/manage");
   revalidatePath("/dashboard");
+  // إغلاق الطابور/تغيير الدوام لازم يصل صفحات العميل المكاشة فورًا
+  revalidateTag("discovery");
+  revalidatePath("/r/[slug]", "page");
 }
 
 // ---------- الفروع والمواقع ----------

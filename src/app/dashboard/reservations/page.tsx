@@ -66,7 +66,7 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
         .from("reservations")
         .select("id, reserved_at, party_size, status, notes, customers(full_name, phone)")
         .eq("branch_id", activeBranch.id)
-        .order("reserved_at")
+        .gte("reserved_at", new Date(Date.now() - 6 * 3600e3).toISOString()).order("reserved_at")
         .limit(200)
     : { data: [] };
   const list = (data ?? []) as Reservation[];

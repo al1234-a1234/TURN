@@ -31,28 +31,32 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
   const lang = useLang();
   const [row, setRow] = useState<Row>(initial);
   const [askCancel, setAskCancel] = useState(false);
+  const [actErr, setActErr] = useState<string | null>(null);
   const [pending, start] = useTransition();
 
-  const poll = useCallback(async () => {
+  // عطل الشبكة العابر يختلف عن «الصف اختفى» — الأول كان يجمّد التذكرة على
+  // رقم قديم إلى الأبد (لحظة واي فاي سيئة داخل المطعم = لا يعرف أن دوره حان).
+  const poll = useCallback(async (): Promise<{ kind: "ok"; row: Row } | { kind: "gone" } | { kind: "err" }> => {
     const supabase = createClient();
     const { data, error } = await supabase.rpc("waitlist_ticket_by_id", { p_entry_id: entryId });
-    if (error) return null;
+    if (error) return { kind: "err" };
     const r = (Array.isArray(data) ? data[0] : data) as Row | undefined;
-    if (r) setRow(r);
-    return r ?? null;
+    if (!r) return { kind: "gone" };
+    setRow(r);
+    return { kind: "ok", row: r };
   }, [entryId]);
 
-  // استطلاع متكيّف (نفس نهج التذكرة الأصلية): يتوقّف عند الخمول وعند الحالة النهائية
+  // استطلاع متكيّف: يتوقّف عند الخمول وعند الحالة النهائية — لا عند خطأ عابر
   useEffect(() => {
     let stopped = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
     const clear = () => { if (timer) { clearTimeout(timer); timer = null; } };
     const tick = async () => {
       if (stopped || document.hidden) return;
-      const r = await poll();
-      if (!r || TERMINAL.has(r.status)) { stopped = true; clear(); return; }
+      const res = await poll();
+      if (res.kind === "gone" || (res.kind === "ok" && TERMINAL.has(res.row.status))) { stopped = true; clear(); return; }
       clear();
-      timer = setTimeout(tick, intervalFor(r.ahead));
+      timer = setTimeout(tick, res.kind === "err" ? 15_000 : intervalFor(res.row.ahead));
     };
     const onVis = () => { if (document.hidden) clear(); else if (!stopped) tick(); };
     document.addEventListener("visibilitychange", onVis);
@@ -94,6 +98,9 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
 
       {/* خياران بضغطة — يردّ العميل بلا كتابة في واتساب */}
       <div className="w-full space-y-2.5">
+        {actErr && (
+          <p className="rounded-2xl px-3 py-2 text-xs font-bold text-red-600" style={{ background: "rgba(200,70,70,0.08)" }}>{actErr}</p>
+        )}
         {row.confirmed ? (
           <p className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-extrabold text-white"
              style={{ background: "var(--brand-solid)" }}>
@@ -104,7 +111,10 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
           <button
             type="button"
             disabled={pending}
-            onClick={() => start(async () => { if (await confirmAttendance(entryId)) setRow((r) => ({ ...r, confirmed: true })); })}
+            onClick={() => start(async () => {
+              if (await confirmAttendance(entryId)) { setActErr(null); setRow((r) => ({ ...r, confirmed: true })); }
+              else setActErr(tr(lang, "تعذّر التأكيد — حدّث الصفحة وحاول ثانية", "Couldn't confirm — refresh and try again"));
+            })}
             className="w-full rounded-2xl px-4 py-3.5 text-sm font-extrabold text-white transition active:scale-[0.985] disabled:opacity-60"
             style={{ background: "var(--brand-solid)", boxShadow: "0 14px 26px -16px rgba(102,28,10,0.72)" }}
           >
@@ -130,7 +140,10 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
               <button
                 type="button"
                 disabled={pending}
-                onClick={() => start(async () => { if (await cancelByTicket(entryId)) setRow((r) => ({ ...r, status: "cancelled" })); })}
+                onClick={() => start(async () => {
+                  if (await cancelByTicket(entryId)) { setActErr(null); setRow((r) => ({ ...r, status: "cancelled" })); }
+                  else setActErr(tr(lang, "تعذّر الإلغاء — ربما تغيّرت حالة دورك، حدّث الصفحة", "Couldn't cancel — your turn may have changed; refresh the page"));
+                })}
                 className="rounded-xl px-3 py-2.5 text-sm font-extrabold text-white transition active:scale-[0.97] disabled:opacity-60"
                 style={{ background: "#8d2f22" }}
               >

@@ -19,13 +19,13 @@ export default function VisitsPage() {
   }, []);
 
   const fmt = (iso: string) =>
-    new Date(iso).toLocaleDateString(lang === "en" ? "en-GB" : "ar-SA", {
+    new Date(iso).toLocaleDateString(lang === "en" ? "en-GB" : "ar-SA-u-nu-latn", {
       weekday: "long",
       day: "2-digit",
       month: "long",
     });
   const fmtTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString(lang === "en" ? "en-GB" : "ar-SA", { hour: "2-digit", minute: "2-digit" });
+    new Date(iso).toLocaleTimeString(lang === "en" ? "en-GB" : "ar-SA-u-nu-latn", { hour: "2-digit", minute: "2-digit" });
 
   return (
     <CustomerShell active="other" search={false}>

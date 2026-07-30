@@ -5,6 +5,7 @@ import { requirePerm, callerBranchIds, resolveWriteBranch } from "../guard";
 import type { TablesInsert } from "@/lib/supabase/database.types";
 
 function intOr(raw: FormDataEntryValue | null, fallback: number): number {
+  raw = String(raw ?? "").replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
   const n = Number(String(raw ?? "").trim());
   return Number.isFinite(n) && n > 0 ? Math.round(n) : fallback;
 }

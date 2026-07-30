@@ -83,9 +83,14 @@ export function clearTurnRecovery(slug: string) {
   if (touched) write(TURNS_KEY, list);
 }
 
+/** يوم الرياض للطابع الزمني — حدود اليوم عندنا رياضية لا UTC. */
+function riyadhDay(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-CA", { timeZone: "Asia/Riyadh" });
+}
+
 /** آخر دور محفوظ لمطعم بعينه اليوم (للاسترجاع بعد الريلود). */
 export function lastTurnFor(slug: string): TurnRecord | null {
-  const today = new Date().toISOString().slice(0, 10);
-  const rec = getTurns().find((t) => t.slug === slug && t.at.slice(0, 10) === today && t.entryId);
+  const today = riyadhDay(new Date().toISOString());
+  const rec = getTurns().find((t) => t.slug === slug && riyadhDay(t.at) === today && t.entryId);
   return rec ?? null;
 }

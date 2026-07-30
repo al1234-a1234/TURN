@@ -28,7 +28,8 @@ export function PermToggle({
         start(async () => {
           const next = !on;
           setOn(next);
-          await setStaffPermission(staffId, perm, next);
+          const ok = await setStaffPermission(staffId, perm, next);
+          if (!ok) setOn(!next); // فشل الخادم → نتراجع بدل مفتاحٍ يكذب
         })
       }
       className="flex items-center justify-between gap-2 rounded-2xl border p-3 text-start transition disabled:opacity-60"

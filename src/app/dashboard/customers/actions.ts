@@ -31,13 +31,13 @@ export async function updateCustomerProfile(
 }
 
 /** منح العميل هديّة أو خصم (أداة تسويق/جذب) — يظهر للعميل عبر رقمه. */
-export async function grantReward(formData: FormData) {
+export async function grantReward(formData: FormData): Promise<boolean> {
   const caller = await requirePerm("customers");
-  if (!caller) return;
+  if (!caller) return false;
 
   const customerId = String(formData.get("customer_id") ?? "");
   const title = String(formData.get("title") ?? "").trim();
-  if (!customerId || !title) return;
+  if (!customerId || !title) return false;
 
   // تأكيد أن العميل ينتمي لهذا المطعم (لا مكافآت لعملاء لم يزوروه)
   const { data: member } = await caller.supabase
@@ -46,7 +46,7 @@ export async function grantReward(formData: FormData) {
     .eq("restaurant_id", caller.restaurantId)
     .eq("customer_id", customerId)
     .maybeSingle();
-  if (!member) return;
+  if (!member) return false;
 
   const kind = String(formData.get("kind") ?? "gift") === "discount" ? "discount" : "gift";
   const valueRaw = String(formData.get("value") ?? "").trim();
@@ -58,7 +58,7 @@ export async function grantReward(formData: FormData) {
   const days = daysRaw ? Math.max(1, Number(daysRaw)) : null;
   const expires_at = days ? new Date(Date.now() + days * 864e5).toISOString() : null;
 
-  await caller.supabase.from("customer_rewards").insert({
+  const { error: insErr } = await caller.supabase.from("customer_rewards").insert({
     restaurant_id: caller.restaurantId,
     customer_id: customerId,
     kind,
@@ -72,6 +72,7 @@ export async function grantReward(formData: FormData) {
   });
 
   revalidatePath(`/dashboard/customers/${customerId}`);
+  return !insErr;
 }
 
 /** منح مكافأة لشريحة كاملة (الكل/VIP/ذهبي/فضّي/عائدون) — حملة تسويقية. */

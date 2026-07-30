@@ -54,7 +54,6 @@
    ```sql
    select cron.schedule('rollup-daily',  '10 0 * * *', $$SELECT public.rollup_all_daily_stats((current_date - 1))$$);
    select cron.schedule('daily-digest',  '20 0 * * *', $$SELECT public.run_daily_digest()$$);
-   select cron.schedule('slow-hours',    '0 * * * *',  $$SELECT public.run_slow_hours()$$);
    select cron.schedule('auto_winback',  '0 2 * * *',  $$select public.run_auto_winback()$$);
    select cron.schedule('weekly_digest', '30 2 * * 0', $$select public.run_weekly_digest()$$);
    ```

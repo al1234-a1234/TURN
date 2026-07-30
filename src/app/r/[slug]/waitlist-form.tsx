@@ -340,9 +340,15 @@ export function WaitlistForm({
         slug, name: restaurantName ?? slug, logo: restaurantLogo ?? null,
         at: new Date().toISOString(), entryId: state.entryId, phone: state.phone,
       });
+      // انضمام جديد بعد «خذ دورًا جديدًا»: startedOver كان يبقى true للأبد
+      // فتُحجب تذكرة النجاح الجديدة — العميل في الطابور فعلًا والواجهة
+      // تعرض النموذج الفارغ فيعيد الضغط حتى يضرب حدّ المعدّل.
+      setStartedOver(false);
     }
+    // الاعتماد على entryId لا ok وحده — ok يظل true بين انضمامين متتاليين
+    // فلا يعاد التسجيل المحلي للدور الجديد.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.ok]);
+  }, [state.ok, state.entryId]);
 
   if (state.ok && !startedOver) {
     return (

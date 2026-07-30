@@ -42,12 +42,16 @@ export function QueueTicket({
 }) {
   const lang = useLang();
   const [pending, start] = useTransition();
+  // مسار المسجّل يمرّر التذكرة بلا onGone — الزر كان يموت؛ إعادة التحميل مخرج دائم
+  const goneOr = () => { if (onGone) onGone(); else if (typeof window !== "undefined") window.location.reload(); };
 
   // حالة حيّة (تُحدَّث بالاستطلاع) — pos هو الترتيب الحيّ = عدد من أمامك + 1
   const [status, setStatus] = useState<string>("waiting");
   const [pos, setPos] = useState<number>(position);
   const [ahead, setAhead] = useState<number>(Math.max(position - 1, 0));
   const [liveTotal, setLiveTotal] = useState<number>(total);
+  // مسترجَعة من التخزين تبدأ بأصفار — لا نعرض «أنت التالي» الكاذبة قبل أول نبضة
+  const [hasLive, setHasLive] = useState(!restored);
 
   // آخر إشعار أُطلق (منعًا للتكرار): 'notified' | 'next' | 'seated'
   const alertedRef = useRef<string>("");
@@ -69,6 +73,7 @@ export function QueueTicket({
 
   // حالة إشعارات الدفع: تُفعَّل بضغطة من العميل (المتصفّحات تشترط إيماءة)
   const [pushOn, setPushOn] = useState(false);
+  const [actErr, setActErr] = useState<string | null>(null);
   const [pushBusy, setPushBusy] = useState(false);
   const [canPush, setCanPush] = useState(false);
 
@@ -107,6 +112,9 @@ export function QueueTicket({
     if (sub) {
       const ok = await savePushSubscription(entryId, phone, sub);
       setPushOn(ok);
+      if (!ok) setActErr(tr(lang, "تعذّر تفعيل التنبيه — حاول ثانية", "Couldn't enable alerts — try again"));
+    } else {
+      setActErr(tr(lang, "الإشعارات مرفوضة في متصفحك — اسمح بها من إعدادات الموقع ثم أعد المحاولة", "Notifications are blocked — allow them in site settings, then retry"));
     }
     setPushBusy(false);
   }
@@ -132,8 +140,9 @@ export function QueueTicket({
         });
         if (error) throw error;
         const row = Array.isArray(data) ? data[0] : data;
-        if (!row) { stopped = true; clear(); onGone?.(); return; }   // الصف غير موجود → توقّف
+        if (!row) { stopped = true; clear(); goneOr(); return; }   // الصف غير موجود → توقّف
         fails = 0;
+        setHasLive(true);
         setStatus(row.status);
         setPos(row.position);
         setAhead(row.ahead);
@@ -176,13 +185,13 @@ export function QueueTicket({
 
   // تذكرة مسترجَعة انتهت حالتها → لا نحبس العميل على شاشة قديمة، نعيده للنموذج
   useEffect(() => {
-    if (restored && TERMINAL.has(status)) onGone?.();
+    if (restored && TERMINAL.has(status)) goneOr();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restored, status]);
 
   /** المخرج من أي حالة نهائية — كان غيابه يمنع أخذ دور جديد نهائيًّا */
   const RestartButton = () => (
-    <button type="button" onClick={() => onGone?.()}
+    <button type="button" onClick={goneOr}
       className="mt-1 w-full rounded-2xl px-4 py-3 text-sm font-extrabold text-white"
       style={{ background: "var(--brand-solid)" }}>
       {tr(lang, "خذ دورًا جديدًا", "Take a new turn")}
@@ -263,7 +272,7 @@ export function QueueTicket({
       </div>
 
       <div>
-        <p className="font-display text-2xl font-bold text-[color:var(--ink)]">{peopleAhead(ahead, lang)}</p>
+        <p className="font-display text-2xl font-bold text-[color:var(--ink)]">{hasLive ? peopleAhead(ahead, lang) : tr(lang, "جارٍ تحديث دورك…", "Syncing your turn…")}</p>
         <p className="mt-1 text-sm text-[color:var(--muted)]">
           {ahead === 0 ? tr(lang, "استعد — جاي دورك", "Get ready — your turn is coming") : tr(lang, "راقب رقمك، وننبّهك قبل دورك", "Keep an eye on your number, we'll alert you before your turn")}
         </p>
@@ -272,11 +281,11 @@ export function QueueTicket({
       {/* أهم معلومتين للعميل الواقف */}
       <div className="grid w-full grid-cols-2 gap-3">
         <div className="rounded-2xl border border-[var(--border)] bg-[color:var(--surface-2)] p-4">
-          <p className="text-2xl font-extrabold text-brand-700">{ahead === 0 ? tr(lang, "التالي", "Next") : toAr(ahead)}</p>
+          <p className="text-2xl font-extrabold text-brand-700">{!hasLive ? "…" : ahead === 0 ? tr(lang, "التالي", "Next") : toAr(ahead)}</p>
           <p className="mt-1 text-xs text-[color:var(--muted)]">{ahead === 0 ? tr(lang, "أنت", "You") : tr(lang, "أمامك بالطابور", "Ahead of you in queue")}</p>
         </div>
         <div className="rounded-2xl border border-[var(--border)] bg-[color:var(--surface-2)] p-4">
-          <p className="text-2xl font-extrabold text-brand-700">{toAr(liveTotal)}</p>
+          <p className="text-2xl font-extrabold text-brand-700">{hasLive ? toAr(liveTotal) : "…"}</p>
           <p className="mt-1 text-xs text-[color:var(--muted)]">{tr(lang, "إجمالي الطابور", "Total in queue")}</p>
         </div>
       </div>
@@ -306,9 +315,15 @@ export function QueueTicket({
         )
       )}
 
+      {actErr && (
+        <p className="w-full rounded-2xl px-3 py-2 text-xs font-bold text-red-600" style={{ background: "rgba(200,70,70,0.08)" }}>{actErr}</p>
+      )}
       {entryId && phone && (
         <button
-          onClick={() => start(async () => { if (await cancelWaitlistGuest(entryId, phone)) setStatus("cancelled"); })}
+          onClick={() => start(async () => {
+            if (await cancelWaitlistGuest(entryId, phone)) { setActErr(null); setStatus("cancelled"); }
+            else setActErr(tr(lang, "تعذّر الإلغاء — ربما تغيّرت حالة دورك، حدّث الصفحة", "Couldn't cancel — your turn may have changed; refresh the page"));
+          })}
           disabled={pending}
           className="mt-1 h-11 w-full rounded-2xl border text-sm font-bold text-[color:var(--muted)] transition hover:text-red-600"
           style={{ borderColor: "rgba(200,70,70,0.28)" }}

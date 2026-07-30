@@ -38,7 +38,7 @@ export async function checkinAction(_prev: CheckinState, formData: FormData): Pr
 
   if (!slug) return { ok: false, error: "رابط غير صالح." };
   const digits = phone.replace(/\D/g, "");
-  if (digits.length < 9) return { ok: false, error: "اكتب رقم جوّالك كامل." };
+  if (!/^05\d{8}$/.test(digits)) return { ok: false, error: "رقم الجوّال غير صحيح — يبدأ بـ 05 ويتكوّن من 10 خانات." };
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("public_checkin", {

@@ -25,12 +25,20 @@ export function StatusToggle({
   const lang = useLang();
   const [closed, setClosed] = useState(closedNow);
   const [busy, setBusy] = useState(busyNow);
+  const [err, setErr] = useState(false);
   const [pending, start] = useTransition();
 
   function toggle(nextClosed: boolean, nextBusy: boolean) {
+    const prev = { closed, busy };
     setClosed(nextClosed);
     setBusy(nextBusy);
-    start(async () => { await setBranchStatus(branchId, nextClosed, nextBusy); });
+    start(async () => {
+      // فشل الخادم (لا حقّ على الفرع/شبكة) → نتراجع بدل واجهةٍ تكذب:
+      // «مغلق» معروضًا والفرع مفتوح فعليًّا في القاعدة
+      const ok = await setBranchStatus(branchId, nextClosed, nextBusy);
+      if (!ok) { setClosed(prev.closed); setBusy(prev.busy); setErr(true); }
+      else setErr(false);
+    });
   }
 
   return (
@@ -77,6 +85,11 @@ export function StatusToggle({
       {closed && (
         <span className="text-xs font-bold" style={{ color: "var(--muted)" }}>
           {tr(lang, "أمان النسيان: يُفتح تلقائيًّا فجر كل يوم", "Forget-safe: reopens automatically at dawn daily")}
+        </span>
+      )}
+      {err && (
+        <span className="text-xs font-extrabold text-red-600">
+          {tr(lang, "تعذّر الحفظ — حدّث الصفحة وحاول ثانية", "Couldn't save — refresh and retry")}
         </span>
       )}
     </div>

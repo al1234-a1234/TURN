@@ -8,6 +8,7 @@ import { useLang } from "@/components/lang-provider";
 export function RewardForm({ customerId }: { customerId: string }) {
   const lang = useLang();
   const [kind, setKind] = useState<"gift" | "discount">("gift");
+  const [grantErr, setGrantErr] = useState(false);
   const [open, setOpen] = useState(false);
 
   if (!open) {
@@ -26,13 +27,19 @@ export function RewardForm({ customerId }: { customerId: string }) {
   return (
     <form
       action={async (fd) => {
-        await grantReward(fd);
-        setOpen(false);
-        setKind("gift");
+        // الإغلاق كان يوهم أن الهدية مُنحت حتى لو رفضها الخادم
+        const ok = await grantReward(fd);
+        if (ok) { setOpen(false); setKind("gift"); setGrantErr(false); }
+        else setGrantErr(true);
       }}
       className="soft-card space-y-3 p-4"
     >
       <input type="hidden" name="customer_id" value={customerId} />
+      {grantErr && (
+        <p className="rounded-xl px-3 py-2 text-sm font-bold text-red-600" style={{ background: "rgba(200,70,70,0.08)" }}>
+          تعذّر منح الهدية — تأكد من العنوان وحاول ثانية
+        </p>
+      )}
 
       <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[color:var(--surface-2)] p-1">
         {(["gift", "discount"] as const).map((k) => (

@@ -76,6 +76,10 @@ with checks(name, pass) as (
   ('status_rate_guarded',      (select pg_get_functiondef(oid) like '%check_rate%'
                                 from pg_proc where proname='my_restaurant_status')),
   -- ── قواعد المسح (0045): الفوري موجود، وصف لكل فرع، والتريغر يخلقه ──
+  ('scan_single_overload',    (select count(*) = 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+                                where n.nspname='public' and p.proname='public_checkin')),
+  ('scan_name_fallback',      (select pg_get_functiondef(oid) like '%ضيف%'
+                                from pg_proc where proname='public_checkin')),
   ('scan_grants_instant',      (select pg_get_functiondef(oid) like '%instant_enabled%'
                                 from pg_proc where proname='public_checkin')),
   ('scan_settings_every_branch', not exists(

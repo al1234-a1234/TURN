@@ -34,7 +34,7 @@ export default async function SearchPage() {
     <CustomerShell active="restaurants" search={false}>
       <SearchList
         items={items}
-        placeholder={tr(lang, "ابحث باسم المطعم أو المدينة…", "Search by restaurant or city…")}
+        placeholder={tr(lang, "ابحث باسم المطعم أو نوع المطبخ…", "Search by restaurant or city…")}
         emptyLabel={tr(lang, "لا نتائج مطابقة.", "No matching results.")}
         cityLabel={tr(lang, "المدينة", "City")}
       />

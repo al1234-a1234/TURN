@@ -164,9 +164,13 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
         >
           <span className="flex items-center gap-2 text-sm font-extrabold text-white">
             <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
-            {tr(lang, "متاح الآن · بدون انتظار", "Available now · No wait")}
+            {r.accepts
+              ? tr(lang, "متاح الآن · بدون انتظار", "Available now · No wait")
+              : tr(lang, "استقبال مباشر · بلا حجز دور", "Walk in directly · no queue")}
           </span>
-          <span className="text-xs font-extrabold text-white/85">{tr(lang, "خذ دورك ←", "Take your turn ←")}</span>
+          <span className="text-xs font-extrabold text-white/85">
+            {r.accepts ? tr(lang, "خذ دورك ←", "Take your turn ←") : tr(lang, "التفاصيل ←", "Details ←")}
+          </span>
         </div>
       )}
     </Link>
@@ -188,14 +192,19 @@ export function DiscoveryList({ items, lang }: { items: DiscoveryItem[]; lang: L
   const [filterOpen, setFilterOpen] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
-  // موقع العميل لعرض المسافة (بإذنه) — يُطلب مرّة، والرفض لا يؤثّر
+  // موقع العميل لعرض المسافة — لا نطلب الإذن هنا أبدًا: طلبه في الرئيسية
+  // كان «يحرق» نافذة السماح قبل أن يحتاجها العميل لأخذ دوره، ورفضة عابرة
+  // هنا كانت تقفل بوابة الدور كلها. نقرأه فقط إن كان ممنوحًا سلفًا.
   useEffect(() => {
-    if (typeof navigator === "undefined" || !navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => {},
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 },
-    );
+    if (typeof navigator === "undefined" || !navigator.geolocation || !navigator.permissions?.query) return;
+    navigator.permissions.query({ name: "geolocation" }).then((s) => {
+      if (s.state !== "granted") return;
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => {},
+        { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 },
+      );
+    }).catch(() => {});
   }, []);
 
   // شرائح المطابخ — مشتقّة من المطاعم المعروضة (بلا تكرار)

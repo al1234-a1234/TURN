@@ -8,10 +8,10 @@ import { pushToWaitlistEntry, pushQueueRankUpdates } from "@/lib/push";
 
 type Action = "seated" | "cancelled" | "notified";
 
-export async function updateWaitlistStatus(id: string, action: Action) {
+export async function updateWaitlistStatus(id: string, action: Action): Promise<boolean> {
   // صلاحية «الطابور» مطلوبة (RLS يفرض العزل بين المطاعم، ونضيف الصلاحية الدقيقة هنا)
   const caller = await requirePerm("waitlist");
-  if (!caller) return;
+  if (!caller) return false;
 
   const patch: TablesUpdate<"waitlist_entries"> = { status: action };
   if (action === "seated") patch.seated_at = new Date().toISOString();
@@ -19,7 +19,7 @@ export async function updateWaitlistStatus(id: string, action: Action) {
 
   // تضييق التحديث على فروع مطعم المتصل فقط (دفاع في العمق فوق RLS)
   const branchIds = await callerBranchIds(caller);
-  if (branchIds.length === 0) return;
+  if (branchIds.length === 0) return false;
 
   // نلتقط الفرع والقسم قبل التحديث — نحتاجهما لإشعار من تقدّم دوره
   const { data: before } = await caller.supabase
@@ -34,16 +34,20 @@ export async function updateWaitlistStatus(id: string, action: Action) {
   const allowedFrom: ("waiting" | "notified" | "seated")[] = action === "cancelled"
     ? ["waiting", "notified", "seated"]
     : ["waiting", "notified"];
-  const { error } = await caller.supabase
+  const { data: updated, error } = await caller.supabase
     .from("waitlist_entries")
     .update(patch)
     .eq("id", id)
     .in("branch_id", branchIds)
-    .in("status", allowedFrom);
+    .in("status", allowedFrom)
+    .select("id");
+  // صفر صفوف = الحالة تغيّرت تحتنا (ألغى الضيف/جُلس من جهاز آخر) — نُعلم
+  // الواجهة بدل صمتٍ يدفع المضيف يضغط مرارًا ظانًّا الشبكة بطيئة
+  const changed = !error && (updated?.length ?? 0) > 0;
 
-  // إشعارات الدفع — تُرسل بعد ردّ الاستجابة (after) كي لا يعلّق زر الإجلاس:
+  // إشعارات الدفع — فقط إن تغيّر صف فعلًا، وتُرسل بعد ردّ الاستجابة (after) كي لا يعلّق زر الإجلاس:
   // إجلاس في طابور ٥٠ شخصًا = ٥٠ استدعاء HTTPS، ولا يصح أن ينتظرها الموظّف.
-  if (!error) after(async () => {
+  if (!error) if (changed) after(async () => {
     const { data: rest } = await caller.supabase
       .from("restaurants")
       .select("name, slug")
@@ -71,4 +75,5 @@ export async function updateWaitlistStatus(id: string, action: Action) {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/reception");
+  return changed;
 }

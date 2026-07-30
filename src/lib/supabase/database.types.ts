@@ -1543,6 +1543,19 @@ export type Database = {
         Args: { p_entry_id: string; p_lat: number; p_lng: number }
         Returns: boolean
       }
+      staff_add_walkin: {
+        Args: {
+          p_branch_id: string
+          p_full_name: string
+          p_party_size?: number
+          p_phone: string
+          p_zone?: string
+        }
+        Returns: {
+          entry_id: string
+          queue_pos: number
+        }[]
+      }
       set_staff_permission: {
         Args: { p_granted: boolean; p_perm: string; p_staff_id: string }
         Returns: undefined

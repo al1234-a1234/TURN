@@ -49,9 +49,9 @@ export default async function ReceptionPage({
           .from("waitlist_entries")
           .select("id, customer_id, position, party_size, zone, status, joined_at, confirmed_at, distance_m, customers(full_name, phone)")
           .eq("branch_id", activeBranch.id)
+          // الحيّ بالحالة فقط — فلتر «يوم الرياض» كان يبخّر طابور ما بعد منتصف
+          // الليل من الشاشة؛ الصفوف المنسية يقتلها تقادم الـ٨ ساعات (0057)
           .in("status", ["waiting", "notified"])
-          // يوم الرياض فقط — صف منسي من أمس كان يكسر تطابق الرقم مع التذكرة والشاشة
-          .gte("joined_at", startToday)
           .order("position", { nullsFirst: false }),
         supabase.from("waitlist_entries").select("id", { count: "exact", head: true })
           .eq("branch_id", activeBranch.id).eq("status", "seated").gte("seated_at", startToday),

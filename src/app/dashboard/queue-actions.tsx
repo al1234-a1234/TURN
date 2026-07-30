@@ -64,7 +64,7 @@ export function QueueActions({
       </button>
       <button
         disabled={pending}
-        onClick={() => start(() => updateWaitlistStatus(id, "seated"))}
+        onClick={() => start(async () => { await updateWaitlistStatus(id, "seated"); })}
         className="rounded-xl px-3 py-2 text-xs font-bold text-[color:var(--bg)] transition disabled:opacity-60"
         style={{ background: "var(--brand-solid)" }}
       >
@@ -72,7 +72,7 @@ export function QueueActions({
       </button>
       <button
         disabled={pending}
-        onClick={() => start(() => updateWaitlistStatus(id, "cancelled"))}
+        onClick={() => start(async () => { await updateWaitlistStatus(id, "cancelled"); })}
         className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-xs font-bold text-[color:var(--muted)] transition hover:text-red-600 disabled:opacity-60"
       >
         {tr(lang, "إزالة", "Remove")}

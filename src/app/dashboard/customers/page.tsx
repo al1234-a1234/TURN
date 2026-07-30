@@ -100,12 +100,22 @@ export default async function CustomersPage({
   const vips = segCounts.vip;
   const totalVisits = list.reduce((a, p) => a + p.visits, 0);
   const avgVisits = list.length ? Math.round((totalVisits / list.length) * 10) / 10 : 0;
+  // عدّادات الحملة الفعلية من القاعدة — الحملة تُرسَل للشريحة كاملة في
+  // الخادم، وكان العدّ من شريحة الـ٥٠٠ المعروضة فقط: مالكٌ عنده ٣٠٠٠ عميل
+  // يقرأ «ستصل ٥٠٠» ثم تصل ٣٠٠٠ هدية ممولة. count رأسي رخيص بلا صفوف.
+  const [allCount, vipCount, goldCount, silverCount, returningCount] = await Promise.all([
+    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id),
+    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).eq("is_vip", true),
+    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).eq("tier", "gold"),
+    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).eq("tier", "silver"),
+    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).gte("visits", 2),
+  ]);
   const campaignCounts = {
-    all: segCounts.all,
-    vip: vips,
-    gold: list.filter((p) => p.tier === "gold").length,
-    silver: list.filter((p) => p.tier === "silver").length,
-    returning: list.filter((p) => p.visits >= 2).length,
+    all: allCount.count ?? segCounts.all,
+    vip: vipCount.count ?? vips,
+    gold: goldCount.count ?? 0,
+    silver: silverCount.count ?? 0,
+    returning: returningCount.count ?? 0,
   };
 
   const hrefFor = (s: Segment) => `/dashboard/customers?seg=${s}${q ? `&q=${encodeURIComponent(q)}` : ""}`;

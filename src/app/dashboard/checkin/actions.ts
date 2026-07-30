@@ -9,9 +9,9 @@ import { requirePerm, resolveWriteBranch } from "../guard";
  * كلٌّ منهما يُطفأ ويُشغَّل على حدة، والقوالب في الواجهة مجرّد تعبئة
  * للنموذج — لا شيء يُفعَّل إلا بضغطة «حفظ» من المالك نفسه.
  */
-export async function saveCheckinSettings(formData: FormData) {
+export async function saveCheckinSettings(formData: FormData): Promise<boolean> {
   const caller = await requirePerm("loyalty");
-  if (!caller) return;
+  if (!caller) return false;
 
   const num = (k: string) => {
     const raw = String(formData.get(k) ?? "").trim();
@@ -32,9 +32,9 @@ export async function saveCheckinSettings(formData: FormData) {
   const instant_value = num("instant_value");
 
   const branchId = await resolveWriteBranch(caller, formData.get("branch_id") as string);
-  if (!branchId) return;
+  if (!branchId) return false;
 
-  await caller.supabase.from("checkin_settings").upsert({
+  const { error } = await caller.supabase.from("checkin_settings").upsert({
     restaurant_id: caller.restaurantId,
     branch_id: branchId,
     welcome_enabled: formData.get("welcome_enabled") === "on",
@@ -56,4 +56,5 @@ export async function saveCheckinSettings(formData: FormData) {
   });
 
   revalidatePath("/dashboard/checkin");
+  return !error;
 }

@@ -113,6 +113,11 @@ export function RestaurantTabs({
     if (t === "reviews" || t === "menu" || t === "media" || t === "waitlist") setTab(t as Tab);
   }, []);
   const [openCat, setOpenCat] = useState<string | null>(categories[0]?.id ?? null);
+  // تبديل الفرع يجلب أقسامًا بمعرّفات جديدة — بلا هذه المزامنة تظهر القائمة كلها مطوية
+  useEffect(() => {
+    if (!openCat || !categories.some((c) => c.id === openCat)) setOpenCat(categories[0]?.id ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories]);
   const hasMenu = categories.length > 0;
 
   // متابعة = إضافة للمفضّلة (تخزين محلّي للضيف)

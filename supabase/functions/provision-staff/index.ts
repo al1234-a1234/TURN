@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
   if (!username) return json(400, { error: "missing_fields" });
 
   // الصلاحيات المسموح منحها من المالك (لا ترقية لمالك/مدير من هنا)
-  const ALLOWED = ["waitlist", "reservations", "customers", "offers", "loyalty", "reviews", "analytics", "settings", "team", "menu"];
+  const ALLOWED = ["waitlist", "reservations", "customers", "loyalty", "reviews", "analytics", "settings", "team", "menu"];
   const permissions: Record<string, boolean> = {};
   for (const k of ALLOWED) if (rawPerms[k] === true) permissions[k] = true;
   if (Object.keys(permissions).length === 0) permissions.waitlist = true; // استقبال افتراضًا

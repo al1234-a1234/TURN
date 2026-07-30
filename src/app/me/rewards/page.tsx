@@ -40,10 +40,15 @@ export default function MyRewardsPage() {
   // الهدية المفتوح باركودها — ضغطة على الرمز تعرضه، وثانية تخفيه
   const [qrOpen, setQrOpen] = useState<string | null>(null);
 
+  const [lookupErr, setLookupErr] = useState(false);
   const runLookup = useCallback(async (p: string) => {
-    if (!p) return;
+    // تحقّق قبل البحث — ضغطة «عرض» برقم ناقص كانت لا تفعل شيئًا بلا أي رسالة
+    if (!/^05\d{8}$/.test(p)) { setLookupErr(!!p); return; }
+    setLookupErr(false);
     setLoading(true);
     try {
+      // لا نحفظ الرقم كهوية للجهاز إلا بعد نجاح صيغته — رقم مغلوط كان
+      // يتسرّب لهوية المسح والتقييم فيتقمّص العميل شخصًا آخر
       window.localStorage.setItem("turn:phone", p);
       const supabase = createClient();
       const [{ data }, { data: loy }] = await Promise.all([
@@ -88,6 +93,9 @@ export default function MyRewardsPage() {
         <div className="rq-card p-5">
           <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "هداياك", "Your gifts")}</p>
           <p className="mt-0.5 text-sm text-[color:var(--muted)]">{tr(lang, "محفوظة عندك برقم جوّالك — أدخله لعرضها.", "Saved to your number — enter it to view.")}</p>
+          {lookupErr && (
+            <p className="mt-2 text-xs font-bold text-red-600">{tr(lang, "رقم الجوّال غير مكتمل — يبدأ بـ 05 ويتكوّن من 10 خانات.", "Incomplete number — starts with 05, 10 digits.")}</p>
+          )}
           <form onSubmit={(e) => { e.preventDefault(); runLookup(phone.trim()); }} className="mt-3 flex gap-2">
             <input dir="ltr" inputMode="tel" value={phone} onChange={(e) => setPhone(normalizePhone(e.target.value).slice(0, 10))} placeholder="05xxxxxxxx" className="field-input flex-1 text-left" />
             <button type="submit" disabled={loading} className="rq-btn shrink-0 px-5">{loading ? "…" : tr(lang, "عرض", "Show")}</button>
