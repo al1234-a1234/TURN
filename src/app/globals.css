@@ -52,6 +52,10 @@
      واستقبال) تقرأ من هذا السطر وحده. تغيير هوية التطبيق كلّه = تعديل
      هذا الرقم فقط. ممنوع أي تدرّج لوني أو درجة ثانية في عناصر الهوية. */
   --brand-solid: #781e0c;
+  /* «الخامة»: لمعة إضاءة مقيسة من أيقونة التطبيق — ضوء أبيض ناعم أعلى
+     وعمق خفيف أسفل فوق اللون الواحد نفسه. ليست لونًا ثانيًا: طبقة إضاءة
+     شفافة، فلا تكسر قاعدة الرقم الواحد وتعيد الإحساس «الفاخر» للأيقونة. */
+  --brand-sheen: linear-gradient(165deg, rgba(255,255,255,0.13), rgba(255,255,255,0.04) 38%, rgba(0,0,0,0) 62%, rgba(0,0,0,0.14));
   --brand: #a3341a;
   --brand-d: #661c0a;
   --ink: #17243f;
@@ -80,7 +84,7 @@ body {
 .turn-badge {
   display: grid; place-items: center; position: relative; overflow: hidden; flex: none;
   border-radius: 23%;
-  background: var(--brand-solid);
+  background: var(--brand-sheen), var(--brand-solid);
   font-family: var(--font-baskerville), Baskerville, Georgia, serif;
   color: #f6efe2;
   box-shadow: 0 0.10em 0.28em -0.12em rgba(40, 12, 4, 0.55);
@@ -103,7 +107,7 @@ h1, h2, h3, h4 {
 
 /* ===== هيدر أخضر بحواف سفلية دائرية (نمط ريكيو) ===== */
 .rq-header {
-  background: var(--brand-solid);
+  background: var(--brand-sheen), var(--brand-solid);
   color: #fff;
   border-end-start-radius: 34px;
   border-end-end-radius: 34px;
@@ -145,7 +149,7 @@ h1, h2, h3, h4 {
     @apply inline-flex w-full items-center justify-center gap-2 text-center text-base font-bold transition-all duration-200 disabled:opacity-55;
     min-height: 3.6rem; padding: 0.7rem 1.25rem;
     border-radius: var(--radius-btn);
-    background: var(--brand-solid);
+    background: var(--brand-sheen), var(--brand-solid);
     color: #fff;
     box-shadow: 0 16px 30px -16px rgba(58, 18, 6, 0.6);
   }
@@ -169,7 +173,7 @@ h1, h2, h3, h4 {
   }
   .rq-tile-label { @apply text-[13px] font-bold; }
   .rq-tile[data-active="true"] {
-    background: var(--brand-solid);
+    background: var(--brand-sheen), var(--brand-solid);
     color: #fff; border-color: transparent;
     box-shadow: 0 16px 26px -16px rgba(58, 18, 6,0.55);
   }
@@ -182,7 +186,7 @@ h1, h2, h3, h4 {
   }
   .rq-seg-btn { @apply rounded-xl py-3 text-sm font-bold transition-all duration-200; color: var(--muted); }
   .rq-seg-btn[data-active="true"] {
-    background: var(--brand-solid); color: #fff;
+    background: var(--brand-sheen), var(--brand-solid); color: #fff;
   }
 
   /* الحقول */
@@ -203,7 +207,7 @@ h1, h2, h3, h4 {
 
   /* ===== توافق مع صفحات المالك/الأدمن/الشركاء القديمة ===== */
   .app-header {
-    background: var(--brand-solid);
+    background: var(--brand-sheen), var(--brand-solid);
     color: #fff;
     border-end-start-radius: 34px; border-end-end-radius: 34px;
   }
@@ -224,7 +228,7 @@ h1, h2, h3, h4 {
     @apply inline-flex items-center justify-center gap-2 text-center text-sm font-bold transition-all duration-200 disabled:opacity-55;
     min-height: 3.2rem; padding: 0.6rem 1.25rem; border-radius: var(--radius-btn);
   }
-  .btn-primary { background: var(--brand-solid); color: #fff; box-shadow: 0 16px 30px -18px rgba(58, 18, 6,0.6); }
+  .btn-primary { background: var(--brand-sheen), var(--brand-solid); color: #fff; box-shadow: 0 16px 30px -18px rgba(58, 18, 6,0.6); }
   .btn-primary:hover { transform: translateY(-1px); }
   .btn-secondary, .btn-ghost, .btn-cream { background: #fff; color: var(--brand-d); border: 1px solid var(--border); }
   .eyebrow { @apply inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold; background: var(--sage); color: var(--brand-d); }
