@@ -26,7 +26,7 @@ export function ReservationActions({ id, status }: { id: string; status: string 
         disabled={pending}
         onClick={() => start(() => setReservationStatus(id, "seated"))}
         className="rounded-xl px-3 py-2 text-xs font-bold text-white transition disabled:opacity-60"
-        style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}
+        style={{ background: "var(--brand-solid)" }}
       >
         {tr(lang, "إجلاس", "Seat")}
       </button>

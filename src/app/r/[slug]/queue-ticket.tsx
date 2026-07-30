@@ -184,7 +184,7 @@ export function QueueTicket({
   const RestartButton = () => (
     <button type="button" onClick={() => onGone?.()}
       className="mt-1 w-full rounded-2xl px-4 py-3 text-sm font-extrabold text-white"
-      style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)" }}>
+      style={{ background: "var(--brand-solid)" }}>
       {tr(lang, "خذ دورًا جديدًا", "Take a new turn")}
     </button>
   );
@@ -197,7 +197,7 @@ export function QueueTicket({
   if (cancelled) {
     return (
       <div className="rq-card flex flex-col items-center gap-3 p-8 text-center">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full text-3xl text-white" style={{ background: "var(--brand)" }}>✓</span>
+        <span className="flex h-16 w-16 items-center justify-center rounded-full text-3xl text-white" style={{ background: "var(--brand-solid)" }}>✓</span>
         <p className="text-lg font-extrabold text-[color:var(--ink)]">{tr(lang, "تم إلغاء دورك", "Your turn was cancelled")}</p>
         <p className="text-sm text-[color:var(--muted)]">{tr(lang, "تقدر تأخذ دورك من جديد وقت ما تحب.", "You can take a new turn whenever you like.")}</p>
         <RestartButton />
@@ -219,7 +219,7 @@ export function QueueTicket({
   if (seated) {
     return (
       <div className="rq-card flex flex-col items-center gap-3 p-8 text-center">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full text-3xl text-white" style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}>🎉</span>
+        <span className="flex h-16 w-16 items-center justify-center rounded-full text-3xl text-white" style={{ background: "var(--brand-solid)" }}>🎉</span>
         <p className="font-display text-2xl font-extrabold text-[color:var(--ink)]">{tr(lang, "تفضّل، دورك جاهز", "You're up — please come in")}</p>
         <p className="text-sm text-[color:var(--muted)]">{tr(lang, "توجّه إلى الاستقبال. بالهناء والشفاء 🌿", "Head to the reception. Enjoy your visit 🌿")}</p>
         <RestartButton />
@@ -285,7 +285,7 @@ export function QueueTicket({
       {entryId && phone && canPush && (
         pushOn ? (
           <p className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold text-white"
-             style={{ background: "var(--brand)" }}>
+             style={{ background: "var(--brand-solid)" }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
             {tr(lang, "بننبّهك على جوّالك قبل دورك", "We'll alert your phone before your turn")}
           </p>
@@ -295,7 +295,7 @@ export function QueueTicket({
             onClick={enablePush}
             disabled={pushBusy}
             className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-extrabold text-white transition active:scale-[0.985] disabled:opacity-60"
-            style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)", boxShadow: "0 14px 26px -16px rgba(102,28,10,0.72)" }}
+            style={{ background: "var(--brand-solid)", boxShadow: "0 14px 26px -16px rgba(102,28,10,0.72)" }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
               <path d="M18 8a6 6 0 1 0-12 0c0 7-3 8-3 8h18s-3-1-3-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

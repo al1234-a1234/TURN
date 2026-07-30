@@ -33,7 +33,7 @@ export function StampCard({ points, threshold, perVisit, reward, lang }: {
           <span dir="ltr">{toAr(points)} / {toAr(threshold)}</span>
         </div>
         <div className="mt-2 h-2.5 overflow-hidden rounded-full" style={{ background: "rgba(102,28,10,0.12)" }}>
-          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg,#b23c1d,#661c0a)" }} />
+          <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "var(--brand-solid)" }} />
         </div>
         <Caption points={points} threshold={threshold} oneAway={oneAway} reward={reward} lang={lang} />
       </div>
@@ -56,7 +56,7 @@ export function StampCard({ points, threshold, perVisit, reward, lang }: {
               key={i}
               className="flex h-10 w-10 items-center justify-center rounded-full text-base font-extrabold transition"
               style={isFilled
-                ? { background: "linear-gradient(155deg,#b23c1d,#661c0a)", color: "#fdf6ef", boxShadow: "0 6px 14px -8px rgba(102,28,10,0.8)" }
+                ? { background: "var(--brand-solid)", color: "#fdf6ef", boxShadow: "0 6px 14px -8px rgba(102,28,10,0.8)" }
                 : { background: "rgba(102,28,10,0.07)", color: "rgba(102,28,10,0.45)", border: "2px dashed rgba(102,28,10,0.25)" }}
               aria-label={isFilled ? tr(lang, "زيارة مسجّلة", "Stamped visit") : tr(lang, "زيارة متبقية", "Remaining visit")}
             >

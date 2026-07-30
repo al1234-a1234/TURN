@@ -27,7 +27,7 @@ export function OwnerNavSidebar({ items, counts }: { items: NavItem[]; counts?: 
             prefetch
             data-active={on}
             className="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm font-bold transition data-[active=true]:text-white"
-            style={on ? { background: "linear-gradient(160deg,#a8371a,#661c0a)" } : { color: "var(--ink)" }}
+            style={on ? { background: "var(--brand-solid)" } : { color: "var(--ink)" }}
           >
             <span className="text-base">{n.icon}</span>
             <span className="flex-1">{n.label}</span>
@@ -60,7 +60,7 @@ export function OwnerNavTabs({ items }: { items: NavItem[] }) {
             prefetch
             data-active={on}
             className="shrink-0 rounded-2xl px-4 py-3 text-center text-sm font-bold text-[color:var(--muted)] transition data-[active=true]:text-white"
-            style={on ? { background: "linear-gradient(160deg,#a8371a,#661c0a)" } : { background: "#fff", border: "1px solid var(--border)" }}
+            style={on ? { background: "var(--brand-solid)" } : { background: "#fff", border: "1px solid var(--border)" }}
           >
             {n.label}
           </Link>

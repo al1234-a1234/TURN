@@ -295,7 +295,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             <ul className="space-y-2">
               {rewards.filter((r) => r.status === "active").map((r) => (
                 <li key={r.id} className="soft-card flex items-center gap-3 p-3.5">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xl text-white" style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}>
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xl text-white" style={{ background: "var(--brand-solid)" }}>
                     {r.kind === "discount" ? "٪" : "🎁"}
                   </span>
                   <div className="min-w-0 flex-1">

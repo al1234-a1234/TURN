@@ -24,7 +24,7 @@ export function OfferToggle({ id, active }: { id: string; active: boolean }) {
         })
       }
       className="relative h-7 w-12 shrink-0 rounded-full transition disabled:opacity-60"
-      style={{ background: on ? "linear-gradient(160deg,#a8371a,#661c0a)" : "var(--surface-2)", border: "1px solid var(--border)" }}
+      style={{ background: on ? "var(--brand-solid)" : "var(--surface-2)", border: "1px solid var(--border)" }}
       title={on ? tr(lang, "مُفعّل", "Active") : tr(lang, "متوقّف", "Paused")}
     >
       <span

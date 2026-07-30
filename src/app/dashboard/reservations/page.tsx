@@ -141,7 +141,7 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
               const sm = STATUS_META[r.status] ?? STATUS_META.confirmed;
               return (
                 <li key={r.id} className="soft-card flex items-center gap-3 p-4">
-                  <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-2xl text-white" style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}>
+                  <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-2xl text-white" style={{ background: "var(--brand-solid)" }}>
                     <span className="font-display text-lg font-bold leading-none">{toAr(r.party_size)}</span>
                     <span className="text-[9px]">{tr(lang, "أشخاص", "pax")}</span>
                   </div>

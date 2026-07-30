@@ -50,7 +50,7 @@ export function OfferClaim({ offerId }: { offerId: string }) {
               disabled={pending}
               onClick={() => { if (known) submit(phone); else setOpen(true); }}
               className="shrink-0 rounded-xl px-3.5 py-2 text-xs font-extrabold text-white disabled:opacity-60"
-              style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)" }}>
+              style={{ background: "var(--brand-solid)" }}>
         {pending ? "…" : tr(lang, "استخدمه", "Claim")}
       </button>
     );
@@ -74,7 +74,7 @@ export function OfferClaim({ offerId }: { offerId: string }) {
           disabled={pending || !valid}
           onClick={() => submit(phone)}
           className="rounded-xl px-3 py-2 text-xs font-extrabold text-white disabled:opacity-50"
-          style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)" }}
+          style={{ background: "var(--brand-solid)" }}
         >
           {pending ? "…" : tr(lang, "تفعيل", "Get")}
         </button>

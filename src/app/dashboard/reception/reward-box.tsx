@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState, useTransition } from "react";
+import { IconGift } from "@/components/icons";
 import { lookupRewards, redeemAtCounter, type CounterReward } from "./reward-actions";
 import { RewardScanner } from "./reward-scanner";
 import { tr } from "@/lib/i18n";
@@ -55,7 +56,7 @@ export function RewardBox() {
   return (
     <section className="soft-card mb-6 p-4">
       <div className="mb-3 flex items-center gap-2">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl text-lg" style={{ background: "var(--sage)" }}>🎁</span>
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl text-white" style={{ background: "var(--brand-solid)" }}><IconGift size={18} /></span>
         <div>
           <h2 className="font-display text-base font-bold text-[color:var(--ink)]">{tr(lang, "اعتمد هدية", "Redeem a gift")}</h2>
           <p className="text-[11px] font-bold text-[color:var(--muted)]">{tr(lang, "رمز الهدية أو رقم جوّال العميل", "Gift code or customer mobile")}</p>
@@ -108,7 +109,7 @@ export function RewardBox() {
                 ) : (
                   <button onClick={() => redeem(r.id)} disabled={pending}
                           className="shrink-0 rounded-xl px-4 py-2 text-xs font-extrabold text-white"
-                          style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)" }}>
+                          style={{ background: "var(--brand-solid)" }}>
                     {tr(lang, "اعتمد", "Redeem")}
                   </button>
                 )}

@@ -235,7 +235,7 @@ export default async function ReportsPage({
               href={`/dashboard/reports?period=${p}`}
               data-active={on}
               className="rounded-2xl px-4 py-2.5 text-sm font-bold transition data-[active=true]:text-white"
-              style={on ? { background: "linear-gradient(160deg,#a8371a,#661c0a)" } : { background: "#fff", border: "1px solid var(--border)", color: "var(--muted)" }}
+              style={on ? { background: "var(--brand-solid)" } : { background: "#fff", border: "1px solid var(--border)", color: "var(--muted)" }}
             >
               {periodLabel(p, lang)}
             </Link>
@@ -291,7 +291,7 @@ export default async function ReportsPage({
       {/* ساعات الذروة */}
       <section className="soft-card mt-6 p-5">
         <h2 className="mb-4 flex items-center gap-2 font-display text-lg font-bold text-[color:var(--ink)]">
-          <span className="h-4 w-1.5 rounded-full" style={{ background: "var(--brand)" }} /> {tr(lang, "ساعات الذروة", "Peak Hours")}
+          <span className="h-4 w-1.5 rounded-full" style={{ background: "var(--brand-solid)" }} /> {tr(lang, "ساعات الذروة", "Peak Hours")}
         </h2>
         {rows.length === 0 ? (
           <p className="py-6 text-center text-sm text-[color:var(--muted)]">{tr(lang, "لا توجد بيانات كافية بعد.", "Not enough data yet.")}</p>
@@ -304,7 +304,7 @@ export default async function ReportsPage({
                 <div key={h} className="flex items-center gap-3">
                   <span className="w-12 shrink-0 text-xs font-bold text-[color:var(--muted)]">{hourLabel(h, lang)}</span>
                   <div className="h-3 flex-1 overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
-                    <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(barPct, 2)}%`, background: "linear-gradient(90deg,#b23c1d,#661c0a)" }} />
+                    <div className="h-full rounded-full transition-all" style={{ width: `${Math.max(barPct, 2)}%`, background: "var(--brand-solid)" }} />
                   </div>
                   <span className="w-10 shrink-0 text-left text-xs font-bold" style={{ color: "var(--brand-d)" }}>{pct(toAr(barPct), lang)}</span>
                 </div>

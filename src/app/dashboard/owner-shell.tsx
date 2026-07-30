@@ -108,7 +108,7 @@ export async function OwnerShell({
   return (
    <div className="flex flex-1 flex-col">
     {adminView && (
-      <div className="flex items-center justify-between gap-3 px-4 py-2 text-white" style={{ background: "linear-gradient(90deg,#661c0a,#a8371a)" }}>
+      <div className="flex items-center justify-between gap-3 px-4 py-2 text-white" style={{ background: "var(--brand-solid)" }}>
         <span className="flex items-center gap-2 text-xs font-bold sm:text-sm">
           <span>🛡️</span>
           {tr(lang, `وضع المشرف — تعرض «${restaurant.name}» بكل فروعه (حسابات الفروع ترى فرعها فقط)`, `Admin view — showing “${restaurant.name}” with all branches (branch accounts see only theirs)`)}

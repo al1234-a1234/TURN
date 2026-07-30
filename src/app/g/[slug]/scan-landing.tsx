@@ -134,7 +134,7 @@ export function ScanLanding({ slug, branchId, lang }: { slug: string; branchId: 
         {/* زر الزيارة — قلب الشاشة */}
         {checkin?.ok ? (
           <div className="mt-4 rounded-2xl p-4 text-center text-cream-100"
-               style={{ background: "linear-gradient(155deg,#b23c1d,#7c230f 60%,#4c1406)" }}>
+               style={{ background: "var(--brand-solid)" }}>
             <p className="font-display text-2xl font-extrabold">
               {checkin.is_recent ? tr(lang, "مسجّل من قبل ✓", "Already checked in ✓") : tr(lang, "تسجّلت زيارتك ✓", "Visit recorded ✓")}
             </p>
@@ -156,7 +156,7 @@ export function ScanLanding({ slug, branchId, lang }: { slug: string; branchId: 
             onClick={checkinNow}
             disabled={pending}
             className="mt-4 w-full rounded-2xl py-4 text-center font-display text-lg font-extrabold text-cream-100 transition active:scale-[0.98] disabled:opacity-60"
-            style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)", boxShadow: "0 16px 30px -18px rgba(102,28,10,0.8)" }}
+            style={{ background: "var(--brand-solid)", boxShadow: "0 16px 30px -18px rgba(102,28,10,0.8)" }}
           >
             {pending ? tr(lang, "لحظة…", "One moment…") : tr(lang, "سجّل زيارتي الآن 🎁", "Check in now 🎁")}
           </button>
@@ -211,7 +211,7 @@ function StatusReward({ r, lang }: { r: NonNullable<Status["rewards"]>[number]; 
     <div className="rq-card p-4">
       <div className="flex items-center gap-3">
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-lg text-white"
-              style={{ background: "linear-gradient(155deg,#a8371a,#661c0a)" }}>
+              style={{ background: "var(--brand-solid)" }}>
           {r.kind === "discount" ? "٪" : "🎁"}
         </span>
         <div className="min-w-0 flex-1">

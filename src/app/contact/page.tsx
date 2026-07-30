@@ -24,7 +24,7 @@ export default async function ContactPage() {
         <div className="space-y-3">
           {channels.map((c) => (
             <a key={c.ar} href={c.href} className="rq-card flex items-center gap-3 p-4 transition active:scale-[0.99]">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl text-xl" style={{ background: "linear-gradient(155deg,#a8371a,#661c0a)" }}>
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl text-xl" style={{ background: "var(--brand-solid)" }}>
                 <span>{c.icon}</span>
               </span>
               <div className="min-w-0 flex-1">

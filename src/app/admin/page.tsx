@@ -75,7 +75,7 @@ export default async function AdminPage() {
                     <button
                       type="submit"
                       className="rounded-full px-3 py-2 text-xs font-bold text-white"
-                      style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}
+                      style={{ background: "var(--brand-solid)" }}
                     >
                       {tr(lang, "لوحة المطعم", "Dashboard")}
                     </button>

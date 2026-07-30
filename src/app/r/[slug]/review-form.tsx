@@ -28,14 +28,14 @@ export function ReviewForm({ slug, googleUrl }: { slug: string; googleUrl?: stri
     return (
       <div className="rq-card space-y-3 p-4">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white" style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}>✓</span>
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white" style={{ background: "var(--brand-solid)" }}>✓</span>
           <p className="text-sm font-bold text-[color:var(--ink)]">{tr(lang, "وصل تقييمك — شكرًا لك 🌿", "Your review is in — thank you 🌿")}</p>
         </div>
         {/* التوجيه الذكي فعليًّا: الراضي (٤★+) يُدعى لنشره في خرائط Google */}
         {stars >= 4 && googleUrl && (
           <a href={googleUrl} target="_blank" rel="noreferrer"
              className="flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-extrabold text-white"
-             style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)" }}>
+             style={{ background: "var(--brand-solid)" }}>
             ⭐ {tr(lang, "أسعدتنا! انشر تقييمك في خرائط Google", "Made our day! Share it on Google Maps")}
           </a>
         )}

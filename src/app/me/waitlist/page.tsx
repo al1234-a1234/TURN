@@ -54,7 +54,7 @@ export default function MyWaitlistPage() {
                     <p className="truncate font-display text-[16px] font-bold text-[color:var(--ink)]">{t.name}</p>
                     <p className="mt-0.5 text-[13px] font-medium text-[color:var(--muted)]">{tr(lang, "آخر دور:", "Last turn:")} {fmt(t.at)}</p>
                   </div>
-                  <span className="shrink-0 rounded-full px-3 py-1 text-xs font-bold text-white" style={{ background: "linear-gradient(155deg,#a8371a,#661c0a)" }}>{tr(lang, "الحالة ←", "Status ←")}</span>
+                  <span className="shrink-0 rounded-full px-3 py-1 text-xs font-bold text-white" style={{ background: "var(--brand-solid)" }}>{tr(lang, "الحالة ←", "Status ←")}</span>
                 </Link>
               );
             })}

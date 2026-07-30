@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { IconGift } from "@/components/icons";
 import { useActionState, useEffect, useState } from "react";
 import { checkinAction, type CheckinState, type Gift } from "./actions";
 import { StampCard } from "@/components/stamp-card";
@@ -43,7 +44,7 @@ export function CheckinForm({ slug, branchId, lang }: { slug: string; branchId: 
         {/* بطاقة النجاح / الهدية */}
         <div
           className="reveal overflow-hidden rounded-3xl p-6 text-center text-cream-100"
-          style={{ background: "linear-gradient(155deg,#b23c1d,#7c230f 60%,#4c1406)", boxShadow: "0 20px 40px -22px rgba(102,28,10,0.85)" }}
+          style={{ background: "var(--brand-solid)", boxShadow: "0 20px 40px -22px rgba(102,28,10,0.85)" }}
         >
           {g ? (
             <>
@@ -107,10 +108,10 @@ export function CheckinForm({ slug, branchId, lang }: { slug: string; branchId: 
         <Link
           href={`/me/rewards${state.phone ? `?phone=${encodeURIComponent(state.phone)}` : ""}`}
           className="flex items-center justify-between rounded-2xl px-4 py-3.5"
-          style={{ background: "var(--brand)" }}
+          style={{ background: "var(--brand-solid)" }}
         >
           <span className="flex items-center gap-2 text-sm font-bold text-white">
-            🎁 {tr(lang, "شوف كل هداياك وعروضك", "See all your gifts & offers")}
+            <IconGift size={18} /> {tr(lang, "شوف كل هداياك وعروضك", "See all your gifts & offers")}
           </span>
           <span className="text-white">←</span>
         </Link>
@@ -164,7 +165,7 @@ export function CheckinForm({ slug, branchId, lang }: { slug: string; branchId: 
         type="submit"
         disabled={pending}
         className="w-full rounded-2xl py-4 text-center font-display text-lg font-extrabold text-cream-100 transition active:scale-[0.98] disabled:opacity-60"
-        style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)", boxShadow: "0 16px 30px -18px rgba(102,28,10,0.8)" }}
+        style={{ background: "var(--brand-solid)", boxShadow: "0 16px 30px -18px rgba(102,28,10,0.8)" }}
       >
         {pending ? tr(lang, "لحظة…", "One moment…") : tr(lang, "خذ هديتك 🎁", "Get your gift 🎁")}
       </button>

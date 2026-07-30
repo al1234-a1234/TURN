@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { IconCamera } from "@/components/icons";
 import jsQR from "jsqr";
 import { extractRewardCode } from "@/lib/reward-code";
 import { tr, type Lang } from "@/lib/i18n";
@@ -121,7 +122,7 @@ export function RewardScanner({ lang, onCode }: { lang: Lang; onCode: (code: str
           className="btn btn-primary flex items-center gap-1.5 px-4"
           title={tr(lang, "امسح باركود الهدية", "Scan gift barcode")}
         >
-          <span aria-hidden>📷</span> {tr(lang, "امسح", "Scan")}
+          <IconCamera size={17} /> {tr(lang, "امسح", "Scan")}
         </button>
         {error && <p className="mt-1 max-w-[160px] text-[10px] font-bold" style={{ color: "#c0564a" }}>{error}</p>}
       </div>

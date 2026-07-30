@@ -58,10 +58,10 @@ export function TvBoard({ branchId, initial }: { branchId: string; initial: Row[
             <li key={`${r.zone}-${r.rank}`}
                 className="flex items-center gap-5 rounded-3xl px-6 py-4"
                 style={r.status === "notified"
-                  ? { background: "linear-gradient(150deg,#b23c1d,#661c0a)", boxShadow: "0 18px 34px -20px rgba(102,28,10,0.7)" }
+                  ? { background: "var(--brand-solid)", boxShadow: "0 18px 34px -20px rgba(102,28,10,0.7)" }
                   : { background: "#fff", border: "1px solid rgba(102,28,10,0.12)" }}>
               <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl font-display text-4xl font-bold"
-                    style={r.status === "notified" ? { background: "rgba(255,255,255,0.16)", color: "#fff" } : { background: "linear-gradient(160deg,#a8371a,#661c0a)", color: "#fff" }}>
+                    style={r.status === "notified" ? { background: "rgba(255,255,255,0.16)", color: "#fff" } : { background: "var(--brand-solid)", color: "#fff" }}>
                 {toAr(r.rank ?? 0)}
               </span>
               <span className="min-w-0 flex-1 truncate font-display text-3xl font-bold"
@@ -84,7 +84,7 @@ export function TvBoard({ branchId, initial }: { branchId: string; initial: Row[
     <div className="flex flex-1 flex-col gap-6">
       {/* شريط النداء */}
       {nowServing.length > 0 && (
-        <div className="rounded-3xl px-8 py-5 text-center" style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)" }}>
+        <div className="rounded-3xl px-8 py-5 text-center" style={{ background: "var(--brand-solid)" }}>
           <p className="font-display text-4xl font-bold text-white">
             🔔 نُنادي الآن: {nowServing.map((r) => `رقم ${toAr(r.rank ?? 0)}`).join(" · ")}
           </p>

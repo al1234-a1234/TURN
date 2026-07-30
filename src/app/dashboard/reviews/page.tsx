@@ -60,7 +60,7 @@ export default async function ReviewsPage() {
                 <div key={d.s} className="flex items-center gap-2">
                   <span className="w-6 text-xs font-bold text-[color:var(--muted)]">{toAr(d.s)}★</span>
                   <div className="h-2 flex-1 overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
-                    <div className="h-full rounded-full" style={{ width: `${(d.n / maxN) * 100}%`, background: "linear-gradient(90deg,#a8371a,#661c0a)" }} />
+                    <div className="h-full rounded-full" style={{ width: `${(d.n / maxN) * 100}%`, background: "var(--brand-solid)" }} />
                   </div>
                   <span className="w-6 text-left text-xs text-[color:var(--muted)]">{toAr(d.n)}</span>
                 </div>

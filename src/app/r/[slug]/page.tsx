@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { IconGift } from "@/components/icons";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BrandMark } from "@/components/brand";
@@ -272,7 +273,7 @@ function OffersSection({ offers, lang }: { offers: OfferLite[]; lang: "ar" | "en
         <div className="space-y-2.5">
           {offers.map((o) => (
             <div key={o.id} className="rq-card flex items-center gap-3 p-3.5">
-              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-extrabold text-white" style={{ background: "linear-gradient(155deg,#a8371a,#661c0a)" }}>
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-extrabold text-white" style={{ background: "var(--brand-solid)" }}>
                 {offerBadge(o, lang)}
               </span>
               <div className="min-w-0 flex-1">
@@ -295,9 +296,9 @@ function OffersSection({ offers, lang }: { offers: OfferLite[]; lang: "ar" | "en
       )}
 
       {/* منفذ الهدايا الشخصية (بلا حساب — عبر الرقم) */}
-      <Link href="/me/rewards" className="mt-2.5 flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: "var(--brand)" }}>
+      <Link href="/me/rewards" className="mt-2.5 flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: "var(--brand-solid)" }}>
         <span className="flex items-center gap-2 text-sm font-bold text-white">
-          <span>🎁</span> {tr(lang, "عندك هديّة خاصة؟ اعرفها برقمك", "Got a personal reward? Check with your number")}
+          <IconGift size={18} /> {tr(lang, "عندك هديّة خاصة؟ اعرفها برقمك", "Got a personal reward? Check with your number")}
         </span>
         <span className="text-white">←</span>
       </Link>
@@ -355,7 +356,7 @@ function RestaurantLinks({ links, label }: { links: Record<string, string>; labe
               target="_blank"
               rel="noopener noreferrer"
               className="flex h-12 w-12 items-center justify-center rounded-full transition active:scale-95"
-              style={{ background: "linear-gradient(155deg,#a8371a,#661c0a)", boxShadow: "0 8px 18px -10px rgba(102,28,10,0.7)" }}
+              style={{ background: "var(--brand-solid)", boxShadow: "0 8px 18px -10px rgba(102,28,10,0.7)" }}
             >
               <LinkGlyph k={m.key} />
             </a>

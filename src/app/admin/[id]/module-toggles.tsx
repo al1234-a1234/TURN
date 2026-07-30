@@ -59,7 +59,7 @@ function Toggle({
           })
         }
         className="relative h-7 w-12 shrink-0 rounded-full transition disabled:cursor-not-allowed disabled:opacity-70"
-        style={{ background: on ? "linear-gradient(160deg,#a8371a,#661c0a)" : "var(--surface-2)", border: "1px solid var(--border)" }}
+        style={{ background: on ? "var(--brand-solid)" : "var(--surface-2)", border: "1px solid var(--border)" }}
         title={locked ? tr(lang, "أساسي — لا يُطفأ", "Core — can't be turned off") : on ? tr(lang, "مُفعّل", "On") : tr(lang, "متوقّف", "Off")}
       >
         <span className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white shadow transition-all" style={{ insetInlineStart: on ? "1.55rem" : "0.2rem" }} />

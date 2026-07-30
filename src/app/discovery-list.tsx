@@ -37,7 +37,7 @@ function OffersRail({ offers, lang }: { offers: DiscoveryOffer[]; lang: Lang }) 
               <div className="flex items-center justify-between gap-2">
                 <span
                   className="rounded-xl px-2.5 py-1 font-display text-sm font-extrabold text-white"
-                  style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)" }}
+                  style={{ background: "var(--brand-solid)" }}
                 >
                   {offerBadge(o, lang)}
                 </span>
@@ -109,8 +109,8 @@ function ZonePill({ label, count, lang }: { label: string; count: number; lang: 
       className="inline-flex w-[116px] items-center justify-between rounded-full px-3 py-1.5 text-[12px] font-bold"
       style={
         busy
-          ? { background: "linear-gradient(150deg,#b23c1d,#661c0a)", color: "#fff" }
-          : { background: "var(--brand)", color: "#fff" }
+          ? { background: "var(--brand-solid)", color: "#fff" }
+          : { background: "var(--brand-solid)", color: "#fff" }
       }
     >
       <span className="inline-flex items-center gap-1.5">
@@ -157,7 +157,7 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
             {r.branchCount > 1 && (
               <span
                 className="inline-flex shrink-0 items-center justify-center rounded-md px-1.5 py-0.5 text-[10px] font-extrabold text-white"
-                style={{ background: "var(--brand)" }}
+                style={{ background: "var(--brand-solid)" }}
               >
                 {tr(lang, `${toAr(r.branchCount)} فرع`, `${r.branchCount} branches`)}
               </span>
@@ -165,7 +165,7 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
             {r.busyNow && !r.closedNow && (
               <span
                 className="inline-flex shrink-0 items-center justify-center rounded-md px-1.5 py-0.5 text-[10px] font-extrabold text-white"
-                style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)" }}
+                style={{ background: "var(--brand-solid)" }}
               >
                 {tr(lang, "مزدحم الآن", "Busy now")}
               </span>
@@ -209,7 +209,7 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
       ) : r.waiting > 0 ? (
         <div
           className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-          style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)", boxShadow: "0 12px 24px -16px rgba(102,28,10,0.72)" }}
+          style={{ background: "var(--brand-solid)", boxShadow: "0 12px 24px -16px rgba(102,28,10,0.72)" }}
         >
           <span className="flex items-center gap-2 text-sm font-extrabold text-white">
             <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
@@ -220,7 +220,7 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
       ) : (
         <div
           className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-          style={{ background: "var(--brand)" }}
+          style={{ background: "var(--brand-solid)" }}
         >
           <span className="flex items-center gap-2 text-sm font-extrabold text-white">
             <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
@@ -296,8 +296,8 @@ export function DiscoveryList({ items, offers = [], lang }: { items: DiscoveryIt
 
   const chip = (active: boolean) =>
     active
-      ? { background: "linear-gradient(160deg,#a8371a,#661c0a)", color: "#fff", border: "1px solid transparent" }
-      : { background: "var(--brand)", color: "#fff", border: "1px solid transparent" };
+      ? { background: "var(--brand-solid)", color: "#fff", border: "1px solid transparent" }
+      : { background: "var(--brand-solid)", color: "#fff", border: "1px solid transparent" };
 
   let delay = 0;
 

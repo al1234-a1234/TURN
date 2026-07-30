@@ -28,7 +28,7 @@ export function CampaignForm({ counts }: { counts: Counts }) {
         type="button"
         onClick={() => setOpen(true)}
         className="w-full rounded-2xl py-3 text-sm font-bold text-white transition active:scale-[0.99]"
-        style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}
+        style={{ background: "var(--brand-solid)" }}
       >
         {tr(lang, "📣 حملة مكافآت — أرسل هديّة/خصم لشريحة", "📣 Reward campaign — send a gift/discount to a segment")}
       </button>
@@ -55,7 +55,7 @@ export function CampaignForm({ counts }: { counts: Counts }) {
               type="button"
               onClick={() => setSegment(s.key)}
               className="rounded-xl py-2 text-xs font-bold transition"
-              style={segment === s.key ? { background: "linear-gradient(160deg,#a8371a,#661c0a)", color: "#fff" } : { color: "var(--muted)" }}
+              style={segment === s.key ? { background: "var(--brand-solid)", color: "#fff" } : { color: "var(--muted)" }}
             >
               {tr(lang, s.ar, s.en)}
               <span className="block text-[10px] opacity-80">{toAr(counts[s.key])}</span>
@@ -76,7 +76,7 @@ export function CampaignForm({ counts }: { counts: Counts }) {
             type="button"
             onClick={() => setKind(k)}
             className="rounded-xl py-2 text-sm font-bold transition"
-            style={kind === k ? { background: "linear-gradient(160deg,#a8371a,#661c0a)", color: "#fff" } : { color: "var(--muted)" }}
+            style={kind === k ? { background: "var(--brand-solid)", color: "#fff" } : { color: "var(--muted)" }}
           >
             {k === "gift" ? tr(lang, "🎁 هديّة", "🎁 Gift") : tr(lang, "٪ خصم", "٪ Discount")}
           </button>

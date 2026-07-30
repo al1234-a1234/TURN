@@ -44,8 +44,8 @@ export function StatusToggle({
         className="flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold transition disabled:opacity-60"
         style={
           closed
-            ? { background: "linear-gradient(150deg,#c0564a,#8d2f22)", color: "#fff" }
-            : { background: "var(--brand)", color: "#fff" }
+            ? { background: "#8d2f22", color: "#fff" }
+            : { background: "var(--brand-solid)", color: "#fff" }
         }
       >
         <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
@@ -61,8 +61,8 @@ export function StatusToggle({
         className="flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold transition disabled:opacity-60"
         style={
           busy
-            ? { background: "linear-gradient(150deg,#b23c1d,#661c0a)", color: "#fff" }
-            : { background: "var(--brand)", color: "#fff" }
+            ? { background: "var(--brand-solid)", color: "#fff" }
+            : { background: "var(--brand-solid)", color: "#fff" }
         }
       >
         <span className="h-2.5 w-2.5 rounded-full bg-white/90" />

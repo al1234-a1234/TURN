@@ -61,7 +61,7 @@ export function CustomerControls({
               aria-checked={vip}
               onClick={() => setVip((v) => !v)}
               className="relative h-7 w-12 shrink-0 rounded-full transition"
-              style={{ background: vip ? "linear-gradient(160deg,#a8371a,#661c0a)" : "var(--surface-2)", border: "1px solid var(--border)" }}
+              style={{ background: vip ? "var(--brand-solid)" : "var(--surface-2)", border: "1px solid var(--border)" }}
             >
               <span className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white shadow transition-all" style={{ insetInlineStart: vip ? "1.55rem" : "0.2rem" }} />
             </button>

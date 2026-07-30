@@ -47,6 +47,11 @@
   --muted: #8a8377;
   --border: rgba(45, 25, 15, 0.10);
   --hairline: rgba(45, 25, 15, 0.10);
+  /* ════ رقم الهوية الواحد ════
+     كل خلفية ملوّنة بالتطبيق (هيدر، أزرار، شارات، بنرات — عميل ومالك
+     واستقبال) تقرأ من هذا السطر وحده. تغيير هوية التطبيق كلّه = تعديل
+     هذا الرقم فقط. ممنوع أي تدرّج لوني أو درجة ثانية في عناصر الهوية. */
+  --brand-solid: #661c0a;
   --brand: #a3341a;
   --brand-d: #661c0a;
   --ink: #17243f;
@@ -75,7 +80,7 @@ body {
 .turn-badge {
   display: grid; place-items: center; position: relative; overflow: hidden; flex: none;
   border-radius: 23%;
-  background: linear-gradient(155deg, #85240d 0%, #661c0a 55%, #2f0d05 100%);
+  background: var(--brand-solid);
   font-family: var(--font-baskerville), Baskerville, Georgia, serif;
   color: #f6efe2;
   box-shadow: 0 0.10em 0.28em -0.12em rgba(40, 12, 4, 0.55);
@@ -98,7 +103,7 @@ h1, h2, h3, h4 {
 
 /* ===== هيدر أخضر بحواف سفلية دائرية (نمط ريكيو) ===== */
 .rq-header {
-  background: linear-gradient(160deg, #b23c1d 0%, #8a2a14 58%, #661c0a 100%);
+  background: var(--brand-solid);
   color: #fff;
   border-end-start-radius: 34px;
   border-end-end-radius: 34px;
@@ -140,7 +145,7 @@ h1, h2, h3, h4 {
     @apply inline-flex w-full items-center justify-center gap-2 text-center text-base font-bold transition-all duration-200 disabled:opacity-55;
     min-height: 3.6rem; padding: 0.7rem 1.25rem;
     border-radius: var(--radius-btn);
-    background: linear-gradient(160deg, #a8371a, #661c0a);
+    background: var(--brand-solid);
     color: #fff;
     box-shadow: 0 16px 30px -16px rgba(58, 18, 6, 0.6);
   }
@@ -164,7 +169,7 @@ h1, h2, h3, h4 {
   }
   .rq-tile-label { @apply text-[13px] font-bold; }
   .rq-tile[data-active="true"] {
-    background: linear-gradient(160deg, #a8371a, #661c0a);
+    background: var(--brand-solid);
     color: #fff; border-color: transparent;
     box-shadow: 0 16px 26px -16px rgba(58, 18, 6,0.55);
   }
@@ -177,7 +182,7 @@ h1, h2, h3, h4 {
   }
   .rq-seg-btn { @apply rounded-xl py-3 text-sm font-bold transition-all duration-200; color: var(--muted); }
   .rq-seg-btn[data-active="true"] {
-    background: linear-gradient(160deg, #a8371a, #661c0a); color: #fff;
+    background: var(--brand-solid); color: #fff;
   }
 
   /* الحقول */
@@ -198,7 +203,7 @@ h1, h2, h3, h4 {
 
   /* ===== توافق مع صفحات المالك/الأدمن/الشركاء القديمة ===== */
   .app-header {
-    background: linear-gradient(160deg, #b23c1d 0%, #8a2a14 58%, #661c0a 100%);
+    background: var(--brand-solid);
     color: #fff;
     border-end-start-radius: 34px; border-end-end-radius: 34px;
   }
@@ -219,7 +224,7 @@ h1, h2, h3, h4 {
     @apply inline-flex items-center justify-center gap-2 text-center text-sm font-bold transition-all duration-200 disabled:opacity-55;
     min-height: 3.2rem; padding: 0.6rem 1.25rem; border-radius: var(--radius-btn);
   }
-  .btn-primary { background: linear-gradient(160deg, #a8371a, #661c0a); color: #fff; box-shadow: 0 16px 30px -18px rgba(58, 18, 6,0.6); }
+  .btn-primary { background: var(--brand-solid); color: #fff; box-shadow: 0 16px 30px -18px rgba(58, 18, 6,0.6); }
   .btn-primary:hover { transform: translateY(-1px); }
   .btn-secondary, .btn-ghost, .btn-cream { background: #fff; color: var(--brand-d); border: 1px solid var(--border); }
   .eyebrow { @apply inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold; background: var(--sage); color: var(--brand-d); }
@@ -236,7 +241,7 @@ h1, h2, h3, h4 {
   .rq-nav-item[data-active="true"] { color: var(--brand-d); }
   .rq-nav-fab {
     @apply flex h-14 w-14 items-center justify-center rounded-full;
-    background: linear-gradient(160deg, #a8371a, #661c0a); color: #fff;
+    background: var(--brand-solid); color: #fff;
     box-shadow: 0 14px 26px -12px rgba(58, 18, 6,0.6);
   }
 }

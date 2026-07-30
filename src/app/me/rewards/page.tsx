@@ -109,7 +109,7 @@ export default function MyRewardsPage() {
                     <p className="shrink-0 text-sm font-extrabold text-brand-700">{toAr(l.points)}<span className="text-xs font-bold text-[color:var(--muted)]"> / {toAr(l.reward_threshold)}</span></p>
                   </div>
                   <div className="mt-2 h-2.5 overflow-hidden rounded-full" style={{ background: "var(--surface-2)" }}>
-                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(90deg,#b23c1d,#661c0a)" }} />
+                    <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "var(--brand-solid)" }} />
                   </div>
                   <p className="mt-1.5 text-xs text-[color:var(--muted)]">
                     {l.points >= l.reward_threshold
@@ -138,7 +138,7 @@ export default function MyRewardsPage() {
             {myGifts.map((r) => (
               <div key={r.id} className="rq-card p-4">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xl text-white" style={{ background: "linear-gradient(155deg,#a8371a,#661c0a)" }}>
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xl text-white" style={{ background: "var(--brand-solid)" }}>
                     {r.kind === "discount" ? "٪" : "🎁"}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -168,7 +168,7 @@ export default function MyRewardsPage() {
                     <p dir="ltr" className="mt-2 text-center font-display text-lg font-extrabold tracking-widest text-brand-800">{r.code}</p>
                   </div>
                 )}
-                <div className="mt-3 rounded-2xl px-3 py-2 text-center text-xs font-bold text-white" style={{ background: "var(--brand)" }}>
+                <div className="mt-3 rounded-2xl px-3 py-2 text-center text-xs font-bold text-white" style={{ background: "var(--brand-solid)" }}>
                   {qrOpen === r.id
                     ? tr(lang, "خلّ الموظف يمسح الباركود — أو يكتب الرمز", "Let staff scan the barcode — or type the code")
                     : tr(lang, "اضغط الرمز يطلع الباركود — يمسحه الموظف ويعتمدها", "Tap the code to show its barcode — staff scan & redeem")}
@@ -187,7 +187,7 @@ export default function MyRewardsPage() {
             {myOffers.map((r) => (
               <div key={r.id} className="rq-card p-4">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xl text-white" style={{ background: "linear-gradient(155deg,#a8371a,#661c0a)" }}>٪</span>
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xl text-white" style={{ background: "var(--brand-solid)" }}>٪</span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-display text-[16px] font-bold text-[color:var(--ink)]">
                       {r.title}{valueLabel(r) ? ` · ${valueLabel(r)}` : ""}
@@ -213,7 +213,7 @@ export default function MyRewardsPage() {
                     <p dir="ltr" className="mt-2 text-center font-display text-lg font-extrabold tracking-widest text-brand-800">{r.code}</p>
                   </div>
                 )}
-                <div className="mt-3 rounded-2xl px-3 py-2 text-center text-xs font-bold text-white" style={{ background: "var(--brand)" }}>
+                <div className="mt-3 rounded-2xl px-3 py-2 text-center text-xs font-bold text-white" style={{ background: "var(--brand-solid)" }}>
                   {qrOpen === r.id
                     ? tr(lang, "خلّ الموظف يمسح الباركود — أو يكتب الرمز", "Let staff scan the barcode — or type the code")
                     : tr(lang, "اضغط الرمز يطلع الباركود — يمسحه الموظف ويعتمدها", "Tap the code to show its barcode — staff scan & redeem")}

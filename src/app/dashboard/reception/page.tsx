@@ -74,7 +74,7 @@ export default async function ReceptionPage({
     const waited = minutesSince(q.joined_at);
     return (
       <li className="soft-card flex items-center gap-3 p-3.5">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-xl font-bold text-white" style={{ background: "linear-gradient(160deg,#a8371a,#661c0a)" }}>
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-xl font-bold text-white" style={{ background: "var(--brand-solid)" }}>
           {toAr(rank)}
         </span>
         <div className="min-w-0 flex-1">
@@ -103,7 +103,7 @@ export default async function ReceptionPage({
           )}
           {q.confirmed_at && (
             <span className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
-              style={{ background: "var(--brand)", color: "#fff" }}>
+              style={{ background: "var(--brand-solid)", color: "#fff" }}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
               {tr(lang, "أكّد حضوره", "Confirmed")}
             </span>
@@ -144,7 +144,7 @@ export default async function ReceptionPage({
         {activeBranch && (
           <a href={`/tv/${activeBranch.id}`} target="_blank" rel="noreferrer"
              className="rounded-2xl px-4 py-2.5 text-sm font-extrabold text-white"
-             style={{ background: "linear-gradient(150deg,#b23c1d,#661c0a)" }}>
+             style={{ background: "var(--brand-solid)" }}>
             📺 {tr(lang, "شاشة العرض", "TV display")}
           </a>
         )}

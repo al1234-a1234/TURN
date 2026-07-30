@@ -169,7 +169,7 @@ export default async function OffersPage({ searchParams }: { searchParams: Promi
                   <div className="flex items-start gap-3">
                     <span
                       className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl font-display font-bold text-white"
-                      style={{ background: o.is_active ? "linear-gradient(160deg,#a8371a,#661c0a)" : "var(--muted)" }}
+                      style={{ background: o.is_active ? "var(--brand-solid)" : "var(--muted)" }}
                     >
                       <span className="text-lg leading-none">{offerValueText(o, lang)}</span>
                     </span>

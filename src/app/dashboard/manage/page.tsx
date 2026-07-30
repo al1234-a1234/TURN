@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { IconPin } from "@/components/icons";
 import { ImageUploader } from "@/components/image-uploader";
 import { updateRestaurantInfo, updateBranchSettings, addBranch, deleteBranch } from "./actions";
 import { MenuManager } from "./menu-manager";
@@ -201,7 +202,7 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
           <ul className="mb-4 space-y-2">
             {branchList.map((b) => (
               <li key={b.id} className={`${inputDark} flex items-center gap-3`} style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[color:var(--sage)] text-brand-700">📍</span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl text-white" style={{ background: "var(--brand-solid)" }}><IconPin size={18} /></span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-bold text-[color:var(--ink)]">{b.name}</p>
                   <p className="truncate text-xs text-[color:var(--muted)]">{[b.city, b.address].filter(Boolean).join(" · ") || "—"}</p>

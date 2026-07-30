@@ -9,7 +9,7 @@ import { BrandMark } from "@/components/brand";
 export default function GlobalError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
     <div className="flex min-h-full flex-1 flex-col items-center justify-center px-6 text-center">
-      <span className="flex h-20 w-20 items-center justify-center rounded-3xl" style={{ background: "linear-gradient(160deg, #b23c1d 0%, #8a2a14 58%, #661c0a 100%)" }}>
+      <span className="flex h-20 w-20 items-center justify-center rounded-3xl" style={{ background: "var(--brand-solid)" }}>
         <BrandMark size={48} />
       </span>
       <h1 className="mt-6 font-display text-2xl font-bold text-[color:var(--ink)]">صار خلل مؤقت</h1>

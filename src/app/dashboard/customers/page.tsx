@@ -143,7 +143,7 @@ export default async function CustomersPage({
                 href={hrefFor(s)}
                 className="shrink-0 rounded-2xl px-3.5 py-2 text-sm font-extrabold transition active:scale-[0.97]"
                 style={active
-                  ? { background: "linear-gradient(150deg,#b23c1d,#661c0a)", color: "#fff", boxShadow: "0 10px 20px -14px rgba(102,28,10,0.7)" }
+                  ? { background: "var(--brand-solid)", color: "#fff", boxShadow: "0 10px 20px -14px rgba(102,28,10,0.7)" }
                   : { background: "var(--surface-2)", color: "var(--ink)", border: "1px solid rgba(102,28,10,0.12)" }}
               >
                 {tr(lang, SEG_LABEL[s].ar, SEG_LABEL[s].en)}
@@ -190,7 +190,7 @@ export default async function CustomersPage({
                         <p className="truncate font-bold text-brand-700 underline decoration-brand-700/40 decoration-2 underline-offset-4">{name}</p>
                         <span aria-hidden className="shrink-0 text-[11px] text-brand-700 opacity-70">↗</span>
                         {p.is_vip && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold" style={{ background: "#f8e9e3", color: "#661c0a" }}>VIP</span>}
-                        {giftedIds.has(p.customer_id) && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold" style={{ background: "var(--brand)", color: "#fff" }}>🎁 {tr(lang, "هدية فعّالة", "Active gift")}</span>}
+                        {giftedIds.has(p.customer_id) && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold" style={{ background: "var(--brand-solid)", color: "#fff" }}>🎁 {tr(lang, "هدية فعّالة", "Active gift")}</span>}
                         {p.is_blocked && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold text-white" style={{ background: "var(--st-closed)" }}>{tr(lang, "محظور", "Blocked")}</span>}
                       </div>
                       <p className="text-sm text-[color:var(--muted)]" dir="ltr">{c?.phone ?? "—"}</p>

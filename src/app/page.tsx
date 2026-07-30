@@ -1,4 +1,5 @@
 import { getDiscovery, getHomeQueueCounts } from "@/lib/supabase/public-cache";
+import { IconPlate } from "@/components/icons";
 import { CustomerShell } from "@/components/customer-shell";
 import { DiscoveryList } from "./discovery-list";
 import { getLang } from "@/lib/i18n-server";
@@ -70,7 +71,7 @@ export default async function Home() {
     <CustomerShell active="restaurants">
       {withStatus.length === 0 ? (
         <div className="rq-card p-10 text-center text-[color:var(--muted)]">
-          <span className="text-4xl">🍽️</span>
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full text-white" style={{ background: "var(--brand-solid)" }}><IconPlate size={26} /></span>
           <p className="mt-3 text-sm">{tr(lang, "لا توجد مطاعم متاحة بعد.", "No restaurants available yet.")}</p>
         </div>
       ) : (
