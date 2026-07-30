@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toAr } from "@/lib/format";
 import { tr, type Lang } from "@/lib/i18n";
 import type { DiscoveryOffer } from "@/lib/supabase/public-cache";
@@ -15,52 +15,141 @@ function offerBadge(o: DiscoveryOffer, lang: Lang): string {
   return "★";
 }
 
+/**
+ * بانر العروض الحيّة — يتنقّل بنفسه (مثل بونات/كوينز): شريحة كاملة العرض
+ * بصورة يرفعها ناشر العرض، تتقدّم كل ٥ ثوانٍ وتتوقّف عند لمس العميل
+ * وعند مغادرة الشاشة. بلا صورة تُعرض شريحة بلون الهوية — لا عرض يضيع.
+ */
 function OffersRail({ offers, lang }: { offers: DiscoveryOffer[]; lang: Lang }) {
-  if (offers.length === 0) return null;
+  const railRef = useRef<HTMLDivElement | null>(null);
+  const idxRef = useRef(0);
+  const holdRef = useRef(0); // آخر تفاعل يدوي — نمهله ٨ ثوانٍ قبل استئناف التنقّل
+  const [dot, setDot] = useState(0);
+  const n = offers.length;
+
+  useEffect(() => {
+    if (n < 2) return;
+    const timer = setInterval(() => {
+      const el = railRef.current;
+      if (!el || document.hidden) return;
+      if (Date.now() - holdRef.current < 8000) return;
+      const next = (idxRef.current + 1) % n;
+      idxRef.current = next;
+      setDot(next);
+      el.children[next]?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [n]);
+
+  // مزامنة النقاط مع السحب اليدوي: أقرب شريحة لمركز الشريط هي الحاليّة
+  const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function onScroll() {
+    holdRef.current = Date.now();
+    if (syncTimer.current) clearTimeout(syncTimer.current);
+    syncTimer.current = setTimeout(() => {
+      const el = railRef.current;
+      if (!el) return;
+      const mid = el.getBoundingClientRect().left + el.clientWidth / 2;
+      let best = 0;
+      let bestDist = Infinity;
+      Array.from(el.children).forEach((c, i) => {
+        const r = (c as HTMLElement).getBoundingClientRect();
+        const d = Math.abs(r.left + r.width / 2 - mid);
+        if (d < bestDist) { bestDist = d; best = i; }
+      });
+      idxRef.current = best;
+      setDot(best);
+    }, 120);
+  }
+
+  if (n === 0) return null;
+
   return (
     <section>
       <div className="mb-2 mt-1 flex items-center gap-2 px-1">
         <span className="h-4 w-1 rounded-full" style={{ background: "var(--brand-d)" }} />
         <h2 className="font-display text-[15px] font-bold text-[color:var(--brand-d)]">{tr(lang, "عروض حيّة", "Live offers")}</h2>
-        <span className="text-[12px] font-bold text-[color:var(--muted)]">{toAr(offers.length)}</span>
+        <span className="text-[12px] font-bold text-[color:var(--muted)]">{toAr(n)}</span>
       </div>
-      <div className="-mx-5 flex gap-2.5 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+
+      <div
+        ref={railRef}
+        onScroll={onScroll}
+        onPointerDown={() => { holdRef.current = Date.now(); }}
+        className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {offers.map((o) => {
           const initial = (o.restaurant.name ?? "").trim().charAt(0) || "م";
+          const chip = (
+            <span className="flex items-center gap-1.5 rounded-full bg-white/95 py-1 pe-2.5 ps-1">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-800 font-serif text-[9px] font-bold text-cream-100">
+                {o.restaurant.logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={o.restaurant.logo_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  initial
+                )}
+              </span>
+              <span className="max-w-[9rem] truncate text-[11px] font-extrabold" style={{ color: "var(--brand-d)" }}>{o.restaurant.name}</span>
+            </span>
+          );
           return (
             <Link
               key={o.id}
               href={`/r/${o.restaurant.slug}`}
-              className="flex w-[172px] shrink-0 flex-col gap-2 rounded-2xl bg-white p-3 transition active:scale-[0.98]"
-              style={{ border: "1px solid rgba(102,28,10,0.12)", boxShadow: "0 8px 18px -16px rgba(102,28,10,0.4)" }}
+              className="relative block h-44 w-full shrink-0 snap-center overflow-hidden rounded-3xl transition active:scale-[0.99]"
+              style={{ background: "var(--brand-sheen), var(--brand-solid)", boxShadow: "0 14px 28px -18px rgba(58,18,6,0.55)" }}
             >
-              <div className="flex items-center justify-between gap-2">
-                <span
-                  className="rounded-xl px-2.5 py-1 font-display text-sm font-extrabold text-white"
-                  style={{ background: "var(--brand-solid)" }}
-                >
-                  {offerBadge(o, lang)}
-                </span>
-                {o.code && (
-                  <span dir="ltr" className="truncate rounded-md px-1.5 py-0.5 text-[10px] font-extrabold" style={{ color: "var(--brand-d)", background: "rgba(102,28,10,0.08)" }}>{o.code}</span>
-                )}
-              </div>
-              <p className="line-clamp-2 text-[13px] font-bold leading-snug text-[color:var(--ink)]">{o.title}</p>
-              <div className="mt-auto flex items-center gap-1.5">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-800 font-serif text-[9px] font-bold text-cream-100">
-                  {o.restaurant.logo_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={o.restaurant.logo_url} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    initial
+              {o.image_url && (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={o.image_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+                  <span className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(20,6,2,0.78) 0%, rgba(20,6,2,0.18) 55%, rgba(20,6,2,0.05) 100%)" }} aria-hidden />
+                </>
+              )}
+
+              <div className="absolute inset-0 flex flex-col justify-between p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <span
+                    className="rounded-xl px-2.5 py-1 font-display text-sm font-extrabold text-white"
+                    style={{ background: "var(--brand-sheen), var(--brand-solid)", boxShadow: "0 6px 14px -8px rgba(20,6,2,0.7)" }}
+                  >
+                    {offerBadge(o, lang)}
+                  </span>
+                  {o.code && (
+                    <span dir="ltr" className="rounded-lg bg-white/95 px-2 py-1 text-[11px] font-extrabold tracking-wide" style={{ color: "var(--brand-d)" }}>{o.code}</span>
                   )}
-                </span>
-                <span className="truncate text-[11px] font-bold text-[color:var(--muted)]">{o.restaurant.name}</span>
+                </div>
+                <div className="space-y-1.5">
+                  <p className="line-clamp-2 font-display text-lg font-extrabold leading-snug text-white" style={{ textShadow: "0 2px 10px rgba(20,6,2,0.5)" }}>{o.title}</p>
+                  {!o.image_url && o.description && (
+                    <p className="line-clamp-1 text-[12px] font-bold text-white/85">{o.description}</p>
+                  )}
+                  <div className="flex items-center justify-between gap-2">
+                    {chip}
+                    <span className="text-[11px] font-extrabold text-white/90">{tr(lang, "خذ دورك ←", "Take your turn ←")}</span>
+                  </div>
+                </div>
               </div>
             </Link>
           );
         })}
       </div>
+
+      {n > 1 && (
+        <div className="mt-2 flex items-center justify-center gap-1.5" aria-hidden>
+          {offers.map((o, i) => (
+            <span
+              key={o.id}
+              className="h-1.5 rounded-full transition-all duration-300"
+              style={{
+                width: i === dot ? 18 : 6,
+                background: i === dot ? "var(--brand-solid)" : "rgba(102,28,10,0.22)",
+              }}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

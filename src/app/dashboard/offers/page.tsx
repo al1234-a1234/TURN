@@ -5,6 +5,7 @@ import { resolveBranchScope, NO_BRANCH } from "../branch-scope";
 import { BranchPicker } from "../branch-picker";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { createOffer, deleteOffer } from "./actions";
+import { ImageUploader } from "@/components/image-uploader";
 import { OfferToggle } from "./offer-toggle";
 import { toAr, money } from "@/lib/format";
 import { tr, type Lang } from "@/lib/i18n";
@@ -55,7 +56,7 @@ export default async function OffersPage({ searchParams }: { searchParams: Promi
   const lang = await getLang();
   const load = await loadOwner();
   if (load.state !== "ok") return null;
-  const { supabase, modules, role, permissions } = load.ctx;
+  const { supabase, modules, role, permissions, restaurant } = load.ctx;
   // العروض صارت لكل فرع على حدة
   const scope = await resolveBranchScope(load.ctx, (await searchParams).branch);
   const activeBranchId = scope.active?.id ?? NO_BRANCH;
@@ -103,6 +104,13 @@ export default async function OffersPage({ searchParams }: { searchParams: Promi
               <label className="field-label">{tr(lang, "الوصف (اختياري)", "Description (optional)")}</label>
               <textarea name="description" rows={2} placeholder={tr(lang, "تفاصيل العرض وشروطه…", "Offer details and terms…")} className={field} />
             </div>
+            {/* صورة البانر — تجعل العرض «حيًّا» في شريط الرئيسية المتحرّك */}
+            <ImageUploader
+              restaurantId={restaurant.id}
+              name="image_url"
+              label={tr(lang, "صورة العرض (اختياري) — تظهر بانرًا في الرئيسية", "Offer image (optional) — shown as a home banner")}
+              shape="wide"
+            />
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label className="field-label">{tr(lang, "نوع العرض", "Offer type")}</label>
@@ -168,10 +176,15 @@ export default async function OffersPage({ searchParams }: { searchParams: Promi
                 <li key={o.id} className="soft-card p-4">
                   <div className="flex items-start gap-3">
                     <span
-                      className="flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-2xl font-display font-bold text-white"
+                      className="flex h-14 w-14 shrink-0 flex-col items-center justify-center overflow-hidden rounded-2xl font-display font-bold text-white"
                       style={{ background: o.is_active ? "var(--brand-solid)" : "var(--muted)" }}
                     >
-                      <span className="text-lg leading-none">{offerValueText(o, lang)}</span>
+                      {o.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={o.image_url} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-lg leading-none">{offerValueText(o, lang)}</span>
+                      )}
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-bold text-[color:var(--ink)]">{o.title}</p>

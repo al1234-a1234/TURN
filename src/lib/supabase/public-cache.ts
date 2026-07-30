@@ -39,6 +39,8 @@ export type DiscoveryOffer = {
   value: number | null;
   code: string | null;
   ends_at: string | null;
+  description: string | null;
+  image_url: string | null;
   restaurant: { name: string; slug: string; logo_url: string | null };
 };
 
@@ -74,7 +76,7 @@ export const getDiscovery = unstable_cache(
         sb.from("reviews").select("restaurant_id, rating").eq("is_published", true).in("restaurant_id", ids),
         sb
           .from("offers")
-          .select("id, title, kind, value, code, ends_at, restaurant_id")
+          .select("id, title, kind, value, code, ends_at, description, image_url, restaurant_id")
           .eq("is_active", true)
           .in("audience", ["all", "new"])
           .in("restaurant_id", ids)
@@ -102,13 +104,14 @@ export const getDiscovery = unstable_cache(
           seen.add(key);
           return [{
             id: o.id, title: o.title, kind: o.kind, value: o.value, code: o.code, ends_at: o.ends_at,
+            description: o.description, image_url: o.image_url,
             restaurant: r,
           }];
         });
     }
     return { list, ratings, offers };
   },
-  ["discovery-v3"],
+  ["discovery-v4"],
   { revalidate: 30, tags: ["discovery"] },
 );
 

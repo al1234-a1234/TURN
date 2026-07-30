@@ -42,6 +42,7 @@ export async function createOffer(formData: FormData) {
     value: kind === "free_item" || kind === "bogo" ? null : toNumberOrNull(formData.get("value")),
     code: String(formData.get("code") ?? "").trim().toUpperCase() || null,
     audience,
+    image_url: String(formData.get("image_url") ?? "").trim() || null,
     ends_at: startRaw ? new Date(startRaw).toISOString() : null,
     total_limit: toNumberOrNull(formData.get("total_limit")),
     per_customer_limit: toNumberOrNull(formData.get("per_customer_limit")) ?? 1,

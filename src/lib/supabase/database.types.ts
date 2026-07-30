@@ -783,6 +783,7 @@ export type Database = {
           description: string | null
           ends_at: string | null
           id: string
+          image_url: string | null
           is_active: boolean
           kind: Database["public"]["Enums"]["offer_kind"]
           per_customer_limit: number
@@ -803,6 +804,7 @@ export type Database = {
           description?: string | null
           ends_at?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
           kind: Database["public"]["Enums"]["offer_kind"]
           per_customer_limit?: number
@@ -823,6 +825,7 @@ export type Database = {
           description?: string | null
           ends_at?: string | null
           id?: string
+          image_url?: string | null
           is_active?: boolean
           kind?: Database["public"]["Enums"]["offer_kind"]
           per_customer_limit?: number
