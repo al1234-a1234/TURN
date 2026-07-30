@@ -15,11 +15,14 @@ export function RewardQr({ code, size = 168 }: { code: string; size?: number }) 
 
   useEffect(() => {
     let alive = true;
+    // أسود صريح على أبيض مصمت — كان بلون الهوية البني على خلفية شفافة،
+    // «أجمل» لكنه أضعف تباينًا فيرفض المسح على شاشات وإضاءات كثيرة.
+    // الهوية مكانها حول الباركود لا داخله؛ داخل الباركود الوضوح ملك.
     QRCode.toString(rewardPayload(code), {
       type: "svg",
-      margin: 1,
+      margin: 2,
       errorCorrectionLevel: "M",
-      color: { dark: "#661c0a", light: "#00000000" },
+      color: { dark: "#000000", light: "#ffffff" },
     }).then((s) => { if (alive) setSvg(s); }).catch(() => {});
     return () => { alive = false; };
   }, [code]);

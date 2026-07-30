@@ -111,7 +111,7 @@ export async function OwnerShell({
       <div className="flex items-center justify-between gap-3 px-4 py-2 text-white" style={{ background: "linear-gradient(90deg,#661c0a,#a8371a)" }}>
         <span className="flex items-center gap-2 text-xs font-bold sm:text-sm">
           <span>🛡️</span>
-          {tr(lang, `وضع المشرف — تعرض «${restaurant.name}»`, `Admin view — showing “${restaurant.name}”`)}
+          {tr(lang, `وضع المشرف — تعرض «${restaurant.name}» بكل فروعه (حسابات الفروع ترى فرعها فقط)`, `Admin view — showing “${restaurant.name}” with all branches (branch accounts see only theirs)`)}
         </span>
         <div className="flex items-center gap-2">
           <Link href="/admin" className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold ring-1 ring-white/25 transition hover:bg-white/25">

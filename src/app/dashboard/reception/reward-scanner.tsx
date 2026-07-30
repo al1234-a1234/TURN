@@ -27,6 +27,11 @@ export function RewardScanner({ lang, onCode }: { lang: Lang; onCode: (code: str
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number>(0);
   const doneRef = useRef(false);
+  // مرجع ثابت للنداء: الأب يعيد الريندر كل نبضة تحديث (١٠ث) فتتغيّر هوية
+  // onCode ويُعاد تشغيل تأثير الكاميرا — كانت الكاميرا تنطفئ وتشتغل كل
+  // ١٠ ثوانٍ في وجه المستخدم وتبدو «ما تضبط».
+  const onCodeRef = useRef(onCode);
+  onCodeRef.current = onCode;
 
   const stop = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
@@ -64,28 +69,34 @@ export function RewardScanner({ lang, onCode }: { lang: Lang; onCode: (code: str
           if (!code || doneRef.current) return;
           doneRef.current = true;
           try { navigator.vibrate?.(80); } catch { /* تجاهُل */ }
-          onCode(code);
+          onCodeRef.current(code);
           stop();
         };
 
+        // بلا هذا الحارس كانت rAF تكدّس عشرات نداءات detect المتوازية
+        // (كلٌّ منها async) فتختنق بعض أجهزة أندرويد ويتجمّد الفكّ.
+        let busy = false;
         const tick = async () => {
           if (!alive || doneRef.current) return;
-          if (video.readyState >= 2) {
+          if (video.readyState >= 2 && !busy) {
+            busy = true;
             if (native) {
               try {
                 const hits = await native.detect(video);
                 for (const h of hits) found(h.rawValue);
               } catch { /* إطار فاسد — نكمل */ }
             } else if (ctx) {
-              // سفاري: فكّ يدوي عبر jsQR — بدقة مخفّضة لثبات الأداء على آيباد
-              const w = 480;
-              const h = Math.round((video.videoHeight / video.videoWidth) * w) || 360;
+              // سفاري: فكّ يدوي عبر jsQR — دقة متوسطة توازن الالتقاط والأداء
+              const w = 640;
+              const h = Math.round((video.videoHeight / video.videoWidth) * w) || 480;
               canvas.width = w; canvas.height = h;
               ctx.drawImage(video, 0, 0, w, h);
               const img = ctx.getImageData(0, 0, w, h);
-              const hit = jsQR(img.data, w, h, { inversionAttempts: "dontInvert" });
+              // attemptBoth: شاشة عميل بالوضع الليلي تعرض الباركود معكوسًا
+              const hit = jsQR(img.data, w, h, { inversionAttempts: "attemptBoth" });
               if (hit?.data) found(hit.data);
             }
+            busy = false;
           }
           rafRef.current = requestAnimationFrame(tick);
         };
@@ -99,7 +110,7 @@ export function RewardScanner({ lang, onCode }: { lang: Lang; onCode: (code: str
     })();
 
     return () => { alive = false; cancelAnimationFrame(rafRef.current); streamRef.current?.getTracks().forEach((t) => t.stop()); streamRef.current = null; };
-  }, [open, lang, onCode, stop]);
+  }, [open, lang, stop]);
 
   if (!open) {
     return (

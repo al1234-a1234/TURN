@@ -193,7 +193,7 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
       {r.closedNow ? (
         <div
           className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-          style={{ background: "#6b6b6b" }}
+          style={{ background: "var(--brand-d)" }}
         >
           <span className="flex items-center gap-2 text-sm font-extrabold text-white">
             <span className="h-2.5 w-2.5 rounded-full bg-white/80" />

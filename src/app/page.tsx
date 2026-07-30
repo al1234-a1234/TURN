@@ -24,25 +24,43 @@ export default async function Home() {
   );
 
   const withStatus = list.map((r) => {
-    const b = (r.branches ?? [])[0];
-    const c = b?.id ? counts.get(b.id) : undefined;
-    const settings = Array.isArray(b?.branch_settings) ? b?.branch_settings[0] : b?.branch_settings;
-    const accepts = settings?.accepts_waitlist ?? true;
-    const closedNow = (settings?.manually_closed ?? false) || !isWithinOpeningHours(settings?.opening_hours ?? null);
-    const busyNow = settings?.busy_now ?? false;
+    // مطعم متعدد الفروع: البطاقة كانت تمثّل أول فرع فقط — فرعٌ فيه طابور
+    // وفرعٌ آخر فاضي كانت تعرضه «فيه طابور» والعميل ينصدّ وهو يقدر يدخل
+    // الفرع الفاضي على طول. القاعدة الآن: أي فرع مفتوح متاح ← المطعم متاح؛
+    // وإلا نعرض أقصر طابور بين الفروع المفتوحة؛ ومغلق فقط إذا أغلقت كلها.
+    const decorated = (r.branches ?? []).map((b) => {
+      const s = Array.isArray(b.branch_settings) ? b.branch_settings[0] : b.branch_settings;
+      const c = counts.get(b.id);
+      return {
+        b,
+        total: c?.total ?? 0,
+        inside: c?.inside ?? 0,
+        outside: c?.outside ?? 0,
+        accepts: s?.accepts_waitlist ?? true,
+        busy: s?.busy_now ?? false,
+        closed: (s?.manually_closed ?? false) || !isWithinOpeningHours(s?.opening_hours ?? null),
+      };
+    });
+    const open = decorated.filter((d) => !d.closed);
+    // «متاح» = طابوره صفر، أو لا يستخدم نظام الطابور أصلًا (استقبال مباشر)
+    const free = open.find((d) => d.total === 0 || !d.accepts);
+    const shortest = open.length
+      ? open.reduce((min, d) => (d.total < min.total ? d : min), open[0])
+      : null;
+    const best = free ?? shortest ?? decorated[0];
     const ra = ratingAgg.get(r.id);
     const rating = ra && ra.n > 0 ? (Math.round((ra.sum / ra.n) * 10) / 10).toFixed(1) : null;
     return {
       ...r,
-      city: b?.city ?? "",
-      lat: b?.lat ?? null,
-      lng: b?.lng ?? null,
-      waiting: c?.total ?? 0,
-      inside: c?.inside ?? 0,
-      outside: c?.outside ?? 0,
-      accepts,
-      closedNow,
-      busyNow,
+      city: best?.b.city ?? "",
+      lat: best?.b.lat ?? null,
+      lng: best?.b.lng ?? null,
+      waiting: best?.total ?? 0,
+      inside: best?.inside ?? 0,
+      outside: best?.outside ?? 0,
+      accepts: best?.accepts ?? true,
+      closedNow: open.length === 0,
+      busyNow: best?.busy ?? false,
       rating,
       branchCount: (r.branches ?? []).length,
     };
