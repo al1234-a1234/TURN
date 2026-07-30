@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Tajawal, Almarai, Playfair_Display, Libre_Baskerville } from "next/font/google";
+import { Tajawal, Almarai, Libre_Baskerville } from "next/font/google";
 import "./globals.css";
 import { getLang } from "@/lib/i18n-server";
 import { dirOf } from "@/lib/i18n";
@@ -25,13 +25,6 @@ const almarai = Almarai({
   variable: "--font-almarai",
   subsets: ["arabic"],
   weight: ["300", "400", "700", "800"],
-  display: "swap",
-});
-
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
-  subsets: ["latin"],
-  weight: ["600", "700"],
   display: "swap",
 });
 
@@ -66,7 +59,7 @@ export default async function RootLayout({
     <html
       lang={lang}
       dir={dirOf(lang)}
-      className={`${tajawal.variable} ${almarai.variable} ${playfair.variable} ${baskerville.variable} h-full antialiased`}
+      className={`${tajawal.variable} ${almarai.variable} ${baskerville.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
         <LangProvider lang={lang}>{children}</LangProvider>

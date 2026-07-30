@@ -27,6 +27,28 @@ export function ImageUploader({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  /** تصغير الصورة قبل الرفع: صورة جوال خام (5MB) كانت تُخزَّن وتُنزَّل كما
+      هي على كل زائر — أكبر مستهلك بيانات وبطء في الرئيسية وصفحة المطعم.
+      نصغّر لأبعاد العرض الفعلية ونحوّل WebP. أي فشل → نرفع الأصل كما كان. */
+  async function compress(file: File): Promise<{ blob: Blob; type: string; ext: string }> {
+    const MAX = shape === "wide" ? 1600 : 800; // غلاف عريض يحتاج دقة أعلى من شعار
+    try {
+      const bmp = await createImageBitmap(file);
+      const scale = Math.min(1, MAX / Math.max(bmp.width, bmp.height));
+      // صغيرة أصلًا وليست PNG ضخمة؟ ارفعها كما هي
+      if (scale === 1 && file.size < 400 * 1024) return { blob: file, type: file.type, ext: "" };
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(bmp.width * scale);
+      canvas.height = Math.round(bmp.height * scale);
+      canvas.getContext("2d")!.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/webp", 0.85));
+      if (blob && blob.size < file.size) return { blob, type: "image/webp", ext: "webp" };
+      return { blob: file, type: file.type, ext: "" };
+    } catch {
+      return { blob: file, type: file.type, ext: "" };
+    }
+  }
+
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -43,17 +65,18 @@ export function ImageUploader({
       setErr(tr(lang, "صيغة غير مدعومة (JPG/PNG/WebP فقط)", "Unsupported format (JPG/PNG/WebP only)"));
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setErr(tr(lang, "الحد الأقصى 5MB", "Max size 5MB"));
+    if (file.size > 15 * 1024 * 1024) {
+      setErr(tr(lang, "الحد الأقصى 15MB", "Max size 15MB"));
       return;
     }
     setBusy(true);
     setErr(null);
+    const up = await compress(file);
     const supabase = createClient();
-    const path = `restaurants/${restaurantId}/${name}-${crypto.randomUUID()}.${ext}`;
+    const path = `restaurants/${restaurantId}/${name}-${crypto.randomUUID()}.${up.ext || ext}`;
     const { error } = await supabase.storage
       .from("media")
-      .upload(path, file, { upsert: true, cacheControl: "3600", contentType: file.type });
+      .upload(path, up.blob, { upsert: true, cacheControl: "3600", contentType: up.type });
     if (error) {
       setErr(tr(lang, "تعذّر رفع الصورة", "Failed to upload image"));
       setBusy(false);

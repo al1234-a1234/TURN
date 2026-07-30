@@ -106,10 +106,14 @@ h1, h2, h3, h4 {
 }
 
 /* أزرار دائرية بيضاء ناعمة على الهيدر */
+/* موحَّد هندسيًّا مع زر القائمة/الشعار (h-11 w-11 rounded-2xl bg-white/15
+   ring-white/25) — كانا شكلين مختلفين (مربع ناعم يمين ودائرة أكبر يسار)
+   فبان الهيدر غير متناظر. مصدر واحد للمقاس والشكل. */
 .rq-circle {
   display: inline-flex; align-items: center; justify-content: center;
-  height: 3.1rem; width: 3.1rem; border-radius: 999px;
-  background: rgba(255,255,255,0.16);
+  height: 2.75rem; width: 2.75rem; border-radius: 1rem;
+  background: rgba(255,255,255,0.15);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25);
   color: #fff;
   border: 1px solid rgba(255,255,255,0.22);
   transition: background .2s;

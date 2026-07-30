@@ -14,6 +14,31 @@ import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 import { fmtDate, fmtDayShort, isWithinOpeningHours } from "@/lib/dates";
+import type { Metadata } from "next";
+
+/* معاينة المشاركة: رابط المطعم في واتساب/تويتر كان يظهر بعنوان «دور | Turn»
+   العام بلا اسم ولا شعار — هنا يظهر اسم المطعم وشعاره، فيصير الرابط الذي
+   يوزّعه صاحب المطعم لعملائه دعاية له لا لنا فقط. */
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createClient();
+  const { data: r } = await supabase
+    .from("restaurants")
+    .select("name, cuisine, logo_url, cover_url")
+    .eq("slug", slug)
+    .eq("is_active", true)
+    .maybeSingle();
+  if (!r) return { title: "دور | Turn" };
+  const title = `${r.name} | دور`;
+  const description = `خذ دورك في ${r.name}${r.cuisine ? ` — ${r.cuisine}` : ""} بلا انتظار على الباب. شوف الطابور الحيّ والقائمة والعروض.`;
+  const image = r.cover_url ?? r.logo_url;
+  return {
+    title,
+    description,
+    openGraph: { title, description, ...(image ? { images: [image] } : {}) },
+    twitter: { card: image ? "summary_large_image" : "summary", title, description },
+  };
+}
 
 export default async function RestaurantPublicPage({
   params,

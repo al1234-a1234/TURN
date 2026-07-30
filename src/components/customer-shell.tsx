@@ -65,6 +65,8 @@ const DRAWER = [
   { label: "الإعدادات", en: "Settings", href: "/me" },
   { label: "من نحن", en: "About Us", href: "/about" },
   { label: "تواصل معنا", en: "Contact Us", href: "/contact" },
+  { label: "سياسة الخصوصية", en: "Privacy Policy", href: "/privacy" },
+  { label: "شروط الاستخدام", en: "Terms of Use", href: "/terms" },
 ];
 
 export function CustomerShell({

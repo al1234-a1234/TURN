@@ -74,6 +74,11 @@ export function StatusToggle({
           {tr(lang, "⏱ خارج أوقات الدوام المضبوطة — يظهر للعميل مغلقًا تلقائيًا", "⏱ Outside configured hours — customers see it as closed automatically")}
         </span>
       )}
+      {closed && (
+        <span className="text-xs font-bold" style={{ color: "var(--muted)" }}>
+          {tr(lang, "أمان النسيان: يُفتح تلقائيًّا فجر كل يوم", "Forget-safe: reopens automatically at dawn daily")}
+        </span>
+      )}
     </div>
   );
 }

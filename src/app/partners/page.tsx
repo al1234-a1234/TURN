@@ -29,6 +29,29 @@ function PartnersLogin() {
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetMsg, setResetMsg] = useState<string | null>(null);
+
+  /** استعادة ذاتية لكلمة المرور — بلا هذي كان الناسي يرجع للأدمِن (تبعية). */
+  async function handleForgot() {
+    setError(null);
+    setResetMsg(null);
+    const user = username.trim().toLowerCase();
+    if (!user) {
+      setResetMsg(tr(lang, "اكتب اسم المستخدم (الإيميل) فوق أولًا، ثم اضغط «نسيت كلمة المرور».", "Enter your username (email) above first, then tap “Forgot password”."));
+      return;
+    }
+    if (!user.includes("@")) {
+      // حسابات بلا إيميل حقيقي (اسم مستخدم داخلي) لا يصلها بريد أصلًا
+      setResetMsg(tr(lang, "حسابك باسم مستخدم داخلي بلا إيميل — يعيد تعيينه مالك المطعم من صفحة «الموظفون»، أو إدارة دور.", "Your account uses an internal username without an email — the restaurant owner can reset it from the Staff page, or the Turn team."));
+      return;
+    }
+    const supabase = createClient();
+    await supabase.auth.resetPasswordForEmail(user, {
+      redirectTo: `${window.location.origin}/reset`,
+    });
+    // نفس الرسالة وُجد الحساب أو لا — لا نكشف أي الإيميلات مسجَّلة عندنا
+    setResetMsg(tr(lang, "إن كان الإيميل مسجَّلًا عندنا وصلك رابط تعيين كلمة مرور جديدة — افحص الوارد والمزعج.", "If this email is registered, a reset link is on its way — check your inbox and spam."));
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -125,9 +148,18 @@ function PartnersLogin() {
               {error}
             </p>
           )}
+          {resetMsg && (
+            <p className="rounded-2xl border border-[rgba(201,169,97,0.4)] bg-[rgba(201,169,97,0.08)] px-4 py-3 text-sm font-medium text-[color:var(--ink)]">
+              {resetMsg}
+            </p>
+          )}
 
           <button type="submit" disabled={loading} className="btn btn-primary w-full">
             {loading ? tr(lang, "جارٍ الدخول…", "Signing in…") : tr(lang, "دخول", "Sign in")}
+          </button>
+
+          <button type="button" onClick={handleForgot} className="w-full text-center text-sm font-bold text-[color:var(--muted)] underline underline-offset-4">
+            {tr(lang, "نسيت كلمة المرور؟", "Forgot password?")}
           </button>
         </form>
 
