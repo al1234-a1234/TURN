@@ -255,11 +255,13 @@ export function WaitlistForm({
       },
       (err) => {
         // رفض صريح (code 1) غير التعذّر المؤقت (GPS/مهلة) — رسالتان مختلفتان.
-        // وأيًّا كان: نُبرز الصندوق فورًا كي لا تبدو الضغطة «ميتة».
+        // وأيًّا كان: نُبرز الرسالة فورًا كي لا تبدو الضغطة «ميتة».
         setGeo(err.code === 1 ? "denied" : "failed");
         requestAnimationFrame(() => geoBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }));
       },
-      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 60_000 },
+      // موقع تقريبي عمدًا (بلا GPS دقيق): يكفينا حساب مسافة بالكيلو/المتر،
+      // وأسرع استجابةً وأخف على خصوصية العميل.
+      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
     );
   }
   const branch = useMemo(() => branches.find((b) => b.id === branchId), [branchId, branches]);
@@ -431,46 +433,34 @@ export function WaitlistForm({
         </p>
       )}
 
-      {/* حالة الموقع — تظهر عند الرفض أو التعذّر، مع خطوات الحل لا مجرد الخبر */}
+      {/* رسالة الرفض/التعذّر — اعتذار قصير، والحل: نفس زر «خذ دورك الآن»
+          يعيد إظهار نافذة السماح الأصلية (كروم/سفاري) مع كل ضغطة */}
       {(geo === "denied" || geo === "failed" || geo === "unavailable") && (
-        <div ref={geoBoxRef} className="rounded-2xl p-4" style={{ background: "var(--brand-solid)" }}>
+        <div ref={geoBoxRef} className="rounded-2xl p-4 text-center" style={{ background: "var(--brand-solid)" }}>
           <p className="text-sm font-extrabold text-white">
             {geo === "denied"
-              ? tr(lang, "يلزم السماح بالموقع لإكمال حجزك", "Location permission is required to complete your booking")
+              ? tr(lang, "المعذرة — يرجى السماح بالموقع لأخذ دورك", "Sorry — please allow location to take your turn")
               : geo === "failed"
-                ? tr(lang, "تعذّر تحديد موقعك", "We couldn't get your location")
+                ? tr(lang, "تعذّر تحديد موقعك — حاول مرة أخرى", "We couldn't get your location — try again")
                 : tr(lang, "جهازك لا يدعم تحديد الموقع، فلا يمكن أخذ الدور حاليًا", "Your device doesn't support location, so a turn can't be taken right now")}
           </p>
-          {geo === "denied" && (
-            <p className="mt-1.5 text-xs font-medium leading-relaxed text-white/90">
-              {tr(lang,
-                "متصفحك حافظ الرفض السابق، ففعّله يدويًا: آيفون: الإعدادات ← سفاري (أو التطبيق) ← الموقع ← أثناء الاستخدام. أندرويد/كروم: أيقونة القفل بجانب الرابط ← الأذونات ← الموقع ← السماح. ثم اضغط «حاول مرة أخرى».",
-                "Your browser saved the earlier denial — enable it manually: iPhone: Settings → Safari (or the app) → Location → While Using. Android/Chrome: the lock icon by the address → Permissions → Location → Allow. Then tap “Try again”.")}
-            </p>
-          )}
-          {geo === "failed" && (
-            <p className="mt-1.5 text-xs font-medium text-white/90">
-              {tr(lang, "تأكّد أن تحديد الموقع (GPS) شغّال في جهازك وحاول مرة أخرى.", "Make sure GPS is on, then try again.")}
+          {geo !== "unavailable" && (
+            <p className="mt-1.5 text-xs font-bold text-white/90">
+              {tr(lang, "اضغط «خذ دورك الآن» وسيظهر لك طلب السماح من جديد", "Tap “Take your turn now” and the permission prompt will appear again")}
             </p>
           )}
           <p className="mt-1.5 text-xs font-medium text-white/75">
             {tr(lang,
-              "الموقع يؤكّد للمطعم أنك قريب فعلًا. نحسب المسافة فقط ولا نحفظ موقعك.",
-              "Location confirms to the restaurant that you're nearby. We store only the distance, never your location.")}
+              "موقعك التقريبي فقط — يؤكّد للمطعم أنك قريب، ولا نحفظه.",
+              "Approximate location only — it confirms you're nearby, and we never store it.")}
           </p>
-          {geo !== "unavailable" && (
-            <button type="button" onClick={() => askLocation(true)} className="mt-3 w-full rounded-xl px-3 py-2.5 text-sm font-extrabold text-white"
-              style={{ background: "#661c0a" }}>
-              {tr(lang, "حاول مرة أخرى", "Try again")}
-            </button>
-          )}
         </div>
       )}
 
-      {/* لا مفاجآت: نخبره قبل الضغط أن الموقع سيُطلب */}
+      {/* لا مفاجآت: نخبره قبل الضغط أن الموقع التقريبي سيُطلب */}
       {geo === "idle" && !coords && (
         <p className="text-center text-[11px] font-bold text-[color:var(--muted)]">
-          {tr(lang, "عند الضغط سنطلب موقعك — يؤكّد للمطعم أنك قريب فعلًا", "We'll ask for your location — it confirms you're really nearby")}
+          {tr(lang, "عند الضغط سيطلب متصفحك السماح بموقعك التقريبي", "Your browser will ask to share your approximate location")}
         </p>
       )}
 
