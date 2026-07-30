@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { BrandMark } from "@/components/brand";
 import { SharedHeader } from "@/components/page-header";
 import { WaitlistForm } from "./waitlist-form";
-import { OfferClaim } from "./offer-claim";
 import { RestaurantTabs } from "./restaurant-tabs";
 import { QueueTicket } from "./queue-ticket";
 import { Gallery } from "./gallery";
@@ -14,7 +13,7 @@ import { ReviewForm } from "./review-form";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
-import { fmtDate, fmtDayShort, isWithinOpeningHours } from "@/lib/dates";
+import { fmtDate, isWithinOpeningHours } from "@/lib/dates";
 import type { Metadata } from "next";
 
 /* معاينة المشاركة: رابط المطعم في واتساب/تويتر كان يظهر بعنوان «دور | Turn»
@@ -76,16 +75,14 @@ export default async function RestaurantPublicPage({
   const branchList = branches ?? [];
   const branchIdsOrPlaceholder = branchList.map((b) => b.id).length ? branchList.map((b) => b.id) : ["00000000-0000-0000-0000-000000000000"];
 
-  // سبعة استعلامات مستقلة (لا يحتاج أحدها نتيجة الآخر) — موجة واحدة بدل سبع
+  // ستة استعلامات مستقلة (لا يحتاج أحدها نتيجة الآخر) — موجة واحدة بدل ست
   const [
-    { data: categories }, { data: items }, { data: photos }, { data: offers }, { data: reviewRows },
+    { data: categories }, { data: items }, { data: photos }, { data: reviewRows },
     { data: branchPhotos }, { data: countRows },
   ] = await Promise.all([
     supabase.from("menu_categories").select("id, name").eq("branch_id", contentBranchId).order("sort_order").order("created_at"),
     supabase.from("menu_items").select("id, name, price, description, image_url, category_id").eq("branch_id", contentBranchId).eq("is_available", true).order("created_at"),
     supabase.from("restaurant_photos").select("id, url, caption").eq("branch_id", contentBranchId).order("sort_order").order("created_at"),
-    // عروض عامّة فقط للزوّار (الشرائح المستهدفة loyalty/walkaway/slow_hours تصل عبر مكافآت العميل)
-    supabase.from("offers").select("id, title, description, kind, value, code, ends_at").eq("branch_id", contentBranchId).eq("is_active", true) .in("audience", ["all", "new", "slow_hours"]).order("created_at", { ascending: false }),
     // تقييمات حقيقية منشورة (بدل بيانات وهمية)
     supabase.from("reviews").select("rating, comment, created_at, customers(full_name)").eq("restaurant_id", restaurant.id).eq("is_published", true).order("created_at", { ascending: false }).limit(200),
     // صورة لكل فرع (صارت لكل فرع بعد المرحلة ٢) — يعرضها شريط الفروع
@@ -234,7 +231,7 @@ export default async function RestaurantPublicPage({
           {waitlistPanel}
         </RestaurantTabs>
 
-        <OffersSection offers={(offers ?? []) as OfferLite[]} lang={lang} />
+        <GiftsSection lang={lang} />
 
         <Gallery photos={photos ?? []} label={tr(lang, "صور من المطعم", "Photos from the restaurant")} />
 
@@ -244,58 +241,12 @@ export default async function RestaurantPublicPage({
   );
 }
 
-type OfferLite = {
-  id: string;
-  title: string;
-  description: string | null;
-  kind: string;
-  value: number | null;
-  code: string | null;
-  ends_at: string | null;
-};
-
-function offerBadge(o: OfferLite, lang: "ar" | "en"): string {
-  if (o.kind === "percent" && o.value != null) return `${toAr(o.value)}${lang === "en" ? "%" : "٪"}`;
-  if (o.kind === "fixed" && o.value != null) return `${toAr(Math.round(o.value))} ${tr(lang, "ر.س", "SAR")}`;
-  if (o.kind === "points" && o.value != null) return `×${toAr(o.value)}`;
-  if (o.kind === "free_item") return tr(lang, "مجاني", "Free");
-  if (o.kind === "bogo") return "1+1";
-  return "★";
-}
-
-/** عروض المطعم العامّة + منفذ للهدايا الشخصية — يشوفها أي عميل. */
-function OffersSection({ offers, lang }: { offers: OfferLite[]; lang: "ar" | "en" }) {
+/** منفذ الهدايا الشخصية — يشوفه أي عميل (بلا حساب — عبر الرقم). */
+function GiftsSection({ lang }: { lang: "ar" | "en" }) {
   return (
     <div className="mt-6">
-      <p className="mb-3 font-display text-base font-bold text-[color:var(--ink)]">{tr(lang, "العروض والمكافآت", "Offers & rewards")}</p>
+      <p className="mb-3 font-display text-base font-bold text-[color:var(--ink)]">{tr(lang, "الهدايا والمكافآت", "Gifts & rewards")}</p>
 
-      {offers.length > 0 ? (
-        <div className="space-y-2.5">
-          {offers.map((o) => (
-            <div key={o.id} className="rq-card flex items-center gap-3 p-3.5">
-              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-extrabold text-white" style={{ background: "var(--brand-solid)" }}>
-                {offerBadge(o, lang)}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-display text-[15px] font-bold text-[color:var(--ink)]">{o.title}</p>
-                {o.description && <p className="mt-0.5 truncate text-[13px] text-[color:var(--muted)]">{o.description}</p>}
-                {o.ends_at && (
-                  <p className="mt-0.5 text-[11px] font-bold text-[color:var(--muted)]">
-                    {tr(lang, "ينتهي", "Ends")} {fmtDayShort(o.ends_at, lang)}
-                  </p>
-                )}
-              </div>
-              <OfferClaim offerId={o.id} />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="rq-card p-5 text-center text-sm text-[color:var(--muted)]">
-          {tr(lang, "لا توجد عروض عامّة حاليًا.", "No public offers right now.")}
-        </div>
-      )}
-
-      {/* منفذ الهدايا الشخصية (بلا حساب — عبر الرقم) */}
       <Link href="/me/rewards" className="mt-2.5 flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: "var(--brand-solid)" }}>
         <span className="flex items-center gap-2 text-sm font-bold text-white">
           <IconGift size={18} /> {tr(lang, "عندك هديّة خاصة؟ اعرفها برقمك", "Got a personal reward? Check with your number")}

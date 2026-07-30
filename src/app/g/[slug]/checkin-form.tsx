@@ -111,7 +111,7 @@ export function CheckinForm({ slug, branchId, lang }: { slug: string; branchId: 
           style={{ background: "var(--brand-solid)" }}
         >
           <span className="flex items-center gap-2 text-sm font-bold text-white">
-            <IconGift size={18} /> {tr(lang, "شوف كل هداياك وعروضك", "See all your gifts & offers")}
+            <IconGift size={18} /> {tr(lang, "شوف كل هداياك ومكافآتك", "See all your gifts & rewards")}
           </span>
           <span className="text-white">←</span>
         </Link>

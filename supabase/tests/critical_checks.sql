@@ -10,7 +10,6 @@ with checks(name, pass) as (
   ('anon_blocked_demo',        not has_function_privilege('anon','public.demo_live_activity()','EXECUTE')),
   ('anon_blocked_rollup',      not has_function_privilege('anon','public.rollup_all_daily_stats(date)','EXECUTE')),
   ('anon_blocked_digest',      not has_function_privilege('anon','public.run_daily_digest()','EXECUTE')),
-  ('anon_blocked_slow_hours',  not has_function_privilege('anon','public.run_slow_hours()','EXECUTE')),
   ('anon_blocked_del_push',    not has_function_privilege('anon','public.delete_push_subscription(text)','EXECUTE')),
   ('auth_blocked_demo',        not has_function_privilege('authenticated','public.demo_live_activity()','EXECUTE')),
   -- ── الأمان: دوال الضيف المحروسة متاحة (كسرها = تعطّل المنتج) ──
@@ -39,7 +38,6 @@ with checks(name, pass) as (
   ('trigger_has_lock',         (select pg_get_functiondef(oid) ilike '%pg_advisory_xact_lock%' from pg_proc where proname='set_waitlist_position')),
   -- ── سلامة فصل الفروع: لا صفوف بلا فرع ولا إحالات عابرة ──
   ('no_null_branch_menu',      not exists(select 1 from public.menu_items where branch_id is null)),
-  ('no_null_branch_offers',    not exists(select 1 from public.offers where branch_id is null)),
   ('no_cross_branch_refs',     not exists(select 1 from public.menu_items i join public.menu_categories c on c.id=i.category_id where c.branch_id<>i.branch_id)),
   ('branch_matches_restaurant',not exists(select 1 from public.menu_items i join public.branches b on b.id=i.branch_id where b.restaurant_id<>i.restaurant_id)),
   -- ── عزل الفرانشايز: كل سياسة موظّفين على جدول يحمل branch_id تفحص الفرع ──
@@ -50,8 +48,8 @@ with checks(name, pass) as (
                                  where schemaname='public'
                                    and tablename in ('waitlist_entries','reservations','tables','branch_settings',
                                                      'notifications','daily_stats','menu_categories','menu_items',
-                                                     'offers','restaurant_photos','checkins','checkin_settings',
-                                                     'reviews','offer_redemptions','branches','staff')
+                                                     'restaurant_photos','checkins','checkin_settings',
+                                                     'reviews','branches','staff')
                                    and (qual like '%is_staff_of%' or qual like '%staff_has_perm%' or qual like '%is_manager_of%')
                                    and qual not like '%can_access_branch%'
                                    and qual not like '%my_branch_ids%')),
@@ -59,14 +57,15 @@ with checks(name, pass) as (
                                 from pg_proc where proname='queue_push_targets')),
   ('branch_guard_in_customer', (select pg_get_functiondef(oid) like '%my_branch_ids%'
                                 from pg_proc where proname='staff_can_read_customer')),
-  -- ── إغلاق حلقات القيمة: الرموز والاعتماد والعروض ──
+  -- ── إغلاق حلقات القيمة: الرموز والاعتماد ──
   ('reward_code_trigger',      exists(select 1 from pg_trigger where tgname='trg_reward_code')),
   ('no_active_reward_no_code', not exists(select 1 from public.customer_rewards
                                           where status='active' and (code is null or btrim(code)=''))),
   ('staff_redeem_exists',      exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
                                       where n.nspname='public' and p.proname='staff_redeem_reward')),
-  ('claim_offer_guarded',      (select pg_get_functiondef(oid) like '%check_rate%' and pg_get_functiondef(oid) like '%per_customer_limit%'
-                                from pg_proc where proname='claim_offer')),
+  -- العروض حُذفت كليًّا (0055) — نتأكد ألّا يعود جدولها بالخطأ
+  ('offers_fully_removed',     not exists(select 1 from information_schema.tables
+                                          where table_schema='public' and table_name in ('offers','offer_redemptions'))),
   ('anon_blocked_self_redeem', not has_function_privilege('anon','public.redeem_customer_reward(uuid,text)','EXECUTE')),
   ('validate_before_limit',    (select position('invalid_rating' in pg_get_functiondef(oid))
                                      < position('check_rate' in pg_get_functiondef(oid))

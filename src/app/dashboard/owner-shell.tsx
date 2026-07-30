@@ -21,7 +21,6 @@ export type OwnerNavKey =
   | "reception"
   | "reservations"
   | "checkin"
-  | "offers"
   | "loyalty"
   | "customers"
   | "reviews"
@@ -47,7 +46,6 @@ const NAV: NavDef[] = [
   { key: "reception", ar: "الاستقبال", en: "Reception", href: "/dashboard/reception", icon: "🪑", perm: "waitlist" },
   { key: "reservations", ar: "الحجوزات", en: "Reservations", href: "/dashboard/reservations", icon: "📅", perm: "reservations", needsReservations: true },
   { key: "checkin", ar: "امسح خذ هديتك", en: "Scan & Gift", href: "/dashboard/checkin", icon: "📷", module: "checkin", perm: "loyalty" },
-  { key: "offers", ar: "العروض", en: "Offers", href: "/dashboard/offers", icon: "🎁", module: "offers", perm: "offers" },
   { key: "loyalty", ar: "الولاء", en: "Loyalty", href: "/dashboard/loyalty", icon: "⭐", module: "loyalty", perm: "loyalty" },
   { key: "customers", ar: "العملاء", en: "Customers", href: "/dashboard/customers", icon: "👥", module: "crm", perm: "customers" },
   { key: "reviews", ar: "التقييمات", en: "Reviews", href: "/dashboard/reviews", icon: "🌟", module: "reviews", perm: "reviews" },

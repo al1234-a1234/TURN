@@ -49,7 +49,7 @@ export default async function OverviewPage() {
   ]);
 
   const insights = (insightsRes.data ?? []) as { id: string; kind: string; title: string; body: string | null; data: { customer_id?: string } | null; created_at: string }[];
-  const INSIGHT_ICON: Record<string, string> = { daily_digest: "📋", walkaway: "🏃", slow_hours: "🌙", smart_alert: "🔔", weekly_digest: "📊" };
+  const INSIGHT_ICON: Record<string, string> = { daily_digest: "📋", walkaway: "🏃", smart_alert: "🔔", weekly_digest: "📊" };
 
   // ===== التقييم =====
   const ratings = (rev.data ?? []).map((r) => r.rating);
@@ -143,12 +143,6 @@ export default async function OverviewPage() {
                     <Link href={`/dashboard/customers/${it.data.customer_id}`}
                           className="mt-1 inline-block text-xs font-extrabold text-[color:var(--brand-d)] underline decoration-2 underline-offset-4">
                       {tr(lang, "افتح ملفه وأهدِه هدية عودة ←", "Open profile & grant a come-back gift ←")}
-                    </Link>
-                  )}
-                  {it.kind === "slow_hours" && (
-                    <Link href="/dashboard/offers"
-                          className="mt-1 inline-block text-xs font-extrabold text-[color:var(--brand-d)] underline decoration-2 underline-offset-4">
-                      {tr(lang, "راجع عروض الركود ←", "Review slow-hours offers ←")}
                     </Link>
                   )}
                 </div>

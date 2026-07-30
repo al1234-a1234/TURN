@@ -17,10 +17,8 @@ export const MODULE_KEYS = [
   "menu",
   "reviews",
   "review_routing",
-  "offers",
   "loyalty",
   "walkaway",
-  "slow_hours",
   "smart_alerts",
   "daily_digest",
   "crm",
@@ -56,7 +54,7 @@ function isKnownModule(key: string): key is ModuleKey {
  *   2) وإلا: مُفعّل إذا كان أساسيًا (is_core) أو مُفعّلًا افتراضيًا (default_enabled).
  *   3) وإلا: مطفأ.
  *
- * استعلامان مفهرسان صغيران (الكتالوج 13 صفًا فقط) — رخيص جدًا حتى مع آلاف المطاعم.
+ * استعلامان مفهرسان صغيران (الكتالوج ١١ صفًا فقط) — رخيص جدًا حتى مع آلاف المطاعم.
  */
 export async function getEnabledModules(
   supabase: DB,
@@ -107,7 +105,6 @@ export const STAFF_PERMISSIONS = [
   "waitlist",
   "reservations",
   "analytics",
-  "offers",
   "loyalty",
   "customers",
   "reviews",
@@ -121,7 +118,6 @@ export const STAFF_PERMISSION_LABELS: Record<StaffPermission, string> = {
   waitlist: "إدارة الطابور",
   reservations: "إدارة الحجوزات",
   analytics: "عرض التحليلات",
-  offers: "إدارة العروض",
   loyalty: "إدارة الولاء",
   customers: "ملفّات العملاء",
   reviews: "التقييمات",

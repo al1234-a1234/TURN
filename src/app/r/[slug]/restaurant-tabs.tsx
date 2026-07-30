@@ -313,7 +313,7 @@ export function RestaurantTabs({
           <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full text-white" style={{ background: "var(--brand-solid)" }}><IconBell size={24} /></span>
           <p className="font-bold text-[color:var(--ink)]">{tr(lang, "تابع المطعم", "Follow the restaurant")}</p>
           <p className="mt-1 text-sm leading-6 text-[color:var(--muted)]">
-            {tr(lang, "تظهر في مفضّلتك للوصول السريع لعروضه وقائمته وطابوره من جهازك.", "Saved to your favorites for quick access to its offers, menu and queue from this device.")}
+            {tr(lang, "تظهر في مفضّلتك للوصول السريع لقائمته وطابوره وهداياه من جهازك.", "Saved to your favorites for quick access to its menu, queue and gifts from this device.")}
           </p>
         </div>
       </div>

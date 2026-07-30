@@ -80,10 +80,7 @@ export default function MyRewardsPage() {
 
   const active = (rewards ?? []).filter((r) => r.status === "active");
   const used = (rewards ?? []).filter((r) => r.status === "redeemed");
-  // قسمان واضحان بدل كومة واحدة: ما فعّلته من عرض، وما أهداك إياه المطعم
-  const isFromOffer = (r: Reward) => (r.description ?? "").startsWith("من عرض:");
-  const myOffers = active.filter(isFromOffer);
-  const myGifts = active.filter((r) => !isFromOffer(r));
+  const myGifts = active;
 
   return (
     <CustomerShell active="other" search={false}>
@@ -162,51 +159,6 @@ export default function MyRewardsPage() {
                   )}
                 </div>
                 {r.description && <p className="mt-2 rounded-2xl bg-[color:var(--surface-2)] px-3 py-2 text-sm text-[color:var(--ink)]">{r.description}</p>}
-                {r.code && qrOpen === r.id && (
-                  <div className="mt-3 rounded-2xl bg-white p-4" style={{ border: "1px solid rgba(102,28,10,0.14)" }}>
-                    <RewardQr code={r.code} />
-                    <p dir="ltr" className="mt-2 text-center font-display text-lg font-extrabold tracking-widest text-brand-800">{r.code}</p>
-                  </div>
-                )}
-                <div className="mt-3 rounded-2xl px-3 py-2 text-center text-xs font-bold text-white" style={{ background: "var(--brand-solid)" }}>
-                  {qrOpen === r.id
-                    ? tr(lang, "خلّ الموظف يمسح الباركود — أو يكتب الرمز", "Let staff scan the barcode — or type the code")
-                    : tr(lang, "اضغط الرمز يطلع الباركود — يمسحه الموظف ويعتمدها", "Tap the code to show its barcode — staff scan & redeem")}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {myOffers.length > 0 && (
-          <div className="space-y-2.5">
-            <p className="px-1 font-display text-base font-bold text-[color:var(--ink)]">
-              ٪ {tr(lang, "عروضي", "My offers")}
-              <span className="ms-2 text-xs font-bold text-[color:var(--muted)]">{toAr(myOffers.length)}</span>
-            </p>
-            {myOffers.map((r) => (
-              <div key={r.id} className="rq-card p-4">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xl text-white" style={{ background: "var(--brand-solid)" }}>٪</span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-display text-[16px] font-bold text-[color:var(--ink)]">
-                      {r.title}{valueLabel(r) ? ` · ${valueLabel(r)}` : ""}
-                    </p>
-                    <p className="mt-0.5 truncate text-[13px] font-medium text-[color:var(--muted)]">
-                      {r.restaurant}{r.expires_at ? ` · ${tr(lang, "ينتهي", "ends")} ${fmtDate(r.expires_at)}` : ""}
-                    </p>
-                  </div>
-                  {r.code && (
-                    <button
-                      type="button"
-                      onClick={() => setQrOpen((v) => (v === r.id ? null : r.id))}
-                      dir="ltr"
-                      className="shrink-0 rounded-lg bg-brand-800 px-2.5 py-1 text-xs font-extrabold text-cream-100"
-                    >
-                      {r.code} <span aria-hidden>▾</span>
-                    </button>
-                  )}
-                </div>
                 {r.code && qrOpen === r.id && (
                   <div className="mt-3 rounded-2xl bg-white p-4" style={{ border: "1px solid rgba(102,28,10,0.14)" }}>
                     <RewardQr code={r.code} />

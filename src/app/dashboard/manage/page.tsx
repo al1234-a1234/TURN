@@ -159,8 +159,8 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
             <h2 className="mb-2 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "معلومات المطعم والصور", "Restaurant info & images")}</h2>
             <p className="text-sm text-[color:var(--muted)]">
               {tr(lang,
-                "اسم العلامة وشعارها ووصفها مشتركة بين كل الفروع، فيديرها مالك العلامة. أما قائمتك وعروضك وصورك وإعداداتك فهي لفرعك وحده.",
-                "Brand name, logo and description are shared across branches and managed by the brand owner. Your menu, offers, photos and settings belong to your branch alone.")}
+                "اسم العلامة وشعارها ووصفها مشتركة بين كل الفروع، فيديرها مالك العلامة. أما قائمتك وصورك وإعداداتك فهي لفرعك وحده.",
+                "Brand name, logo and description are shared across branches and managed by the brand owner. Your menu, photos and settings belong to your branch alone.")}
             </p>
           </section>
         ) : (

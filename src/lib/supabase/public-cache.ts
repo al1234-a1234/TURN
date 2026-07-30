@@ -32,18 +32,6 @@ export type DiscoveryRestaurant = {
   }[];
 };
 
-export type DiscoveryOffer = {
-  id: string;
-  title: string;
-  kind: string;
-  value: number | null;
-  code: string | null;
-  ends_at: string | null;
-  description: string | null;
-  image_url: string | null;
-  restaurant: { name: string; slug: string; logo_url: string | null };
-};
-
 /**
  * قائمة الاكتشاف + متوسط التقييمات — مكاشة ٣٠ ثانية.
  * تُقلّل ضرب القاعدة لمرة كل ٣٠ث مهما زاد عدد الزوّار (عدّاد الطوابير يبقى حيًّا خارج الكاش).
@@ -52,7 +40,6 @@ export const getDiscovery = unstable_cache(
   async (): Promise<{
     list: DiscoveryRestaurant[];
     ratings: Record<string, { sum: number; n: number }>;
-    offers: DiscoveryOffer[];
   }> => {
     const sb = anon();
     const { data: restaurants } = await sb
@@ -67,51 +54,19 @@ export const getDiscovery = unstable_cache(
       .filter((r) => r.branches.length > 0);
 
     const ratings: Record<string, { sum: number; n: number }> = {};
-    let offers: DiscoveryOffer[] = [];
     if (list.length) {
-      const meta = new Map(list.map((r) => [r.id, { name: r.name, slug: r.slug, logo_url: r.logo_url }]));
       const ids = list.map((r) => r.id);
-
-      const [{ data: reviewRows }, { data: offerRows }] = await Promise.all([
-        sb.from("reviews").select("restaurant_id, rating").eq("is_published", true).in("restaurant_id", ids),
-        sb
-          .from("offers")
-          .select("id, title, kind, value, code, ends_at, description, image_url, restaurant_id")
-          .eq("is_active", true)
-          .in("audience", ["all", "new"])
-          .in("restaurant_id", ids)
-          .order("created_at", { ascending: false })
-          .limit(24),
-      ]);
-
+      const { data: reviewRows } = await sb
+        .from("reviews").select("restaurant_id, rating").eq("is_published", true).in("restaurant_id", ids);
       for (const rr of reviewRows ?? []) {
         const a = ratings[rr.restaurant_id] ?? { sum: 0, n: 0 };
         a.sum += rr.rating; a.n += 1;
         ratings[rr.restaurant_id] = a;
       }
-
-      const now = Date.now();
-      // العروض صارت لكل فرع، والرئيسية على مستوى المطعم — نعرض العرض مرّة واحدة
-      // لكل (مطعم + عنوان) كي لا يتكرّر بعدد الفروع.
-      const seen = new Set<string>();
-      offers = (offerRows ?? [])
-        .filter((o) => !o.ends_at || new Date(o.ends_at).getTime() > now)
-        .flatMap((o) => {
-          const r = meta.get(o.restaurant_id);
-          if (!r) return [];
-          const key = `${o.restaurant_id}|${o.title}`;
-          if (seen.has(key)) return [];
-          seen.add(key);
-          return [{
-            id: o.id, title: o.title, kind: o.kind, value: o.value, code: o.code, ends_at: o.ends_at,
-            description: o.description, image_url: o.image_url,
-            restaurant: r,
-          }];
-        });
     }
-    return { list, ratings, offers };
+    return { list, ratings };
   },
-  ["discovery-v4"],
+  ["discovery-v5"],
   { revalidate: 30, tags: ["discovery"] },
 );
 

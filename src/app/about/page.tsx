@@ -10,7 +10,7 @@ export default async function AboutPage() {
   const features = [
     { icon: "⏱️", ar: "طابور ذكي بلا حساب", en: "Smart queue, no account", arD: "خذ دورك من جوّالك وتابع موقعك لحظيًا دون تسجيل.", enD: "Take your turn from your phone and track your spot live — no sign-up." },
     { icon: "📅", ar: "حجوزات مسبقة", en: "Advance reservations", arD: "احجز طاولتك قبل الحضور، منفصلة عن طابور الحضور.", enD: "Book your table ahead of time, separate from the walk-in queue." },
-    { icon: "🎁", ar: "عروض وولاء", en: "Offers & loyalty", arD: "عروض المطاعم ونقاط ولاء تكافئ زياراتك.", enD: "Restaurant offers and loyalty points that reward your visits." },
+    { icon: "🎁", ar: "هدايا وولاء", en: "Gifts & loyalty", arD: "هدايا المطاعم ونقاط ولاء تكافئ زياراتك.", enD: "Restaurant gifts and loyalty points that reward your visits." },
   ];
   return (
     <CustomerShell active="other" search={false}>

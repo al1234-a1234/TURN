@@ -49,13 +49,13 @@ export default async function TermsPage() {
       ],
     },
     {
-      ar: "العروض والمكافآت",
-      en: "Offers & rewards",
+      ar: "الهدايا والمكافآت",
+      en: "Gifts & rewards",
       arB: [
-        "العروض والهدايا والنقاط يحدّدها ويموّلها المطعم المانح، وهو المسؤول عن الوفاء بها، ولها شروطها وحدودها المعروضة معها.",
+        "الهدايا والنقاط يحدّدها ويموّلها المطعم المانح، وهو المسؤول عن الوفاء بها، ولها شروطها وحدودها المعروضة معها.",
       ],
       enB: [
-        "Offers, gifts, and points are defined and funded by the granting restaurant, which is responsible for honoring them, per the conditions and limits shown with each.",
+        "Gifts and points are defined and funded by the granting restaurant, which is responsible for honoring them, per the conditions and limits shown with each.",
       ],
     },
   ];

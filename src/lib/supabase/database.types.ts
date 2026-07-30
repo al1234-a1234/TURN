@@ -714,146 +714,6 @@ export type Database = {
           },
         ]
       }
-      offer_redemptions: {
-        Row: {
-          amount: number | null
-          branch_id: string | null
-          customer_id: string | null
-          id: string
-          offer_id: string
-          redeemed_at: string
-          restaurant_id: string
-        }
-        Insert: {
-          amount?: number | null
-          branch_id?: string | null
-          customer_id?: string | null
-          id?: string
-          offer_id: string
-          redeemed_at?: string
-          restaurant_id: string
-        }
-        Update: {
-          amount?: number | null
-          branch_id?: string | null
-          customer_id?: string | null
-          id?: string
-          offer_id?: string
-          redeemed_at?: string
-          restaurant_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "offer_redemptions_branch_id_fkey"
-            columns: ["branch_id"]
-            isOneToOne: false
-            referencedRelation: "branches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "offer_redemptions_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "offer_redemptions_offer_id_fkey"
-            columns: ["offer_id"]
-            isOneToOne: false
-            referencedRelation: "offers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "offer_redemptions_restaurant_id_fkey"
-            columns: ["restaurant_id"]
-            isOneToOne: false
-            referencedRelation: "restaurants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      offers: {
-        Row: {
-          audience: string
-          branch_id: string
-          code: string | null
-          conditions: Json
-          created_at: string
-          description: string | null
-          ends_at: string | null
-          id: string
-          image_url: string | null
-          is_active: boolean
-          kind: Database["public"]["Enums"]["offer_kind"]
-          per_customer_limit: number
-          redeemed_count: number
-          restaurant_id: string
-          starts_at: string | null
-          title: string
-          total_limit: number | null
-          updated_at: string
-          value: number | null
-        }
-        Insert: {
-          audience?: string
-          branch_id: string
-          code?: string | null
-          conditions?: Json
-          created_at?: string
-          description?: string | null
-          ends_at?: string | null
-          id?: string
-          image_url?: string | null
-          is_active?: boolean
-          kind: Database["public"]["Enums"]["offer_kind"]
-          per_customer_limit?: number
-          redeemed_count?: number
-          restaurant_id: string
-          starts_at?: string | null
-          title: string
-          total_limit?: number | null
-          updated_at?: string
-          value?: number | null
-        }
-        Update: {
-          audience?: string
-          branch_id?: string
-          code?: string | null
-          conditions?: Json
-          created_at?: string
-          description?: string | null
-          ends_at?: string | null
-          id?: string
-          image_url?: string | null
-          is_active?: boolean
-          kind?: Database["public"]["Enums"]["offer_kind"]
-          per_customer_limit?: number
-          redeemed_count?: number
-          restaurant_id?: string
-          starts_at?: string | null
-          title?: string
-          total_limit?: number | null
-          updated_at?: string
-          value?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "offers_branch_id_fkey"
-            columns: ["branch_id"]
-            isOneToOne: false
-            referencedRelation: "branches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "offers_restaurant_id_fkey"
-            columns: ["restaurant_id"]
-            isOneToOne: false
-            referencedRelation: "restaurants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       owner_insights: {
         Row: {
           body: string | null
@@ -1488,10 +1348,6 @@ export type Database = {
         Args: { p_key: string; p_max: number; p_window: string }
         Returns: boolean
       }
-      claim_offer: {
-        Args: { p_name?: string; p_offer_id: string; p_phone: string }
-        Returns: Json
-      }
       claim_restaurant: { Args: { p_code: string }; Returns: string }
       confirm_attendance: { Args: { p_entry_id: string }; Returns: boolean }
       create_reservation_guest: {
@@ -1664,7 +1520,6 @@ export type Database = {
       run_auto_winback: { Args: never; Returns: number }
       run_daily_digest: { Args: never; Returns: number }
       run_retention: { Args: never; Returns: undefined }
-      run_slow_hours: { Args: never; Returns: number }
       run_weekly_digest: { Args: never; Returns: number }
       save_push_subscription: {
         Args: {
@@ -1781,7 +1636,6 @@ export type Database = {
     }
     Enums: {
       notification_channel: "sms" | "whatsapp" | "push" | "email"
-      offer_kind: "percent" | "fixed" | "free_item" | "bogo" | "points"
       reservation_status:
         | "pending"
         | "confirmed"
@@ -1926,7 +1780,6 @@ export const Constants = {
   public: {
     Enums: {
       notification_channel: ["sms", "whatsapp", "push", "email"],
-      offer_kind: ["percent", "fixed", "free_item", "bogo", "points"],
       reservation_status: [
         "pending",
         "confirmed",
