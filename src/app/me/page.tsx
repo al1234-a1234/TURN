@@ -32,39 +32,12 @@ function IcHeart() {
     </svg>
   );
 }
-function IcBook() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M5 5.5A1.5 1.5 0 016.5 4H18a1 1 0 011 1v13.5a1 1 0 01-1 1H6.5A1.5 1.5 0 015 18V5.5z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-      <path d="M8.5 8.5h6M8.5 12h6M8.5 15.5h3.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-    </svg>
-  );
-}
-function IcInfo() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <circle cx="12" cy="12" r="8.2" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M12 11v5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-      <circle cx="12" cy="7.8" r="1.05" fill="currentColor" />
-    </svg>
-  );
-}
-function IcChat() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M4.5 6.5A1.5 1.5 0 016 5h12a1.5 1.5 0 011.5 1.5v8A1.5 1.5 0 0118 16H9l-4 3.2V6.5z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-      <path d="M8.5 10h7M8.5 12.6h4.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-    </svg>
-  );
-}
 
+// ثلاثة بنود فقط بقرار المالك: الهدايا والمفضلة والزيارات — الباقي في الدرج الجانبي
 const ITEMS = [
-  { href: "/me/rewards", ar: "هداياي وخصوماتي", en: "My rewards & discounts", Icon: IcGift },
-  { href: "/me/waitlist", ar: "اشتراكاتي في الطوابير", en: "My queue subscriptions", Icon: IcClock },
+  { href: "/me/rewards", ar: "الهدايا", en: "Gifts", Icon: IcGift },
   { href: "/me/favorites", ar: "المفضّلة", en: "Favorites", Icon: IcHeart },
-  { href: "/diaries", ar: "يومياتي", en: "My diary", Icon: IcBook },
-  { href: "/about", ar: "من نحن", en: "About us", Icon: IcInfo },
-  { href: "/contact", ar: "تواصل معنا", en: "Contact us", Icon: IcChat },
+  { href: "/me/visits", ar: "الزيارات", en: "Visits", Icon: IcClock },
 ];
 
 export default async function MePage() {

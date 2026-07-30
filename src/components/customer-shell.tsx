@@ -33,18 +33,10 @@ function IcList() {
     </svg>
   );
 }
-function IcDiary() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <rect x="5" y="4" width="14" height="16" rx="2" stroke="currentColor" strokeWidth="1.8" />
-      <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 const DRAWER = [
-  { label: "الاشتراكات", en: "Subscriptions", href: "/me/waitlist" },
+  { label: "الهدايا", en: "Gifts", href: "/me/rewards" },
   { label: "المفضلة", en: "Favorites", href: "/me/favorites" },
+  { label: "الزيارات", en: "Visits", href: "/me/visits" },
   { label: "الإعدادات", en: "Settings", href: "/me" },
   { label: "من نحن", en: "About Us", href: "/about" },
   { label: "تواصل معنا", en: "Contact Us", href: "/contact" },
@@ -57,7 +49,7 @@ export function CustomerShell({
   search = true,
   children,
 }: {
-  active?: "restaurants" | "other" | "diaries";
+  active?: "restaurants" | "other";
   search?: boolean;
   children: React.ReactNode;
 }) {
@@ -106,8 +98,7 @@ export function CustomerShell({
       <nav className="fixed inset-x-0 bottom-0 z-30 px-4 pb-4">
         <div className="rq-nav">
           {[
-            { key: "diaries", href: "/diaries", icon: <IcDiary />, label: tr(lang, "اليوميات", "Diaries") },
-            { key: "other", href: "/me", icon: <IcList />, label: tr(lang, "أخرى", "Other") },
+            { key: "other", href: "/me", icon: <IcList />, label: tr(lang, "حسابي", "My account") },
             { key: "restaurants", href: "/", icon: <IcRestaurants />, label: tr(lang, "المطاعم", "Restaurants") },
           ].map((item) => {
             const isActive = active === item.key;

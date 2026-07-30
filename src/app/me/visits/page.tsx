@@ -7,7 +7,7 @@ import { useLang } from "@/components/lang-provider";
 import { tr } from "@/lib/i18n";
 import { getTurns, type TurnRecord } from "@/lib/local-store";
 
-export default function DiariesPage() {
+export default function VisitsPage() {
   const lang = useLang();
   const [turns, setTurns] = useState<TurnRecord[] | null>(null);
 
@@ -28,16 +28,16 @@ export default function DiariesPage() {
     new Date(iso).toLocaleTimeString(lang === "en" ? "en-GB" : "ar-SA", { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <CustomerShell active="diaries" search={false}>
+    <CustomerShell active="other" search={false}>
       {turns === null ? null : turns.length === 0 ? (
         <div className="rq-card p-10 text-center text-[color:var(--muted)]">
-          <span className="text-4xl">📔</span>
-          <p className="mt-3 text-sm">{tr(lang, "يومياتك ستظهر هنا بعد أول دور تأخذه.", "Your diary appears here after your first turn.")}</p>
+          <span className="text-4xl">🍽️</span>
+          <p className="mt-3 text-sm">{tr(lang, "زياراتك ستظهر هنا بعد أول دور تأخذه.", "Your visits appear here after your first turn.")}</p>
           <Link href="/" className="rq-btn-soft mt-4 inline-flex">{tr(lang, "ابدأ الآن", "Start now")}</Link>
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="mb-1 text-sm text-[color:var(--muted)]">{tr(lang, "سجلّ زياراتك عبر دور.", "A journal of your visits with Turn.")}</p>
+          <p className="mb-1 text-sm text-[color:var(--muted)]">{tr(lang, "سجلّ زياراتك عبر دور.", "A record of your visits with Turn.")}</p>
           {turns.map((t, i) => {
             const initial = (t.name || "م").trim().charAt(0);
             return (
