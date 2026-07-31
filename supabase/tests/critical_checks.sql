@@ -123,6 +123,10 @@ with checks(name, pass) as (
   ('rls_customers',            (select relrowsecurity from pg_class where relname='customers')),
   ('rls_waitlist',             (select relrowsecurity from pg_class where relname='waitlist_entries')),
   ('rls_push_subs',            (select relrowsecurity from pg_class where relname='push_subscriptions')),
+  -- الرفع يعتمد على قراءة الحاوية — RLS بلا سياسة هنا = فشل كل رفع بصمت (0061)
+  ('bucket_readable',          exists(select 1 from pg_policies
+                                      where schemaname='storage' and tablename='buckets'
+                                        and cmd='SELECT' and 'authenticated' = any(roles))),
   -- ── التذكرة الحيّة: position = ahead + 1 لكل صف حيّ ──
   ('live_rank_math',           not exists(
                                  select 1 from public.waitlist_entries w
