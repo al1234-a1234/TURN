@@ -33,16 +33,33 @@ export function ImageUploader({
   async function compress(file: File): Promise<{ blob: Blob; type: string; ext: string }> {
     const MAX = shape === "wide" ? 1600 : 800; // غلاف عريض يحتاج دقة أعلى من شعار
     try {
-      const bmp = await createImageBitmap(file);
-      const scale = Math.min(1, MAX / Math.max(bmp.width, bmp.height));
+      // createImageBitmap يفشل على بعض المتصفحات/الصور — فكان يُرفع الأصل
+      // الخام (8–12MB من كاميرا الجوال) ويرفضه الخادم: «كل» الصور تتعذّر.
+      // مسار احتياطي عبر <img> يفكّ ما عجز عنه الأول.
+      const bmp: ImageBitmap | HTMLImageElement = await createImageBitmap(file).catch(
+        () =>
+          new Promise<HTMLImageElement>((res, rej) => {
+            const url = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = () => { URL.revokeObjectURL(url); res(img); };
+            img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("decode")); };
+            img.src = url;
+          }),
+      );
+      const w = "naturalWidth" in bmp ? bmp.naturalWidth : bmp.width;
+      const h = "naturalHeight" in bmp ? bmp.naturalHeight : bmp.height;
+      const scale = Math.min(1, MAX / Math.max(w, h));
       // صغيرة أصلًا وليست PNG ضخمة؟ ارفعها كما هي
       if (scale === 1 && file.size < 400 * 1024) return { blob: file, type: file.type, ext: "" };
       const canvas = document.createElement("canvas");
-      canvas.width = Math.round(bmp.width * scale);
-      canvas.height = Math.round(bmp.height * scale);
+      canvas.width = Math.round(w * scale);
+      canvas.height = Math.round(h * scale);
       canvas.getContext("2d")!.drawImage(bmp, 0, 0, canvas.width, canvas.height);
-      const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/webp", 0.85));
-      if (blob && blob.size < file.size) return { blob, type: "image/webp", ext: "webp" };
+      // webp ثم jpeg احتياطًا (متصفحات لا تصدّر webp)
+      let blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/webp", 0.85));
+      if (blob && blob.type === "image/webp" && blob.size < file.size) return { blob, type: "image/webp", ext: "webp" };
+      blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", 0.85));
+      if (blob && blob.size < file.size) return { blob, type: "image/jpeg", ext: "jpg" };
       return { blob: file, type: file.type, ext: "" };
     } catch {
       return { blob: file, type: file.type, ext: "" };
@@ -78,7 +95,11 @@ export function ImageUploader({
       .from("media")
       .upload(path, up.blob, { upsert: true, cacheControl: "3600", contentType: up.type });
     if (error) {
-      setErr(tr(lang, "تعذّر رفع الصورة", "Failed to upload image"));
+      // سبب مفهوم بدل «تعذّر» العامة — الحجم أكثر الأسباب شيوعًا
+      const msg = /size|large|payload|exceed/i.test(error.message ?? "")
+        ? tr(lang, "الصورة كبيرة جدًا — جرّب صورة أصغر", "Image too large — try a smaller one")
+        : tr(lang, "تعذّر رفع الصورة — حاول مرة أخرى", "Failed to upload — try again");
+      setErr(msg);
       setBusy(false);
       return;
     }
