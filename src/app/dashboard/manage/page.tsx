@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { IconPin } from "@/components/icons";
 import { ImageUploader } from "@/components/image-uploader";
@@ -155,12 +156,29 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
 
         {/* ===== معلومات وصور المطعم — هوية العلامة، لمالكها وحده ===== */}
         {!isBrandLevel ? (
+          /* حساب فرع: بدل نصٍّ يتيم يوحي أن التحكم «اختفى» — خريطة كاملة
+             لكل صورة يراها العميل: أين تُدار ومن أي شاشة، بروابط مباشرة. */
           <section className="soft-card p-5">
-            <h2 className="mb-2 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "معلومات المطعم والصور", "Restaurant info & images")}</h2>
-            <p className="text-sm text-[color:var(--muted)]">
+            <h2 className="mb-2 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "صور فرعك — تحكّمك الكامل", "Your branch images — full control")}</h2>
+            <p className="mb-4 text-sm text-[color:var(--muted)]">
               {tr(lang,
-                "اسم العلامة وشعارها ووصفها مشتركة بين كل الفروع، فيديرها مالك العلامة. أما قائمتك وصورك وإعداداتك فهي لفرعك وحده.",
-                "Brand name, logo and description are shared across branches and managed by the brand owner. Your menu, photos and settings belong to your branch alone.")}
+                "كل صورة يراها العميل لها مكان إدارة واحد واضح:",
+                "Every image your customer sees has one clear place to manage it:")}
+            </p>
+            <div className="space-y-2.5">
+              <Link href="/dashboard/content" className="flex items-center justify-between rounded-2xl px-4 py-3.5 text-sm font-extrabold text-white" style={{ background: "var(--brand-solid)" }}>
+                <span>📸 {tr(lang, "صور الأجواء (معرض الفرع) — تظهر في صفحة مطعمك وتبويب ميديا", "Ambience photos (branch gallery) — shown on your page & Media tab")}</span>
+                <span>←</span>
+              </Link>
+              <div className="flex items-center justify-between rounded-2xl px-4 py-3.5 text-sm font-extrabold" style={{ background: "var(--surface-2)", color: "var(--brand-d)" }}>
+                <span>🍽️ {tr(lang, "صور أصناف القائمة — من قسم «القائمة» أسفل هذه الصفحة", "Menu item photos — in the Menu section further down this page")}</span>
+                <span>↓</span>
+              </div>
+            </div>
+            <p className="mt-4 rounded-2xl px-4 py-3 text-[13px] font-medium leading-relaxed" style={{ background: "var(--surface-2)", color: "var(--muted)" }}>
+              {tr(lang,
+                "أما شعار العلامة وصورة الغلاف والاسم والوصف فهي مشتركة بين كل الفروع، ويديرها حساب مالك العلامة (الحساب غير المربوط بفرع) من هذه الشاشة نفسها.",
+                "The brand logo, cover, name and description are shared across all branches and managed by the brand-owner account (the one not bound to a branch) from this same screen.")}
             </p>
           </section>
         ) : (
