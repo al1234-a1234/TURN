@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { uploadMedia } from "@/lib/upload-action";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 
@@ -88,23 +88,21 @@ export function ImageUploader({
     }
     setBusy(true);
     setErr(null);
+    // الرفع عبر الخادم (server action) لا عبر جلسة المتصفح — جلسة متصفح
+    // متقادمة كانت تُفشل كل رفع بينما أزرار الحفظ العادية تعمل. الآن الرفع
+    // يسلك الطريق الموثوق نفسه الذي تسلكه أزرار الحفظ.
     const up = await compress(file);
-    const supabase = createClient();
-    const path = `restaurants/${restaurantId}/${name}-${crypto.randomUUID()}.${up.ext || ext}`;
-    const { error } = await supabase.storage
-      .from("media")
-      .upload(path, up.blob, { upsert: true, cacheControl: "3600", contentType: up.type });
-    if (error) {
-      // سبب مفهوم بدل «تعذّر» العامة — الحجم أكثر الأسباب شيوعًا
-      const msg = /size|large|payload|exceed/i.test(error.message ?? "")
-        ? tr(lang, "الصورة كبيرة جدًا — جرّب صورة أصغر", "Image too large — try a smaller one")
-        : tr(lang, "تعذّر رفع الصورة — حاول مرة أخرى", "Failed to upload — try again");
-      setErr(msg);
+    const fd = new FormData();
+    fd.set("file", new File([up.blob], `${name}.${up.ext || ext}`, { type: up.type }));
+    fd.set("restaurant_id", restaurantId);
+    fd.set("prefix", name);
+    const res = await uploadMedia(fd);
+    if ("error" in res) {
+      setErr(res.error);
       setBusy(false);
       return;
     }
-    const { data } = supabase.storage.from("media").getPublicUrl(path);
-    setUrl(data.publicUrl);
+    setUrl(res.url);
     setBusy(false);
   }
 

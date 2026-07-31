@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { uploadMedia } from "@/lib/upload-action";
 import { addRestaurantPhoto, deleteRestaurantPhoto } from "./gallery-actions";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
@@ -20,33 +20,23 @@ export function GalleryManager({ restaurantId, branchId, photos }: { restaurantI
     if (!files.length) return;
     setBusy(true);
     setErr(null);
-    const supabase = createClient();
+    // الرفع عبر الخادم — نفس مسار image-uploader (جلسة الكوكيز الموثوقة)
     try {
-      const MIME_EXT: Record<string, string> = {
-        "image/jpeg": "jpg",
-        "image/png": "png",
-        "image/webp": "webp",
-        "image/avif": "avif",
-        "image/gif": "gif",
-      };
       for (const file of files) {
-        const ext = MIME_EXT[file.type];
-        if (!ext) {
-          setErr(tr(lang, "بعض الملفات بصيغة غير مدعومة", "Some files have an unsupported format"));
+        if (file.size > 15 * 1024 * 1024) {
+          setErr(tr(lang, "بعض الصور تجاوزت 15MB", "Some images exceed 15MB"));
           continue;
         }
-        if (file.size > 5 * 1024 * 1024) {
-          setErr(tr(lang, "بعض الصور تجاوزت 5MB", "Some images exceed 5MB"));
+        const fd = new FormData();
+        fd.set("file", file);
+        fd.set("restaurant_id", restaurantId);
+        fd.set("prefix", "gallery");
+        const res = await uploadMedia(fd);
+        if ("error" in res) {
+          setErr(res.error);
           continue;
         }
-        const path = `restaurants/${restaurantId}/gallery-${crypto.randomUUID()}.${ext}`;
-        const { error } = await supabase.storage.from("media").upload(path, file, { upsert: true, cacheControl: "3600", contentType: file.type });
-        if (error) {
-          setErr(tr(lang, "تعذّر رفع بعض الصور", "Failed to upload some images"));
-          continue;
-        }
-        const { data } = supabase.storage.from("media").getPublicUrl(path);
-        await addRestaurantPhoto(data.publicUrl, undefined, branchId);
+        await addRestaurantPhoto(res.url, undefined, branchId);
       }
       router.refresh();
     } finally {
