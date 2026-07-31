@@ -48,8 +48,10 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
     supabase.from("reviews").select("rating").eq("branch_id", menuBranchId),
   ]);
 
-  // عزل الفرانشايز: الحساب المربوط بفرع لا يرى فروع غيره ولا يديرها
-  const isBrandLevel = load.ctx.branchId == null;
+  // «المالك مالك» (0062): دور owner = مستوى العلامة كاملًا ولو كان حسابه
+  // مربوطًا بفرع — الشعار والغلاف والتقييمات ملك صاحب المطعم. عزل
+  // الفرانشايز يُحفظ بالأدوار: الشريك يُنشأ manager/host مربوطًا بفرعه.
+  const isBrandLevel = load.ctx.branchId == null || role === "owner";
   const branchList = isBrandLevel
     ? (allBranches ?? [])
     : (allBranches ?? []).filter((b) => b.id === load.ctx.branchId);
