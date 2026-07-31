@@ -104,7 +104,8 @@ with checks(name, pass) as (
   -- ── يوم الرياض في التجميع والعدّادات ──
   ('rollup_riyadh_day',        (select pg_get_functiondef(oid) like '%Asia/Riyadh%' from pg_proc where proname='rollup_daily_stats')),
   ('digest_riyadh_day',        (select pg_get_functiondef(oid) like '%Asia/Riyadh%' from pg_proc where proname='run_daily_digest')),
-  ('counts_riyadh_day',        (select pg_get_functiondef(oid) like '%Asia/Riyadh%' from pg_proc where proname='waitlist_counts')),
+  -- «counts_riyadh_day» حُذف عمدًا: 0057 جعل العدّادات حيّة بالحالة لا بيوم
+  -- الرياض (كي لا يتبخّر الطابور عند منتصف الليل)، فالفحص القديم انعكس ضدّه.
   ('visit_idempotency_col',    exists(select 1 from information_schema.columns
                                       where table_schema='public' and table_name='waitlist_entries' and column_name='visit_counted_at')),
   ('uniq_guest_phone',         exists(select 1 from pg_indexes where indexname='uniq_customers_phone_guest')),
@@ -126,6 +127,11 @@ with checks(name, pass) as (
   -- الرفع يعتمد على قراءة الحاوية — RLS بلا سياسة هنا = فشل كل رفع بصمت (0061)
   ('bucket_readable',          exists(select 1 from pg_policies
                                       where schemaname='storage' and tablename='buckets'
+                                        and cmd='SELECT' and 'authenticated' = any(roles))),
+  -- upsert التخزين = INSERT ON CONFLICT، وتحكيمه يشترط سياسة SELECT على
+  -- objects — غيابها أفشل «كل» رفع صورة رغم صحة سياسة الرفع نفسها (0063)
+  ('objects_readable',         exists(select 1 from pg_policies
+                                      where schemaname='storage' and tablename='objects'
                                         and cmd='SELECT' and 'authenticated' = any(roles))),
   -- ── التذكرة الحيّة: position = ahead + 1 لكل صف حيّ ──
   ('live_rank_math',           not exists(
