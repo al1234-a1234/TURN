@@ -597,6 +597,31 @@ export function WaitlistForm({
               ))}
             </ol>
 
+            {/* سماح الموقع (الإلكتروني) وحده لا يكفي إن كان التطبيق نفسه أو
+                الجهاز حاظرًا — أكثر حالة «فعّلتُه وما نفع» في الواقع. */}
+            <div className="mx-auto mt-4 max-w-xs rounded-2xl bg-[rgba(102,28,10,0.06)] px-4 py-3">
+              <p className="text-[12.5px] font-extrabold text-[color:var(--ink)]">
+                {tr(lang, "سويتها وما نفع؟ تأكد من مفتاحين بالجهاز:", "Did it and still stuck? Check two device switches:")}
+              </p>
+              <ul className="mt-1.5 space-y-1 text-[12px] font-bold leading-5 text-[color:var(--muted)]">
+                {(isIOS
+                  ? [
+                      tr(lang, "الإعدادات ← الخصوصية ← خدمات الموقع: المفتاح الرئيسي مفعّل", "Settings → Privacy → Location Services: master switch on"),
+                      tr(lang, "وتحتها سفاري (أو متصفحك): «أثناء الاستخدام»", "and under it Safari (or your browser): “While Using”"),
+                    ]
+                  : [
+                      tr(lang, "الإعدادات ← التطبيقات ← المتصفح ← الأذونات ← الموقع: «السماح»", "Settings → Apps → your browser → Permissions → Location: “Allow”"),
+                      tr(lang, "خدمة الموقع مفعّلة بالجهاز (أيقونة الموقع بالإعدادات السريعة)", "Device location is on (location icon in quick settings)"),
+                    ]
+                ).map((hint, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="shrink-0">•</span>
+                    <span>{hint}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
             <button
               type="button"
               onClick={() => askLocation(true)}
