@@ -118,6 +118,26 @@ export function RestaurantTabs({
     if (!openCat || !categories.some((c) => c.id === openCat)) setOpenCat(categories[0]?.id ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categories]);
+
+  // بطاقة تفاصيل الصنف: الوصف في القائمة مقصوص بسطرين والصورة مصغّرة —
+  // الضغط على الصنف يفتح ورقة سفلية بالصورة الكاملة والوصف غير المقصوص،
+  // والضغط على الصورة يكبّرها ملء الشاشة (نفس عارض الميديا).
+  const [openItem, setOpenItem] = useState<Item | null>(null);
+  const [itemZoom, setItemZoom] = useState(false);
+  useEffect(() => {
+    if (!openItem) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (itemZoom) setItemZoom(false);
+      else setOpenItem(null);
+    };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [openItem, itemZoom]);
   const hasMenu = categories.length > 0;
 
   // متابعة = إضافة للمفضّلة (تخزين محلّي للضيف)
@@ -212,24 +232,30 @@ export function RestaurantTabs({
                   {isOpen && list.length > 0 && (
                     <ul>
                       {list.map((it) => (
-                        <li key={it.id} className="flex items-center gap-3 border-t border-[color:var(--border)] px-4 py-3.5">
-                          <span className="h-[76px] w-[76px] shrink-0 overflow-hidden rounded-2xl bg-[color:var(--surface-2)]">
-                            {it.image_url && (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={it.image_url} alt="" className="h-full w-full object-cover" />
-                            )}
-                          </span>
-                          <div className="min-w-0 flex-1 text-right">
-                            <p className="font-bold text-[color:var(--ink)]">{it.name}</p>
-                            {it.description && (
-                              <p className="mt-0.5 line-clamp-2 text-[13px] leading-6 text-[color:var(--muted)]">{it.description}</p>
-                            )}
-                          </div>
-                          {it.price != null && (
-                            <span className="shrink-0 whitespace-nowrap text-sm font-extrabold text-brand-700">
-                              {money(it.price, lang)}
+                        <li key={it.id} className="border-t border-[color:var(--border)]">
+                          <button
+                            type="button"
+                            onClick={() => { setItemZoom(false); setOpenItem(it); }}
+                            className="flex w-full items-center gap-3 px-4 py-3.5 text-start transition active:scale-[0.99] active:bg-[color:var(--surface-2)]"
+                          >
+                            <span className="h-[76px] w-[76px] shrink-0 overflow-hidden rounded-2xl bg-[color:var(--surface-2)]">
+                              {it.image_url && (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={it.image_url} alt="" className="h-full w-full object-cover" />
+                              )}
                             </span>
-                          )}
+                            <div className="min-w-0 flex-1 text-right">
+                              <p className="font-bold text-[color:var(--ink)]">{it.name}</p>
+                              {it.description && (
+                                <p className="mt-0.5 line-clamp-2 text-[13px] leading-6 text-[color:var(--muted)]">{it.description}</p>
+                              )}
+                            </div>
+                            {it.price != null && (
+                              <span className="shrink-0 whitespace-nowrap text-sm font-extrabold text-brand-700">
+                                {money(it.price, lang)}
+                              </span>
+                            )}
+                          </button>
                         </li>
                       ))}
                     </ul>
@@ -240,6 +266,66 @@ export function RestaurantTabs({
           </div>
         )}
       </div>
+
+      {/* ورقة تفاصيل الصنف */}
+      {openItem && !itemZoom && (
+        <div className="fixed inset-0 z-50 flex items-end" role="dialog" aria-modal>
+          <button type="button" aria-label={tr(lang, "إغلاق", "Close")} className="absolute inset-0 cursor-default bg-black/45" onClick={() => setOpenItem(null)} />
+          <div className="relative max-h-[85vh] w-full overflow-y-auto rounded-t-[30px] bg-white px-5 pb-8 pt-3 shadow-2xl">
+            <span className="mx-auto mb-4 block h-1 w-11 rounded-full bg-[rgba(102,28,10,0.18)]" />
+            {openItem.image_url && (
+              <button
+                type="button"
+                onClick={() => setItemZoom(true)}
+                className="relative block w-full overflow-hidden rounded-3xl transition active:scale-[0.99]"
+                aria-label={tr(lang, "تكبير الصورة", "Zoom image")}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={openItem.image_url} alt={openItem.name} className="aspect-[4/3] w-full object-cover" />
+                <span className="absolute end-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/45 text-sm text-white">⤢</span>
+              </button>
+            )}
+            <div className="mt-4 flex items-start justify-between gap-3">
+              <p className="min-w-0 flex-1 text-right font-display text-xl font-bold text-[color:var(--ink)]">{openItem.name}</p>
+              {openItem.price != null && (
+                <span className="shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-extrabold text-white" style={{ background: "var(--brand-solid)" }}>
+                  {money(openItem.price, lang)}
+                </span>
+              )}
+            </div>
+            {openItem.description && (
+              <p className="mt-2 whitespace-pre-line text-right text-[15px] leading-8 text-[color:var(--muted)]">{openItem.description}</p>
+            )}
+            <button type="button" onClick={() => setOpenItem(null)} className="btn btn-primary mt-6 w-full">
+              {tr(lang, "إغلاق", "Close")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* عارض صورة الصنف ملء الشاشة */}
+      {openItem && itemZoom && openItem.image_url && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4"
+          role="dialog"
+          aria-modal
+          onClick={() => setItemZoom(false)}
+        >
+          <button
+            type="button"
+            onClick={() => setItemZoom(false)}
+            className="absolute end-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-xl text-white"
+            aria-label={tr(lang, "إغلاق", "Close")}
+          >
+            ✕
+          </button>
+          <figure className="max-h-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={openItem.image_url} alt={openItem.name} className="max-h-[80vh] w-full rounded-2xl object-contain" />
+            <figcaption className="mt-3 text-center text-sm font-bold text-white/90">{openItem.name}</figcaption>
+          </figure>
+        </div>
+      )}
 
       {/* ===== التقييمات ===== */}
       <div className={tab === "reviews" ? "space-y-4" : "hidden"}>
