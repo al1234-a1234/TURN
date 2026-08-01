@@ -1,7 +1,8 @@
 import type { MetadataRoute } from "next";
 import { getDiscovery } from "@/lib/supabase/public-cache";
+import { SITE_ORIGIN } from "@/lib/site";
 
-const BASE = "https://turn-alpha.vercel.app";
+const BASE = SITE_ORIGIN;
 
 /* خريطة موقع حيّة: الرئيسية + صفحة كل مطعم فعّال — كل مطعم ينضم يصير
    قابلًا للعثور عليه في قوقل باسمه تلقائيًّا (قيمة تسويقية له بلا جهد). */

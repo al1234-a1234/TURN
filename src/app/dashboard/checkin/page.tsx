@@ -6,6 +6,7 @@ import { riyadhDayStart } from "@/lib/dates";
 import { resolveBranchScope, NO_BRANCH } from "../branch-scope";
 import { BranchPicker } from "../branch-picker";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
+import { SITE_HOST } from "@/lib/site";
 import { CheckinPoster } from "./checkin-poster";
 import { ScanRulesForm } from "./scan-rules";
 import { toAr } from "@/lib/format";
@@ -26,7 +27,7 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
 
   // رابط المسح + باركود
   const h = await headers();
-  const host = h.get("host") ?? "turn-alpha.vercel.app";
+  const host = h.get("host") ?? SITE_HOST;
   const proto = host.includes("localhost") ? "http" : "https";
   // الإعدادات والملصق صارا لكل فرع؛ الرابط يحمل الفرع (والملصقات القديمة بلا فرع تبقى تعمل)
   const scope = await resolveBranchScope(load.ctx, (await searchParams).branch);
