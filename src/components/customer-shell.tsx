@@ -72,7 +72,7 @@ export function CustomerShell({
           dir="ltr"
           className="select-none text-cream-100"
           style={{
-            fontFamily: "var(--font-dm-serif), "DM Serif Display", Georgia, serif",
+            fontFamily: 'var(--font-dm-serif), "DM Serif Display", Georgia, serif',
             fontWeight: 700,
             fontSize: "1.4rem",
             letterSpacing: "0.34em",
