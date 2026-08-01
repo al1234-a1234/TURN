@@ -626,7 +626,7 @@ export function WaitlistForm({
               type="button"
               onClick={() => askLocation(true)}
               className="mt-6 w-full rounded-2xl px-4 py-3.5 text-sm font-extrabold text-cream-100 transition active:scale-[0.985]"
-              style={{ background: "var(--brand-sheen), var(--brand-solid)", boxShadow: "0 14px 26px -14px rgba(58,18,6,0.7)" }}
+              style={{ background: "var(--brand-solid)", boxShadow: "0 14px 26px -14px rgba(58,18,6,0.7)" }}
             >
               {geo === "asking" ? tr(lang, "جارٍ التحقق…", "Checking…") : tr(lang, "فعّلته — خذ دوري ✓", "Enabled — take my turn ✓")}
             </button>
