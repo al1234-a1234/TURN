@@ -34,7 +34,7 @@ export function OwnerNavSidebar({ items, counts }: { items: NavItem[]; counts?: 
             {c != null && c > 0 && (
               <span
                 className="rounded-full px-2 py-0.5 text-[11px] font-extrabold"
-                style={on ? { background: "rgba(255,255,255,0.25)", color: "#fff" } : { background: "var(--sage)", color: "var(--brand-d)" }}
+                style={on ? { background: "rgba(255,255,255,0.25)", color: "var(--brand-ink)" } : { background: "var(--sage)", color: "var(--brand-d)" }}
               >
                 {toAr(c)}
               </span>
@@ -60,7 +60,7 @@ export function OwnerNavTabs({ items }: { items: NavItem[] }) {
             prefetch
             data-active={on}
             className="shrink-0 rounded-2xl px-4 py-3 text-center text-sm font-bold text-[color:var(--muted)] transition data-[active=true]:text-cream-100"
-            style={on ? { background: "var(--brand-solid)" } : { background: "#fff", border: "1px solid var(--border)" }}
+            style={on ? { background: "var(--brand-solid)" } : { background: "var(--surface)", border: "1px solid var(--border)" }}
           >
             {n.label}
           </Link>

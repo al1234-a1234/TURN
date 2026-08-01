@@ -154,7 +154,7 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
                 disabled={pending}
                 onClick={() => setAskCancel(false)}
                 className="rounded-xl border px-3 py-2.5 text-sm font-bold text-[color:var(--ink)] transition disabled:opacity-60"
-                style={{ borderColor: "rgba(102,28,10,0.20)", background: "#fff" }}
+                style={{ borderColor: "rgba(102,28,10,0.20)", background: "var(--surface)" }}
               >
                 {tr(lang, "تراجع", "Keep it")}
               </button>

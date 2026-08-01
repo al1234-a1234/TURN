@@ -48,7 +48,7 @@ export function RewardForm({ customerId }: { customerId: string }) {
             type="button"
             onClick={() => setKind(k)}
             className="rounded-xl py-2 text-sm font-bold transition"
-            style={kind === k ? { background: "var(--brand-solid)", color: "#fff" } : { color: "var(--muted)" }}
+            style={kind === k ? { background: "var(--brand-solid)", color: "var(--brand-ink)" } : { color: "var(--muted)" }}
           >
             {k === "gift" ? tr(lang, "🎁 هديّة", "🎁 Gift") : tr(lang, "٪ خصم", "٪ Discount")}
           </button>

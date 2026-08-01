@@ -59,13 +59,13 @@ export function TvBoard({ branchId, initial }: { branchId: string; initial: Row[
                 className="flex items-center gap-5 rounded-3xl px-6 py-4"
                 style={r.status === "notified"
                   ? { background: "var(--brand-solid)", boxShadow: "0 18px 34px -20px rgba(102,28,10,0.7)" }
-                  : { background: "#fff", border: "1px solid rgba(102,28,10,0.12)" }}>
+                  : { background: "var(--surface)", border: "1px solid rgba(102,28,10,0.12)" }}>
               <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl font-display text-4xl font-bold"
-                    style={r.status === "notified" ? { background: "rgba(255,255,255,0.16)", color: "#fff" } : { background: "var(--brand-solid)", color: "#fff" }}>
+                    style={r.status === "notified" ? { background: "rgba(255,255,255,0.16)", color: "var(--brand-ink)" } : { background: "var(--brand-solid)", color: "var(--brand-ink)" }}>
                 {toAr(r.rank ?? 0)}
               </span>
               <span className="min-w-0 flex-1 truncate font-display text-3xl font-bold"
-                    style={{ color: r.status === "notified" ? "#fff" : "var(--ink)" }}>
+                    style={{ color: r.status === "notified" ? "var(--brand-ink)" : "var(--ink)" }}>
                 {r.display_name}
               </span>
               {r.status === "notified" && (

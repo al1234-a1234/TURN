@@ -235,7 +235,7 @@ export default async function ReportsPage({
               href={`/dashboard/reports?period=${p}`}
               data-active={on}
               className="rounded-2xl px-4 py-2.5 text-sm font-bold transition data-[active=true]:text-cream-100"
-              style={on ? { background: "var(--brand-solid)" } : { background: "#fff", border: "1px solid var(--border)", color: "var(--muted)" }}
+              style={on ? { background: "var(--brand-solid)" } : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--muted)" }}
             >
               {periodLabel(p, lang)}
             </Link>

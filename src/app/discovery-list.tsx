@@ -49,8 +49,8 @@ function ZonePill({ label, count, lang }: { label: string; count: number; lang: 
       className="inline-flex w-[116px] items-center justify-between rounded-full px-3 py-1.5 text-[12px] font-bold"
       style={
         busy
-          ? { background: "var(--brand-solid)", color: "#fff" }
-          : { background: "var(--brand-solid)", color: "#fff" }
+          ? { background: "var(--brand-solid)", color: "var(--brand-ink)" }
+          : { background: "var(--brand-solid)", color: "var(--brand-ink)" }
       }
     >
       <span className="inline-flex items-center gap-1.5">
@@ -245,8 +245,8 @@ export function DiscoveryList({ items, lang }: { items: DiscoveryItem[]; lang: L
 
   const chip = (active: boolean) =>
     active
-      ? { background: "var(--brand-solid)", color: "#fff", border: "1px solid transparent" }
-      : { background: "var(--brand-solid)", color: "#fff", border: "1px solid transparent" };
+      ? { background: "var(--brand-solid)", color: "var(--brand-ink)", border: "1px solid transparent" }
+      : { background: "var(--brand-solid)", color: "var(--brand-ink)", border: "1px solid transparent" };
 
   let delay = 0;
 

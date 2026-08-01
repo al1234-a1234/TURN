@@ -44,7 +44,7 @@ export function BranchPicker({
               className="shrink-0 rounded-2xl px-4 py-2.5 text-right transition active:scale-[0.97]"
               style={
                 active
-                  ? { background: "var(--brand-solid)", color: "#fff", boxShadow: "0 12px 24px -16px rgba(102,28,10,0.72)" }
+                  ? { background: "var(--brand-solid)", color: "var(--brand-ink)", boxShadow: "0 12px 24px -16px rgba(102,28,10,0.72)" }
                   : { background: "var(--surface-2)", color: "var(--ink)", border: "1px solid rgba(102,28,10,0.12)" }
               }
             >

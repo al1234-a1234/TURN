@@ -103,7 +103,7 @@ export default async function ReceptionPage({
           )}
           {q.confirmed_at && (
             <span className="mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
-              style={{ background: "var(--brand-solid)", color: "#fff" }}>
+              style={{ background: "var(--brand-solid)", color: "var(--brand-ink)" }}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
               {tr(lang, "أكّد حضوره", "Confirmed")}
             </span>

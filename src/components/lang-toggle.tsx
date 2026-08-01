@@ -36,7 +36,7 @@ export function LangToggle({ variant = "header" }: { variant?: "header" | "plain
             className="rounded-full px-2 py-0.5 transition"
             style={
               on
-                ? { background: variant === "header" ? "rgba(255,255,255,0.9)" : "var(--brand-d)", color: variant === "header" ? "var(--brand-solid)" : "#fff" }
+                ? { background: variant === "header" ? "rgba(255,255,255,0.9)" : "var(--brand-d)", color: variant === "header" ? "var(--brand-solid)" : "var(--brand-ink)" }
                 : { color: variant === "header" ? "rgba(255,255,255,0.85)" : "var(--muted)" }
             }
           >

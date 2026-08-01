@@ -52,8 +52,8 @@ export function StatusToggle({
         className="flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold transition disabled:opacity-60"
         style={
           closed
-            ? { background: "var(--brand-solid)", color: "#fff" }
-            : { background: "var(--brand-solid)", color: "#fff" }
+            ? { background: "var(--brand-solid)", color: "var(--brand-ink)" }
+            : { background: "var(--brand-solid)", color: "var(--brand-ink)" }
         }
       >
         <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
@@ -69,8 +69,8 @@ export function StatusToggle({
         className="flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold transition disabled:opacity-60"
         style={
           busy
-            ? { background: "var(--brand-solid)", color: "#fff" }
-            : { background: "var(--brand-solid)", color: "#fff" }
+            ? { background: "var(--brand-solid)", color: "var(--brand-ink)" }
+            : { background: "var(--brand-solid)", color: "var(--brand-ink)" }
         }
       >
         <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
