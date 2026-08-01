@@ -9,9 +9,7 @@ import { Logo } from "@/components/logo";
 export default function GlobalError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
     <div className="flex min-h-full flex-1 flex-col items-center justify-center px-6 text-center">
-      <span className="flex h-20 w-20 items-center justify-center rounded-3xl" style={{ background: "var(--brand-solid)" }}>
-        <Logo size={96} />
-      </span>
+      <Logo size={96} />
       <h1 className="mt-6 font-display text-2xl font-bold text-[color:var(--ink)]">صار خلل مؤقت</h1>
       <p className="mt-2 max-w-sm text-sm leading-6 text-[color:var(--muted)]">
         ما ضاع شيء من بياناتك. جرّب مرة ثانية، ولو تكررت المشكلة انتظر دقيقة ثم أعد فتح الصفحة.

@@ -63,9 +63,9 @@ export function CustomerShell({
         <button
           onClick={() => setOpen(true)}
           aria-label={tr(lang, "القائمة", "Menu")}
-          className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-white/15 ring-1 ring-white/25 transition active:scale-95"
+          className="flex items-center justify-center transition active:scale-95"
         >
-          <Logo size={38} withName={false} />
+          <Logo size={44} />
         </button>
 
         <span
@@ -123,9 +123,7 @@ export function CustomerShell({
               </button>
               <div className="flex items-center justify-end gap-3">
                 <span className="font-display text-xl font-bold">{tr(lang, "إيت", "EIGHT")}</span>
-                <span className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-white/15 ring-1 ring-white/25">
-                  <Logo size={56} />
-                </span>
+                <Logo size={56} />
               </div>
             </div>
             <ul className="px-6 py-4">

@@ -16,9 +16,7 @@ export default async function AboutPage() {
     <CustomerShell active="other" search={false}>
       <div className="space-y-5">
         <div className="rq-card flex flex-col items-center gap-3 p-8 text-center">
-          <span className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl bg-brand-800">
-            <Logo size={56} />
-          </span>
+          <Logo size={96} />
           <h1 className="font-display text-2xl font-bold text-[color:var(--ink)]">{tr(lang, "إيت — EIGHT", "EIGHT — إيت")}</h1>
           <p className="max-w-md text-sm leading-relaxed text-[color:var(--muted)]">
             {tr(
