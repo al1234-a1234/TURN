@@ -65,7 +65,7 @@ export function CustomerShell({
           aria-label={tr(lang, "القائمة", "Menu")}
           className="flex items-center justify-center transition active:scale-95"
         >
-          <Logo size={44} inverted />
+          <Logo size={44} />
         </button>
 
         <span className="eight-wordmark select-none">EIGHT</span>
@@ -111,7 +111,7 @@ export function CustomerShell({
               </button>
               <div className="flex items-center justify-end gap-3">
                 <span className="font-display text-xl font-bold text-[color:var(--brand-maroon)]">{tr(lang, "إيت", "EIGHT")}</span>
-                <Logo size={56} inverted />
+                <Logo size={56} />
               </div>
             </div>
             <ul className="px-6 py-4">

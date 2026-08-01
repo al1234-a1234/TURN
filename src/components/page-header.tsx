@@ -13,7 +13,7 @@ export function SharedHeader({
 }) {
   return (
     <header className="rq-header relative px-5 pb-5 pt-5">
-      <div className="mx-auto flex max-w-2xl items-center justify-between">{children}</div>
+      <div className="relative mx-auto flex max-w-2xl items-center justify-between">{children}</div>
       {overlap}
     </header>
   );

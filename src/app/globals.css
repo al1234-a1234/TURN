@@ -198,7 +198,7 @@ body {
     0 0.05em 0.16em -0.06em rgba(90,50,30,0.30);
   font-family: 'DM Serif Display', Georgia, serif;
   font-weight: 400;                /* DM Serif Display وزن واحد — 700 يولّد ثقلًا زائفًا */
-  font-size: 1.22rem;
+  font-size: 1.62rem;
   line-height: 1;
   letter-spacing: 0.300em;
   padding-inline-end: calc(0.86em - 0.300em); /* يلغي فراغ آخر حرف */
@@ -217,7 +217,7 @@ h1, h2, h3, h4 {
    الشريط صار بلون تعبئة الشعار الفاتح، فانقلبت نبرته: النص والأيقونات
    عنابية. مسطّح لا متدرّج — التدرّج على سطح عريض قصير يُقرأ لونين. */
 .rq-header {
-  background: var(--brand-cream-1);
+  background: var(--brand-cream-2);
   color: var(--brand-maroon);
   border-end-start-radius: 34px;
   border-end-end-radius: 34px;
@@ -240,11 +240,17 @@ h1, h2, h3, h4 {
 .rq-circle:hover { background: rgba(120,30,12,0.12); }
 
 /* كلمة العلامة فوق الهيدر الكريمي: بلا لوح — اللوح الكريمي على كريمي
-   يختفي ويبقى حدّه خطًّا يتيمًا. الحروف العنابية وحدها تكفي. */
+   يختفي ويبقى حدّه خطًّا يتيمًا. الحروف العنابية وحدها تكفي.
+   والتوسيط مطلق بالنسبة للشريط لا «بين عنصرين»: زر يمين وزران يسار
+   بعرضين مختلفين يزيحان العنصر الأوسط عن منتصف الصفحة فعليًّا. */
 .rq-header .eight-wordmark {
   background: none;
   box-shadow: none;
   padding-block: 0;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
 }
 
 /* بطاقة بيضاء نيومورفية */

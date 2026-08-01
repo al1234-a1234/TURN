@@ -197,7 +197,7 @@ export default async function RestaurantPublicPage({
           aria-label={tr(lang, "الصفحة الرئيسية", "Home")}
           className="flex items-center justify-center transition active:scale-95"
         >
-          <Logo size={44} inverted />
+          <Logo size={44} />
         </Link>
         <h1 className="sr-only">{restaurant.name}</h1>
         <div className="flex items-center gap-2">

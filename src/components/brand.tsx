@@ -16,8 +16,8 @@ export function BrandLink({
 }) {
   return (
     <Link href={href} className={`flex items-center gap-2.5 ${className}`}>
-      <Logo size={size} inverted withName={false} />
-      <span className="font-display text-lg font-bold text-[color:var(--brand-maroon)]">إيت</span>
+      <Logo size={size} withName={false} />
+      <span className="font-display text-lg font-bold text-cream-100/95">إيت</span>
     </Link>
   );
 }
