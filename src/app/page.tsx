@@ -71,7 +71,7 @@ export default async function Home() {
     <CustomerShell active="restaurants">
       {withStatus.length === 0 ? (
         <div className="rq-card p-10 text-center text-[color:var(--muted)]">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full text-white" style={{ background: "var(--brand-solid)" }}><IconPlate size={26} /></span>
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full text-cream-100" style={{ background: "var(--brand-solid)" }}><IconPlate size={26} /></span>
           <p className="mt-3 text-sm">{tr(lang, "لا توجد مطاعم متاحة بعد.", "No restaurants available yet.")}</p>
         </div>
       ) : (

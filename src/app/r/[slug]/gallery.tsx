@@ -44,9 +44,9 @@ export function Gallery({ photos, label }: { photos: Photo[]; label: string }) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={ph.url} alt={ph.caption ?? ""} className="h-full w-full object-cover" />
             {ph.caption && (
-              <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-3 text-sm font-bold text-white">{ph.caption}</span>
+              <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-3 text-sm font-bold text-cream-100">{ph.caption}</span>
             )}
-            <span className="absolute end-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/45 text-xs text-white">⤢</span>
+            <span className="absolute end-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/45 text-xs text-cream-100">⤢</span>
           </button>
         ))}
       </div>
@@ -62,7 +62,7 @@ export function Gallery({ photos, label }: { photos: Photo[]; label: string }) {
           <button
             type="button"
             onClick={() => setOpen(null)}
-            className="absolute end-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-xl text-white"
+            className="absolute end-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-xl text-cream-100"
             aria-label={tr(lang, "إغلاق", "Close")}
           >
             ✕
@@ -73,7 +73,7 @@ export function Gallery({ photos, label }: { photos: Photo[]; label: string }) {
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); go(-1); }}
-                className="absolute start-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-2xl text-white"
+                className="absolute start-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-2xl text-cream-100"
                 aria-label={tr(lang, "السابق", "Previous")}
               >
                 ‹
@@ -81,7 +81,7 @@ export function Gallery({ photos, label }: { photos: Photo[]; label: string }) {
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); go(1); }}
-                className="absolute end-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-2xl text-white"
+                className="absolute end-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-2xl text-cream-100"
                 aria-label={tr(lang, "التالي", "Next")}
               >
                 ›
@@ -93,9 +93,9 @@ export function Gallery({ photos, label }: { photos: Photo[]; label: string }) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={photos[open].url} alt={photos[open].caption ?? ""} className="max-h-[80vh] w-full rounded-2xl object-contain" />
             {photos[open].caption && (
-              <figcaption className="mt-3 text-center text-sm font-bold text-white/90">{photos[open].caption}</figcaption>
+              <figcaption className="mt-3 text-center text-sm font-bold text-cream-100/90">{photos[open].caption}</figcaption>
             )}
-            <p className="mt-1 text-center text-xs text-white/50">{open + 1} / {photos.length}</p>
+            <p className="mt-1 text-center text-xs text-cream-100/50">{open + 1} / {photos.length}</p>
           </figure>
         </div>
       )}

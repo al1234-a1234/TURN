@@ -28,13 +28,13 @@ export function ReviewForm({ slug, googleUrl }: { slug: string; googleUrl?: stri
     return (
       <div className="rq-card space-y-3 p-4">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white" style={{ background: "var(--brand-solid)" }}>✓</span>
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-cream-100" style={{ background: "var(--brand-solid)" }}>✓</span>
           <p className="text-sm font-bold text-[color:var(--ink)]">{tr(lang, "وصل تقييمك — شكرًا لك 🌿", "Your review is in — thank you 🌿")}</p>
         </div>
         {/* التوجيه الذكي فعليًّا: الراضي (٤★+) يُدعى لنشره في خرائط Google */}
         {stars >= 4 && googleUrl && (
           <a href={googleUrl} target="_blank" rel="noreferrer"
-             className="flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-extrabold text-white"
+             className="flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-extrabold text-cream-100"
              style={{ background: "var(--brand-solid)" }}>
             ⭐ {tr(lang, "أسعدتنا! انشر تقييمك في خرائط Google", "Made our day! Share it on Google Maps")}
           </a>
@@ -68,7 +68,7 @@ export function ReviewForm({ slug, googleUrl }: { slug: string; googleUrl?: stri
         placeholder={tr(lang, "شاركنا رأيك (اختياري)", "Share your thoughts (optional)")} className="field-input resize-none" />
 
       {state.error && (
-        <p className="rounded-2xl border border-[rgba(200,70,70,0.3)] bg-[rgba(200,70,70,0.06)] px-3 py-2.5 text-xs font-medium text-red-600">{state.error}</p>
+        <p className="rounded-2xl border border-[rgba(200,70,70,0.3)] bg-[rgba(200,70,70,0.06)] px-3 py-2.5 text-xs font-medium text-[color:var(--danger)]">{state.error}</p>
       )}
 
       <button type="submit" disabled={pending || stars === 0 || !/^05\d{8}$/.test(phone)} className="rq-btn !h-11 text-sm">

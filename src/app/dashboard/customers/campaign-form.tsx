@@ -27,7 +27,7 @@ export function CampaignForm({ counts }: { counts: Counts }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full rounded-2xl py-3 text-sm font-bold text-white transition active:scale-[0.99]"
+        className="w-full rounded-2xl py-3 text-sm font-bold text-cream-100 transition active:scale-[0.99]"
         style={{ background: "var(--brand-solid)" }}
       >
         {tr(lang, "📣 حملة مكافآت — أرسل هديّة/خصم لشريحة", "📣 Reward campaign — send a gift/discount to a segment")}

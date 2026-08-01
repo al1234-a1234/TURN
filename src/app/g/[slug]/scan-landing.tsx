@@ -34,7 +34,7 @@ type Status = {
 };
 
 // لون الطبقة بالمفتاح الثابت؛ الاسم المعروض يأتي من إعداد المالك
-const TIER_COLOR: Record<string, string> = { gold: "#b8860b", silver: "#7d7d85" };
+const TIER_COLOR: Record<string, string> = { gold: "var(--star)", silver: "#7d7d85" };
 const TIER_FALLBACK: Record<string, [string, string]> = { gold: ["ذهبي", "Gold"], silver: ["فضّي", "Silver"] };
 
 export function ScanLanding({ slug, branchId, lang }: { slug: string; branchId: string; lang: Lang }) {
@@ -119,7 +119,7 @@ export function ScanLanding({ slug, branchId, lang }: { slug: string; branchId: 
             </p>
           </div>
           {tierKey && (
-            <span className="rounded-full px-3 py-1 text-xs font-extrabold text-white" style={{ background: TIER_COLOR[tierKey] }}>
+            <span className="rounded-full px-3 py-1 text-xs font-extrabold text-cream-100" style={{ background: TIER_COLOR[tierKey] }}>
               {tierName}
             </span>
           )}
@@ -162,7 +162,7 @@ export function ScanLanding({ slug, branchId, lang }: { slug: string; branchId: 
           </button>
         )}
         {checkin && !checkin.ok && checkin.error && (
-          <p className="mt-2 text-center text-sm font-bold" style={{ color: "#c0564a" }}>{checkin.error}</p>
+          <p className="mt-2 text-center text-sm font-bold" style={{ color: "var(--danger)" }}>{checkin.error}</p>
         )}
       </div>
 
@@ -210,7 +210,7 @@ function StatusReward({ r, lang }: { r: NonNullable<Status["rewards"]>[number]; 
   return (
     <div className="rq-card p-4">
       <div className="flex items-center gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-lg text-white"
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-lg text-cream-100"
               style={{ background: "var(--brand-solid)" }}>
           {r.kind === "discount" ? "٪" : "🎁"}
         </span>
@@ -228,7 +228,7 @@ function StatusReward({ r, lang }: { r: NonNullable<Status["rewards"]>[number]; 
         )}
       </div>
       {r.code && open && (
-        <div className="mt-3 rounded-2xl bg-white p-4" style={{ border: "1px solid rgba(102,28,10,0.14)" }}>
+        <div className="mt-3 rounded-2xl bg-[color:var(--surface)] p-4" style={{ border: "1px solid rgba(102,28,10,0.14)" }}>
           <RewardQr code={r.code} />
           <p dir="ltr" className="mt-2 text-center font-display text-lg font-extrabold tracking-widest text-brand-800">{r.code}</p>
           <p className="mt-1 text-center text-[11px] font-bold text-[color:var(--muted)]">

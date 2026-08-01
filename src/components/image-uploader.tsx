@@ -119,7 +119,7 @@ export function ImageUploader({
       <input type="hidden" name={name} value={url} />
       <label className="flex cursor-pointer items-center gap-3">
         <span
-          className={`${box} flex shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-dashed border-[var(--border)] bg-sand-100 text-[color:var(--muted)] dark:bg-stone-800/50`}
+          className={`${box} flex shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-dashed border-[var(--border)] bg-sand-100 text-[color:var(--muted)] `}
         >
           {url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -137,12 +137,12 @@ export function ImageUploader({
         <button
           type="button"
           onClick={() => setUrl("")}
-          className="mt-2 text-xs font-bold text-[color:var(--muted)] transition hover:text-red-300"
+          className="mt-2 text-xs font-bold text-[color:var(--muted)] transition hover:text-[color:var(--danger)]"
         >
           {tr(lang, "🗑 إزالة الصورة", "🗑 Remove image")}
         </button>
       )}
-      {err && <p className="mt-1 text-xs text-red-300">{err}</p>}
+      {err && <p className="mt-1 text-xs text-[color:var(--danger)]">{err}</p>}
     </div>
   );
 }

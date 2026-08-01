@@ -168,7 +168,7 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
                 "Every image your customer sees has one clear place to manage it:")}
             </p>
             <div className="space-y-2.5">
-              <Link href="/dashboard/content" className="flex items-center justify-between rounded-2xl px-4 py-3.5 text-sm font-extrabold text-white" style={{ background: "var(--brand-solid)" }}>
+              <Link href="/dashboard/content" className="flex items-center justify-between rounded-2xl px-4 py-3.5 text-sm font-extrabold text-cream-100" style={{ background: "var(--brand-solid)" }}>
                 <span>📸 {tr(lang, "صور الأجواء (معرض الفرع) — تظهر في صفحة مطعمك وتبويب ميديا", "Ambience photos (branch gallery) — shown on your page & Media tab")}</span>
                 <span>←</span>
               </Link>
@@ -222,7 +222,7 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
           <ul className="mb-4 space-y-2">
             {branchList.map((b) => (
               <li key={b.id} className={`${inputDark} flex items-center gap-3`} style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
-                <span className="flex h-9 w-9 items-center justify-center rounded-xl text-white" style={{ background: "var(--brand-solid)" }}><IconPin size={18} /></span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl text-cream-100" style={{ background: "var(--brand-solid)" }}><IconPin size={18} /></span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-bold text-[color:var(--ink)]">{b.name}</p>
                   <p className="truncate text-xs text-[color:var(--muted)]">{[b.city, b.address].filter(Boolean).join(" · ") || "—"}</p>
@@ -230,7 +230,7 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
                 {isBrandLevel && branchList.length > 1 && (
                   <form action={deleteBranch}>
                     <input type="hidden" name="branch_id" value={b.id} />
-                    <button className="rounded-lg px-2 py-1 text-xs font-bold text-[color:var(--muted)] transition hover:text-red-600">{tr(lang, "حذف", "Delete")}</button>
+                    <button className="rounded-lg px-2 py-1 text-xs font-bold text-[color:var(--muted)] transition hover:text-[color:var(--danger)]">{tr(lang, "حذف", "Delete")}</button>
                   </form>
                 )}
               </li>
@@ -264,14 +264,14 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
                 <span className="block font-bold text-[color:var(--ink)]">{tr(lang, "استقبال قائمة الانتظار", "Accept waitlist")}</span>
                 <span className="text-xs text-[color:var(--muted)]">{tr(lang, "أوقفها لإغلاق الطابور مؤقتًا أمام العملاء", "Turn off to temporarily close the queue to customers")}</span>
               </span>
-              <input type="checkbox" name="accepts_waitlist" defaultChecked={settings?.accepts_waitlist ?? true} className="h-6 w-6 accent-[#a3341a]" />
+              <input type="checkbox" name="accepts_waitlist" defaultChecked={settings?.accepts_waitlist ?? true} className="h-6 w-6 accent-[var(--brand-solid)]" />
             </label>
             <label className="flex items-center justify-between rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
               <span>
                 <span className="block font-bold text-[color:var(--ink)]">{tr(lang, "استقبال الحجوزات", "Accept reservations")}</span>
                 <span className="text-xs text-[color:var(--muted)]">{tr(lang, "فعّل الحجز المسبق للطاولات — منفصل عن طابور الحضور", "Enable advance table booking — separate from the walk-in queue")}</span>
               </span>
-              <input type="checkbox" name="accepts_reservations" defaultChecked={settings?.accepts_reservations ?? false} className="h-6 w-6 accent-[#a3341a]" />
+              <input type="checkbox" name="accepts_reservations" defaultChecked={settings?.accepts_reservations ?? false} className="h-6 w-6 accent-[var(--brand-solid)]" />
             </label>
             <div className="grid gap-4 sm:grid-cols-3">
               <div>

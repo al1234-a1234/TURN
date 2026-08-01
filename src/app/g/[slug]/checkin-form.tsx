@@ -110,10 +110,10 @@ export function CheckinForm({ slug, branchId, lang }: { slug: string; branchId: 
           className="flex items-center justify-between rounded-2xl px-4 py-3.5"
           style={{ background: "var(--brand-solid)" }}
         >
-          <span className="flex items-center gap-2 text-sm font-bold text-white">
+          <span className="flex items-center gap-2 text-sm font-bold text-cream-100">
             <IconGift size={18} /> {tr(lang, "شوف كل هداياك ومكافآتك", "See all your gifts & rewards")}
           </span>
-          <span className="text-white">←</span>
+          <span className="text-cream-100">←</span>
         </Link>
 
         <Link href={`/r/${slug}?tab=reviews`} className="flex items-center justify-between rounded-2xl px-4 py-3"
@@ -147,7 +147,7 @@ export function CheckinForm({ slug, branchId, lang }: { slug: string; branchId: 
           required
           value={phone}
           onChange={(e) => setPhone(normalizePhone(e.target.value).slice(0, 10))}
-          className="mt-2 w-full rounded-2xl border border-[color:var(--border)] bg-white px-4 py-3 text-center text-lg font-bold tracking-widest text-[color:var(--ink)] outline-none focus:border-[color:var(--brand-d)]"
+          className="mt-2 w-full rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 text-center text-lg font-bold tracking-widest text-[color:var(--ink)] outline-none focus:border-[color:var(--brand-d)]"
         />
         <label className="mt-4 block text-[13px] font-bold text-[color:var(--ink)]">{tr(lang, "اسمك (اختياري)", "Your name (optional)")}</label>
         <input
@@ -155,7 +155,7 @@ export function CheckinForm({ slug, branchId, lang }: { slug: string; branchId: 
           type="text"
           autoComplete="name"
           placeholder={tr(lang, "عشان نرحّب فيك", "So we greet you")}
-          className="mt-2 w-full rounded-2xl border border-[color:var(--border)] bg-white px-4 py-3 text-[15px] font-bold text-[color:var(--ink)] outline-none focus:border-[color:var(--brand-d)]"
+          className="mt-2 w-full rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-3 text-[15px] font-bold text-[color:var(--ink)] outline-none focus:border-[color:var(--brand-d)]"
         />
       </div>
 

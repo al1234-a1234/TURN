@@ -7,7 +7,7 @@ import { rewardPayload } from "@/lib/reward-code";
 /**
  * باركود الهدية عند العميل — نصفه الأول من حلقة «ماك»:
  * العميل يعرض، الكاشير يمسح بالكاميرا، ولو تعطّلت الكاميرا يبقى الرمز
- * السداسي مقروءًا تحته فيُكتب يدويًّا. الحمولة `TURN:R:<code>` كي يرفض
+ * السداسي مقروءًا تحته فيُكتب يدويًّا. الحمولة `EIGHT:R:<code>` (والقراءة تقبل TURN القديمة) كي يرفض
  * الماسح أي باركود غريب (رابط موقع، ملصق منتج…) بدل أن يبحث به عبثًا.
  */
 export function RewardQr({ code, size = 168 }: { code: string; size?: number }) {
@@ -22,7 +22,7 @@ export function RewardQr({ code, size = 168 }: { code: string; size?: number }) 
       type: "svg",
       margin: 2,
       errorCorrectionLevel: "M",
-      color: { dark: "#000000", light: "#ffffff" },
+      color: { dark: "#000000", light: "var(--surface)" },
     }).then((s) => { if (alive) setSvg(s); }).catch(() => {});
     return () => { alive = false; };
   }, [code]);

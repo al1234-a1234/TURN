@@ -33,7 +33,7 @@ export function CheckinPoster({
 
       {/* الملصق */}
       <div
-        className="checkin-poster mx-auto max-w-sm rounded-3xl bg-white p-8 text-center"
+        className="checkin-poster mx-auto max-w-sm rounded-3xl bg-[color:var(--surface)] p-8 text-center"
         style={{ border: "1px solid rgba(102,28,10,0.14)", boxShadow: "0 20px 44px -28px rgba(102,28,10,0.5)" }}
       >
         <p className="font-display text-2xl font-bold text-[color:var(--brand-d)]">{name}</p>

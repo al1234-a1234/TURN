@@ -69,7 +69,7 @@ export function TvBoard({ branchId, initial }: { branchId: string; initial: Row[
                 {r.display_name}
               </span>
               {r.status === "notified" && (
-                <span className="shrink-0 animate-pulse rounded-full bg-white/20 px-4 py-1.5 text-lg font-extrabold text-white">
+                <span className="shrink-0 animate-pulse rounded-full bg-white/20 px-4 py-1.5 text-lg font-extrabold text-cream-100">
                   تفضّل 🔔
                 </span>
               )}
@@ -85,7 +85,7 @@ export function TvBoard({ branchId, initial }: { branchId: string; initial: Row[
       {/* شريط النداء */}
       {nowServing.length > 0 && (
         <div className="rounded-3xl px-8 py-5 text-center" style={{ background: "var(--brand-solid)" }}>
-          <p className="font-display text-4xl font-bold text-white">
+          <p className="font-display text-4xl font-bold text-cream-100">
             🔔 نُنادي الآن: {nowServing.map((r) => `رقم ${toAr(r.rank ?? 0)}`).join(" · ")}
           </p>
         </div>

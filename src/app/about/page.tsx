@@ -19,7 +19,7 @@ export default async function AboutPage() {
           <span className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl bg-brand-800">
             <BrandMark size={54} />
           </span>
-          <h1 className="font-display text-2xl font-bold text-[color:var(--ink)]">{tr(lang, "دور — Turn", "Turn — دور")}</h1>
+          <h1 className="font-display text-2xl font-bold text-[color:var(--ink)]">{tr(lang, "إيت — EIGHT", "EIGHT — إيت")}</h1>
           <p className="max-w-md text-sm leading-relaxed text-[color:var(--muted)]">
             {tr(
               lang,

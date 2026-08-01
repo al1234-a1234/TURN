@@ -37,7 +37,7 @@ export async function OwnerHeader({
         </div>
       )}
       {!title && email && (
-        <p className="mx-auto mt-4 max-w-3xl text-sm text-white/80" dir="ltr">{email}</p>
+        <p className="mx-auto mt-4 max-w-3xl text-sm text-cream-100/80" dir="ltr">{email}</p>
       )}
     </header>
   );

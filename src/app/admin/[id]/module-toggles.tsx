@@ -62,7 +62,7 @@ function Toggle({
         style={{ background: on ? "var(--brand-solid)" : "var(--surface-2)", border: "1px solid var(--border)" }}
         title={locked ? tr(lang, "أساسي — لا يُطفأ", "Core — can't be turned off") : on ? tr(lang, "مُفعّل", "On") : tr(lang, "متوقّف", "Off")}
       >
-        <span className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-white shadow transition-all" style={{ insetInlineStart: on ? "1.55rem" : "0.2rem" }} />
+        <span className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-[color:var(--surface)] shadow transition-all" style={{ insetInlineStart: on ? "1.55rem" : "0.2rem" }} />
       </button>
     </div>
   );

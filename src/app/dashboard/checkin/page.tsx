@@ -36,7 +36,7 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
   const svg = await QRCode.toString(link, {
     type: "svg",
     margin: 1,
-    color: { dark: "#661c0a", light: "#00000000" },
+    color: { dark: "var(--brand-solid)", light: "#00000000" },
   });
 
   const todayIso = riyadhDayStart().toISOString();
@@ -106,7 +106,7 @@ export default async function CheckinPage({ searchParams }: { searchParams: Prom
             print: tr(lang, "اطبع الملصق", "Print poster"),
             copy: tr(lang, "انسخ الرابط", "Copy link"),
             copied: tr(lang, "تم النسخ ✓", "Copied ✓"),
-            poweredBy: tr(lang, "مقدّم من دور", "Powered by Turn"),
+            poweredBy: tr(lang, "مقدّم من إيت", "Powered by EIGHT"),
           }}
         />
       </section>

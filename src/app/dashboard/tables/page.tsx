@@ -50,7 +50,7 @@ export default async function TablesPage({ searchParams }: { searchParams: Promi
               </div>
               <form action={deleteTable}>
                 <input type="hidden" name="table_id" value={t.id} />
-                <button className="text-xs font-bold text-[color:var(--muted)] transition hover:text-red-600">{tr(lang, "حذف", "Delete")}</button>
+                <button className="text-xs font-bold text-[color:var(--muted)] transition hover:text-[color:var(--danger)]">{tr(lang, "حذف", "Delete")}</button>
               </form>
             </li>
           ))}

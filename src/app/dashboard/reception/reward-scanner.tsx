@@ -15,7 +15,7 @@ import { tr, type Lang } from "@/lib/i18n";
  * وتعطّل الكاميرا (رفض إذن/غيابها) لا يكسر شيئًا: الرمز السداسي يبقى
  * طريق الاحتياط في نفس الصندوق.
  *
- * الحمولة المقبولة: `TURN:R:<code>` أو الرمز مجرّدًا — أي شيء آخر يُتجاهل
+ * الحمولة المقبولة: `EIGHT:R:<code>` (أو TURN القديمة) أو الرمز مجرّدًا — أي شيء آخر يُتجاهل
  * بصمت (ملصق منتج، رابط موقع…) ويستمر المسح بدل أن يفشل البحث.
  */
 
@@ -124,7 +124,7 @@ export function RewardScanner({ lang, onCode }: { lang: Lang; onCode: (code: str
         >
           <IconCamera size={17} /> {tr(lang, "امسح", "Scan")}
         </button>
-        {error && <p className="mt-1 max-w-[160px] text-[10px] font-bold" style={{ color: "#c0564a" }}>{error}</p>}
+        {error && <p className="mt-1 max-w-[160px] text-[10px] font-bold" style={{ color: "var(--danger)" }}>{error}</p>}
       </div>
     );
   }
@@ -139,10 +139,10 @@ export function RewardScanner({ lang, onCode }: { lang: Lang; onCode: (code: str
           <div className="h-44 w-44 rounded-2xl border-4 border-white/80" style={{ boxShadow: "0 0 0 9999px rgba(0,0,0,0.35)" }} />
         </div>
       </div>
-      <p className="mt-4 text-center text-sm font-bold text-white/90">
+      <p className="mt-4 text-center text-sm font-bold text-cream-100/90">
         {tr(lang, "وجّه الكاميرا على باركود هدية العميل", "Point the camera at the customer's gift barcode")}
       </p>
-      <button type="button" onClick={stop} className="mt-3 rounded-xl bg-white/15 px-5 py-2 text-sm font-extrabold text-white ring-1 ring-white/30">
+      <button type="button" onClick={stop} className="mt-3 rounded-xl bg-white/15 px-5 py-2 text-sm font-extrabold text-cream-100 ring-1 ring-white/30">
         {tr(lang, "إغلاق", "Close")}
       </button>
     </div>

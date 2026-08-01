@@ -37,7 +37,7 @@ export default function VisitsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="mb-1 text-sm text-[color:var(--muted)]">{tr(lang, "سجلّ زياراتك عبر دور.", "A record of your visits with Turn.")}</p>
+          <p className="mb-1 text-sm text-[color:var(--muted)]">{tr(lang, "سجلّ زياراتك عبر إيت.", "A record of your visits with EIGHT.")}</p>
           {turns.map((t, i) => {
             const initial = (t.name || "م").trim().charAt(0);
             return (

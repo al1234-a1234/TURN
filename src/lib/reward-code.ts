@@ -1,10 +1,14 @@
 /**
- * حمولة باركود الهدية: `TURN:R:<code>` — أو الرمز السداسي مجرّدًا (كتابة يدوية).
+ * حمولة باركود الهدية: `EIGHT:R:<code>` — أو الرمز السداسي مجرّدًا (كتابة يدوية).
  * أي شيء آخر (رابط موقع، ملصق منتج…) يُرفض فيستمر الماسح بدل بحث عبثي.
  * الأبجدية مطابقة لمولّد القاعدة `gen_reward_code`: بلا 0/O/1/I الملتبسة.
+ *
+ * التوليد صار `EIGHT:` بعد تبديل الهوية، والقراءة تقبل `TURN:` **للأبد**:
+ * كل بطاقة هدية طُبعت أو أُرسلت قبل التبديل تحمل الصيغة القديمة، وكسرها
+ * يعني رفض هدية دفع المطعم ثمنها أمام عميله.
  */
 
-const PAYLOAD = /^TURN:R:([A-Z2-9]{4,12})$/i;
+const PAYLOAD = /^(?:EIGHT|TURN):R:([A-Z2-9]{4,12})$/i;
 const BARE = /^[A-HJ-NP-Z2-9]{6}$/i;
 
 export function extractRewardCode(raw: string): string | null {
@@ -17,5 +21,5 @@ export function extractRewardCode(raw: string): string | null {
 
 /** حمولة باركود العميل — ما يُرمَّز في QR الهدية. */
 export function rewardPayload(code: string): string {
-  return `TURN:R:${code}`;
+  return `EIGHT:R:${code}`;
 }

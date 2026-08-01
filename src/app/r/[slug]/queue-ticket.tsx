@@ -192,7 +192,7 @@ export function QueueTicket({
   /** المخرج من أي حالة نهائية — كان غيابه يمنع أخذ دور جديد نهائيًّا */
   const RestartButton = () => (
     <button type="button" onClick={goneOr}
-      className="mt-1 w-full rounded-2xl px-4 py-3 text-sm font-extrabold text-white"
+      className="mt-1 w-full rounded-2xl px-4 py-3 text-sm font-extrabold text-cream-100"
       style={{ background: "var(--brand-solid)" }}>
       {tr(lang, "خذ دورًا جديدًا", "Take a new turn")}
     </button>
@@ -206,7 +206,7 @@ export function QueueTicket({
   if (cancelled) {
     return (
       <div className="rq-card flex flex-col items-center gap-3 p-8 text-center">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full text-3xl text-white" style={{ background: "var(--brand-solid)" }}>✓</span>
+        <span className="flex h-16 w-16 items-center justify-center rounded-full text-3xl text-cream-100" style={{ background: "var(--brand-solid)" }}>✓</span>
         <p className="text-lg font-extrabold text-[color:var(--ink)]">{tr(lang, "تم إلغاء دورك", "Your turn was cancelled")}</p>
         <p className="text-sm text-[color:var(--muted)]">{tr(lang, "تقدر تأخذ دورك من جديد وقت ما تحب.", "You can take a new turn whenever you like.")}</p>
         <RestartButton />
@@ -228,7 +228,7 @@ export function QueueTicket({
   if (seated) {
     return (
       <div className="rq-card flex flex-col items-center gap-3 p-8 text-center">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full text-3xl text-white" style={{ background: "var(--brand-solid)" }}>🎉</span>
+        <span className="flex h-16 w-16 items-center justify-center rounded-full text-3xl text-cream-100" style={{ background: "var(--brand-solid)" }}>🎉</span>
         <p className="font-display text-2xl font-extrabold text-[color:var(--ink)]">{tr(lang, "تفضّل، دورك جاهز", "You're up — please come in")}</p>
         <p className="text-sm text-[color:var(--muted)]">{tr(lang, "توجّه إلى الاستقبال. بالهناء والشفاء 🌿", "Head to the reception. Enjoy your visit 🌿")}</p>
         <RestartButton />
@@ -253,8 +253,8 @@ export function QueueTicket({
         <svg width="176" height="176" viewBox="0 0 128 128" className="absolute inset-0 -rotate-90">
           <defs>
             <linearGradient id="greenring" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#b23c1d" />
-              <stop offset="100%" stopColor="#661c0a" />
+              <stop offset="0%" stopColor="var(--brand-solid)" />
+              <stop offset="100%" stopColor="var(--brand-solid)" />
             </linearGradient>
           </defs>
           <circle cx="64" cy="64" r={R} fill="none" stroke="rgba(150,45,20,0.16)" strokeWidth="7" />
@@ -293,7 +293,7 @@ export function QueueTicket({
       {/* تنبيه الدور — يصل والتطبيق مُغلق */}
       {entryId && phone && canPush && (
         pushOn ? (
-          <p className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold text-white"
+          <p className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold text-cream-100"
              style={{ background: "var(--brand-solid)" }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
             {tr(lang, "بننبّهك على جوّالك قبل دورك", "We'll alert your phone before your turn")}
@@ -303,7 +303,7 @@ export function QueueTicket({
             type="button"
             onClick={enablePush}
             disabled={pushBusy}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-extrabold text-white transition active:scale-[0.985] disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-extrabold text-cream-100 transition active:scale-[0.985] disabled:opacity-60"
             style={{ background: "var(--brand-solid)", boxShadow: "0 14px 26px -16px rgba(102,28,10,0.72)" }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -316,7 +316,7 @@ export function QueueTicket({
       )}
 
       {actErr && (
-        <p className="w-full rounded-2xl px-3 py-2 text-xs font-bold text-red-600" style={{ background: "rgba(200,70,70,0.08)" }}>{actErr}</p>
+        <p className="w-full rounded-2xl px-3 py-2 text-xs font-bold text-[color:var(--danger)]" style={{ background: "rgba(200,70,70,0.08)" }}>{actErr}</p>
       )}
       {entryId && phone && (
         <button
@@ -325,7 +325,7 @@ export function QueueTicket({
             else setActErr(tr(lang, "تعذّر الإلغاء — ربما تغيّرت حالة دورك، حدّث الصفحة", "Couldn't cancel — your turn may have changed; refresh the page"));
           })}
           disabled={pending}
-          className="mt-1 h-11 w-full rounded-2xl border text-sm font-bold text-[color:var(--muted)] transition hover:text-red-600"
+          className="mt-1 h-11 w-full rounded-2xl border text-sm font-bold text-[color:var(--muted)] transition hover:text-[color:var(--danger)]"
           style={{ borderColor: "rgba(200,70,70,0.28)" }}
         >
           {pending ? tr(lang, "جارٍ الإلغاء…", "Cancelling…") : tr(lang, "إلغاء دوري", "Cancel my turn")}

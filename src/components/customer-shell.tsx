@@ -58,7 +58,7 @@ export function CustomerShell({
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
-      {/* الهيدر — يمين: الشعار (يفتح القائمة) · وسط: TURN · يسار: بحث */}
+      {/* الهيدر — يمين: الشعار (يفتح القائمة) · وسط: EIGHT · يسار: بحث */}
       <SharedHeader>
         <button
           onClick={() => setOpen(true)}
@@ -70,7 +70,7 @@ export function CustomerShell({
 
         <span
           dir="ltr"
-          className="select-none text-white"
+          className="select-none text-cream-100"
           style={{
             fontFamily: "var(--font-baskerville), Baskerville, Georgia, serif",
             fontWeight: 700,
@@ -79,7 +79,7 @@ export function CustomerShell({
             paddingInlineStart: "0.34em",
           }}
         >
-          TURN
+          EIGHT
         </span>
 
         {search ? (
@@ -122,7 +122,7 @@ export function CustomerShell({
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" /></svg>
               </button>
               <div className="flex items-center justify-end gap-3">
-                <span className="font-display text-xl font-bold">{tr(lang, "دور", "Turn")}</span>
+                <span className="font-display text-xl font-bold">{tr(lang, "إيت", "EIGHT")}</span>
                 <span className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-white/15 ring-1 ring-white/25">
                   <BrandMark size={40} />
                 </span>

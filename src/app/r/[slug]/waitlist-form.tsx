@@ -35,11 +35,11 @@ function ZoneStat({ label, count }: { label: string; count: number }) {
           : { background: "var(--brand-solid)" }
       }
     >
-      <p className="font-display text-3xl font-bold text-white">
+      <p className="font-display text-3xl font-bold text-cream-100">
         {busy ? toAr(count) : "0"}
       </p>
-      <p className="mt-1 text-xs font-bold text-white/90">{label}</p>
-      <p className="mt-0.5 text-[11px] font-bold text-white">
+      <p className="mt-1 text-xs font-bold text-cream-100/90">{label}</p>
+      <p className="mt-0.5 text-[11px] font-bold text-cream-100">
         {busy ? tr(lang, "بالطابور", "In queue") : tr(lang, "متاح الآن", "Available now")}
       </p>
     </div>
@@ -74,8 +74,8 @@ function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; o
         <span className="pointer-events-none absolute inset-x-0 bottom-0 block h-24"
               style={{ background: "linear-gradient(to top, rgba(58,18,6,0.86), transparent)" }} />
         <span className="absolute bottom-3 start-4 end-4 block">
-          <span className="block truncate font-display text-lg font-bold text-white">{b.name}</span>
-          {b.city && <span className="block truncate text-[13px] font-bold text-white/85">{b.city}</span>}
+          <span className="block truncate font-display text-lg font-bold text-cream-100">{b.name}</span>
+          {b.city && <span className="block truncate text-[13px] font-bold text-cream-100/85">{b.city}</span>}
         </span>
       </span>
 
@@ -84,7 +84,7 @@ function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; o
         {b.closedNow ? (
           <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
                 style={{ background: "var(--brand-d)" }}>
-            <span className="flex items-center gap-2 text-sm font-extrabold text-white">
+            <span className="flex items-center gap-2 text-sm font-extrabold text-cream-100">
               <span className="h-2.5 w-2.5 rounded-full bg-white/80" />
               {tr(lang, "مغلق حاليًا", "Closed now")}
             </span>
@@ -92,7 +92,7 @@ function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; o
         ) : !b.accepts ? (
           <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
                 style={{ background: "var(--brand-solid)" }}>
-            <span className="flex items-center gap-2 text-sm font-extrabold text-white">
+            <span className="flex items-center gap-2 text-sm font-extrabold text-cream-100">
               <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
               {tr(lang, "استقبال مباشر — بلا حجز دور", "Walk-in — no queue")}
             </span>
@@ -100,20 +100,20 @@ function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; o
         ) : b.total > 0 ? (
           <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
                 style={{ background: "var(--brand-solid)", boxShadow: "0 12px 24px -16px rgba(102,28,10,0.72)" }}>
-            <span className="flex items-center gap-2 text-sm font-extrabold text-white">
+            <span className="flex items-center gap-2 text-sm font-extrabold text-cream-100">
               <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
               {tr(lang, `${toAr(b.total)} بالطابور الآن`, `${toAr(b.total)} in queue now`)}
             </span>
-            <span className="text-xs font-extrabold text-white/85">{tr(lang, "خذ دورك ←", "Take turn ←")}</span>
+            <span className="text-xs font-extrabold text-cream-100/85">{tr(lang, "خذ دورك ←", "Take turn ←")}</span>
           </span>
         ) : (
           <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
                 style={{ background: "var(--brand-solid)" }}>
-            <span className="flex items-center gap-2 text-sm font-extrabold text-white">
+            <span className="flex items-center gap-2 text-sm font-extrabold text-cream-100">
               <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
               {tr(lang, "متاح الآن · بدون انتظار", "Available now · No wait")}
             </span>
-            <span className="text-xs font-extrabold text-white/85">{tr(lang, "خذ دورك ←", "Take turn ←")}</span>
+            <span className="text-xs font-extrabold text-cream-100/85">{tr(lang, "خذ دورك ←", "Take turn ←")}</span>
           </span>
         )}
       </span>
@@ -388,7 +388,7 @@ export function WaitlistForm({
           <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
         )}
         <div className="rq-card p-7 text-center">
-          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full text-white" style={{ background: "var(--brand-d)" }}>
+          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full text-cream-100" style={{ background: "var(--brand-d)" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" /><path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
           </span>
           <p className="text-lg font-bold text-[color:var(--ink)]">{tr(lang, "هذا الفرع مغلق حاليًا", "This branch is closed right now")}</p>
@@ -438,7 +438,7 @@ export function WaitlistForm({
       )}
 
       {branch?.busyNow && (
-        <p className="flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold text-white"
+        <p className="flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold text-cream-100"
            style={{ background: "var(--brand-solid)" }}>
           <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
           {tr(lang, "الفرع مزدحم الآن — قد يطول الانتظار قليلًا", "The branch is busy now — expect a slightly longer wait")}
@@ -474,7 +474,7 @@ export function WaitlistForm({
       <div className="rq-card space-y-4 p-5">
         <div className="text-right">
           <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "سجّل بياناتك وخذ دورك", "Enter your details and take your turn")}</p>
-          <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-white" style={{ background: "var(--brand-solid)" }}>
+          <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-cream-100" style={{ background: "var(--brand-solid)" }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
             {tr(lang, "بلا حساب ولا كلمة مرور", "No account, no password")}
           </span>
@@ -494,7 +494,7 @@ export function WaitlistForm({
             className="field-input text-left" placeholder="05xxxxxxxx"
           />
           {phone.length > 0 && !/^05\d{8}$/.test(phone) && (
-            <p className="mt-1.5 text-xs font-bold" style={{ color: "#c0564a" }}>
+            <p className="mt-1.5 text-xs font-bold" style={{ color: "var(--danger)" }}>
               {tr(lang, "الرقم يبدأ بـ 05 ويتكوّن من 10 خانات.", "Number must start with 05 and be 10 digits.")}
             </p>
           )}
@@ -502,7 +502,7 @@ export function WaitlistForm({
       </div>
 
       {state.error && (
-        <p className="rounded-2xl border border-[rgba(200,70,70,0.3)] bg-[rgba(200,70,70,0.06)] px-4 py-3 text-sm font-medium text-red-600">
+        <p className="rounded-2xl border border-[rgba(200,70,70,0.3)] bg-[rgba(200,70,70,0.06)] px-4 py-3 text-sm font-medium text-[color:var(--danger)]">
           {state.error}
         </p>
       )}
@@ -511,7 +511,7 @@ export function WaitlistForm({
           يعيد إظهار نافذة السماح الأصلية (كروم/سفاري) مع كل ضغطة */}
       {(geo === "denied" || geo === "failed" || geo === "unavailable") && (
         <div ref={geoBoxRef} className="rounded-2xl p-4 text-center" style={{ background: "var(--brand-solid)" }}>
-          <p className="text-sm font-extrabold text-white">
+          <p className="text-sm font-extrabold text-cream-100">
             {geo === "denied"
               ? tr(lang, "المعذرة — يرجى السماح بالموقع لأخذ دورك", "Sorry — please allow location to take your turn")
               : geo === "failed"
@@ -519,11 +519,11 @@ export function WaitlistForm({
                 : tr(lang, "جهازك لا يدعم تحديد الموقع، فلا يمكن أخذ الدور حاليًا", "Your device doesn't support location, so a turn can't be taken right now")}
           </p>
           {geo !== "unavailable" && (
-            <p className="mt-1.5 text-xs font-bold text-white/90">
+            <p className="mt-1.5 text-xs font-bold text-cream-100/90">
               {tr(lang, "اضغط «خذ دورك الآن» وسيظهر لك طلب السماح من جديد", "Tap “Take your turn now” and the permission prompt will appear again")}
             </p>
           )}
-          <p className="mt-1.5 text-xs font-medium text-white/75">
+          <p className="mt-1.5 text-xs font-medium text-cream-100/75">
             {tr(lang,
               "موقعك التقريبي فقط — يؤكّد للمطعم أنك قريب، ولا نحفظه.",
               "Approximate location only — it confirms you're nearby, and we never store it.")}
@@ -560,9 +560,9 @@ export function WaitlistForm({
       {geoSheet && (
         <div className="fixed inset-0 z-50 flex items-end" role="dialog" aria-modal>
           <button type="button" aria-label={tr(lang, "إغلاق", "Close")} className="absolute inset-0 cursor-default bg-black/45" onClick={() => setGeoSheet(false)} />
-          <div className="relative w-full rounded-t-[30px] bg-white px-6 pb-8 pt-3 shadow-2xl">
+          <div className="relative w-full rounded-t-[30px] bg-[color:var(--surface)] px-6 pb-8 pt-3 shadow-2xl">
             <span className="mx-auto mb-5 block h-1 w-11 rounded-full bg-[rgba(102,28,10,0.18)]" />
-            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full text-white" style={{ background: "var(--brand-solid)" }}>
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full text-cream-100" style={{ background: "var(--brand-solid)" }}>
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
                 <path d="M12 21s7-6.3 7-11a7 7 0 10-14 0c0 4.7 7 11 7 11z" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
                 <circle cx="12" cy="10" r="2.4" stroke="currentColor" strokeWidth="1.9" />
@@ -589,7 +589,7 @@ export function WaitlistForm({
                   ]
               ).map((step, i) => (
                 <li key={i} className="flex items-center gap-3">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-extrabold text-white" style={{ background: "var(--brand-solid)" }}>
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[13px] font-extrabold text-cream-100" style={{ background: "var(--brand-solid)" }}>
                     {toAr(i + 1)}
                   </span>
                   <span className="text-[13.5px] font-bold text-[color:var(--ink)]">{step}</span>
@@ -625,7 +625,7 @@ export function WaitlistForm({
             <button
               type="button"
               onClick={() => askLocation(true)}
-              className="mt-6 w-full rounded-2xl px-4 py-3.5 text-sm font-extrabold text-white transition active:scale-[0.985]"
+              className="mt-6 w-full rounded-2xl px-4 py-3.5 text-sm font-extrabold text-cream-100 transition active:scale-[0.985]"
               style={{ background: "var(--brand-sheen), var(--brand-solid)", boxShadow: "0 14px 26px -14px rgba(58,18,6,0.7)" }}
             >
               {geo === "asking" ? tr(lang, "جارٍ التحقق…", "Checking…") : tr(lang, "فعّلته — خذ دوري ✓", "Enabled — take my turn ✓")}

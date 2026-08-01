@@ -36,7 +36,7 @@ export function RewardForm({ customerId }: { customerId: string }) {
     >
       <input type="hidden" name="customer_id" value={customerId} />
       {grantErr && (
-        <p className="rounded-xl px-3 py-2 text-sm font-bold text-red-600" style={{ background: "rgba(200,70,70,0.08)" }}>
+        <p className="rounded-xl px-3 py-2 text-sm font-bold text-[color:var(--danger)]" style={{ background: "rgba(200,70,70,0.08)" }}>
           تعذّر منح الهدية — تأكد من العنوان وحاول ثانية
         </p>
       )}

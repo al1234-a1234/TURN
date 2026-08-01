@@ -234,7 +234,7 @@ export default async function ReportsPage({
               key={p}
               href={`/dashboard/reports?period=${p}`}
               data-active={on}
-              className="rounded-2xl px-4 py-2.5 text-sm font-bold transition data-[active=true]:text-white"
+              className="rounded-2xl px-4 py-2.5 text-sm font-bold transition data-[active=true]:text-cream-100"
               style={on ? { background: "var(--brand-solid)" } : { background: "#fff", border: "1px solid var(--border)", color: "var(--muted)" }}
             >
               {periodLabel(p, lang)}
@@ -261,16 +261,16 @@ export default async function ReportsPage({
 
       {/* المؤشرات */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi label={tr(lang, "خدمناهم", "Served")} value={toAr(served)} tone="var(--brand)" tint="#f8ece7" />
-        <Kpi label={tr(lang, "انضموا للطابور", "Joined")} value={toAr(joined)} tone="var(--brand-d)" tint="#eef3fb" />
-        <Kpi label={tr(lang, "متوسط الانتظار", "Average Wait")} value={`${toAr(avgWait)} ${tr(lang, "د", "min")}`} tone="var(--st-full)" tint="#fdf5e6" />
-        <Kpi label={tr(lang, "متوسط المجموعة", "Average Party")} value={toAr(avgParty)} tone="var(--brand-d)" tint="#eef3fb" />
-        <Kpi label={tr(lang, "أكثر الساعات ازدحامًا", "Busiest Hour")} value={busiestLabel} tone="var(--st-full)" tint="#fdf5e6" />
-        <Kpi label={tr(lang, "متوسط التقييم", "Average Rating")} value={ratings.length ? `★ ${toAr(avgRating)}` : "—"} tone="var(--star)" tint="#fbf1e6" />
-        <Kpi label={tr(lang, "إجمالي العملاء", "Total Customers")} value={toAr(totalCustomers)} tone="var(--brand-d)" tint="#f8e9e3" />
-        <Kpi label={tr(lang, "عملاء عائدون", "Returning Customers")} value={pct(toAr(returningPct), lang)} tone="var(--st-open)" tint="#e9f4ee" />
-        <Kpi label={tr(lang, "نسبة التغيّب", "No-show Rate")} value={pct(toAr(noShowRate), lang)} tone={noShowRate >= 20 ? "var(--st-closed)" : "var(--muted)"} tint="#f4eee6" />
-        <Kpi label={tr(lang, "نسبة الإلغاء", "Cancel Rate")} value={pct(toAr(cancelRate), lang)} tone={cancelRate >= 20 ? "var(--st-closed)" : "var(--muted)"} tint="#f4eee6" />
+        <Kpi label={tr(lang, "خدمناهم", "Served")} value={toAr(served)} tone="var(--brand)" tint="rgba(120,30,12,0.08)" />
+        <Kpi label={tr(lang, "انضموا للطابور", "Joined")} value={toAr(joined)} tone="var(--brand-d)" tint="rgba(120,30,12,0.05)" />
+        <Kpi label={tr(lang, "متوسط الانتظار", "Average Wait")} value={`${toAr(avgWait)} ${tr(lang, "د", "min")}`} tone="var(--st-full)" tint="rgba(169,114,30,0.10)" />
+        <Kpi label={tr(lang, "متوسط المجموعة", "Average Party")} value={toAr(avgParty)} tone="var(--brand-d)" tint="rgba(120,30,12,0.05)" />
+        <Kpi label={tr(lang, "أكثر الساعات ازدحامًا", "Busiest Hour")} value={busiestLabel} tone="var(--st-full)" tint="rgba(169,114,30,0.10)" />
+        <Kpi label={tr(lang, "متوسط التقييم", "Average Rating")} value={ratings.length ? `★ ${toAr(avgRating)}` : "—"} tone="var(--star)" tint="rgba(120,30,12,0.06)" />
+        <Kpi label={tr(lang, "إجمالي العملاء", "Total Customers")} value={toAr(totalCustomers)} tone="var(--brand-d)" tint="rgba(120,30,12,0.10)" />
+        <Kpi label={tr(lang, "عملاء عائدون", "Returning Customers")} value={pct(toAr(returningPct), lang)} tone="var(--st-open)" tint="rgba(63,125,93,0.10)" />
+        <Kpi label={tr(lang, "نسبة التغيّب", "No-show Rate")} value={pct(toAr(noShowRate), lang)} tone={noShowRate >= 20 ? "var(--st-closed)" : "var(--muted)"} tint="var(--surface-2)" />
+        <Kpi label={tr(lang, "نسبة الإلغاء", "Cancel Rate")} value={pct(toAr(cancelRate), lang)} tone={cancelRate >= 20 ? "var(--st-closed)" : "var(--muted)"} tint="var(--surface-2)" />
       </div>
 
       {/* رسوم */}

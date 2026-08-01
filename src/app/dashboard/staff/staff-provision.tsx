@@ -14,10 +14,10 @@ function Credentials({ username, code, onDone }: { username: string; code: strin
         ✅ {tr(lang, "جاهز — سلّمه هذه البيانات", "Ready — hand over these details")}
       </p>
       <p className="mb-1 text-xs font-bold text-[color:var(--muted)]">{tr(lang, "اسم المستخدم", "Username")}</p>
-      <p className="mb-3 select-all rounded-xl bg-white px-3 py-2.5 font-mono text-lg font-bold" dir="ltr">{username}</p>
+      <p className="mb-3 select-all rounded-xl bg-[color:var(--surface)] px-3 py-2.5 font-mono text-lg font-bold" dir="ltr">{username}</p>
       <p className="mb-1 text-xs font-bold text-[color:var(--muted)]">{tr(lang, "الرمز", "Code")}</p>
-      <p className="mb-3 select-all rounded-xl bg-white px-3 py-2.5 font-mono text-lg font-bold tracking-widest" dir="ltr">{code}</p>
-      <p className="mb-3 text-xs font-bold" style={{ color: "#9a6a4c" }}>
+      <p className="mb-3 select-all rounded-xl bg-[color:var(--surface)] px-3 py-2.5 font-mono text-lg font-bold tracking-widest" dir="ltr">{code}</p>
+      <p className="mb-3 text-xs font-bold" style={{ color: "var(--muted)" }}>
         ⚠️ {tr(lang, "الرمز لن يظهر مرة أخرى — انسخه الآن. يدخل من صفحة /reception", "The code won't be shown again — copy it now. They sign in at /reception")}
       </p>
       <button type="button" onClick={onDone} className="btn btn-secondary w-full">{tr(lang, "تم", "Done")}</button>
@@ -86,7 +86,7 @@ export function StaffProvision({
       </div>
 
       {state.error && (
-        <p className="rounded-2xl border border-[rgba(200,70,70,0.3)] bg-[rgba(200,70,70,0.06)] px-3 py-2.5 text-sm font-medium text-red-600">{state.error}</p>
+        <p className="rounded-2xl border border-[rgba(200,70,70,0.3)] bg-[rgba(200,70,70,0.06)] px-3 py-2.5 text-sm font-medium text-[color:var(--danger)]">{state.error}</p>
       )}
 
       <div className="flex gap-2">
@@ -111,7 +111,7 @@ export function ResetCode({ staffId }: { staffId: string }) {
   return (
     <form action={action} className="mt-2">
       <input type="hidden" name="staff_id" value={staffId} />
-      {state.error && <p className="mb-2 text-xs font-bold text-red-600">{state.error}</p>}
+      {state.error && <p className="mb-2 text-xs font-bold text-[color:var(--danger)]">{state.error}</p>}
       <button type="submit" disabled={pending} className="text-xs font-bold text-[color:var(--muted)] underline-offset-2 hover:text-brand-700 hover:underline">
         {pending ? tr(lang, "جارٍ…", "Working…") : tr(lang, "🔑 إعادة ضبط الرمز", "🔑 Reset code")}
       </button>

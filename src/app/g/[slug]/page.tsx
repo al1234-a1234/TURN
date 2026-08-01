@@ -36,8 +36,8 @@ export default async function CheckinPage({ params, searchParams }: { params: Pr
             initial
           )}
         </span>
-        <h1 className="mt-4 font-display text-2xl font-bold text-white">{name}</h1>
-        {cuisine && <p className="mt-1 text-sm font-medium text-white/80">{cuisine}</p>}
+        <h1 className="mt-4 font-display text-2xl font-bold text-cream-100">{name}</h1>
+        {cuisine && <p className="mt-1 text-sm font-medium text-cream-100/80">{cuisine}</p>}
       </header>
 
       <main className="mx-auto -mt-10 w-full max-w-md px-5 pb-16">
@@ -45,7 +45,7 @@ export default async function CheckinPage({ params, searchParams }: { params: Pr
         <ScanLanding slug={slug} branchId={(await searchParams).b ?? ""} lang={lang} />
 
         <p className="mt-8 text-center text-[11px] font-bold tracking-widest text-[color:var(--muted)]">
-          {tr(lang, "مقدّم من دور", "Powered by Turn")}
+          {tr(lang, "مقدّم من إيت", "Powered by EIGHT")}
         </p>
       </main>
     </div>

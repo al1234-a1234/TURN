@@ -1,4 +1,4 @@
-/* دور / Turn — Service Worker لإشعارات الدفع (Web Push).
+/* إيت / EIGHT — Service Worker لإشعارات الدفع (Web Push).
    يصل الإشعار والتطبيق مُغلق تمامًا. لا يخزّن شيئًا ولا يعترض الطلبات. */
 
 self.addEventListener("install", () => self.skipWaiting());
@@ -9,10 +9,10 @@ self.addEventListener("push", (event) => {
   try {
     payload = event.data ? event.data.json() : {};
   } catch {
-    payload = { title: "دور", body: event.data ? event.data.text() : "" };
+    payload = { title: "إيت", body: event.data ? event.data.text() : "" };
   }
 
-  const title = payload.title || "دور";
+  const title = payload.title || "إيت";
   const options = {
     body: payload.body || "",
     icon: payload.icon || "/icon-192.png",

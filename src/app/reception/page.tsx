@@ -74,7 +74,7 @@ function ReceptionLogin() {
           <BrandMark size={72} />
         </span>
         <p className="mt-4 text-xs font-bold tracking-[0.35em] text-[color:var(--gold-1)]/80" dir="ltr">
-          TURN · RECEPTION
+          EIGHT · RECEPTION
         </p>
         <h1 className="font-serif mt-1 text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "بوابة الاستقبال", "Reception Portal")}</h1>
         <p className="mt-2 text-sm text-[color:var(--muted)]">{tr(lang, "دخول موظّف الاستقبال إلى شاشة الطابور مباشرة", "Reception staff sign in straight to the live queue")}</p>
@@ -101,7 +101,7 @@ function ReceptionLogin() {
           </div>
 
           {error && (
-            <p className="rounded-2xl border border-[rgba(200,70,70,0.3)] bg-[rgba(200,70,70,0.06)] px-4 py-3 text-sm font-medium text-red-600">
+            <p className="rounded-2xl border border-[rgba(200,70,70,0.3)] bg-[rgba(200,70,70,0.06)] px-4 py-3 text-sm font-medium text-[color:var(--danger)]">
               {error}
             </p>
           )}

@@ -54,7 +54,7 @@ export function GalleryManager({ restaurantId, branchId, photos }: { restaurantI
             <img src={p.url} alt={p.caption ?? ""} className="h-full w-full object-cover" />
             <form action={deleteRestaurantPhoto} className="absolute end-1 top-1">
               <input type="hidden" name="photo_id" value={p.id} />
-              <button className="flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-sm text-white transition hover:bg-red-600" title={tr(lang, "حذف", "Delete")}>
+              <button className="flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-sm text-cream-100 transition hover:bg-[color:var(--danger)]" title={tr(lang, "حذف", "Delete")}>
                 ✕
               </button>
             </form>
@@ -66,7 +66,7 @@ export function GalleryManager({ restaurantId, branchId, photos }: { restaurantI
           <input type="file" accept="image/*" multiple onChange={onFiles} disabled={busy} className="hidden" />
         </label>
       </div>
-      {err && <p className="text-xs text-red-600">{err}</p>}
+      {err && <p className="text-xs text-[color:var(--danger)]">{err}</p>}
       <p className="text-xs text-[color:var(--muted)]">{tr(lang, "أضف صور مطعمك من الداخل والخارج — يتصفّحها العميل في صفحتك.", "Add photos of your restaurant inside and out — customers browse them on your page.")}</p>
     </div>
   );

@@ -2,7 +2,7 @@ import { CustomerShell } from "@/components/customer-shell";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
 
-export const metadata = { title: "شروط الاستخدام · دور" };
+export const metadata = { title: "شروط الاستخدام · إيت" };
 
 /* شروط مختصرة صادقة تطابق سلوك المنتج الفعلي — تحمي المنصّة (الدور تنظيم
    انتظار لا التزام قانوني بطاولة، والمطعم مسؤول عن خدمته) وتحمي العميل
@@ -11,14 +11,14 @@ export default async function TermsPage() {
   const lang = await getLang();
   const sections = [
     {
-      ar: "وش هي دور؟",
-      en: "What is Turn?",
+      ar: "وش هي إيت؟",
+      en: "What is EIGHT?",
       arB: [
-        "منصّة تنظّم طوابير الانتظار والحجوزات بين العميل والمطعم. المطعم هو من يقدّم الخدمة والطعام — دور وسيط تنظيمي فقط.",
+        "منصّة تنظّم طوابير الانتظار والحجوزات بين العميل والمطعم. المطعم هو من يقدّم الخدمة والطعام — إيت وسيط تنظيمي فقط.",
         "استخدام المنصّة للعملاء مجاني بالكامل، وبلا أي مدفوعات داخل المنصّة.",
       ],
       enB: [
-        "A platform that organizes waitlists and reservations between guests and restaurants. The restaurant provides the service and food — Turn is an organizing intermediary only.",
+        "A platform that organizes waitlists and reservations between guests and restaurants. The restaurant provides the service and food — EIGHT is an organizing intermediary only.",
         "The platform is completely free for guests, with no in-app payments.",
       ],
     },
@@ -66,7 +66,7 @@ export default async function TermsPage() {
         <div className="rq-card p-6">
           <h1 className="font-display text-2xl font-bold text-[color:var(--ink)]">{tr(lang, "شروط الاستخدام", "Terms of Use")}</h1>
           <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">
-            {tr(lang, "باستخدامك دور فأنت توافق على هذي الشروط المختصرة.", "By using Turn you agree to these brief terms.")}
+            {tr(lang, "باستخدامك إيت فأنت توافق على هذي الشروط المختصرة.", "By using EIGHT you agree to these brief terms.")}
           </p>
         </div>
         {sections.map((s) => (

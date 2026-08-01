@@ -96,7 +96,7 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
             </span>
             {r.branchCount > 1 && (
               <span
-                className="inline-flex shrink-0 items-center justify-center rounded-md px-1.5 py-0.5 text-[10px] font-extrabold text-white"
+                className="inline-flex shrink-0 items-center justify-center rounded-md px-1.5 py-0.5 text-[10px] font-extrabold text-cream-100"
                 style={{ background: "var(--brand-solid)" }}
               >
                 {tr(lang, `${toAr(r.branchCount)} فرع`, `${r.branchCount} branches`)}
@@ -104,7 +104,7 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
             )}
             {r.busyNow && !r.closedNow && (
               <span
-                className="inline-flex shrink-0 items-center justify-center rounded-md px-1.5 py-0.5 text-[10px] font-extrabold text-white"
+                className="inline-flex shrink-0 items-center justify-center rounded-md px-1.5 py-0.5 text-[10px] font-extrabold text-cream-100"
                 style={{ background: "var(--brand-solid)" }}
               >
                 {tr(lang, "مزدحم الآن", "Busy now")}
@@ -135,11 +135,11 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
           className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
           style={{ background: "var(--brand-d)" }}
         >
-          <span className="flex items-center gap-2 text-sm font-extrabold text-white">
+          <span className="flex items-center gap-2 text-sm font-extrabold text-cream-100">
             <span className="h-2.5 w-2.5 rounded-full bg-white/80" />
             {tr(lang, "مغلق حاليًا", "Closed now")}
           </span>
-          <span className="text-xs font-extrabold text-white/85">{tr(lang, "التفاصيل ←", "Details ←")}</span>
+          <span className="text-xs font-extrabold text-cream-100/85">{tr(lang, "التفاصيل ←", "Details ←")}</span>
         </div>
       ) : r.waiting > 0 && r.inside + r.outside > 0 ? (
         <div className="mt-2.5 flex flex-col items-end gap-1.5">
@@ -151,24 +151,24 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
           className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
           style={{ background: "var(--brand-solid)", boxShadow: "0 12px 24px -16px rgba(102,28,10,0.72)" }}
         >
-          <span className="flex items-center gap-2 text-sm font-extrabold text-white">
+          <span className="flex items-center gap-2 text-sm font-extrabold text-cream-100">
             <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
             {tr(lang, `${toAr(r.waiting)} بالطابور الآن`, `${toAr(r.waiting)} in queue now`)}
           </span>
-          <span className="text-xs font-extrabold text-white/85">{tr(lang, "التفاصيل ←", "Details ←")}</span>
+          <span className="text-xs font-extrabold text-cream-100/85">{tr(lang, "التفاصيل ←", "Details ←")}</span>
         </div>
       ) : (
         <div
           className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
           style={{ background: "var(--brand-solid)" }}
         >
-          <span className="flex items-center gap-2 text-sm font-extrabold text-white">
+          <span className="flex items-center gap-2 text-sm font-extrabold text-cream-100">
             <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
             {r.accepts
               ? tr(lang, "متاح الآن · بدون انتظار", "Available now · No wait")
               : tr(lang, "استقبال مباشر · بلا حجز دور", "Walk in directly · no queue")}
           </span>
-          <span className="text-xs font-extrabold text-white/85">
+          <span className="text-xs font-extrabold text-cream-100/85">
             {r.accepts ? tr(lang, "خذ دورك ←", "Take your turn ←") : tr(lang, "التفاصيل ←", "Details ←")}
           </span>
         </div>
@@ -284,7 +284,7 @@ export function DiscoveryList({ items, lang }: { items: DiscoveryItem[]; lang: L
             <>
               <button className="fixed inset-0 z-10 cursor-default" aria-hidden onClick={() => setFilterOpen(false)} />
               <div
-                className="absolute z-20 mt-2 flex max-h-72 w-[min(20rem,85vw)] flex-wrap gap-2 overflow-y-auto rounded-3xl bg-white p-3 shadow-xl"
+                className="absolute z-20 mt-2 flex max-h-72 w-[min(20rem,85vw)] flex-wrap gap-2 overflow-y-auto rounded-3xl bg-[color:var(--surface)] p-3 shadow-xl"
                 style={{ border: "1px solid rgba(102,28,10,0.12)" }}
               >
                 <button

@@ -38,3 +38,12 @@ test("rewardPayload ↔ extractRewardCode: ذهاب وإياب بلا فقد", (
     assert.equal(extractRewardCode(rewardPayload(code)), code);
   }
 });
+
+// بعد تبديل الهوية: التوليد بالصيغة الجديدة، والقراءة تقبل القديمة للأبد
+// (بطاقات هدايا مطبوعة قبل التبديل تحمل TURN — كسرها يعني رفض هدية مدفوعة).
+test("reward payload: يولّد EIGHT ويقبل TURN القديمة", () => {
+  assert.equal(rewardPayload("A7K2M9"), "EIGHT:R:A7K2M9");
+  assert.equal(extractRewardCode("EIGHT:R:A7K2M9"), "A7K2M9");
+  assert.equal(extractRewardCode("TURN:R:A7K2M9"), "A7K2M9");
+  assert.equal(extractRewardCode("eight:r:a7k2m9"), "A7K2M9");
+});

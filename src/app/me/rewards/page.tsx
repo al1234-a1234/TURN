@@ -94,7 +94,7 @@ export default function MyRewardsPage() {
           <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "هداياك", "Your gifts")}</p>
           <p className="mt-0.5 text-sm text-[color:var(--muted)]">{tr(lang, "محفوظة عندك برقم جوّالك — أدخله لعرضها.", "Saved to your number — enter it to view.")}</p>
           {lookupErr && (
-            <p className="mt-2 text-xs font-bold text-red-600">{tr(lang, "رقم الجوّال غير مكتمل — يبدأ بـ 05 ويتكوّن من 10 خانات.", "Incomplete number — starts with 05, 10 digits.")}</p>
+            <p className="mt-2 text-xs font-bold text-[color:var(--danger)]">{tr(lang, "رقم الجوّال غير مكتمل — يبدأ بـ 05 ويتكوّن من 10 خانات.", "Incomplete number — starts with 05, 10 digits.")}</p>
           )}
           <form onSubmit={(e) => { e.preventDefault(); runLookup(phone.trim()); }} className="mt-3 flex gap-2">
             <input dir="ltr" inputMode="tel" value={phone} onChange={(e) => setPhone(normalizePhone(e.target.value).slice(0, 10))} placeholder="05xxxxxxxx" className="field-input flex-1 text-left" />
@@ -143,13 +143,13 @@ export default function MyRewardsPage() {
             {myGifts.map((r) => (
               <div key={r.id} className="rq-card p-4">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xl text-white" style={{ background: "var(--brand-solid)" }}>
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xl text-cream-100" style={{ background: "var(--brand-solid)" }}>
                     {r.kind === "discount" ? "٪" : "🎁"}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-2 truncate font-display text-[16px] font-bold text-[color:var(--ink)]">
                       {r.title}{valueLabel(r) ? ` · ${valueLabel(r)}` : ""}
-                      {newIds.has(r.id) && <span className="shrink-0 rounded-full bg-[color:var(--brand-d)] px-2 py-0.5 text-[10px] font-extrabold text-white">{tr(lang, "جديد", "New")}</span>}
+                      {newIds.has(r.id) && <span className="shrink-0 rounded-full bg-[color:var(--brand-d)] px-2 py-0.5 text-[10px] font-extrabold text-cream-100">{tr(lang, "جديد", "New")}</span>}
                     </p>
                     <p className="mt-0.5 truncate text-[13px] font-medium text-[color:var(--muted)]">
                       {r.restaurant}{r.expires_at ? ` · ${tr(lang, "ينتهي", "ends")} ${fmtDate(r.expires_at)}` : ""}
@@ -168,12 +168,12 @@ export default function MyRewardsPage() {
                 </div>
                 {r.description && <p className="mt-2 rounded-2xl bg-[color:var(--surface-2)] px-3 py-2 text-sm text-[color:var(--ink)]">{r.description}</p>}
                 {r.code && qrOpen === r.id && (
-                  <div className="mt-3 rounded-2xl bg-white p-4" style={{ border: "1px solid rgba(102,28,10,0.14)" }}>
+                  <div className="mt-3 rounded-2xl bg-[color:var(--surface)] p-4" style={{ border: "1px solid rgba(102,28,10,0.14)" }}>
                     <RewardQr code={r.code} />
                     <p dir="ltr" className="mt-2 text-center font-display text-lg font-extrabold tracking-widest text-brand-800">{r.code}</p>
                   </div>
                 )}
-                <div className="mt-3 rounded-2xl px-3 py-2 text-center text-xs font-bold text-white" style={{ background: "var(--brand-solid)" }}>
+                <div className="mt-3 rounded-2xl px-3 py-2 text-center text-xs font-bold text-cream-100" style={{ background: "var(--brand-solid)" }}>
                   {qrOpen === r.id
                     ? tr(lang, "خلّ الموظف يمسح الباركود — أو يكتب الرمز", "Let staff scan the barcode — or type the code")
                     : tr(lang, "اضغط الرمز يطلع الباركود — يمسحه الموظف ويعتمدها", "Tap the code to show its barcode — staff scan & redeem")}

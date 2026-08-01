@@ -67,7 +67,7 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
   if (row.status === "seated") {
     return (
       <div className="rq-card flex flex-col items-center gap-3 p-8 text-center">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full text-white" style={{ background: "var(--brand-solid)" }}><IconSparkle size={28} /></span>
+        <span className="flex h-16 w-16 items-center justify-center rounded-full text-cream-100" style={{ background: "var(--brand-solid)" }}><IconSparkle size={28} /></span>
         <p className="font-display text-2xl font-extrabold text-[color:var(--ink)]">{tr(lang, "تفضّل، دورك جاهز", "You're up — please come in")}</p>
         <p className="text-sm text-[color:var(--muted)]">{tr(lang, `توجّه إلى الاستقبال في ${row.restaurant}.`, `Head to reception at ${row.restaurant}.`)}</p>
       </div>
@@ -77,7 +77,7 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
   if (TERMINAL.has(row.status)) {
     return (
       <div className="rq-card flex flex-col items-center gap-3 p-8 text-center">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full text-white" style={{ background: "var(--brand-solid)" }}><IconHourglass size={26} /></span>
+        <span className="flex h-16 w-16 items-center justify-center rounded-full text-cream-100" style={{ background: "var(--brand-solid)" }}><IconHourglass size={26} /></span>
         <p className="text-lg font-extrabold text-[color:var(--ink)]">{tr(lang, "انتهى هذا الدور", "This turn has ended")}</p>
         <a href={`/r/${row.slug}`} className="rq-btn-soft mt-2 inline-flex">{tr(lang, "خذ دورًا جديدًا", "Take a new turn")}</a>
       </div>
@@ -99,10 +99,10 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
       {/* خياران بضغطة — يردّ العميل بلا كتابة في واتساب */}
       <div className="w-full space-y-2.5">
         {actErr && (
-          <p className="rounded-2xl px-3 py-2 text-xs font-bold text-red-600" style={{ background: "rgba(200,70,70,0.08)" }}>{actErr}</p>
+          <p className="rounded-2xl px-3 py-2 text-xs font-bold text-[color:var(--danger)]" style={{ background: "rgba(200,70,70,0.08)" }}>{actErr}</p>
         )}
         {row.confirmed ? (
-          <p className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-extrabold text-white"
+          <p className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-extrabold text-cream-100"
              style={{ background: "var(--brand-solid)" }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
             {tr(lang, "أكّدت حضورك — ننتظرك", "Attendance confirmed — see you soon")}
@@ -115,7 +115,7 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
               if (await confirmAttendance(entryId)) { setActErr(null); setRow((r) => ({ ...r, confirmed: true })); }
               else setActErr(tr(lang, "تعذّر التأكيد — حدّث الصفحة وحاول ثانية", "Couldn't confirm — refresh and try again"));
             })}
-            className="w-full rounded-2xl px-4 py-3.5 text-sm font-extrabold text-white transition active:scale-[0.985] disabled:opacity-60"
+            className="w-full rounded-2xl px-4 py-3.5 text-sm font-extrabold text-cream-100 transition active:scale-[0.985] disabled:opacity-60"
             style={{ background: "var(--brand-solid)", boxShadow: "0 14px 26px -16px rgba(102,28,10,0.72)" }}
           >
             {pending ? tr(lang, "جارٍ التأكيد…", "Confirming…") : tr(lang, "أكّد حضوري ✓", "Confirm I'm coming ✓")}
@@ -144,8 +144,8 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
                   if (await cancelByTicket(entryId)) { setActErr(null); setRow((r) => ({ ...r, status: "cancelled" })); }
                   else setActErr(tr(lang, "تعذّر الإلغاء — ربما تغيّرت حالة دورك، حدّث الصفحة", "Couldn't cancel — your turn may have changed; refresh the page"));
                 })}
-                className="rounded-xl px-3 py-2.5 text-sm font-extrabold text-white transition active:scale-[0.97] disabled:opacity-60"
-                style={{ background: "#8d2f22" }}
+                className="rounded-xl px-3 py-2.5 text-sm font-extrabold text-cream-100 transition active:scale-[0.97] disabled:opacity-60"
+                style={{ background: "var(--brand-solid)" }}
               >
                 {pending ? tr(lang, "جارٍ…", "Working…") : tr(lang, "نعم، ألغِ", "Yes, cancel")}
               </button>

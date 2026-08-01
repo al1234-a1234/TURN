@@ -54,12 +54,12 @@ export function WalkInForm({ branchId, branchName }: { branchId: string; branchN
             </select>
           </div>
           {state.error && (
-            <p className="rounded-xl px-3 py-2 text-sm font-bold text-red-600" style={{ background: "rgba(200,70,70,0.08)" }}>
+            <p className="rounded-xl px-3 py-2 text-sm font-bold text-[color:var(--danger)]" style={{ background: "rgba(200,70,70,0.08)" }}>
               {state.error}
             </p>
           )}
           {flash && (
-            <p className="rounded-xl px-3 py-2 text-sm font-extrabold text-white" style={{ background: "var(--brand-solid)" }}>
+            <p className="rounded-xl px-3 py-2 text-sm font-extrabold text-cream-100" style={{ background: "var(--brand-solid)" }}>
               ✓ {tr(lang, "انضاف للطابور", "Added to the queue")}
             </p>
           )}

@@ -28,8 +28,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
-  if (!r) return { title: "دور | Turn" };
-  const title = `${r.name} | دور`;
+  if (!r) return { title: "إيت | EIGHT" };
+  const title = `${r.name} | إيت`;
   const description = `خذ دورك في ${r.name}${r.cuisine ? ` — ${r.cuisine}` : ""} بلا انتظار على الباب. شوف الطابور الحيّ والقائمة والهدايا.`;
   const image = r.cover_url ?? r.logo_url;
   return {
@@ -181,7 +181,7 @@ export default async function RestaurantPublicPage({
           // يبتلع ضغطات زرّي الرجوع/المشاركة تحته لأنه يُرسَم بعدهما بالـDOM
           <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center">
             {/* نصفه داخل الهيدر ونصفه خارجه — على الحافة السفلية بالضبط. */}
-            <span className="flex h-20 w-20 shrink-0 translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-white/15 font-serif text-2xl font-bold text-white ring-4 ring-[var(--background)] backdrop-blur-sm">
+            <span className="flex h-20 w-20 shrink-0 translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-white/15 font-serif text-2xl font-bold text-cream-100 ring-4 ring-[var(--background)] backdrop-blur-sm">
               {restaurant.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={restaurant.logo_url} alt="" className="h-full w-full object-cover" />
@@ -248,10 +248,10 @@ function GiftsSection({ lang }: { lang: "ar" | "en" }) {
       <p className="mb-3 font-display text-base font-bold text-[color:var(--ink)]">{tr(lang, "الهدايا والمكافآت", "Gifts & rewards")}</p>
 
       <Link href="/me/rewards" className="mt-2.5 flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: "var(--brand-solid)" }}>
-        <span className="flex items-center gap-2 text-sm font-bold text-white">
+        <span className="flex items-center gap-2 text-sm font-bold text-cream-100">
           <IconGift size={18} /> {tr(lang, "عندك هديّة خاصة؟ اعرفها برقمك", "Got a personal reward? Check with your number")}
         </span>
-        <span className="text-white">←</span>
+        <span className="text-cream-100">←</span>
       </Link>
     </div>
   );

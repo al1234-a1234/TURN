@@ -1,37 +1,32 @@
 import type { Metadata, Viewport } from "next";
-import { Tajawal, Almarai, Libre_Baskerville } from "next/font/google";
+import { IBM_Plex_Sans_Arabic, DM_Serif_Display } from "next/font/google";
 import "./globals.css";
 import { getLang } from "@/lib/i18n-server";
 import { dirOf } from "@/lib/i18n";
 import { LangProvider } from "@/components/lang-provider";
 
-const baskerville = Libre_Baskerville({
-  variable: "--font-baskerville",
+// خط الشعار والأرقام اللاتينية — الرقم ٨ في الشارة.
+// يُحمَّل عبر next/font لا عبر <link>: بلا طلب خارجي وبلا قفزة تخطيط.
+const dmSerif = DM_Serif_Display({
+  variable: "--font-dm-serif",
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["400"],
   display: "swap",
 });
 
-// خط الواجهة الرسمي — نمط UI عربي معروف (تستخدمه تطبيقات سعودية كثيرة)،
-// بديل El Messiri الزخرفي الذي بدا "غريبًا" لعميل حقيقي جرّبه.
-const tajawal = Tajawal({
-  variable: "--font-tajawal",
+// خط الواجهة كلّها — عربي ولاتيني بعائلة واحدة، فلا تختلف النبرة بين
+// العنوان والنص. أوزانه الثقيلة تكفي للعناوين فاستُغني عن خط عناوين ثانٍ.
+const plexArabic = IBM_Plex_Sans_Arabic({
+  variable: "--font-plex-ar",
   subsets: ["arabic", "latin"],
-  weight: ["400", "500", "700", "800"],
-  display: "swap",
-});
-
-const almarai = Almarai({
-  variable: "--font-almarai",
-  subsets: ["arabic"],
-  weight: ["300", "400", "700", "800"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "دور | Turn — خذ دورك بأناقة",
+  title: "إيت | EIGHT — خذ دورك بأناقة",
   description:
-    "دور (Turn): اختر مطعمك، سجّل اسمك ورقمك، وتابع طابورك لحظة بلحظة.",
+    "إيت (EIGHT): اختر مطعمك، سجّل اسمك ورقمك، وتابع طابورك لحظة بلحظة.",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -59,7 +54,7 @@ export default async function RootLayout({
     <html
       lang={lang}
       dir={dirOf(lang)}
-      className={`${tajawal.variable} ${almarai.variable} ${baskerville.variable} h-full antialiased`}
+      className={`${plexArabic.variable} ${dmSerif.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
         <LangProvider lang={lang}>{children}</LangProvider>

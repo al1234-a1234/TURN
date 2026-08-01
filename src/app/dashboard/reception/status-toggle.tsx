@@ -52,7 +52,7 @@ export function StatusToggle({
         className="flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold transition disabled:opacity-60"
         style={
           closed
-            ? { background: "#8d2f22", color: "#fff" }
+            ? { background: "var(--brand-solid)", color: "#fff" }
             : { background: "var(--brand-solid)", color: "#fff" }
         }
       >
@@ -88,7 +88,7 @@ export function StatusToggle({
         </span>
       )}
       {err && (
-        <span className="text-xs font-extrabold text-red-600">
+        <span className="text-xs font-extrabold text-[color:var(--danger)]">
           {tr(lang, "تعذّر الحفظ — حدّث الصفحة وحاول ثانية", "Couldn't save — refresh and retry")}
         </span>
       )}

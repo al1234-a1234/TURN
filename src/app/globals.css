@@ -3,50 +3,56 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  /* برتقالي محروق (#661c0a وعائلته) + كحلي غامق + كريمي — هوية دور */
-  --color-brand-50: #f8e9e3;
-  --color-brand-100: #eec7ba;
-  --color-brand-200: #e0a08b;
-  --color-brand-300: #d07a60;
-  --color-brand-400: #c05838;
-  --color-brand-500: #ad3d1f;
-  --color-brand-600: #a3341a;
-  --color-brand-700: #832712;
-  --color-brand-800: #661c0a;
-  --color-brand-900: #481207;
+  /* ════ هوية إيت / EIGHT — رقم لون واحد ════
+     #781e0c وحده. لا درجة ثانية مستقلّة أبدًا: كل «تفتيح» شفافيةٌ من الرقم
+     نفسه (.72 / .46 / .24 / .10 / .05). السلّم أدناه أُبقي بأسمائه لتوافق
+     الصفوف القائمة، لكن قيمه صارت شفافيات لا ألوانًا مستقلّة. */
+  --color-brand-50: rgba(120, 30, 12, 0.05);
+  --color-brand-100: rgba(120, 30, 12, 0.10);
+  --color-brand-200: rgba(120, 30, 12, 0.24);
+  --color-brand-300: rgba(120, 30, 12, 0.46);
+  --color-brand-400: rgba(120, 30, 12, 0.72);
+  --color-brand-500: #781e0c;
+  --color-brand-600: #781e0c;
+  --color-brand-700: #781e0c;
+  --color-brand-800: #781e0c;
+  --color-brand-900: #781e0c;
 
-  --color-cream-100: #fbf7ee;
-  --color-cream-200: #f4eee1;
-  --color-cream-300: #efe7d6;
-  /* توافق قديم: أي إشارة قديمة تصير تراكوتّا */
-  --color-gold-400: #ad3d1f;
-  --color-gold-500: #a3341a;
+  /* كريمي الهوية — بديل الأبيض الصريح فوق العنابي (الأبيض يقسّي ويبرد اللون) */
+  --color-cream-100: #f6efe2;
+  --color-cream-200: #efe7da;
+  --color-cream-300: #e4dacb;
+  /* توافق قديم: أي إشارة ذهبية سابقة تصير رقم الهوية نفسه */
+  --color-gold-400: #781e0c;
+  --color-gold-500: #781e0c;
 
-  /* كحلي غامق للنصوص */
-  --color-navy-700: #24324f;
-  --color-navy-800: #17243f;
-  --color-navy-900: #101a30;
+  /* الكحلي أُلغي — حبر دافئ واحد يخدم النصوص كلها */
+  --color-navy-700: #2e1d14;
+  --color-navy-800: #2e1d14;
+  --color-navy-900: #2e1d14;
 
-  /* جسم النص: المسيري — مقروء وهادئ، يخلي العناوين البارزة (Almarai) تبرز
-     فعلًا بدل ما يكون كل النص بخط واحد فيصير التطبيق شكله متطابقًا مسطّحًا. */
-  --font-sans: var(--font-tajawal), "Tajawal", system-ui, sans-serif;
-  --font-display: var(--font-almarai), "Almarai", system-ui, sans-serif;
-  --font-serif: var(--font-almarai), "Almarai", system-ui, sans-serif;
+  /* عربي: IBM Plex Sans Arabic — أهدأ وأوضح على الجوال من المسيري، ووزنه
+     الثقيل يكفي للعناوين فلا نحتاج خطًّا ثانيًا. اللاتيني والرقم ٨ في
+     الشعار: DM Serif Display. */
+  --font-sans: var(--font-plex-ar), "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --font-display: var(--font-plex-ar), "IBM Plex Sans Arabic", system-ui, sans-serif;
+  --font-serif: var(--font-dm-serif), "DM Serif Display", Georgia, serif;
 
   --radius-card: 26px;
   --radius-btn: 18px;
 }
 
 :root {
-  --background: #f1ece2;
-  --foreground: #17243f;
-  --surface: #ffffff;
-  --surface-2: #f6f0e8;
-  --sand: #efe7d6;
-  --sage: #f0eadf;
-  --muted: #8a8377;
-  --border: rgba(45, 25, 15, 0.10);
-  --hairline: rgba(45, 25, 15, 0.10);
+  --background: #ede7dc;
+  --foreground: #2e1d14;
+  --surface: #fcfaf6;
+  --surface-2: #efe7da;
+  --sand: #e4dacb;
+  --sage: rgba(120, 30, 12, 0.05);
+  --muted: #8b7a6b;
+  --muted-2: #a89685;
+  --border: #e4dacb;
+  --hairline: #efe7da;
   /* ════ رقم الهوية الواحد ════
      كل خلفية ملوّنة بالتطبيق (هيدر، أزرار، شارات، بنرات — عميل ومالك
      واستقبال) تقرأ من هذا السطر وحده. تغيير هوية التطبيق كلّه = تعديل
@@ -56,51 +62,98 @@
      وعمق خفيف أسفل فوق اللون الواحد نفسه. ليست لونًا ثانيًا: طبقة إضاءة
      شفافة، فلا تكسر قاعدة الرقم الواحد وتعيد الإحساس «الفاخر» للأيقونة. */
   --brand-sheen: linear-gradient(165deg, rgba(255,255,255,0.13), rgba(255,255,255,0.04) 38%, rgba(0,0,0,0) 62%, rgba(0,0,0,0.14));
-  --brand: #a3341a;
-  --brand-d: #661c0a;
-  --ink: #17243f;
-  --cream: #f4eee1;
-  /* حالات وظيفية (إشارات مرور) */
-  --st-open: #3f8560;
-  --st-full: #d98a2b;
-  --st-closed: #c0564a;
-  --like: #ef5f5a;
-  --star: #eab308;
+  /* حبر الهوية: كل نص فوق العنابي. ممنوع #fff — يقسّي ويكسر دفء اللون. */
+  --brand-ink: #f6efe2;
+  /* الدرجات الثانية السابقة (#a3341a و#661c0a) أُلغيت: كلها الرقم الواحد.
+     أسماؤها باقية لأنها مستعملة في ٩٠+ موضعًا، وقيمتها واحدة الآن. */
+  --brand: #781e0c;
+  --brand-d: #781e0c;
+  --ink: #2e1d14;
+  --cream: #f6efe2;
+  /* حالات وظيفية — مسحوبة نحو الدفء، بلا ألوان Tailwind اللامعة الباردة */
+  --st-open: #3f7d5d;
+  --st-full: #a9721e;
+  --st-closed: #9c3b26;
+  --danger: #9c3b26;
+  --like: #9c3b26;
+  --star: #c08a2e;
   /* توافق مع صفحات قديمة */
-  --gold-1: #a3341a;
-  --gold-2: #661c0a;
-  --bg: #f1ece2;
+  --gold-1: #781e0c;
+  --gold-2: #781e0c;
+  --bg: #ede7dc;
+  /* ظلال مصبوغة بعائلة اللون — الأسود المحايد يطفّي الدفء */
+  --shadow-brand: 0 6px 18px -6px rgba(120, 30, 12, 0.45);
+  --shadow-card: 0 1px 1.5px rgba(74, 42, 26, 0.06), 0 6px 20px -8px rgba(74, 42, 26, 0.16);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  /* العربي يحتاج نفَسًا أكثر من اللاتيني — ١٫٧ لا ١٫٥ */
+  line-height: 1.7;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
-/* ===== شعار TURN الحرفي (بديل الصورة) ===== */
-.turn-badge {
+/* ═══════════ شعار إيت / EIGHT ═══════════
+   الرقم ٨ بخط DM Serif Display داخل مربّع بتقويس ٢٣٪.
+   المقاس كلّه من font-size — لا width/height مباشرة أبدًا.
+   تحت 40px تُحذف الكلمة (غير مقروءة). */
+.badge {
   display: grid; place-items: center; position: relative; overflow: hidden; flex: none;
+  width: 1em; height: 1em;
   border-radius: 23%;
   background: var(--brand-sheen), var(--brand-solid);
-  font-family: var(--font-baskerville), Baskerville, Georgia, serif;
-  color: #f6efe2;
   box-shadow: 0 0.10em 0.28em -0.12em rgba(40, 12, 4, 0.55);
 }
-.turn-badge::after {
+.badge::after {
   content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
   background: linear-gradient(150deg, rgba(255,255,255,0.15), transparent 44%);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
 }
-.turn-badge > span { direction: ltr; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
-.turn-badge .tb-t { font-weight: 700; font-size: 0.44em; line-height: 0.8; }
-.turn-badge .tb-w { font-weight: 700; font-size: 0.132em; letter-spacing: 0.3em; margin-inline-end: -0.3em; }
+.badge > span {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  line-height: 1; direction: ltr;
+  gap: 0.050em;
+  transform: translateY(0.026em);
+}
+.badge .letter {
+  font-family: var(--font-dm-serif), "DM Serif Display", Georgia, serif;
+  font-weight: 400;
+  font-size: 0.620em;
+  line-height: 0.78;
+  color: var(--brand-ink);
+}
+.badge .word {
+  font-family: var(--font-dm-serif), "DM Serif Display", Georgia, serif;
+  font-weight: 400;
+  font-size: 0.118em;
+  /* letter-spacing لازم يقابله margin سالب بنفس القيمة، وإلا انزاحت
+     الكلمة لليسار وطلع التوسيط غلطًا */
+  letter-spacing: 0.300em;
+  margin-inline-end: -0.300em;
+  color: var(--brand-ink);
+  opacity: 0.86;
+}
+
+/* النسخة الفاتحة — فوق العنابي (الهيدر والأزرار والخلفيات الداكنة) */
+.badge--light {
+  background:
+    linear-gradient(165deg, rgba(120,30,12,.05), rgba(120,30,12,0) 45%, rgba(120,30,12,.07)),
+    linear-gradient(165deg, #f7f0e4 0%, #e4d7c2 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(120,30,12,.14),
+    0 0.05em 0.16em -0.06em rgba(90,50,30,.30);
+}
+.badge--light::after { background: none; box-shadow: none; }
+.badge--light .letter,
+.badge--light .word { color: #781e0c; }
 
 h1, h2, h3, h4 {
   font-family: var(--font-display);
-  letter-spacing: -0.005em;
+  /* لا letter-spacing سالب: العربي متّصل، وتضييقه يشوّه وصلات الحروف */
+  line-height: 1.45;
 }
 .font-serif { font-family: var(--font-serif); }
 .font-display { font-family: var(--font-display); }
@@ -108,7 +161,7 @@ h1, h2, h3, h4 {
 /* ===== هيدر أخضر بحواف سفلية دائرية (نمط ريكيو) ===== */
 .rq-header {
   background: var(--brand-sheen), var(--brand-solid);
-  color: #fff;
+  color: var(--brand-ink);
   border-end-start-radius: 34px;
   border-end-end-radius: 34px;
   box-shadow: 0 18px 34px -22px rgba(58, 18, 6, 0.6);
@@ -123,7 +176,7 @@ h1, h2, h3, h4 {
   height: 2.75rem; width: 2.75rem; border-radius: 1rem;
   background: rgba(255,255,255,0.15);
   box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25);
-  color: #fff;
+  color: var(--brand-ink);
   border: 1px solid rgba(255,255,255,0.22);
   transition: background .2s;
 }
@@ -132,7 +185,7 @@ h1, h2, h3, h4 {
 /* بطاقة بيضاء نيومورفية */
 .rq-card {
   background:
-    linear-gradient(180deg, #ffffff, #fbfaf6);
+    linear-gradient(180deg, #fcfaf6, #f7f2e9);
   border: 1px solid var(--border);
   border-radius: var(--radius-card);
   box-shadow: 0 18px 40px -24px rgba(58, 18, 6, 0.34);
@@ -150,7 +203,7 @@ h1, h2, h3, h4 {
     min-height: 3.6rem; padding: 0.7rem 1.25rem;
     border-radius: var(--radius-btn);
     background: var(--brand-sheen), var(--brand-solid);
-    color: #fff;
+    color: var(--brand-ink);
     box-shadow: 0 16px 30px -16px rgba(58, 18, 6, 0.6);
   }
   .rq-btn:hover { transform: translateY(-1px); }
@@ -166,7 +219,7 @@ h1, h2, h3, h4 {
   .rq-tile {
     @apply flex flex-col items-center justify-center gap-1.5 rounded-2xl transition-all duration-200;
     height: 5.4rem;
-    background: #fff;
+    background: var(--surface);
     border: 1px solid var(--border);
     box-shadow: 0 10px 22px -16px rgba(58, 18, 6,0.35);
     color: var(--brand-d);
@@ -174,26 +227,26 @@ h1, h2, h3, h4 {
   .rq-tile-label { @apply text-[13px] font-bold; }
   .rq-tile[data-active="true"] {
     background: var(--brand-sheen), var(--brand-solid);
-    color: #fff; border-color: transparent;
+    color: var(--brand-ink); border-color: transparent;
     box-shadow: 0 16px 26px -16px rgba(58, 18, 6,0.55);
   }
 
   /* سويتش مقسّم (الانتظار / الحجوزات) */
   .rq-seg {
     @apply grid grid-cols-2 gap-1 rounded-2xl p-1;
-    background: #fff; border: 1px solid var(--border);
+    background: var(--surface); border: 1px solid var(--border);
     box-shadow: 0 10px 24px -18px rgba(58, 18, 6,0.3);
   }
   .rq-seg-btn { @apply rounded-xl py-3 text-sm font-bold transition-all duration-200; color: var(--muted); }
   .rq-seg-btn[data-active="true"] {
-    background: var(--brand-sheen), var(--brand-solid); color: #fff;
+    background: var(--brand-sheen), var(--brand-solid); color: var(--brand-ink);
   }
 
   /* الحقول */
   .field-label { @apply mb-1.5 block text-sm font-bold; color: var(--ink); }
   .field-input {
     @apply w-full px-4 py-3.5 text-[15px] outline-none transition;
-    color: var(--ink); background: #fff;
+    color: var(--ink); background: var(--surface);
     border: 1px solid var(--border); border-radius: var(--radius-btn);
   }
   .field-input::placeholder { color: var(--muted); }
@@ -208,11 +261,11 @@ h1, h2, h3, h4 {
   /* ===== توافق مع صفحات المالك/الأدمن/الشركاء القديمة ===== */
   .app-header {
     background: var(--brand-sheen), var(--brand-solid);
-    color: #fff;
+    color: var(--brand-ink);
     border-end-start-radius: 34px; border-end-end-radius: 34px;
   }
   .soft-card {
-    background: linear-gradient(180deg, #ffffff, #fbfaf6);
+    background: linear-gradient(180deg, #fcfaf6, #f7f2e9);
     border: 1px solid var(--border);
     border-radius: var(--radius-card);
     box-shadow: 0 18px 40px -24px rgba(58, 18, 6, 0.34);
@@ -220,7 +273,7 @@ h1, h2, h3, h4 {
   .icon-btn {
     display: inline-flex; align-items: center; justify-content: center;
     height: 2.75rem; width: 2.75rem; border-radius: 999px;
-    background: rgba(255,255,255,0.16); color: #fff;
+    background: rgba(255,255,255,0.16); color: var(--brand-ink);
     border: 1px solid rgba(255,255,255,0.22); transition: background .2s;
   }
   .icon-btn:hover { background: rgba(255,255,255,0.26); }
@@ -228,16 +281,16 @@ h1, h2, h3, h4 {
     @apply inline-flex items-center justify-center gap-2 text-center text-sm font-bold transition-all duration-200 disabled:opacity-55;
     min-height: 3.2rem; padding: 0.6rem 1.25rem; border-radius: var(--radius-btn);
   }
-  .btn-primary { background: var(--brand-sheen), var(--brand-solid); color: #fff; box-shadow: 0 16px 30px -18px rgba(58, 18, 6,0.6); }
+  .btn-primary { background: var(--brand-sheen), var(--brand-solid); color: var(--brand-ink); box-shadow: 0 16px 30px -18px rgba(58, 18, 6,0.6); }
   .btn-primary:hover { transform: translateY(-1px); }
-  .btn-secondary, .btn-ghost, .btn-cream { background: #fff; color: var(--brand-d); border: 1px solid var(--border); }
+  .btn-secondary, .btn-ghost, .btn-cream { background: var(--surface); color: var(--brand-d); border: 1px solid var(--border); }
   .eyebrow { @apply inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold; background: var(--sage); color: var(--brand-d); }
   .badge { @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold; }
 
   /* شريط سفلي عائم */
   .rq-nav {
     @apply mx-auto flex max-w-2xl items-end justify-around;
-    background: #fff; border: 1px solid var(--border);
+    background: var(--surface); border: 1px solid var(--border);
     border-radius: 28px;
     box-shadow: 0 18px 38px -20px rgba(58, 18, 6,0.4);
   }
@@ -245,7 +298,7 @@ h1, h2, h3, h4 {
   .rq-nav-item[data-active="true"] { color: var(--brand-d); }
   .rq-nav-fab {
     @apply flex h-14 w-14 items-center justify-center rounded-full;
-    background: var(--brand-solid); color: #fff;
+    background: var(--brand-solid); color: var(--brand-ink);
     box-shadow: 0 14px 26px -12px rgba(58, 18, 6,0.6);
   }
 }

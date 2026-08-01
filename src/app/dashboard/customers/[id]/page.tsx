@@ -66,9 +66,9 @@ type RewardRow = {
 };
 
 const TIER_META: Record<string, { label: string; labelEn: string; color: string; bg: string }> = {
-  vip: { label: "VIP", labelEn: "VIP", color: "#661c0a", bg: "#f8e9e3" },
-  gold: { label: "ذهبي", labelEn: "Gold", color: "#8a6a12", bg: "#faf1d8" },
-  silver: { label: "فضي", labelEn: "Silver", color: "#5b6470", bg: "#eef1f4" },
+  vip: { label: "VIP", labelEn: "VIP", color: "var(--brand-solid)", bg: "rgba(120,30,12,0.10)" },
+  gold: { label: "ذهبي", labelEn: "Gold", color: "var(--star)", bg: "rgba(169,114,30,0.12)" },
+  silver: { label: "فضي", labelEn: "Silver", color: "var(--muted)", bg: "rgba(120,30,12,0.05)" },
   regular: { label: "عادي", labelEn: "Regular", color: "var(--muted)", bg: "var(--surface-2)" },
 };
 
@@ -211,14 +211,14 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                 {profile?.is_vip && (
                   <span
                     className="rounded-full px-2 py-0.5 text-[10px] font-extrabold"
-                    style={{ background: "#f8e9e3", color: "#661c0a" }}
+                    style={{ background: "rgba(120,30,12,0.10)", color: "var(--brand-solid)" }}
                   >
                     VIP
                   </span>
                 )}
                 {profile?.is_blocked && (
                   <span
-                    className="rounded-full px-2 py-0.5 text-[10px] font-extrabold text-white"
+                    className="rounded-full px-2 py-0.5 text-[10px] font-extrabold text-cream-100"
                     style={{ background: "var(--st-closed)" }}
                   >
                     {tr(lang, "محظور", "Blocked")}
@@ -295,7 +295,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             <ul className="space-y-2">
               {rewards.filter((r) => r.status === "active").map((r) => (
                 <li key={r.id} className="soft-card flex items-center gap-3 p-3.5">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xl text-white" style={{ background: "var(--brand-solid)" }}>
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xl text-cream-100" style={{ background: "var(--brand-solid)" }}>
                     {r.kind === "discount" ? "٪" : "🎁"}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -317,7 +317,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                   <form action={revokeReward} className="shrink-0">
                     <input type="hidden" name="reward_id" value={r.id} />
                     <input type="hidden" name="customer_id" value={customer.id} />
-                    <button className="rounded-lg px-2 py-1 text-xs font-bold text-[color:var(--muted)] transition hover:text-red-600">{tr(lang, "إلغاء", "Revoke")}</button>
+                    <button className="rounded-lg px-2 py-1 text-xs font-bold text-[color:var(--muted)] transition hover:text-[color:var(--danger)]">{tr(lang, "إلغاء", "Revoke")}</button>
                   </form>
                 </li>
               ))}
@@ -360,7 +360,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                       </p>
                     </div>
                     <span
-                      className="shrink-0 rounded-full px-2.5 py-1 text-xs font-bold text-white"
+                      className="shrink-0 rounded-full px-2.5 py-1 text-xs font-bold text-cream-100"
                       style={{ background: st.color }}
                     >
                       {st.label}
@@ -399,7 +399,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                         </p>
                       </div>
                       <span
-                        className="shrink-0 rounded-full px-2.5 py-1 text-xs font-bold text-white"
+                        className="shrink-0 rounded-full px-2.5 py-1 text-xs font-bold text-cream-100"
                         style={{ background: st.color }}
                       >
                         {st.label}

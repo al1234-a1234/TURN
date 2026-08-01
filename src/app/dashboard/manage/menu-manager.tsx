@@ -85,14 +85,14 @@ function CategoryBlock({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setOpen((v) => !v)}
-            className="rounded-xl bg-brand-600 px-3 py-1.5 text-xs font-bold text-white"
+            className="rounded-xl bg-brand-600 px-3 py-1.5 text-xs font-bold text-cream-100"
           >
             {open ? tr(lang, "إغلاق", "Close") : tr(lang, "+ صنف", "+ Item")}
           </button>
           <button
             onClick={() => start(() => deleteMenuCategory(category.id))}
             disabled={pending}
-            className="rounded-xl border border-[var(--border)] px-3 py-1.5 text-xs font-bold text-[color:var(--muted)] hover:text-red-600"
+            className="rounded-xl border border-[var(--border)] px-3 py-1.5 text-xs font-bold text-[color:var(--muted)] hover:text-[color:var(--danger)]"
           >
             {tr(lang, "حذف الفئة", "Delete category")}
           </button>
@@ -100,7 +100,7 @@ function CategoryBlock({
       </div>
 
       {open && (
-        <form action={addMenuItem} className="mt-4 space-y-3 rounded-2xl bg-sand-100 p-4 dark:bg-stone-800/40">
+        <form action={addMenuItem} className="mt-4 space-y-3 rounded-2xl bg-sand-100 p-4 ">
             <input type="hidden" name="branch_id" value={branchId} />
           <input type="hidden" name="category_id" value={category.id} />
           <ImageUploader restaurantId={restaurantId} name="image_url" label={tr(lang, "صورة الصنف", "Item image")} />
@@ -116,7 +116,7 @@ function CategoryBlock({
       <ul className="mt-3 space-y-2">
         {items.map((it) => (
           <li key={it.id} className="flex items-center gap-3 rounded-2xl border border-[var(--border)] p-2">
-            <span className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-sand-100 dark:bg-stone-800">
+            <span className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-sand-100 ">
               {it.image_url && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={it.image_url} alt="" className="h-full w-full object-cover" />
@@ -146,7 +146,7 @@ function ItemDelete({ id }: { id: string }) {
     <button
       onClick={() => start(() => deleteMenuItem(id))}
       disabled={pending}
-      className="shrink-0 rounded-lg px-2 py-1 text-xs text-[color:var(--muted)] hover:text-red-600"
+      className="shrink-0 rounded-lg px-2 py-1 text-xs text-[color:var(--muted)] hover:text-[color:var(--danger)]"
       aria-label={tr(lang, "حذف", "Delete")}
     >
       ✕

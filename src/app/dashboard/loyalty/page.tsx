@@ -141,7 +141,7 @@ export default async function LoyaltyPage() {
                     </p>
                   </div>
                   <a href={nearWaLink(n)} target="_blank" rel="noreferrer"
-                     className="shrink-0 rounded-xl px-4 py-2 text-xs font-extrabold text-white"
+                     className="shrink-0 rounded-xl px-4 py-2 text-xs font-extrabold text-cream-100"
                      style={{ background: "var(--brand-solid)" }}>
                     {tr(lang, "ذكّره واتساب", "Nudge on WhatsApp")}
                   </a>
@@ -173,7 +173,7 @@ export default async function LoyaltyPage() {
                     </p>
                   </div>
                   <a href={waLink(w)} target="_blank" rel="noreferrer"
-                     className="shrink-0 rounded-xl px-4 py-2 text-xs font-extrabold text-white"
+                     className="shrink-0 rounded-xl px-4 py-2 text-xs font-extrabold text-cream-100"
                      style={{ background: "var(--brand-solid)" }}>
                     {tr(lang, "أرسل واتساب", "Send WhatsApp")}
                   </a>
@@ -193,7 +193,7 @@ export default async function LoyaltyPage() {
                 <span className="block font-bold text-[color:var(--ink)]">{tr(lang, "تفعيل البرنامج", "Activate program")}</span>
                 <span className="text-xs text-[color:var(--muted)]">{tr(lang, "عند التفعيل تُحتسب النقاط تلقائيًا لكل عميل يُجلَس", "When active, points are counted automatically for every seated customer")}</span>
               </span>
-              <input type="checkbox" name="is_active" defaultChecked={active} className="h-6 w-6 accent-[#a3341a]" />
+              <input type="checkbox" name="is_active" defaultChecked={active} className="h-6 w-6 accent-[var(--brand-solid)]" />
             </label>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
@@ -246,7 +246,7 @@ export default async function LoyaltyPage() {
                   <span className="block font-bold text-[color:var(--ink)]">{tr(lang, "استرجاع المنقطعين تلقائيًا 🪃", "Auto win-back 🪃")}</span>
                   <span className="text-xs text-[color:var(--muted)]">{tr(lang, "من انقطع +30 يومًا تصله هدية عودة تلقائيًا (مرة كل 60 يومًا كحد أقصى)", "Guests inactive 30+ days get a comeback gift automatically (at most once per 60 days)")}</span>
                 </span>
-                <input type="checkbox" name="winback_enabled" defaultChecked={program?.winback_enabled ?? false} className="h-6 w-6 accent-[#a3341a]" />
+                <input type="checkbox" name="winback_enabled" defaultChecked={program?.winback_enabled ?? false} className="h-6 w-6 accent-[var(--brand-solid)]" />
               </label>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <input name="winback_title" defaultValue={program?.winback_title ?? "اشتقنا لك — هدية عودة 🎁"} placeholder={tr(lang, "عنوان الهدية", "Gift title")} className={field} />
@@ -274,7 +274,7 @@ export default async function LoyaltyPage() {
                 const ready = m.points >= threshold;
                 return (
                   <li key={m.customer_id} className="soft-card flex items-center gap-3 p-3.5">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-display font-bold text-white" style={{ background: "var(--brand-solid)" }}>{toAr(i + 1)}</span>
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-display font-bold text-cream-100" style={{ background: "var(--brand-solid)" }}>{toAr(i + 1)}</span>
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-bold text-[color:var(--ink)]">{c?.full_name ?? tr(lang, "عميل", "Customer")}</p>
                       <p className="text-xs text-[color:var(--muted)]">{tr(lang, `${toAr(m.visits)} زيارة`, `${toAr(m.visits)} visits`)}</p>

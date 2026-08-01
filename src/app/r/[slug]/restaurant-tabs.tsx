@@ -271,7 +271,7 @@ export function RestaurantTabs({
       {openItem && !itemZoom && (
         <div className="fixed inset-0 z-50 flex items-end" role="dialog" aria-modal>
           <button type="button" aria-label={tr(lang, "إغلاق", "Close")} className="absolute inset-0 cursor-default bg-black/45" onClick={() => setOpenItem(null)} />
-          <div className="relative max-h-[85vh] w-full overflow-y-auto rounded-t-[30px] bg-white px-5 pb-8 pt-3 shadow-2xl">
+          <div className="relative max-h-[85vh] w-full overflow-y-auto rounded-t-[30px] bg-[color:var(--surface)] px-5 pb-8 pt-3 shadow-2xl">
             <span className="mx-auto mb-4 block h-1 w-11 rounded-full bg-[rgba(102,28,10,0.18)]" />
             {openItem.image_url && (
               <button
@@ -282,13 +282,13 @@ export function RestaurantTabs({
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={openItem.image_url} alt={openItem.name} className="aspect-[4/3] w-full object-cover" />
-                <span className="absolute end-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/45 text-sm text-white">⤢</span>
+                <span className="absolute end-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/45 text-sm text-cream-100">⤢</span>
               </button>
             )}
             <div className="mt-4 flex items-start justify-between gap-3">
               <p className="min-w-0 flex-1 text-right font-display text-xl font-bold text-[color:var(--ink)]">{openItem.name}</p>
               {openItem.price != null && (
-                <span className="shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-extrabold text-white" style={{ background: "var(--brand-solid)" }}>
+                <span className="shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-extrabold text-cream-100" style={{ background: "var(--brand-solid)" }}>
                   {money(openItem.price, lang)}
                 </span>
               )}
@@ -314,7 +314,7 @@ export function RestaurantTabs({
           <button
             type="button"
             onClick={() => setItemZoom(false)}
-            className="absolute end-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-xl text-white"
+            className="absolute end-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-xl text-cream-100"
             aria-label={tr(lang, "إغلاق", "Close")}
           >
             ✕
@@ -322,7 +322,7 @@ export function RestaurantTabs({
           <figure className="max-h-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={openItem.image_url} alt={openItem.name} className="max-h-[80vh] w-full rounded-2xl object-contain" />
-            <figcaption className="mt-3 text-center text-sm font-bold text-white/90">{openItem.name}</figcaption>
+            <figcaption className="mt-3 text-center text-sm font-bold text-cream-100/90">{openItem.name}</figcaption>
           </figure>
         </div>
       )}
@@ -360,7 +360,7 @@ export function RestaurantTabs({
             {reviews.map((rv, i) => (
               <li key={i} className="rq-card p-5">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-display text-base font-bold text-white" style={{ background: "var(--brand-solid)" }}>
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-display text-base font-bold text-cream-100" style={{ background: "var(--brand-solid)" }}>
                     {rv.name.charAt(0)}
                   </span>
                   <div className="min-w-0 flex-1 text-right">
@@ -401,7 +401,7 @@ export function RestaurantTabs({
           <p className="text-center text-sm text-[color:var(--muted)]" dir="ltr">{nameEn}</p>
         )}
         <div className="rq-card p-8 text-center">
-          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full text-white" style={{ background: "var(--brand-solid)" }}><IconBell size={24} /></span>
+          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full text-cream-100" style={{ background: "var(--brand-solid)" }}><IconBell size={24} /></span>
           <p className="font-bold text-[color:var(--ink)]">{tr(lang, "تابع المطعم", "Follow the restaurant")}</p>
           <p className="mt-1 text-sm leading-6 text-[color:var(--muted)]">
             {tr(lang, "تظهر في مفضّلتك للوصول السريع لقائمته وطابوره وهداياه من جهازك.", "Saved to your favorites for quick access to its menu, queue and gifts from this device.")}

@@ -15,9 +15,9 @@ type Profile = Database["public"]["Tables"]["customer_restaurant"]["Row"] & {
 };
 
 const TIER_META: Record<string, { label: string; color: string; bg: string }> = {
-  vip: { label: "VIP", color: "#661c0a", bg: "#f8e9e3" },
-  gold: { label: "ذهبي", color: "#8a6a12", bg: "#faf1d8" },
-  silver: { label: "فضي", color: "#5b6470", bg: "#eef1f4" },
+  vip: { label: "VIP", color: "var(--brand-solid)", bg: "rgba(120,30,12,0.10)" },
+  gold: { label: "ذهبي", color: "var(--star)", bg: "rgba(169,114,30,0.12)" },
+  silver: { label: "فضي", color: "var(--muted)", bg: "rgba(120,30,12,0.05)" },
   regular: { label: "عادي", color: "var(--muted)", bg: "var(--surface-2)" },
 };
 const TIER_LABEL_EN: Record<string, string> = { vip: "VIP", gold: "Gold", silver: "Silver", regular: "Regular" };
@@ -199,9 +199,9 @@ export default async function CustomersPage({
                         {/* الاسم يبدو رابطًا بوضوح: الصفّ كله قابل للضغط لكن أحدًا لم يكن يعرف */}
                         <p className="truncate font-bold text-brand-700 underline decoration-brand-700/40 decoration-2 underline-offset-4">{name}</p>
                         <span aria-hidden className="shrink-0 text-[11px] text-brand-700 opacity-70">↗</span>
-                        {p.is_vip && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold" style={{ background: "#f8e9e3", color: "#661c0a" }}>VIP</span>}
+                        {p.is_vip && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold" style={{ background: "rgba(120,30,12,0.10)", color: "var(--brand-solid)" }}>VIP</span>}
                         {giftedIds.has(p.customer_id) && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold" style={{ background: "var(--brand-solid)", color: "#fff" }}>🎁 {tr(lang, "هدية فعّالة", "Active gift")}</span>}
-                        {p.is_blocked && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold text-white" style={{ background: "var(--st-closed)" }}>{tr(lang, "محظور", "Blocked")}</span>}
+                        {p.is_blocked && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold text-cream-100" style={{ background: "var(--st-closed)" }}>{tr(lang, "محظور", "Blocked")}</span>}
                       </div>
                       <p className="text-sm text-[color:var(--muted)]" dir="ltr">{c?.phone ?? "—"}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-[color:var(--muted)]">

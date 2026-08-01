@@ -5,7 +5,7 @@ import { RewardsBadge } from "./rewards-badge";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
 
-export const metadata = { title: "حسابي · دور" };
+export const metadata = { title: "حسابي · إيت" };
 
 /* أيقونات الهوية — دائرة كريميّة بلون الهوية داخلها رمز الدلالة */
 function IcGift() {
@@ -48,8 +48,8 @@ export default async function MePage() {
         <div className="rq-card flex items-center gap-4 p-5">
           <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-800 font-display text-2xl text-cream-100">✦</span>
           <div>
-            <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "مرحبًا بك في دور", "Welcome to Turn")}</p>
-            <p className="text-sm text-[color:var(--muted)]">{tr(lang, "تستخدم دور كضيف — بلا حساب ولا كلمة مرور.", "You're using Turn as a guest — no account, no password.")}</p>
+            <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "مرحبًا بك في إيت", "Welcome to EIGHT")}</p>
+            <p className="text-sm text-[color:var(--muted)]">{tr(lang, "تستخدم إيت كضيف — بلا حساب ولا كلمة مرور.", "You're using EIGHT as a guest — no account, no password.")}</p>
           </div>
         </div>
 
@@ -57,7 +57,7 @@ export default async function MePage() {
           {ITEMS.map((it) => (
             <Link key={it.href} href={it.href} className="flex items-center gap-3.5 px-5 py-4 transition active:bg-[color:var(--surface-2)]">
               <span
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-cream-100"
                 style={{ background: "var(--brand-solid)" }}
               >
                 <it.Icon />
@@ -76,7 +76,7 @@ export default async function MePage() {
 
         <div className="rq-card p-5">
           <p className="font-display text-sm font-bold text-[color:var(--ink)]">{tr(lang, "عندك مطعم؟", "Own a restaurant?")}</p>
-          <p className="mt-0.5 text-sm text-[color:var(--muted)]">{tr(lang, "انضمّ إلى دور وابدأ بإدارة طابورك وحجوزاتك.", "Join Turn and start managing your queue and reservations.")}</p>
+          <p className="mt-0.5 text-sm text-[color:var(--muted)]">{tr(lang, "انضمّ إلى إيت وابدأ بإدارة طابورك وحجوزاتك.", "Join EIGHT and start managing your queue and reservations.")}</p>
           <Link href="/partners" className="rq-btn-soft mt-3 inline-flex">{tr(lang, "بوابة الشركاء ←", "Partners portal ←")}</Link>
         </div>
       </div>

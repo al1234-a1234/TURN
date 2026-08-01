@@ -42,7 +42,7 @@ function PartnersLogin() {
     }
     if (!user.includes("@")) {
       // حسابات بلا إيميل حقيقي (اسم مستخدم داخلي) لا يصلها بريد أصلًا
-      setResetMsg(tr(lang, "حسابك باسم مستخدم داخلي بلا إيميل — يعيد تعيينه مالك المطعم من صفحة «الموظفون»، أو إدارة دور.", "Your account uses an internal username without an email — the restaurant owner can reset it from the Staff page, or the Turn team."));
+      setResetMsg(tr(lang, "حسابك باسم مستخدم داخلي بلا إيميل — يعيد تعيينه مالك المطعم من صفحة «الموظفون»، أو إدارة إيت.", "Your account uses an internal username without an email — the restaurant owner can reset it from the Staff page, or the EIGHT team."));
       return;
     }
     const supabase = createClient();
@@ -109,7 +109,7 @@ function PartnersLogin() {
           <BrandMark size={72} />
         </span>
         <p className="mt-4 text-xs font-bold tracking-[0.35em] text-[color:var(--gold-1)]/80" dir="ltr">
-          TURN PARTNERS
+          EIGHT PARTNERS
         </p>
         <h1 className="font-serif mt-1 text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "بوابة الشركاء", "Partners Portal")}</h1>
         <p className="mt-2 text-sm text-[color:var(--muted)]">{tr(lang, "دخول أصحاب المطاعم ببيانات الإدارة", "Restaurant owners sign in with their admin credentials")}</p>
@@ -144,7 +144,7 @@ function PartnersLogin() {
           </div>
 
           {error && (
-            <p className="rounded-2xl border border-[rgba(200,70,70,0.3)] bg-[rgba(200,70,70,0.06)] px-4 py-3 text-sm font-medium text-red-600">
+            <p className="rounded-2xl border border-[rgba(200,70,70,0.3)] bg-[rgba(200,70,70,0.06)] px-4 py-3 text-sm font-medium text-[color:var(--danger)]">
               {error}
             </p>
           )}
@@ -165,7 +165,7 @@ function PartnersLogin() {
 
         <p className="mt-6 text-center text-sm text-[color:var(--muted)]">
           {tr(lang, "تبي تضيف مطعمك؟", "Want to add your restaurant?")}{" "}
-          <a href="mailto:albraalaan@gmail.com" className="font-bold text-[color:var(--gold-1)]">{tr(lang, "تواصل مع إدارة دور", "Contact the Turn team")}</a>
+          <a href="mailto:albraalaan@gmail.com" className="font-bold text-[color:var(--gold-1)]">{tr(lang, "تواصل مع إدارة إيت", "Contact the EIGHT team")}</a>
         </p>
       </main>
     </div>

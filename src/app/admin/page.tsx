@@ -74,7 +74,7 @@ export default async function AdminPage() {
                     <input type="hidden" name="restaurant_id" value={r.id} />
                     <button
                       type="submit"
-                      className="rounded-full px-3 py-2 text-xs font-bold text-white"
+                      className="rounded-full px-3 py-2 text-xs font-bold text-cream-100"
                       style={{ background: "var(--brand-solid)" }}
                     >
                       {tr(lang, "لوحة المطعم", "Dashboard")}

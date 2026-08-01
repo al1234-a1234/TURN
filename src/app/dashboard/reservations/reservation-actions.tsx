@@ -25,7 +25,7 @@ export function ReservationActions({ id, status }: { id: string; status: string 
       <button
         disabled={pending}
         onClick={() => start(() => setReservationStatus(id, "seated"))}
-        className="rounded-xl px-3 py-2 text-xs font-bold text-white transition disabled:opacity-60"
+        className="rounded-xl px-3 py-2 text-xs font-bold text-cream-100 transition disabled:opacity-60"
         style={{ background: "var(--brand-solid)" }}
       >
         {tr(lang, "إجلاس", "Seat")}
@@ -40,7 +40,7 @@ export function ReservationActions({ id, status }: { id: string; status: string 
       <button
         disabled={pending}
         onClick={() => start(() => setReservationStatus(id, "cancelled"))}
-        className="rounded-xl border border-[var(--hairline)] px-2.5 py-2 text-xs font-bold text-[color:var(--muted)] transition hover:text-red-600 disabled:opacity-60"
+        className="rounded-xl border border-[var(--hairline)] px-2.5 py-2 text-xs font-bold text-[color:var(--muted)] transition hover:text-[color:var(--danger)] disabled:opacity-60"
       >
         {tr(lang, "إلغاء", "Cancel")}
       </button>

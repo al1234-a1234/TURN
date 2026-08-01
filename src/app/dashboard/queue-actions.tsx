@@ -73,7 +73,7 @@ export function QueueActions({
       <button
         disabled={pending}
         onClick={() => start(async () => { await updateWaitlistStatus(id, "cancelled"); })}
-        className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-xs font-bold text-[color:var(--muted)] transition hover:text-red-600 disabled:opacity-60"
+        className="rounded-xl border border-[var(--hairline)] px-3 py-2 text-xs font-bold text-[color:var(--muted)] transition hover:text-[color:var(--danger)] disabled:opacity-60"
       >
         {tr(lang, "إزالة", "Remove")}
       </button>

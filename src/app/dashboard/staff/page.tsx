@@ -98,7 +98,7 @@ export default async function StaffPage() {
           return (
             <section key={m.id} className="soft-card p-5">
               <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-bold text-white" style={{ background: "var(--brand-solid)" }}>
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-bold text-cream-100" style={{ background: "var(--brand-solid)" }}>
                   {(m.name ?? tr(lang, "؟", "?")).trim().charAt(0)}
                 </span>
                 <div className="min-w-0 flex-1">

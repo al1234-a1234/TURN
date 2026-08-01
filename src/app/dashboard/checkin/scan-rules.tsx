@@ -230,7 +230,7 @@ export function ScanRulesForm({ initial, branchId, lang }: { initial: ScanRules;
 
       <button className="btn btn-primary w-full">{tr(lang, "حفظ قواعد المسح", "Save scan rules")}</button>
       {saveErr && (
-        <p className="rounded-xl px-3 py-2 text-sm font-bold text-red-600" style={{ background: "rgba(200,70,70,0.08)" }}>تعذّر الحفظ — تأكد من صلاحيتك وحاول ثانية</p>
+        <p className="rounded-xl px-3 py-2 text-sm font-bold text-[color:var(--danger)]" style={{ background: "rgba(200,70,70,0.08)" }}>تعذّر الحفظ — تأكد من صلاحيتك وحاول ثانية</p>
       )}
       {saved && (
         <p className="text-center text-sm font-bold" style={{ color: "var(--brand-d)" }}>
@@ -252,7 +252,7 @@ function RuleCard({ title, sub, enabled, onToggle, name, children }: {
           <span className="block font-bold text-[color:var(--ink)]">{title}</span>
           <span className="text-xs text-[color:var(--muted)]">{sub}</span>
         </span>
-        <input type="checkbox" name={name} checked={enabled} onChange={(e) => onToggle(e.target.checked)} className="h-6 w-6 shrink-0 accent-[#a3341a]" />
+        <input type="checkbox" name={name} checked={enabled} onChange={(e) => onToggle(e.target.checked)} className="h-6 w-6 shrink-0 accent-[var(--brand-solid)]" />
       </label>
       {/* الحقول تبقى في النموذج حتى والقسم مطفأ — الإطفاء المؤقت لا يمحو قيم المالك */}
       <div className={enabled ? "mt-4 space-y-3" : "hidden"}>{children}</div>

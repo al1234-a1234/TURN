@@ -155,14 +155,14 @@ export default async function OverviewPage() {
 
       {/* المؤشرات (8) */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi label={tr(lang, "متوسط التقييم", "Average Rating")} value={ratings.length ? `★ ${toAr(avgRating)}` : "—"} tone="var(--star)" tint="#fbf1e6" />
-        <Kpi label={tr(lang, "متوسط الانتظار", "Average Wait")} value={`${toAr(avgWait)} ${tr(lang, "د", "min")}`} tone="var(--st-full)" tint="#fdf5e6" />
-        <Kpi label={tr(lang, "جالسون اليوم", "Seated Today")} value={toAr(seatedToday)} tone="var(--st-open)" tint="#e9f4ee" />
-        <Kpi label={tr(lang, "إجمالي العملاء", "Total Customers")} value={toAr(totalCustomers)} tone="var(--brand-d)" tint="#eef3fb" />
-        <Kpi label={tr(lang, "خدمناهم (30 يوم)", "Served (30 days)")} value={toAr(served30)} tone="var(--brand)" tint="#f8ece7" />
-        <Kpi label={tr(lang, "عملاء عائدون", "Returning Customers")} value={pct(toAr(returningPct), lang)} tone="var(--st-open)" tint="#e9f4ee" />
-        <Kpi label={tr(lang, "عملاء مميّزون", "VIP Customers")} value={toAr(vips)} tone="var(--brand-d)" tint="#f8e9e3" />
-        <Kpi label={tr(lang, "نسبة التغيّب", "No-show Rate")} value={pct(toAr(noShowRate), lang)} tone={noShowRate >= 20 ? "var(--st-closed)" : "var(--muted)"} tint="#f4eee6" />
+        <Kpi label={tr(lang, "متوسط التقييم", "Average Rating")} value={ratings.length ? `★ ${toAr(avgRating)}` : "—"} tone="var(--star)" tint="rgba(120,30,12,0.06)" />
+        <Kpi label={tr(lang, "متوسط الانتظار", "Average Wait")} value={`${toAr(avgWait)} ${tr(lang, "د", "min")}`} tone="var(--st-full)" tint="rgba(169,114,30,0.10)" />
+        <Kpi label={tr(lang, "جالسون اليوم", "Seated Today")} value={toAr(seatedToday)} tone="var(--st-open)" tint="rgba(63,125,93,0.10)" />
+        <Kpi label={tr(lang, "إجمالي العملاء", "Total Customers")} value={toAr(totalCustomers)} tone="var(--brand-d)" tint="rgba(120,30,12,0.05)" />
+        <Kpi label={tr(lang, "خدمناهم (30 يوم)", "Served (30 days)")} value={toAr(served30)} tone="var(--brand)" tint="rgba(120,30,12,0.08)" />
+        <Kpi label={tr(lang, "عملاء عائدون", "Returning Customers")} value={pct(toAr(returningPct), lang)} tone="var(--st-open)" tint="rgba(63,125,93,0.10)" />
+        <Kpi label={tr(lang, "عملاء مميّزون", "VIP Customers")} value={toAr(vips)} tone="var(--brand-d)" tint="rgba(120,30,12,0.10)" />
+        <Kpi label={tr(lang, "نسبة التغيّب", "No-show Rate")} value={pct(toAr(noShowRate), lang)} tone={noShowRate >= 20 ? "var(--st-closed)" : "var(--muted)"} tint="var(--surface-2)" />
       </div>
 
       {/* رسوم */}
@@ -221,7 +221,7 @@ export default async function OverviewPage() {
                 const c = Array.isArray(p.customers) ? p.customers[0] : p.customers;
                 return (
                   <li key={i} className="flex items-center gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-display text-sm font-bold text-white" style={{ background: "var(--brand-solid)" }}>{toAr(i + 1)}</span>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-display text-sm font-bold text-cream-100" style={{ background: "var(--brand-solid)" }}>{toAr(i + 1)}</span>
                     <span className="min-w-0 flex-1 truncate font-bold text-[color:var(--ink)]">{c?.full_name ?? tr(lang, "عميل", "Customer")}{p.is_vip ? " ⭐" : ""}</span>
                     <span className="text-sm font-bold text-[color:var(--muted)]">{toAr(p.visits)} {tr(lang, "زيارة", "visits")}</span>
                   </li>

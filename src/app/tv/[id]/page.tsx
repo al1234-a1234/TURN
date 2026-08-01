@@ -32,7 +32,7 @@ export default async function TvPage({ params }: { params: Promise<{ id: string 
   const host = h.get("host") ?? SITE_HOST;
   const proto = host.includes("localhost") ? "http" : "https";
   const joinUrl = `${proto}://${host}/r/${meta.restaurant_slug}?branch=${id}`;
-  const qr = await QRCode.toString(joinUrl, { type: "svg", margin: 1, color: { dark: "#661c0a", light: "#00000000" } });
+  const qr = await QRCode.toString(joinUrl, { type: "svg", margin: 1, color: { dark: "var(--brand-solid)", light: "#00000000" } });
 
   return (
     <div dir="rtl" className="flex min-h-screen flex-col gap-6 p-8" style={{ background: "var(--bg)" }}>
@@ -48,7 +48,7 @@ export default async function TvPage({ params }: { params: Promise<{ id: string 
             <p className="mt-1 text-2xl font-bold" style={{ color: "var(--muted)" }}>{meta.branch_name}</p>
           </div>
         </div>
-        <div className="flex items-center gap-4 rounded-3xl bg-white p-4" style={{ border: "1px solid rgba(102,28,10,0.14)" }}>
+        <div className="flex items-center gap-4 rounded-3xl bg-[color:var(--surface)] p-4" style={{ border: "1px solid rgba(102,28,10,0.14)" }}>
           <div className="text-left">
             <p className="font-display text-2xl font-bold" style={{ color: "var(--brand-d)" }}>خذ دورك من جوّالك</p>
             <p className="text-sm font-bold" style={{ color: "var(--muted)" }}>امسح الرمز — بلا تطبيق ولا حساب</p>
@@ -60,7 +60,7 @@ export default async function TvPage({ params }: { params: Promise<{ id: string 
       <TvBoard branchId={id} initial={rows} />
 
       <footer className="text-center text-sm font-bold" style={{ color: "rgba(102,28,10,0.4)" }} dir="ltr">
-        TURN · دور
+        EIGHT · إيت
       </footer>
     </div>
   );

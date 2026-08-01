@@ -74,7 +74,7 @@ export default async function ReceptionPage({
     const waited = minutesSince(q.joined_at);
     return (
       <li className="soft-card flex items-center gap-3 p-3.5">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-xl font-bold text-white" style={{ background: "var(--brand-solid)" }}>
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-xl font-bold text-cream-100" style={{ background: "var(--brand-solid)" }}>
           {toAr(rank)}
         </span>
         <div className="min-w-0 flex-1">
@@ -95,7 +95,7 @@ export default async function ReceptionPage({
           </p>
           {q.distance_m != null && (
             <span className="mt-1 me-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
-              style={{ background: "var(--surface-2)", border: "1px solid rgba(102,28,10,0.14)", color: q.distance_m > 5000 ? "#9a6a4c" : "var(--brand-d)" }}>
+              style={{ background: "var(--surface-2)", border: "1px solid rgba(102,28,10,0.14)", color: q.distance_m > 5000 ? "var(--muted)" : "var(--brand-d)" }}>
               📍 {tr(lang,
                     q.distance_m >= 1000 ? `يبعد ${(q.distance_m / 1000).toFixed(1)} كم` : `يبعد ${q.distance_m} م`,
                     q.distance_m >= 1000 ? `${(q.distance_m / 1000).toFixed(1)} km away` : `${q.distance_m} m away`)}
@@ -143,7 +143,7 @@ export default async function ReceptionPage({
         </div>
         {activeBranch && (
           <a href={`/tv/${activeBranch.id}`} target="_blank" rel="noreferrer"
-             className="rounded-2xl px-4 py-2.5 text-sm font-extrabold text-white"
+             className="rounded-2xl px-4 py-2.5 text-sm font-extrabold text-cream-100"
              style={{ background: "var(--brand-solid)" }}>
             📺 {tr(lang, "شاشة العرض", "TV display")}
           </a>
