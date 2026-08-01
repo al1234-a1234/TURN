@@ -7,11 +7,11 @@ export default function RestaurantLoading() {
     <div className="flex min-h-full flex-1 flex-col">
       <div className="rq-header relative px-5 pb-5 pt-5">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
-          <div className={`${bar} h-11 w-11`} style={{ background: "rgba(255,255,255,0.2)" }} />
-          <div className={`${bar} h-11 w-11`} style={{ background: "rgba(255,255,255,0.2)" }} />
+          <div className={`${bar} h-11 w-11`} style={{ background: "rgba(120,30,12,0.10)" }} />
+          <div className={`${bar} h-11 w-11`} style={{ background: "rgba(120,30,12,0.10)" }} />
         </div>
         <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center">
-          <div className={`${bar} h-20 w-20 translate-y-1/2`} style={{ background: "rgba(255,255,255,0.25)" }} />
+          <div className={`${bar} h-20 w-20 translate-y-1/2`} style={{ background: "rgba(120,30,12,0.10)" }} />
         </div>
       </div>
 

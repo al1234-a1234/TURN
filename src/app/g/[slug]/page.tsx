@@ -28,7 +28,7 @@ export default async function CheckinPage({ params, searchParams }: { params: Pr
     <div className="min-h-full" style={{ background: "var(--background)" }}>
       {/* هيدر المطعم */}
       <header className="rq-header px-6 pb-16 pt-10 text-center">
-        <span className="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl bg-white/15 font-serif text-4xl font-bold text-cream-100 ring-1 ring-white/25">
+        <span className="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl font-serif text-4xl font-bold text-[color:var(--brand-maroon)] ring-1 ring-[rgba(120,30,12,0.14)]">
           {restaurant.logo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={restaurant.logo_url} alt="" className="h-full w-full object-cover" />
@@ -36,8 +36,8 @@ export default async function CheckinPage({ params, searchParams }: { params: Pr
             initial
           )}
         </span>
-        <h1 className="mt-4 font-display text-2xl font-bold text-cream-100">{name}</h1>
-        {cuisine && <p className="mt-1 text-sm font-medium text-cream-100/80">{cuisine}</p>}
+        <h1 className="mt-4 font-display text-2xl font-bold text-[color:var(--brand-maroon)]">{name}</h1>
+        {cuisine && <p className="mt-1 text-sm font-medium text-[color:var(--brand-maroon)]/70">{cuisine}</p>}
       </header>
 
       <main className="mx-auto -mt-10 w-full max-w-md px-5 pb-16">

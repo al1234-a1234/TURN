@@ -65,7 +65,7 @@ export function CustomerShell({
           aria-label={tr(lang, "القائمة", "Menu")}
           className="flex items-center justify-center transition active:scale-95"
         >
-          <Logo size={44} />
+          <Logo size={44} inverted />
         </button>
 
         <span className="eight-wordmark select-none">EIGHT</span>
@@ -110,8 +110,8 @@ export function CustomerShell({
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" /></svg>
               </button>
               <div className="flex items-center justify-end gap-3">
-                <span className="font-display text-xl font-bold">{tr(lang, "إيت", "EIGHT")}</span>
-                <Logo size={56} />
+                <span className="font-display text-xl font-bold text-[color:var(--brand-maroon)]">{tr(lang, "إيت", "EIGHT")}</span>
+                <Logo size={56} inverted />
               </div>
             </div>
             <ul className="px-6 py-4">
