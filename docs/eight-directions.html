@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EIGHT — ثمانية اتجاهات</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Tajawal:wght@400;500;700;800&family=Almarai:wght@400;700;800&family=Noto+Kufi+Arabic:wght@400;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand:#781e0c; --cream1:#f7f0e4; --cream2:#e4d7c2;
+  --ok:#3f7d5d; --wait:#a9721e; --shut:#8d7b6b;
+  --bg:#f2ece2; --surf:#faf6ee; --surf2:#ebe4d7;
+  --ink:#241a13; --ink2:#5d4f43; --ink3:#8a7a6b; --line:#ded3c2;
+  --lab:#efe9df; --labs:#f8f5ef; --labl:#dbd0be; --labi:#241a13; --labd:#6f6154;
+  --s1:11px; --s2:13px; --s3:15px; --s4:22px; --s5:34px;
+}
+[data-mode="dark"]{
+  --bg:#17120e; --surf:#211a15; --surf2:#2b221b;
+  --ink:#f0e8dc; --ink2:#bcaa98; --ink3:#8a7a6b; --line:#382c23;
+  --ok:#5b9c79; --wait:#c99339; --shut:#8a7a6b;
+  --lab:#120e0b; --labs:#1c1611; --labl:#312720; --labi:#efe6d9; --labd:#95867a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--lab);color:var(--labi);
+  font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.rail::-webkit-scrollbar{height:10px}
+.rail::-webkit-scrollbar-thumb{background:var(--labl);border-radius:9px}
+
+/* ═══ الشعار — من المواصفة، بلا تعديل ═══ */
+.eight-badge{display:grid;place-items:center;position:relative;overflow:hidden;
+ width:1em;height:1em;border-radius:23%;flex-shrink:0;
+ background:linear-gradient(165deg,rgba(120,30,12,.05),rgba(120,30,12,0) 45%,rgba(120,30,12,.07)),
+   linear-gradient(165deg,var(--cream1) 0%,var(--cream2) 100%);
+ box-shadow:inset 0 0 0 1px rgba(120,30,12,.14),0 .05em .16em -.06em rgba(90,50,30,.30)}
+.eight-stack{display:flex;flex-direction:column;align-items:center;justify-content:center;
+ line-height:1;direction:ltr;gap:.05em;transform:translateY(.026em)}
+.eight-letter{font-family:"DM Serif Display",serif;font-weight:400;font-size:.62em;
+ line-height:.78;color:var(--brand)}
+.eight-word{font-family:"DM Serif Display",serif;font-weight:400;font-size:.118em;
+ letter-spacing:.3em;margin-right:-.3em;color:var(--brand);opacity:.86}
+
+/* ═══ إطار الجوال ═══ */
+.dev{width:390px;height:844px;flex:none;border-radius:38px;overflow:hidden;
+ background:var(--surf);border:1px solid var(--line);position:relative;
+ box-shadow:0 24px 60px -30px rgba(40,25,15,.5)}
+.scr{position:absolute;inset:0;display:flex;flex-direction:column;
+  background:var(--bg);color:var(--ink);overflow:hidden;font-size:var(--s2)}
+.body{flex:1;overflow-y:auto;overscroll-behavior:contain}
+.body::-webkit-scrollbar{width:0}
+
+/* رأس الشاشة */
+.top{display:flex;align-items:center;justify-content:space-between;
+ padding:16px 20px 12px;gap:12px;flex:none}
+.top .wm{font-family:"DM Serif Display",serif;font-size:20px;letter-spacing:.28em;
+ margin-right:-.28em;direction:ltr;color:var(--brand)}
+.icobtn{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;
+ background:var(--surf2);color:var(--ink2)}
+
+/* نصّ */
+.t1{font-size:var(--s1);line-height:1.5}
+.t2{font-size:var(--s2);line-height:1.6}
+.t3{font-size:var(--s3);line-height:1.5}
+.t4{font-size:var(--s4);line-height:1.25;font-weight:700}
+.t5{font-size:var(--s5);line-height:1.1;font-weight:700}
+.dim{color:var(--ink2)} .dim3{color:var(--ink3)}
+.sec{font-size:var(--s1);font-weight:700;color:var(--ink3);letter-spacing:.04em;
+ padding:0 20px;margin:20px 0 8px}
+img.ph{display:block;width:100%;height:100%;object-fit:cover;background:var(--surf2)}
+
+/* حالات — تُفهم باللون قبل النص */
+.sdot{width:8px;height:8px;border-radius:99px;flex:none}
+.spill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:99px;
+ font-size:var(--s1);font-weight:600}
+.sedge{position:absolute;inset-inline-start:0;top:0;bottom:0;width:3px;border-radius:3px}
+
+/* فعل */
+.act{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+ background:var(--brand);color:var(--cream1);font-weight:600;font-size:var(--s2);
+ padding:12px 16px;border-radius:12px;width:100%}
+.act-q{border:1px solid var(--line);background:transparent;color:var(--ink);
+ padding:8px 14px;border-radius:10px;font-size:var(--s1);font-weight:600}
+
+/* هيكل المعمل */
+.chip{padding:8px 14px;border-radius:10px;font-size:13px;font-weight:500;
+ background:var(--labs);border:1px solid var(--labl);color:var(--labd)}
+.chip[aria-pressed="true"]{background:var(--labi);color:var(--lab);border-color:transparent}
+.card-lab{background:var(--labs);border:1px solid var(--labl);border-radius:14px}
+dialog{border:0;padding:0;background:transparent;max-width:none;max-height:none}
+dialog::backdrop{background:rgba(15,10,7,.72)}
+
+/* ═══ أدوات التخطيط — مستقلّة عن الـCDN ═══ */
+.flex{display:flex}.grid{display:grid}.flex-1{flex:1 1 0%}.flex-wrap{flex-wrap:wrap}
+.items-center{align-items:center}.items-baseline{align-items:baseline}
+.items-start{align-items:flex-start}.items-stretch{align-items:stretch}
+.justify-between{justify-content:space-between}.place-items-center{place-items:center}
+.min-w-0{min-width:0}.min-h-screen{min-height:100vh}
+.gap-1\.5{gap:6px}.gap-2{gap:8px}.gap-3{gap:12px}.gap-6{gap:24px}
+.px-1{padding-inline:4px}.px-4{padding-inline:16px}.px-5{padding-inline:20px}
+.py-3{padding-block:12px}.py-6{padding-block:24px}
+.p-1{padding:4px}.p-3{padding:12px}.p-4{padding:16px}.p-5{padding:20px}
+.mb-2{margin-bottom:8px}.mb-3{margin-bottom:12px}.mt-2{margin-top:8px}
+.mt-3{margin-top:12px}.mt-4{margin-top:16px}
+.sticky{position:sticky}.top-0{top:0}.z-40{z-index:40}
+.border-b{border-bottom-width:1px;border-bottom-style:solid}
+.rounded-xl{border-radius:12px}.rounded-2xl{border-radius:16px}
+.overflow-x-auto{overflow-x:auto}.overflow-auto{overflow:auto}
+.font-semibold{font-weight:600}.leading-tight{line-height:1.25}.leading-6{line-height:1.6}
+.text-\[11\.5px\]{font-size:11.5px}.text-\[12px\]{font-size:12px}
+.text-\[13px\]{font-size:13px}.text-\[15px\]{font-size:15px}.text-\[16px\]{font-size:16px}
+.w-\[min\(680px\2c 92vw\)\]{width:min(680px,92vw)}.max-h-\[86vh\]{max-height:86vh}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header class="sticky top-0 z-40 border-b" style="background:var(--lab);border-color:var(--labl)">
+  <div class="flex flex-wrap items-center gap-3 px-5 py-3">
+    <span class="eight-badge" style="font-size:34px"><span class="eight-stack"><span class="eight-letter">8</span></span></span>
+    <div>
+      <div class="text-[15px] font-semibold leading-tight">ثمانية اتجاهات — EIGHT</div>
+      <div class="text-[12px]" style="color:var(--labd)">كل اتجاه يختلف هيكليًّا لا لونيًّا · نفس البيانات في الثمانية</div>
+    </div>
+    <div class="flex-1"></div>
+    <div class="flex gap-1 p-1 rounded-xl" style="background:var(--labs);border:1px solid var(--labl)">
+      <button class="chip" data-scr="list" aria-pressed="true">القائمة</button>
+      <button class="chip" data-scr="rest" aria-pressed="false">المطعم</button>
+      <button class="chip" data-scr="tick" aria-pressed="false">التذكرة</button>
+    </div>
+    <button class="chip" id="mode">ليلي</button>
+  </div>
+</header>
+
+<main class="rail flex gap-6 overflow-x-auto px-5 py-6 items-start" id="rail"></main>
+
+<dialog id="zoom"><div class="p-4 grid place-items-center min-h-screen"><div id="zoomIn"></div>
+  <button class="chip mt-4" id="zclose">إغلاق</button></div></dialog>
+
+<dialog id="exp"><div class="p-5 min-h-screen grid place-items-center">
+  <div class="card-lab p-5 w-[min(680px,92vw)] max-h-[86vh] overflow-auto">
+    <div class="flex items-center gap-3 mb-3"><b id="expT" class="text-[16px]"></b>
+      <div class="flex-1"></div><button class="chip" id="expCopy">نسخ</button>
+      <button class="chip" id="expClose">إغلاق</button></div>
+    <pre id="expC" dir="ltr" class="text-[11.5px] leading-6 p-4 rounded-xl overflow-auto"
+      style="background:var(--lab);border:1px solid var(--labl);font-family:ui-monospace,monospace"></pre>
+  </div></div></dialog>
+
+<script>
+const IMG=["photo-1517248135467-4c7edcad34c4","photo-1414235077428-338989a2e8c0",
+"photo-1513104890138-7c749659a591","photo-1519708227418-c8fd9a32b7a2",
+"photo-1504674900247-0877df9cc836","photo-1565299624946-b28f40a0ae38",
+"photo-1546069901-ba9599a7e63c","photo-1540189549336-e6e99c3679fe"];
+const u=(i,w)=>`https://images.unsplash.com/${IMG[i%IMG.length]}?w=${w}&q=80&auto=format&fit=crop`;
+const FB=`onerror="if(!this.dataset.f){this.dataset.f=1;this.src='https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80&auto=format&fit=crop'}"`;
+
+const R=[
+{n:"تكية",c:"سعودي معاصر",city:"الرياض",r:4.6,st:"wait",q:3,m:12,i:0},
+{n:"بيت المونة",c:"شعبي",city:"الرياض",r:4.5,st:"ok",q:0,m:0,i:1},
+{n:"نُوّ",c:"بحري",city:"جدة",r:4.8,st:"wait",q:7,m:25,i:3},
+{n:"إفيكتو",c:"إيطالي",city:"بريدة",r:4.4,st:"ok",q:0,m:0,i:5},
+{n:"برايم كت",c:"مشاوي",city:"الرياض",r:4.3,st:"shut",q:0,m:0,i:4},
+{n:"القرية النجدية",c:"نجدي",city:"الرياض",r:4.7,st:"wait",q:2,m:8,i:1},
+{n:"رودي",c:"بيتزا",city:"جدة",r:4.2,st:"ok",q:0,m:0,i:5},
+{n:"سُهيل",c:"فطور",city:"الخبر",r:4.6,st:"shut",q:0,m:0,i:7}];
+
+const ST={ok:{t:"متاح الآن",v:"--ok",s:"متاح"},wait:{t:"يوجد انتظار",v:"--wait",s:"انتظار"},
+shut:{t:"مغلق",v:"--shut",s:"مغلق"}};
+const sv=k=>`var(${ST[k].v})`;
+const wait=x=>x.st==="wait"?`${x.q} بالطابور · ${x.m} د`:x.st==="ok"?"ادخل مباشرة":"يفتح ٤ م";
+
+const badge=(px,w)=>`<span class="eight-badge" style="font-size:${px}px"><span class="eight-stack">
+  <span class="eight-letter">8</span>${w?'<span class="eight-word">EIGHT</span>':''}</span></span>`;
+const head=(t)=>`<div class="top"><span class="wm">EIGHT</span>
+  <span class="t1 dim3">${t}</span>${badge(38,0)}</div>`;
+
+/* ══════ ثمانية هياكل — لا يتكرّر منها اثنان ══════ */
+const D=[
+{id:"shelf",n:"الرفّ",e:"Hero + list",
+ why:"تدرّج الاهتمام: بطل واحد يمسك العين ثم قائمة سريعة. الدماغ يعالج عنصرًا بارزًا أسرع من ثمانية متساوية.",
+ mkt:"Airbnb · The Fork · Resy",
+ ax:"بطاقة بطل ثم مصغّرات · طبقة على الصورة · البطاقة كاملة قابلة للنقر · ٥ مطاعم · مرتفعة بظل",
+ list(){const h=R[0];return `${head("الرياض")}<div class="body">
+ <div class="px-5"><div style="border-radius:20px;overflow:hidden;position:relative;box-shadow:0 14px 32px -18px rgba(40,25,15,.45)">
+  <div style="height:230px"><img class="ph" src="${u(h.i,780)}" alt="${h.n}" ${FB}></div>
+  <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(20,12,8,.88) 4%,rgba(20,12,8,.1) 52%)"></div>
+  <div style="position:absolute;inset-inline:16px;bottom:14px">
+   <span class="spill" style="background:${sv(h.st)};color:#fff">${wait(h)}</span>
+   <div class="t4" style="color:#fff;margin-top:8px">${h.n}</div>
+   <div class="t2" style="color:rgba(255,255,255,.82)">${h.c} · ★ ${h.r}</div>
+  </div></div></div>
+ <div class="sec">قريب منك</div>
+ ${R.slice(1,5).map(x=>`<div class="flex items-center gap-3 px-5 py-3">
+  <div style="width:56px;height:56px;border-radius:14px;overflow:hidden;flex:none"><img class="ph" src="${u(x.i,160)}" alt="" ${FB}></div>
+  <div class="min-w-0 flex-1"><div class="t3" style="font-weight:600">${x.n}</div>
+   <div class="t1 dim">${x.c} · ★ ${x.r}</div></div>
+  <span class="t1" style="color:${sv(x.st)};font-weight:600">${ST[x.st].s}</span></div>`).join("")}
+ <div style="height:24px"></div></div>`}},
+
+{id:"line",n:"السطر",e:"Text-only",
+ why:"إزالة الصور تلغي التنافس البصري فيصير الاسم والحالة هما القرار — أسرع مسح للعين عند البحث بالاسم.",
+ mkt:"OpenTable (قوائم مكثّفة) · Yelp Waitlist",
+ ax:"نص فقط بلا صور · شريط حافة رفيع · بلا زر (السطر ينقر) · ٧ مطاعم · فواصل خطّية بلا بطاقات",
+ list(){return `${head("كل المدن")}<div class="body px-5">
+ ${R.slice(0,7).map(x=>`<div style="position:relative;padding:14px 14px 14px 0;border-bottom:1px solid var(--line)">
+  <span class="sedge" style="background:${sv(x.st)}"></span>
+  <div class="flex items-baseline gap-2"><div class="t4" style="font-size:19px">${x.n}</div>
+   <div class="t1 dim3">${x.city}</div><div class="flex-1"></div><div class="t2 dim">★ ${x.r}</div></div>
+  <div class="t2" style="color:${sv(x.st)};margin-top:2px;font-weight:600">${wait(x)}</div></div>`).join("")}
+ <div style="height:20px"></div></div>`}},
+
+{id:"grid",n:"الشبكة",e:"Two-column",
+ why:"عمودان يضاعفان الخيارات في نظرة واحدة، والصورة المربّعة تجعل الاختيار بالشهية لا بالاسم.",
+ mkt:"جاهز · هنقرستيشن · Deliveroo",
+ ax:"شبكة عمودين · نقطة ملوّنة · البلاطة كاملة · ٦ مطاعم · مسطّحة بلا ظل · تبويبات علوية",
+ list(){return `${head("")}<div style="display:flex;gap:8px;padding:0 20px 12px">
+  ${["الكل","متاح","قريب","الأعلى"].map((t,i)=>`<span class="t2" style="padding:7px 14px;border-radius:10px;font-weight:600;
+   ${i===0?`background:var(--brand);color:var(--cream1)`:`background:var(--surf2);color:var(--ink2)`}">${t}</span>`).join("")}</div>
+ <div class="body px-5" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-content:start">
+ ${R.slice(0,6).map(x=>`<div>
+  <div style="aspect-ratio:1;border-radius:16px;overflow:hidden"><img class="ph" src="${u(x.i,420)}" alt="${x.n}" ${FB}></div>
+  <div class="flex items-center gap-1.5" style="margin-top:8px">
+   <span class="sdot" style="background:${sv(x.st)}"></span>
+   <span class="t3" style="font-weight:600">${x.n}</span></div>
+  <div class="t1 dim">${x.c} · ★ ${x.r}</div></div>`).join("")}
+ <div style="height:16px;grid-column:1/-1"></div></div>`}},
+
+{id:"mag",n:"المجلّة",e:"Full-bleed",
+ why:"صورتان كبيرتان فقط في الشاشة: قرار واحد في كل مرّة، وحضور المكان يسبق بياناته. للتصفّح لا للبحث.",
+ mkt:"Resy · Tock · Airbnb Experiences",
+ ax:"صورة سائحة بعرض الشاشة · رقاقة زمنية · زر ظاهر · مطعمان · بلا حدود ولا بطاقة",
+ list(){return `${head("جدة")}<div class="body">
+ ${R.slice(2,4).map(x=>`<div style="margin-bottom:28px">
+  <div style="height:300px"><img class="ph" src="${u(x.i,820)}" alt="${x.n}" ${FB}></div>
+  <div class="px-5" style="margin-top:14px">
+   <div class="flex items-center gap-2">
+    <span class="spill" style="background:var(--surf2);color:${sv(x.st)}">
+     <span class="sdot" style="background:${sv(x.st)}"></span>${x.st==="wait"?x.m+" دقيقة":ST[x.st].t}</span>
+    <span class="t1 dim3">${x.c} · ${x.city}</span></div>
+   <div class="t5" style="margin:8px 0 4px">${x.n}</div>
+   <div class="t2 dim" style="margin-bottom:14px">تقييم ${x.r} · ${x.st==="wait"?x.q+" في الانتظار":"بلا انتظار"}</div>
+   <button class="act">خذ دورك</button></div></div>`).join("")}</div>`}},
+
+{id:"board",n:"اللوح",e:"Dense rows",
+ why:"أعلى كثافة معلومات لكل بكسل: للمستخدم الذي يعرف ما يريد ويقارن سبعة خيارات دفعة واحدة.",
+ mkt:"OpenTable · Zomato · Google Maps (قائمة)",
+ ax:"صف مضغوط بمصغّرة · شارة صغيرة · زر صريح صغير · ٧ مطاعم · سطح واحد بفواصل",
+ list(){return `${head("الأقرب")}<div class="body">
+ <div style="margin:0 16px;border-radius:16px;overflow:hidden;background:var(--surf)">
+ ${R.slice(0,7).map((x,i)=>`<div class="flex items-center gap-3" style="padding:10px 12px;${i?'border-top:1px solid var(--line)':''}">
+  <div style="width:44px;height:44px;border-radius:10px;overflow:hidden;flex:none"><img class="ph" src="${u(x.i,130)}" alt="" ${FB}></div>
+  <div class="min-w-0 flex-1"><div class="flex items-center gap-2">
+    <span class="t3" style="font-weight:600">${x.n}</span>
+    <span class="spill" style="background:color-mix(in srgb,${sv(x.st)} 16%,transparent);color:${sv(x.st)};padding:2px 8px">${ST[x.st].s}</span></div>
+   <div class="t1 dim">${x.c} · ★ ${x.r} · ${wait(x)}</div></div>
+  <button class="act-q">${x.st==="shut"?"تنبيه":"دور"}</button></div>`).join("")}</div>
+ <div style="height:20px"></div></div>`}},
+
+{id:"pass",n:"البِطاقة",e:"Boarding pass",
+ why:"المنتج تذكرة، فالبطاقة نفسها تشبه التذكرة: الرقم هو البطل والاسم تابع. يبني توقّع الدور قبل أخذه.",
+ mkt:"Waitwhile · NextMe · بطاقات الطيران",
+ ax:"بطاقة تذكرة مثقوبة · رقم كبير بدل الشارة · زر أسفل البطاقة · ٣ مطاعم · مرتفعة بحزّ",
+ list(){return `${head("طوابير مفتوحة")}<div class="body px-5">
+ ${R.slice(0,3).map(x=>`<div style="position:relative;background:var(--surf);border:1px solid var(--line);
+   border-radius:16px;margin-bottom:14px;overflow:hidden">
+  <div class="flex items-stretch">
+   <div style="width:96px;flex:none;border-inline-end:1px dashed var(--line);
+     display:grid;place-items:center;padding:14px 0">
+    <div style="text-align:center"><div class="t5" style="color:${sv(x.st)};font-family:'DM Serif Display',serif">${x.st==="shut"?"—":x.q||"٠"}</div>
+     <div class="t1 dim3">${x.st==="shut"?"مغلق":"بالطابور"}</div></div></div>
+   <div class="flex-1 min-w-0" style="padding:14px">
+    <div class="t4" style="font-size:19px">${x.n}</div>
+    <div class="t1 dim">${x.c} · ${x.city} · ★ ${x.r}</div>
+    <div class="t2" style="margin-top:6px;color:var(--ink2)">${x.st==="wait"?`الانتظار ~${x.m} دقيقة`:x.st==="ok"?"الدخول فورًا":"يفتح الساعة ٤ م"}</div></div></div>
+  <div style="border-top:1px dashed var(--line);padding:10px 14px">
+   <button class="act" style="background:${x.st==="shut"?"var(--surf2)":"var(--brand)"};color:${x.st==="shut"?"var(--ink2)":"var(--cream1)"}">
+    ${x.st==="shut"?"نبّهني عند الفتح":"خذ دورك"}</button></div></div>`).join("")}
+ <div style="height:12px"></div></div>`}},
+
+{id:"layer",n:"الطبقة",e:"Overlay",
+ why:"المعلومة داخل الصورة لا تحتها: الشاشة تصير معرضًا، والحالة تُقرأ من شريط علوي دون تفكيك البطاقة.",
+ mkt:"Instagram/TikTok للمطاعم · Zomato Stories",
+ ax:"صورة تحمل كل شيء · شريط حالة فوق الصورة · البطاقة كاملة · ٣ مطاعم · بلا حدود ولا ظل",
+ list(){return `${head("مختارات اليوم")}<div class="body px-5">
+ ${R.slice(0,3).map(x=>`<div style="position:relative;border-radius:22px;overflow:hidden;margin-bottom:14px;height:206px">
+  <img class="ph" src="${u(x.i,780)}" alt="${x.n}" ${FB}>
+  <div style="position:absolute;inset-inline:0;top:0;padding:12px 14px;
+    background:linear-gradient(to bottom,rgba(20,12,8,.7),transparent)">
+   <span class="spill" style="background:${sv(x.st)};color:#fff">${wait(x)}</span></div>
+  <div style="position:absolute;inset-inline:0;bottom:0;padding:14px;
+    background:linear-gradient(to top,rgba(20,12,8,.9),transparent)">
+   <div class="t4" style="color:#fff">${x.n}</div>
+   <div class="t2" style="color:rgba(255,255,255,.8)">${x.c} · ${x.city} · ★ ${x.r}</div></div></div>`).join("")}
+ <div style="height:12px"></div></div>`}},
+
+{id:"col",n:"العمود",e:"City rail",
+ why:"تجميع بالمدينة على خيط رأسي: البنية تجيب «وين؟» قبل «أيش؟» — يناسب مستخدمًا يتنقّل بين المدن.",
+ mkt:"Google Maps (تجميع مناطق) · Foursquare City Guide",
+ ax:"خيط رأسي بعلامات · نقطة على الخيط · سهم بلا زر · ٥ مطاعم · خط واحد بلا بطاقات · تجميع بالمدينة",
+ list(){const g={};R.slice(0,6).forEach(x=>(g[x.city]??=[]).push(x));
+ return `${head("حسب المدينة")}<div class="body px-5">
+ ${Object.entries(g).map(([city,xs])=>`<div style="margin-bottom:6px">
+  <div class="t1" style="font-weight:700;color:var(--brand);padding:12px 0 6px">${city}</div>
+  <div style="position:relative;padding-inline-start:22px">
+   <span style="position:absolute;inset-inline-start:5px;top:6px;bottom:10px;width:1px;background:var(--line)"></span>
+   ${xs.map(x=>`<div class="flex items-center gap-3" style="position:relative;padding:10px 0">
+    <span class="sdot" style="position:absolute;inset-inline-start:-21px;top:22px;box-shadow:0 0 0 3px var(--bg);background:${sv(x.st)}"></span>
+    <div style="width:40px;height:40px;border-radius:10px;overflow:hidden;flex:none"><img class="ph" src="${u(x.i,120)}" alt="" ${FB}></div>
+    <div class="min-w-0 flex-1"><div class="t3" style="font-weight:600">${x.n}</div>
+     <div class="t1 dim">${wait(x)} · ★ ${x.r}</div></div>
+    <span class="dim3" style="font-size:18px">‹</span></div>`).join("")}</div></div>`).join("")}
+ <div style="height:16px"></div></div>`}}
+];
+
+/* شاشتا المطعم والتذكرة — تتبعان لغة كل اتجاه */
+const restScr=d=>{const x=R[0],flat=["line","col"].includes(d.id),over=["layer","mag","shelf"].includes(d.id);
+return `${head("")}<div class="body">
+ ${over?`<div style="position:relative;height:250px"><img class="ph" src="${u(x.i,820)}" alt="${x.n}" ${FB}>
+   <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(20,12,8,.9),transparent 60%)"></div>
+   <div style="position:absolute;inset-inline:20px;bottom:16px">
+    <div class="t5" style="color:#fff">${x.n}</div>
+    <div class="t2" style="color:rgba(255,255,255,.82)">${x.c} · ${x.city} · ★ ${x.r}</div></div></div>`
+ :`<div class="px-5"><div class="t5">${x.n}</div>
+   <div class="t2 dim" style="margin-top:2px">${x.c} · ${x.city} · ★ ${x.r}</div>
+   ${flat?"":`<div style="height:150px;border-radius:16px;overflow:hidden;margin-top:12px"><img class="ph" src="${u(x.i,780)}" alt="" ${FB}></div>`}</div>`}
+ <div class="px-5" style="margin-top:16px">
+  <div class="flex items-center gap-2" style="padding:12px 14px;border-radius:14px;
+    background:color-mix(in srgb,${sv(x.st)} 12%,transparent)">
+   <span class="sdot" style="background:${sv(x.st)}"></span>
+   <span class="t2" style="font-weight:600;color:${sv(x.st)}">${wait(x)}</span>
+   <div class="flex-1"></div><span class="t1 dim">آخر تحديث الآن</span></div>
+  <div style="display:flex;gap:8px;margin-top:16px">
+   ${["الانتظار","القائمة","التقييمات"].map((t,i)=>`<span class="t2" style="flex:1;text-align:center;padding:9px 0;border-radius:10px;font-weight:600;
+    ${i===0?"background:var(--surf2);color:var(--ink)":"color:var(--ink3)"}">${t}</span>`).join("")}</div>
+  <div style="margin-top:16px">
+   <div class="t1 dim3" style="margin-bottom:4px">الاسم</div>
+   <div style="border-bottom:1px solid var(--line);padding-bottom:8px" class="t3">البراء</div>
+   <div class="t1 dim3" style="margin:14px 0 4px">الجوّال</div>
+   <div style="border-bottom:1px solid var(--line);padding-bottom:8px;direction:ltr;text-align:right" class="t3">0506089164</div>
+   <div style="display:flex;gap:8px;margin-top:16px">
+    ${["١","٢","٣","٤+"].map((t,i)=>`<span class="t2" style="flex:1;text-align:center;padding:10px 0;border-radius:10px;font-weight:600;
+     ${i===1?"background:var(--brand);color:var(--cream1)":"background:var(--surf2);color:var(--ink2)"}">${t}</span>`).join("")}</div></div>
+  <div style="height:20px"></div></div></div>
+ <div style="flex:none;padding:12px 20px 20px;background:var(--bg);border-top:1px solid var(--line)">
+  <button class="act">خذ دورك الآن</button></div>`};
+
+const tickScr=d=>{const pass=["pass","board"].includes(d.id);
+return `${head("تذكرتك")}<div class="body px-5" style="display:flex;align-items:center">
+ <div style="width:100%;background:var(--surf);border:1px solid var(--line);border-radius:22px;
+   overflow:hidden;box-shadow:0 18px 40px -26px rgba(40,25,15,.5)">
+  <div style="padding:26px 20px;text-align:center">
+   <div class="t1 dim3">تكية · الرياض</div>
+   <div style="font-family:'DM Serif Display',serif;font-size:78px;line-height:1;
+     color:var(--brand);margin:10px 0 4px;font-variant-numeric:tabular-nums">١٤</div>
+   <div class="t1 dim3" style="letter-spacing:.06em">رقم دورك</div></div>
+  ${pass?`<div style="position:relative;border-top:1px dashed var(--line)">
+   <span style="position:absolute;top:-9px;inset-inline-start:-9px;width:18px;height:18px;border-radius:99px;background:var(--bg)"></span>
+   <span style="position:absolute;top:-9px;inset-inline-end:-9px;width:18px;height:18px;border-radius:99px;background:var(--bg)"></span></div>`
+  :`<div style="border-top:1px solid var(--line)"></div>`}
+  <div style="padding:18px 20px">
+   <div class="flex items-center justify-between"><span class="t2 dim">أمامك</span>
+     <span class="t3" style="font-weight:700">٣ أشخاص</span></div>
+   <div class="flex items-center justify-between" style="margin-top:6px"><span class="t2 dim">الانتظار المتوقّع</span>
+     <span class="t3" style="font-weight:700">١٢ دقيقة</span></div>
+   <div style="height:6px;border-radius:99px;background:var(--surf2);margin-top:14px;overflow:hidden">
+    <div style="width:62%;height:100%;background:var(--wait)"></div></div>
+   <div class="flex items-center gap-2" style="margin-top:14px">
+    <span class="sdot" style="background:var(--wait)"></span>
+    <span class="t2" style="color:var(--wait);font-weight:600">ننبّهك قبل دورك بخمس دقائق</span></div></div></div></div>
+ <div style="flex:none;padding:12px 20px 20px;display:flex;gap:8px">
+  <button class="act-q" style="flex:1;padding:12px">ألغِ دوري</button>
+  <button class="act" style="flex:2">أنا في الطريق</button></div>`};
+
+/* ══════ تركيب ══════ */
+let scr="list";
+const rail=document.getElementById("rail");
+function draw(){
+ rail.innerHTML="";
+ D.forEach(d=>{
+  const w=document.createElement("div");w.style.width="390px";w.style.flex="none";
+  w.innerHTML=`<div class="flex items-baseline gap-2 mb-2 px-1">
+    <b class="text-[15px]">${d.n}</b><span class="text-[12px]" style="color:var(--labd)">${d.e}</span>
+    <div class="flex-1"></div>
+    <button class="chip" data-z="${d.id}">تكبير</button>
+    <button class="chip" data-x="${d.id}">اختر</button></div>
+   <div class="dev"><div class="scr">${d[scr==="list"?"list":"list"] && (scr==="list"?d.list():scr==="rest"?restScr(d):tickScr(d))}</div></div>
+   <div class="card-lab mt-3 p-3 text-[12px] leading-6" style="color:var(--labd)">
+    <div><b style="color:var(--labi)">المبدأ:</b> ${d.why}</div>
+    <div style="margin-top:4px"><b style="color:var(--labi)">في السوق:</b> ${d.mkt}</div>
+    <div style="margin-top:4px"><b style="color:var(--labi)">محاور التميّز:</b> ${d.ax}</div></div>`;
+  rail.appendChild(w);
+ });
+}
+document.querySelectorAll("[data-scr]").forEach(b=>b.onclick=()=>{
+ scr=b.dataset.scr;document.querySelectorAll("[data-scr]").forEach(x=>
+  x.setAttribute("aria-pressed",x===b));draw()});
+document.getElementById("mode").onclick=e=>{
+ const dk=document.documentElement.dataset.mode==="dark";
+ document.documentElement.dataset.mode=dk?"":"dark";e.target.textContent=dk?"ليلي":"نهاري"};
+
+rail.addEventListener("click",e=>{
+ const z=e.target.closest("[data-z]"),x=e.target.closest("[data-x]");
+ if(z){const d=D.find(k=>k.id===z.dataset.z);
+  document.getElementById("zoomIn").innerHTML=
+   `<div class="dev" style="transform:scale(1.06);transform-origin:top center"><div class="scr">${scr==="list"?d.list():scr==="rest"?restScr(d):tickScr(d)}</div></div>`;
+  document.getElementById("zoom").showModal()}
+ if(x){const d=D.find(k=>k.id===x.dataset.x);
+  document.getElementById("expT").textContent=`اتجاه ${d.n} — ${d.e}`;
+  document.getElementById("expC").textContent=spec(d);
+  document.getElementById("exp").showModal()}});
+document.getElementById("zclose").onclick=()=>document.getElementById("zoom").close();
+document.getElementById("expClose").onclick=()=>document.getElementById("exp").close();
+document.getElementById("expCopy").onclick=e=>{
+ navigator.clipboard.writeText(document.getElementById("expC").textContent);
+ e.target.textContent="تم النسخ";setTimeout(()=>e.target.textContent="نسخ",1400)};
+
+function spec(d){return `/* EIGHT — اتجاه ${d.n} (${d.e}) */
+/* المبدأ: ${d.why} */
+
+:root{
+  /* الهوية — للشعار والعنصر النشط والفعل الرئيسي فقط */
+  --brand:        #781e0c;
+  --brand-ink:    #f7f0e4;
+
+  /* حالات وظيفية — تُفهم قبل قراءة النص */
+  --state-open:   #3f7d5d;   /* متاح */
+  --state-wait:   #a9721e;   /* يوجد انتظار */
+  --state-shut:   #8d7b6b;   /* مغلق */
+
+  /* أسطح دافئة — لا أبيض ناصع ولا أسود خالص */
+  --bg:           #f2ece2;
+  --surface:      #faf6ee;
+  --surface-2:    #ebe4d7;
+  --line:         #ded3c2;
+  --ink:          #241a13;   /* AA على كل الأسطح */
+  --ink-2:        #5d4f43;
+  --ink-3:        #8a7a6b;
+
+  /* ليلي */
+  --bg-dark:      #17120e;
+  --surface-dark: #211a15;
+  --ink-dark:     #f0e8dc;
+  --line-dark:    #382c23;
+
+  /* مقياس نصّي — خمسة أحجام لا غير */
+  --t-1: 11px;   /* بيانات ثانوية */
+  --t-2: 13px;   /* نص */
+  --t-3: 15px;   /* اسم في قائمة */
+  --t-4: 22px;   /* عنوان بطاقة */
+  --t-5: 34px;   /* بطل الشاشة */
+
+  /* شبكة ٤px */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:28px;
+  --r-sm:10px; --r-md:16px; --r-lg:22px;
+}
+
+/* tailwind.config.js */
+theme:{ extend:{
+  colors:{
+    brand:"#781e0c", brandInk:"#f7f0e4",
+    open:"#3f7d5d", wait:"#a9721e", shut:"#8d7b6b",
+    bg:"#f2ece2", surface:"#faf6ee", surface2:"#ebe4d7",
+    line:"#ded3c2", ink:"#241a13", ink2:"#5d4f43", ink3:"#8a7a6b" },
+  fontSize:{ xs:"11px", sm:"13px", base:"15px", xl:"22px","3xl":"34px" },
+  spacing:{ 1:"4px",2:"8px",3:"12px",4:"16px",5:"20px",6:"28px" },
+  borderRadius:{ sm:"10px", md:"16px", lg:"22px" },
+  fontFamily:{ sans:['"IBM Plex Sans Arabic"','system-ui'] } } }
+
+/* بنية البطاقة */
+${d.ax.split(" · ").map(s=>"  - "+s).join("\\n")}
+
+/* قواعد ملزمة */
+  - ثقل المعلومة يبدأ يمينًا (RTL)
+  - كل فعل أساسي في الثلث السفلي من الشاشة
+  - لا تزيد عناصر البطاقة عن ٤
+  - اسم المطعم ≈ ضعف حجم البيانات الثانوية
+  - لون الهوية لا يُصبغ به إلا الشعار والنشط والفعل الرئيسي`}
+
+draw();
+</script>
+</body>
+</html>
