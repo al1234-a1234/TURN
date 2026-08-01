@@ -32,8 +32,9 @@
   --color-navy-900: #2e1d14;
 
   /* عربي: IBM Plex Sans Arabic — أهدأ وأوضح على الجوال من المسيري، ووزنه
-     الثقيل يكفي للعناوين فلا نحتاج خطًّا ثانيًا. اللاتيني والرقم ٨ في
-     الشعار: DM Serif Display. */
+     الثقيل يكفي للعناوين فلا نحتاج خطًّا ثانيًا. العناوين اللاتينية
+     والأحرف الأولى: DM Serif Display. الشعار لا يستعمل أي خط — حروفه
+     مسارات متجهة (src/components/logo.tsx). */
   --font-sans: var(--font-plex-ar), "IBM Plex Sans Arabic", system-ui, sans-serif;
   --font-display: var(--font-plex-ar), "IBM Plex Sans Arabic", system-ui, sans-serif;
   --font-serif: var(--font-dm-serif), "DM Serif Display", Georgia, serif;
@@ -100,9 +101,11 @@ body {
 }
 
 /* ═══════════ شعار 8 / EIGHT ═══════════
-   منقول حرفيًّا من LOGO-SPEC.md — كل رقم هنا يحلّ مشكلة توسيط موصوفة في
-   القسم ٤ (انزياح الكلمة، علوّ الرقم، الفراغ الميت). ممنوع تعديل أي قيمة
-   أو تحويل em إلى بكسل. النسخة الكريمية هي الافتراضية في كل مكان. */
+   الحرفان لم يعودا نصًّا: هما مساران متجهان مقتفَيان من ملف الشعار المعتمد
+   نفسه (انظر src/components/logo.tsx). فسقطت معهما كل حسابات التوسيط
+   القديمة — لا فراغ ميت ولا تباعد أحرف ولا هامش سالب — لأن المواضع صارت
+   محفورة في الإحداثيات. هذا الملف يبقى مسؤولًا عن اللوح فقط: شكله ولونه
+   وحدّه وظلّه. النسخة الكريمية هي الافتراضية في كل مكان. */
 .eight-badge {
   display: grid;
   place-items: center;
@@ -110,7 +113,9 @@ body {
   overflow: hidden;
   width: 1em;                /* المقاس كله من font-size */
   height: 1em;
-  border-radius: 23%;
+  /* ٢٢٫٨٪ — مقيسة من الشعار المعتمد بمطابقة قوس الزاوية (خطأ ٠٫٧ بكسل) */
+  border-radius: 22.8%;
+  color: var(--brand-maroon); /* ← يرثه المسار عبر currentColor */
   background:
     /* طبقة الخامة — عنابي شفاف، ليست لونًا ثانيًا */
     linear-gradient(165deg,
@@ -125,38 +130,13 @@ body {
   flex-shrink: 0;
 }
 
-/* ═══ العمود: الرقم فوق الكلمة ═══ */
-.eight-stack {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  direction: ltr;                  /* إلزامي — حتى داخل صفحة RTL */
-  gap: 0.050em;                    /* ← المسافة بينهما */
-  transform: translateY(0.026em);  /* ← التوسيط البصري — القسم ٤ */
+/* ═══ الرسم: يملأ اللوح، والمواضع بداخله من الإحداثيات لا من CSS ═══ */
+.eight-art {
   position: relative;
   z-index: 2;
-}
-
-/* ═══ الرقم ═══ */
-.eight-letter {
-  font-family: 'DM Serif Display', Georgia, serif;
-  font-weight: 400;
-  font-size: 0.620em;
-  line-height: 0.78;               /* ← يشيل الفراغ الميت — القسم ٤ */
-  color: var(--brand-maroon);
-}
-
-/* ═══ الكلمة ═══ */
-.eight-word {
-  font-family: 'DM Serif Display', Georgia, serif;
-  font-weight: 400;
-  font-size: 0.118em;
-  letter-spacing: 0.300em;
-  margin-right: -0.300em;          /* ← إلزامي — القسم ٤ */
-  color: var(--brand-maroon);
-  opacity: 0.86;
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 /* ═══ النسخة المعكوسة — احتياطية فقط، القسم ٦ ═══ */
@@ -172,36 +152,18 @@ body {
     inset 0 0 0 1px rgba(255,255,255,0.08),
     0 0.10em 0.28em -0.12em rgba(40,12,4,0.55);
 }
-.eight-badge--inverted .eight-letter,
-.eight-badge--inverted .eight-word {
+.eight-badge--inverted {
   color: #f6efe2;                  /* كريمي — ممنوع #ffffff */
 }
 
-/* ═══ كلمة العلامة في الهيدر — بمعالجة الشعار نفسها ═══
-   حروف عنابية على لوح كريمي، لا كريمية على عنابي: العلامة تُقرأ بنبرة
-   واحدة أينما ظهرت (شارة أو كلمة). التعبئة والحد الداخلي من مواصفة
-   الشعار، وقاعدة القسم ٤ سارية هنا كذلك: تباعد الأحرف يقابله هامش
-   سالب مساوٍ وإلا انزاحت الكلمة يسارًا داخل اللوح. */
+/* ═══ كلمة العلامة في الهيدر ═══
+   نفس حروف الشعار المعتمد بالضبط — المسار ذاته المستخرج منه، لا خطّ
+   يحاكيه. فلا تباعد أحرف ولا هامش سالب: الفراغات بين الحروف محفورة في
+   الإحداثيات. الارتفاع وحده يُضبط هنا والعرض يتبعه. */
 .eight-wordmark {
-  display: inline-flex; align-items: center; justify-content: center;
-  direction: ltr;
-  padding: 0.30em 0.86em 0.34em;
-  border-radius: 0.62em;
-  background:
-    linear-gradient(165deg,
-      rgba(120,30,12,0.05),
-      rgba(120,30,12,0) 45%,
-      rgba(120,30,12,0.07)),
-    linear-gradient(165deg, var(--brand-cream-1) 0%, var(--brand-cream-2) 100%);
-  box-shadow:
-    inset 0 0 0 1px rgba(120,30,12,0.14),
-    0 0.05em 0.16em -0.06em rgba(90,50,30,0.30);
-  font-family: 'DM Serif Display', Georgia, serif;
-  font-weight: 400;                /* DM Serif Display وزن واحد — 700 يولّد ثقلًا زائفًا */
-  font-size: 1.62rem;
-  line-height: 1;
-  letter-spacing: 0.300em;
-  padding-inline-end: calc(0.86em - 0.300em); /* يلغي فراغ آخر حرف */
+  display: block;
+  height: 1.22rem;                 /* ارتفاع الحروف — العرض تلقائي بالنسبة */
+  width: auto;
   color: var(--brand-maroon);
 }
 
@@ -239,14 +201,9 @@ h1, h2, h3, h4 {
 }
 .rq-circle:hover { background: rgba(120,30,12,0.12); }
 
-/* كلمة العلامة فوق الهيدر الكريمي: بلا لوح — اللوح الكريمي على كريمي
-   يختفي ويبقى حدّه خطًّا يتيمًا. الحروف العنابية وحدها تكفي.
-   والتوسيط مطلق بالنسبة للشريط لا «بين عنصرين»: زر يمين وزران يسار
+/* التوسيط مطلق بالنسبة للشريط لا «بين عنصرين»: زر يمين وزران يسار
    بعرضين مختلفين يزيحان العنصر الأوسط عن منتصف الصفحة فعليًّا. */
 .rq-header .eight-wordmark {
-  background: none;
-  box-shadow: none;
-  padding-block: 0;
   position: absolute;
   left: 50%;
   transform: translateX(-50%);

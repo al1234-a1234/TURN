@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Logo } from "@/components/logo";
+import { Logo, Wordmark } from "@/components/logo";
 import { SharedHeader } from "@/components/page-header";
 import { useLang } from "@/components/lang-provider";
 import { tr } from "@/lib/i18n";
@@ -68,7 +68,7 @@ export function CustomerShell({
           <Logo size={44} />
         </button>
 
-        <span className="eight-wordmark select-none">EIGHT</span>
+        <Wordmark className="select-none" />
 
         {search ? (
           <Link href="/search" className="rq-circle" aria-label={tr(lang, "بحث", "Search")}>
