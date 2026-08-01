@@ -177,6 +177,34 @@ body {
   color: #f6efe2;                  /* كريمي — ممنوع #ffffff */
 }
 
+/* ═══ كلمة العلامة في الهيدر — بمعالجة الشعار نفسها ═══
+   حروف عنابية على لوح كريمي، لا كريمية على عنابي: العلامة تُقرأ بنبرة
+   واحدة أينما ظهرت (شارة أو كلمة). التعبئة والحد الداخلي من مواصفة
+   الشعار، وقاعدة القسم ٤ سارية هنا كذلك: تباعد الأحرف يقابله هامش
+   سالب مساوٍ وإلا انزاحت الكلمة يسارًا داخل اللوح. */
+.eight-wordmark {
+  display: inline-flex; align-items: center; justify-content: center;
+  direction: ltr;
+  padding: 0.30em 0.86em 0.34em;
+  border-radius: 0.62em;
+  background:
+    linear-gradient(165deg,
+      rgba(120,30,12,0.05),
+      rgba(120,30,12,0) 45%,
+      rgba(120,30,12,0.07)),
+    linear-gradient(165deg, var(--brand-cream-1) 0%, var(--brand-cream-2) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(120,30,12,0.14),
+    0 0.05em 0.16em -0.06em rgba(90,50,30,0.30);
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-weight: 400;                /* DM Serif Display وزن واحد — 700 يولّد ثقلًا زائفًا */
+  font-size: 1.22rem;
+  line-height: 1;
+  letter-spacing: 0.300em;
+  padding-inline-end: calc(0.86em - 0.300em); /* يلغي فراغ آخر حرف */
+  color: var(--brand-maroon);
+}
+
 h1, h2, h3, h4 {
   font-family: var(--font-display);
   /* لا letter-spacing سالب: العربي متّصل، وتضييقه يشوّه وصلات الحروف */

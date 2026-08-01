@@ -68,19 +68,7 @@ export function CustomerShell({
           <Logo size={44} />
         </button>
 
-        <span
-          dir="ltr"
-          className="select-none text-cream-100"
-          style={{
-            fontFamily: 'var(--font-dm-serif), "DM Serif Display", Georgia, serif',
-            fontWeight: 700,
-            fontSize: "1.4rem",
-            letterSpacing: "0.34em",
-            paddingInlineStart: "0.34em",
-          }}
-        >
-          EIGHT
-        </span>
+        <span className="eight-wordmark select-none">EIGHT</span>
 
         {search ? (
           <Link href="/search" className="rq-circle" aria-label={tr(lang, "بحث", "Search")}>
