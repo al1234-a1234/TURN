@@ -30,11 +30,11 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
-      { url: "/icon-32.png?v=3", sizes: "32x32", type: "image/png" },
-      { url: "/icon-192.png?v=3", sizes: "192x192", type: "image/png" },
+      { url: "/icon-32.png?v=4", sizes: "32x32", type: "image/png" },
+      { url: "/icon-192.png?v=4", sizes: "192x192", type: "image/png" },
     ],
-    shortcut: "/icon-32.png?v=3",
-    apple: "/icon-180.png?v=3",
+    shortcut: "/icon-32.png?v=4",
+    apple: "/icon-180.png?v=4",
   },
 };
 

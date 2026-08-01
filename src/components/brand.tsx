@@ -6,7 +6,10 @@ import Link from "next/link";
  *
  * قواعد ملزمة:
  * - المقاس كلّه من `font-size`؛ العرض والارتفاع `1em` في CSS فلا يُمرَّران هنا.
- * - تحت 40px تُحذف الكلمة تلقائيًّا (تصير غير مقروءة).
+ * - تحت 72px تُحذف الكلمة تلقائيًّا. الحدّ كان 40px فكانت الكلمة عند 40–64
+ *   لطخة رمادية غير مقروءة (ارتفاعها هناك أقل من ٥ بكسل) — رُفع بعد
+ *   معاينة الشعار مطبوعًا بكل مقاساته.
+ * - بلا كلمة يكبر الرقم ويتوسّط (`badge--solo`) فلا يضيع في المربّع.
  * - `light` تعطي النسخة الفاتحة فوق الخلفيات العنابية (الهيدر والأزرار).
  */
 export function BrandMark({
@@ -18,10 +21,10 @@ export function BrandMark({
   light?: boolean;
   withName?: boolean;
 }) {
-  const showName = withName ?? size >= 40;
+  const showName = withName ?? size >= 72;
   return (
     <span
-      className={`badge${light ? " badge--light" : ""}`}
+      className={`badge${light ? " badge--light" : ""}${showName ? "" : " badge--solo"}`}
       style={{ fontSize: size }}
       aria-label="EIGHT"
       role="img"

@@ -125,6 +125,11 @@ body {
   line-height: 0.78;
   color: var(--brand-ink);
 }
+/* بلا كلمة: الرقم وحده. بمقاس 0.620em كان يشغل ~٤٠٪ من المربّع فقط
+   (لأن ارتفاع حبر الرقم أقل من مقاس الخط) فيبدو ضائعًا وسط عنابي فارغ —
+   أوضح ما يكون في أيقونة التطبيق وشارة الهيدر. يكبر ويتوسّط تمامًا. */
+.badge--solo .letter { font-size: 0.860em; }
+.badge--solo > span { transform: translateY(0.012em); }
 .badge .word {
   font-family: var(--font-dm-serif), "DM Serif Display", Georgia, serif;
   font-weight: 400;
