@@ -28,13 +28,21 @@ export const metadata: Metadata = {
   description:
     "إيت (EIGHT): اختر مطعمك، سجّل اسمك ورقمك، وتابع طابورك لحظة بلحظة.",
   manifest: "/manifest.webmanifest",
+  openGraph: {
+    title: "إيت | EIGHT — خذ دورك بأناقة",
+    description: "إيت (EIGHT): اختر مطعمك، سجّل اسمك ورقمك، وتابع طابورك لحظة بلحظة.",
+    siteName: "EIGHT",
+    images: [{ url: "/og-image.png?v=5", width: 1200, height: 630 }],
+    type: "website",
+  },
+  twitter: { card: "summary_large_image", images: ["/og-image.png?v=5"] },
   icons: {
     icon: [
-      { url: "/icon-32.png?v=4", sizes: "32x32", type: "image/png" },
-      { url: "/icon-192.png?v=4", sizes: "192x192", type: "image/png" },
+      { url: "/icon-32.png?v=5", sizes: "32x32", type: "image/png" },
+      { url: "/icon-192.png?v=5", sizes: "192x192", type: "image/png" },
     ],
-    shortcut: "/icon-32.png?v=4",
-    apple: "/icon-180.png?v=4",
+    shortcut: "/icon-32.png?v=5",
+    apple: "/icon-180.png?v=5",
   },
 };
 

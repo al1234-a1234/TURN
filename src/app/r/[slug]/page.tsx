@@ -2,7 +2,7 @@ import Link from "next/link";
 import { IconGift } from "@/components/icons";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { BrandMark } from "@/components/brand";
+import { Logo } from "@/components/logo";
 import { SharedHeader } from "@/components/page-header";
 import { WaitlistForm } from "./waitlist-form";
 import { RestaurantTabs } from "./restaurant-tabs";
@@ -197,7 +197,7 @@ export default async function RestaurantPublicPage({
           aria-label={tr(lang, "الصفحة الرئيسية", "Home")}
           className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-white/15 ring-1 ring-white/25 transition active:scale-95"
         >
-          <BrandMark size={30} />
+          <Logo size={38} withName={false} />
         </Link>
         <h1 className="sr-only">{restaurant.name}</h1>
         <div className="flex items-center gap-2">

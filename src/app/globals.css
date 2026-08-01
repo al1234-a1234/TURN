@@ -58,6 +58,10 @@
      واستقبال) تقرأ من هذا السطر وحده. تغيير هوية التطبيق كلّه = تعديل
      هذا الرقم فقط. ممنوع أي تدرّج لوني أو درجة ثانية في عناصر الهوية. */
   --brand-solid: #781e0c;
+  /* رموز الشعار — من LOGO-SPEC.md، لا تُعدَّل */
+  --brand-maroon: #781e0c;   /* لون العلامة — لون واحد، لا درجة ثانية */
+  --brand-cream-1: #f7f0e4;  /* أعلى تدرّج المربّع */
+  --brand-cream-2: #e4d7c2;  /* أسفل تدرّج المربّع */
   /* «الخامة»: لمعة إضاءة مقيسة من أيقونة التطبيق — ضوء أبيض ناعم أعلى
      وعمق خفيف أسفل فوق اللون الواحد نفسه. ليست لونًا ثانيًا: طبقة إضاءة
      شفافة، فلا تكسر قاعدة الرقم الواحد وتعيد الإحساس «الفاخر» للأيقونة. */
@@ -96,64 +100,83 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* ═══════════ شعار إيت / EIGHT ═══════════
-   الرقم ٨ بخط DM Serif Display داخل مربّع بتقويس ٢٣٪.
-   المقاس كلّه من font-size — لا width/height مباشرة أبدًا.
-   تحت 40px تُحذف الكلمة (غير مقروءة). */
-.badge {
-  display: grid; place-items: center; position: relative; overflow: hidden; flex: none;
-  width: 1em; height: 1em;
+/* ═══════════ شعار 8 / EIGHT ═══════════
+   منقول حرفيًّا من LOGO-SPEC.md — كل رقم هنا يحلّ مشكلة توسيط موصوفة في
+   القسم ٤ (انزياح الكلمة، علوّ الرقم، الفراغ الميت). ممنوع تعديل أي قيمة
+   أو تحويل em إلى بكسل. النسخة الكريمية هي الافتراضية في كل مكان. */
+.eight-badge {
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+  width: 1em;                /* المقاس كله من font-size */
+  height: 1em;
   border-radius: 23%;
-  background: var(--brand-sheen), var(--brand-solid);
-  box-shadow: 0 0.10em 0.28em -0.12em rgba(40, 12, 4, 0.55);
+  background:
+    /* طبقة الخامة — عنابي شفاف، ليست لونًا ثانيًا */
+    linear-gradient(165deg,
+      rgba(120,30,12,0.05),
+      rgba(120,30,12,0) 45%,
+      rgba(120,30,12,0.07)),
+    /* التعبئة الكريمية */
+    linear-gradient(165deg, var(--brand-cream-1) 0%, var(--brand-cream-2) 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(120,30,12,0.14),        /* حد داخلي — يفصله عن الخلفية */
+    0 0.05em 0.16em -0.06em rgba(90,50,30,0.30); /* ظل خارجي خفيف */
+  flex-shrink: 0;
 }
-.badge::after {
-  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  background: linear-gradient(150deg, rgba(255,255,255,0.15), transparent 44%);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+
+/* ═══ العمود: الرقم فوق الكلمة ═══ */
+.eight-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  direction: ltr;                  /* إلزامي — حتى داخل صفحة RTL */
+  gap: 0.050em;                    /* ← المسافة بينهما */
+  transform: translateY(0.026em);  /* ← التوسيط البصري — القسم ٤ */
+  position: relative;
+  z-index: 2;
 }
-.badge > span {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  line-height: 1; direction: ltr;
-  gap: 0.050em;
-  transform: translateY(0.026em);
-}
-.badge .letter {
-  font-family: var(--font-dm-serif), "DM Serif Display", Georgia, serif;
+
+/* ═══ الرقم ═══ */
+.eight-letter {
+  font-family: 'DM Serif Display', Georgia, serif;
   font-weight: 400;
   font-size: 0.620em;
-  line-height: 0.78;
-  color: var(--brand-ink);
+  line-height: 0.78;               /* ← يشيل الفراغ الميت — القسم ٤ */
+  color: var(--brand-maroon);
 }
-/* بلا كلمة: الرقم وحده. بمقاس 0.620em كان يشغل ~٤٠٪ من المربّع فقط
-   (لأن ارتفاع حبر الرقم أقل من مقاس الخط) فيبدو ضائعًا وسط عنابي فارغ —
-   أوضح ما يكون في أيقونة التطبيق وشارة الهيدر. يكبر ويتوسّط تمامًا. */
-.badge--solo .letter { font-size: 0.860em; }
-.badge--solo > span { transform: translateY(0.012em); }
-.badge .word {
-  font-family: var(--font-dm-serif), "DM Serif Display", Georgia, serif;
+
+/* ═══ الكلمة ═══ */
+.eight-word {
+  font-family: 'DM Serif Display', Georgia, serif;
   font-weight: 400;
   font-size: 0.118em;
-  /* letter-spacing لازم يقابله margin سالب بنفس القيمة، وإلا انزاحت
-     الكلمة لليسار وطلع التوسيط غلطًا */
   letter-spacing: 0.300em;
-  margin-inline-end: -0.300em;
-  color: var(--brand-ink);
+  margin-right: -0.300em;          /* ← إلزامي — القسم ٤ */
+  color: var(--brand-maroon);
   opacity: 0.86;
 }
 
-/* النسخة الفاتحة — فوق العنابي (الهيدر والأزرار والخلفيات الداكنة) */
-.badge--light {
+/* ═══ النسخة المعكوسة — احتياطية فقط، القسم ٦ ═══ */
+.eight-badge--inverted {
   background:
-    linear-gradient(165deg, rgba(120,30,12,.05), rgba(120,30,12,0) 45%, rgba(120,30,12,.07)),
-    linear-gradient(165deg, #f7f0e4 0%, #e4d7c2 100%);
+    linear-gradient(165deg,
+      rgba(255,255,255,0.13),
+      rgba(255,255,255,0.04) 38%,
+      rgba(0,0,0,0) 62%,
+      rgba(0,0,0,0.14)),
+    var(--brand-maroon);
   box-shadow:
-    inset 0 0 0 1px rgba(120,30,12,.14),
-    0 0.05em 0.16em -0.06em rgba(90,50,30,.30);
+    inset 0 0 0 1px rgba(255,255,255,0.08),
+    0 0.10em 0.28em -0.12em rgba(40,12,4,0.55);
 }
-.badge--light::after { background: none; box-shadow: none; }
-.badge--light .letter,
-.badge--light .word { color: #781e0c; }
+.eight-badge--inverted .eight-letter,
+.eight-badge--inverted .eight-word {
+  color: #f6efe2;                  /* كريمي — ممنوع #ffffff */
+}
 
 h1, h2, h3, h4 {
   font-family: var(--font-display);

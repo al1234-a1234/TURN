@@ -1,5 +1,5 @@
 import { CustomerShell } from "@/components/customer-shell";
-import { BrandMark } from "@/components/brand";
+import { Logo } from "@/components/logo";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
 
@@ -17,7 +17,7 @@ export default async function AboutPage() {
       <div className="space-y-5">
         <div className="rq-card flex flex-col items-center gap-3 p-8 text-center">
           <span className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-3xl bg-brand-800">
-            <BrandMark size={54} />
+            <Logo size={56} />
           </span>
           <h1 className="font-display text-2xl font-bold text-[color:var(--ink)]">{tr(lang, "إيت — EIGHT", "EIGHT — إيت")}</h1>
           <p className="max-w-md text-sm leading-relaxed text-[color:var(--muted)]">

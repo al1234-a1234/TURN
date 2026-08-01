@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { BrandMark } from "@/components/brand";
+import { Logo } from "@/components/logo";
 import { LangToggle } from "@/components/lang-toggle";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
@@ -71,7 +71,7 @@ function ReceptionLogin() {
           <LangToggle variant="plain" />
         </div>
         <span className="mx-auto block w-fit drop-shadow-[0_14px_30px_rgba(0,0,0,0.55)]">
-          <BrandMark size={72} />
+          <Logo size={96} />
         </span>
         <p className="mt-4 text-xs font-bold tracking-[0.35em] text-[color:var(--gold-1)]/80" dir="ltr">
           EIGHT · RECEPTION

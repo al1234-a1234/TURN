@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { BrandMark } from "@/components/brand";
+import { Logo } from "@/components/logo";
 import { SharedHeader } from "@/components/page-header";
 import { useLang } from "@/components/lang-provider";
 import { tr } from "@/lib/i18n";
@@ -65,7 +65,7 @@ export function CustomerShell({
           aria-label={tr(lang, "القائمة", "Menu")}
           className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-white/15 ring-1 ring-white/25 transition active:scale-95"
         >
-          <BrandMark size={30} />
+          <Logo size={38} withName={false} />
         </button>
 
         <span
@@ -124,7 +124,7 @@ export function CustomerShell({
               <div className="flex items-center justify-end gap-3">
                 <span className="font-display text-xl font-bold">{tr(lang, "إيت", "EIGHT")}</span>
                 <span className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-white/15 ring-1 ring-white/25">
-                  <BrandMark size={40} />
+                  <Logo size={56} />
                 </span>
               </div>
             </div>

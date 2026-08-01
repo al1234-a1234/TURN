@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { BrandMark } from "@/components/brand";
+import { Logo } from "@/components/logo";
 import { AccountForm } from "../account/account-form";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
@@ -49,7 +49,7 @@ function ResetInner() {
     <div className="flex flex-1 flex-col">
       <header className="app-header px-5 pb-16 pt-10 text-center">
         <span className="mx-auto block w-fit drop-shadow-[0_14px_30px_rgba(0,0,0,0.55)]">
-          <BrandMark size={56} />
+          <Logo size={56} />
         </span>
         <h1 className="font-serif mt-4 text-3xl font-bold text-[color:var(--ink)]">
           {tr(lang, "تعيين كلمة مرور جديدة", "Set a new password")}

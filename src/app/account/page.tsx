@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { BrandMark } from "@/components/brand";
+import { Logo } from "@/components/logo";
 import { LangToggle } from "@/components/lang-toggle";
 import { LogoutButton } from "@/components/logout-button";
 import { AccountForm } from "./account-form";
@@ -33,7 +33,7 @@ export default async function AccountPage() {
           <LangToggle variant="plain" />
         </div>
         <span className="mx-auto mt-4 block w-fit drop-shadow-[0_14px_30px_rgba(0,0,0,0.55)]">
-          <BrandMark size={56} />
+          <Logo size={56} />
         </span>
         <h1 className="font-serif mt-4 text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "حسابي", "My account")}</h1>
         <p className="mt-2 text-sm text-[color:var(--muted)]" dir="ltr">{user.email}</p>
