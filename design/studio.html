@@ -122,6 +122,9 @@ input[type=color]{width:26px;height:22px;padding:0;border:1px solid var(--u-line
 .elpop .ephd b{flex:1;font-size:12.5px;color:#fff;font-family:ui-monospace,monospace;direction:ltr;text-align:start}
 .elpop .epx{background:none;border:0;color:var(--u-dim2);font-size:13px;padding:0 3px}
 .elpop .eplink{background:none;border:0;color:var(--u-acc);font-size:10.5px;text-decoration:underline}
+.elpop .epnav{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:4px 0 6px;
+  border-bottom:1px dashed #232329;margin-bottom:5px}
+.elpop .epnav .pill{font-size:9.5px;padding:3px 7px;font-family:ui-monospace,monospace;direction:ltr}
 .elpop .epnud{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:5px 0;border-top:1px dashed #232329;margin-top:5px}
 .elpop .epbody{border-top:1px dashed #232329;margin-top:6px;padding-top:4px}
 .elpop .row{grid-template-columns:96px minmax(0,1fr)}
@@ -741,7 +744,7 @@ body.freemove .app [data-el].fmsel{cursor:move}
     <div id="stage">
       <div id="single">
         <div class="frame" id="frame"><div class="app" id="app"></div><div class="ovl" id="ovl"></div></div>
-        <div class="fcap" id="cap">اضغط داخل الجوال · مفتاح E للتحرير</div>
+        <div class="fcap" id="cap">وضع التحرير — <b>اضغط أي عنصر تظهر خياراته عنده</b></div>
       </div>
       <div id="sheet"></div>
       <div id="abwrap"></div>
@@ -760,6 +763,7 @@ body.freemove .app [data-el].fmsel{cursor:move}
   <div class="list" id="cmdl"></div>
 </div></div>
 <div id="mbar">
+  <button id="mEdit">تحرير</button>
   <button id="mPrev" class="on">المعاينة</button>
   <button id="mCtl">التحكّم</button>
   <button id="mInsp">المفتّش</button>
@@ -3356,7 +3360,7 @@ function drawOverlays(){
 /* ══════════════════════════════════════════════════════════════
    ١٠) المفتش وشجرة العناصر
    ══════════════════════════════════════════════════════════════ */
-let SEL=[],EDIT=false,FREE=false,TREEMODE=false,HIDDEN={};
+let SEL=[],EDIT=true,FREE=false,TREEMODE=false,HIDDEN={};
 function elName(n){return n.dataset.el||n.className||n.tagName.toLowerCase()}
 function selectEl(node,add){
   if(!node){SEL=[];}
@@ -3512,7 +3516,9 @@ const QUICKANY=[
  ['أضيق هامشًا',()=>setv('c.gutter',Math.max(0,raw('c.gutter')-4))]];
 
 let POP=null;
-function closePop(){if(POP){POP.remove();POP=null;document.removeEventListener('mousedown',_popOut,true)}}
+function closePop(){if(POP){POP.remove();POP=null;
+  document.removeEventListener('mousedown',_popOut,true);
+  document.removeEventListener('touchstart',_popOut,true)}}
 function _popOut(e){if(POP&&!POP.contains(e.target)&&!e.target.closest('#app'))closePop()}
 function openPop(node){
   closePop();
@@ -3526,6 +3532,21 @@ function openPop(node){
   const all=el('button','eplink','كل الخيارات');
   all.onclick=()=>{selectEl(node);TREEMODE=false;buildInspector();closePop()};
   hd.append(all,x);m.appendChild(hd);
+  /* التنقّل: الأب وأجزاؤه */
+  /* الأب المعروض هو أقرب عنصر مسمّى، لا أقرب غلاف تلقائي بلا معنى */
+  let up=node.parentElement&&node.parentElement.closest('[data-el]');
+  if(up&&up.dataset.auto){const nu=up.closest('[data-el]:not([data-auto])');if(nu)up=nu}
+  const kids=[...node.querySelectorAll('[data-el]')].filter(k=>{
+    const r=k.getBoundingClientRect();return r.width>8&&r.height>8}).slice(0,10);
+  if(up||kids.length){
+    const nav=el('div','epnav');
+    if(up){const b=el('button','pill','⬆ '+elName(up));b.title='العنصر الذي يحتويه';
+      b.onclick=()=>openPop(up);nav.appendChild(b)}
+    if(kids.length){nav.appendChild(el('span','mini','أجزاء داخله:'));
+      kids.forEach(k=>{const b=el('button','pill',elName(k));
+        b.onmouseenter=()=>{k.classList.add('flash');setTimeout(()=>k.classList.remove('flash'),900)};
+        b.onclick=()=>openPop(k);nav.appendChild(b)})}
+    m.appendChild(nav)}
   /* الأزرار السريعة */
   const acts=(QUICK[name]||[]).concat(QUICKANY);
   if(acts.length){
@@ -3576,7 +3597,8 @@ function openPop(node){
   if(left<8)left=Math.max(8,(innerWidth-w)/2);
   if(top+h>innerHeight-8)top=Math.max(8,innerHeight-h-8);
   m.style.left=left+'px';m.style.top=Math.max(8,top)+'px';
-  setTimeout(()=>document.addEventListener('mousedown',_popOut,true),0)}
+  setTimeout(()=>{document.addEventListener('mousedown',_popOut,true);
+    document.addEventListener('touchstart',_popOut,true)},0)}
 let CLIP=null;
 function buildTree(host){
   $('#ititle').textContent='شجرة العناصر';
@@ -3943,7 +3965,11 @@ $('#app').addEventListener('mouseover',e=>{if(!EDIT)return;const n=e.target.clos
 $('#app').addEventListener('mouseleave',()=>hoverBox(null));
 $('#app').addEventListener('click',e=>{
   if(EDIT){e.preventDefault();e.stopPropagation();
-    const n=e.target.closest('[data-el]');if(!n)return;
+    let n=e.target.closest('[data-el]');if(!n)return;
+    /* الأجزاء الموسومة تلقائيًّا لا تسرق الضغطة من العنصر المسمّى الذي
+       تسكنه: نصعد إلى أقرب عنصر له اسم حقيقي، وتبقى الأجزاء متاحة من
+       صفّ «أجزاء داخله» في النافذة. */
+    if(n.dataset.auto){const named=n.closest('[data-el]:not([data-auto])');if(named)n=named}
     if(n.dataset.lock==='1')return toast('العنصر مقفل');
     if(MEASURE){MPICK.push(n);if(MPICK.length>2)MPICK=[n];drawSel();
       if(MPICK.length===2)toast('المسافة معروضة');return}
@@ -4054,9 +4080,16 @@ function buildScreens(){
 /* ══════════════════════════════════════════════════════════════
    ١٦) الشريط العلوي والاختصارات
    ══════════════════════════════════════════════════════════════ */
-$('#bEdit').onclick=()=>{EDIT=!EDIT;$('#bEdit').classList.toggle('on',EDIT);
-  document.body.classList.toggle('editing',EDIT);if(!EDIT){selectEl(null);hoverBox(null)}
-  toast(EDIT?'وضع التحرير — اضغط أي عنصر':'وضع الاستخدام')};
+function setEdit(v){EDIT=v;$('#bEdit').classList.toggle('on',EDIT);
+  $('#bEdit').textContent=EDIT?'تحرير ●':'تحرير';
+  document.body.classList.toggle('editing',EDIT);
+  if(!EDIT){selectEl(null);hoverBox(null);closePop()}
+  $('#cap').innerHTML=EDIT
+    ? 'وضع التحرير — <b>اضغط أي عنصر تظهر خياراته عنده</b>'
+    : 'وضع الاستخدام — الضغط يتنقّل في التطبيق · اضغط «تحرير» للرجوع';
+  if(typeof mBar==='function')mBar()}
+$('#bEdit').onclick=()=>{setEdit(!EDIT);toast(EDIT?'التحرير مشتغل — اضغط أي عنصر':'التحرير مطفأ — الضغط يتنقّل')};
+setEdit(true);
 $('#bFree').onclick=()=>{FREE=!FREE;$('#bFree').classList.toggle('on',FREE);
   document.body.classList.toggle('freemove',FREE);
   if(FREE&&!EDIT)$('#bEdit').click();
@@ -4086,6 +4119,8 @@ function mSet(mode){
   setTimeout(fitStage,60)}
 ['mPrev','prev','mCtl','ctl','mInsp','insp','mCode','code'].forEach((_,i,a)=>{
   if(i%2)return;$('#'+a[i]).onclick=()=>mSet(a[i+1])});
+function mBar(){const b=$('#mEdit');if(b)b.classList.toggle('on',EDIT)}
+$('#mEdit').onclick=()=>{setEdit(!EDIT);mBar()};
 /* يلائم إطار الجوّال عرضَ الشاشة تلقائيًّا */
 function fitStage(){
   if(!isPhone())return;
