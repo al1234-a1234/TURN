@@ -116,6 +116,19 @@ input[type=color]{width:26px;height:22px;padding:0;border:1px solid var(--u-line
 .fdesc b{color:#b9c4d2;font-weight:500}
 .fdesc .where{color:#8fa5bd}
 .fdesc .show{white-space:nowrap}
+/* المحرّر على الشاشة */
+.elpop{position:fixed;z-index:620;width:330px;max-height:76vh;overflow-y:auto;
+  background:#15151a;border:1px solid var(--u-acc);border-radius:12px;padding:9px;
+  box-shadow:0 26px 64px -20px rgba(0,0,0,.9)}
+.elpop .ephd{display:flex;align-items:center;gap:6px;padding-bottom:6px;border-bottom:1px solid var(--u-line);margin-bottom:6px}
+.elpop .ephd b{flex:1;font-size:12.5px;color:#fff;font-family:ui-monospace,monospace;direction:ltr;text-align:start}
+.elpop .epx{background:none;border:0;color:var(--u-dim2);font-size:13px;padding:0 3px}
+.elpop .eplink{background:none;border:0;color:var(--u-acc);font-size:10.5px;text-decoration:underline}
+.elpop .epnud{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:5px 0;border-top:1px dashed #232329;margin-top:5px}
+.elpop .epbody{border-top:1px dashed #232329;margin-top:6px;padding-top:4px}
+.elpop .row{grid-template-columns:96px minmax(0,1fr)}
+.elpop .fdest{display:none}
+@media (max-width:900px){.elpop{width:auto;inset-inline:8px;left:8px!important;max-height:62vh}}
 .fdest{margin-top:2px;font-size:9.5px;line-height:1.7}
 .fdest code{font-family:ui-monospace,monospace;direction:ltr;unicode-bidi:isolate;color:#c8b487}
 .dest{color:#7f8ba0}.dest b{color:#a9b7c9}
@@ -587,6 +600,13 @@ body.freemove .app [data-el].fmsel{cursor:move}
   padding:var(--c-qbox-pad);box-shadow:var(--x-rcard-shadow);text-align:center}
 .app .ring{width:var(--c-ring-size);height:var(--c-ring-size);border-radius:50%;margin:0 auto;
   display:grid;place-items:center;align-content:center;box-shadow:inset 0 0 0 var(--c-ring-w) var(--s-brand)}
+.app .ring.v-square{border-radius:var(--c-tile-radius)}
+.app .ring.v-plain{box-shadow:none}
+.app .ring.v-line{box-shadow:none;border-radius:0;width:auto;height:auto;
+  padding-bottom:var(--c-ring-lab-mt);border-bottom:var(--c-ring-w) solid var(--s-brand);display:inline-grid}
+.app .ring.v-bar{box-shadow:none;border-radius:var(--p-radius-full);width:auto;height:auto;
+  padding:var(--c-tile-pad) calc(var(--c-tile-pad)*2);background:var(--s-brand);display:inline-grid}
+.app .ring.v-bar b,.app .ring.v-bar span{color:var(--s-brand-ink)}
 .app .ring b{display:block;font-family:var(--c-num-font);font-size:var(--c-ring-num);
   font-weight:var(--c-ring-num-weight);color:var(--s-brand-text);line-height:1}
 .app .ring span{font-size:var(--c-ring-lab);color:var(--s-ink3);letter-spacing:var(--c-ring-lab-tracking);
@@ -1477,6 +1497,9 @@ C('qgreet.mt','dim',6,{u:'px',g:'qcard',l:'مسافة «حيّاك الله»',m
 C('qbox.mt','dim',18,{u:'px',g:'qcard',l:'مسافة بطاقة الدور',min:0,max:60,step:1});
 C('qbox.pad','dim',26,{u:'px',g:'qcard',l:'حشو بطاقة الدور',min:0,max:60,step:1});
 C('qbox.radius','dim',24,{u:'px',g:'qcard',l:'استدارة بطاقة الدور',min:0,max:50,step:1});
+C('ring.variant','enum','circle',{g:'qcard',l:'شكل إطار الرقم',
+  opts:['circle','line','bar','square','plain'],
+  d:'دائرة · خطّ تحت الرقم · شريط ممتلئ · مربّع مستدير · بلا إطار إطلاقًا.'});
 C('ring.size','dim',176,{u:'px',g:'qcard',l:'قطر حلقة الرقم',min:50,max:320,step:2});
 C('ring.w','dim',9,{u:'px',g:'qcard',l:'سمك الحلقة',min:1,max:30,step:.5});
 C('ring.num','dim',68,{u:'px',g:'qcard',l:'حجم رقم الدور',min:16,max:160,step:1});
@@ -1853,7 +1876,7 @@ function scrQcard(){const x=DATA.find(r=>r.id===S.rest)||DATA[1];
    <div class="qtitle" data-el="qcard.title" data-tok="c.qtitle.pt,c.qtitle.size,c.qtitle.weight,c.qgreet.size,c.qgreet.weight,c.qgreet.mt,c.title.font,c.gutter,s.ink,s.brand.text">
     <h2>${x.city}</h2><span>حيّاك الله</span></div>
    <div class="qbox" data-el="qcard.box" data-tok="c.qbox.mt,c.qbox.pad,c.qbox.radius,c.rcard.shadow,c.gutter,s.bg">
-    <div class="ring" data-el="qcard.ring" data-tok="c.ring.size,c.ring.w,c.ring.num,c.ring.num.weight,c.ring.lab,c.ring.lab.tracking,c.ring.lab.mt,c.num.font,s.brand,s.brand.text,s.ink3">
+    <div class="ring v-${raw('c.ring.variant')}" data-el="qcard.ring" data-tok="c.ring.variant,c.ring.size,c.ring.w,c.ring.num,c.ring.num.weight,c.ring.lab,c.ring.lab.tracking,c.ring.lab.mt,c.num.font,s.brand,s.brand.text,s.ink3">
      <b>${NUM(1)}</b><span>رقم دورك</span></div>
     <h3 data-el="qcard.state" data-tok="c.qstate.mt,c.qstate.size,c.qstate.weight,s.ink">أنت التالي</h3>
     <div class="qsub" data-el="qcard.sub" data-tok="c.qsub.size,c.qsub.mt,s.ink3">استعد — جاي دورك</div>
@@ -3376,6 +3399,152 @@ function buildInspector(){
     inh.body.appendChild(el('div','mini',`<code>${id}</code> = <code>${out(id)}</code>${t.ref?' ← <code>'+t.ref+'</code>':' (حرّة)'}`))});
   b.appendChild(inh);
 }
+/* ══════════════════════════════════════════════════════════════
+   المحرّر على الشاشة — تضغط العنصر فتطلع خياراته عنده لا في لوحة بعيدة.
+   ثلاث طبقات: أزرار سريعة تفعل الشائع بضغطة، ثم كل توكنات العنصر،
+   ثم أسهم تزحزحه بالبكسل.
+   ══════════════════════════════════════════════════════════════ */
+const setv=(id,v)=>{if(!TOK[id])return;TOK[id].ref=null;TOK[id].v=v};
+const QUICK={
+ 'header':[
+   ['الشعار يمين',()=>{STRUCT.slots.header=[{k:'badge',on:1},{k:'wordmark',on:1},{k:'place',on:1}];setv('c.hd.justify','flex-start')}],
+   ['الشعار وسط',()=>{STRUCT.slots.header=[{k:'wordmark',on:1},{k:'badge',on:1},{k:'place',on:1}];setv('c.hd.justify','center')}],
+   ['الشعار يسار',()=>{STRUCT.slots.header=[{k:'place',on:1},{k:'wordmark',on:1},{k:'badge',on:1}];setv('c.hd.justify','flex-end')}],
+   ['متباعد',()=>setv('c.hd.justify','space-between')],
+   ['ترويسة أطول',()=>{setv('c.hd.pt',+raw('c.hd.pt')+6);setv('c.hd.pb',+raw('c.hd.pb')+6)}],
+   ['ترويسة أقصر',()=>{setv('c.hd.pt',Math.max(0,raw('c.hd.pt')-6));setv('c.hd.pb',Math.max(0,raw('c.hd.pb')-6))}]],
+ 'header2':[
+   ['الشعار يمين',()=>setv('c.hd.justify','flex-start')],
+   ['الشعار وسط',()=>setv('c.hd.justify','center')],
+   ['حافّة مستقيمة',()=>setv('c.hd2.radius',0)],
+   ['حافّة مقوّسة',()=>setv('c.hd2.radius',34)],
+   ['أطول',()=>{setv('c.hd2.pt',+raw('c.hd2.pt')+6);setv('c.hd2.pb',+raw('c.hd2.pb')+6)}],
+   ['أقصر',()=>{setv('c.hd2.pt',Math.max(0,raw('c.hd2.pt')-6));setv('c.hd2.pb',Math.max(0,raw('c.hd2.pb')-6))}]],
+ 'row':[
+   ['تباعد أوسع',()=>{setv('c.row.height',+raw('c.row.height')+8);setv('c.row.margin',+raw('c.row.margin')+3)}],
+   ['تباعد أضيق',()=>{setv('c.row.height',Math.max(40,raw('c.row.height')-8));setv('c.row.margin',Math.max(0,raw('c.row.margin')-3))}],
+   ['بطاقات منفصلة',()=>{setv('c.row.radius',18);setv('c.row.margin',8);setv('c.row.divider.on',0);
+     TOK['c.row.shadow'].v=JSON.parse(JSON.stringify(SHADOWPRESETS['مرتفع']))}],
+   ['قائمة ملتصقة',()=>{setv('c.row.radius',0);setv('c.row.margin',0);setv('c.row.divider.on',1);TOK['c.row.shadow'].v=[]}],
+   ['خلفية أفتح',()=>setv('s.surface','#ffffff')],
+   ['خلفية بلون الصفحة',()=>{TOK['s.surface'].ref='p.neutral.50';TOK['s.surface'].v=raw('p.neutral.50')}],
+   ['بلا ظلّ',()=>{TOK['c.row.shadow'].v=[]}],
+   ['بلا خطّ فاصل',()=>setv('c.row.divider.on',0)],
+   ['اعكس الاتجاه',()=>setv('c.row.reverse',!raw('c.row.reverse'))]],
+ 'row.chip':[
+   ['أكبر',()=>setv('c.chip.size',+raw('c.chip.size')+6)],['أصغر',()=>setv('c.chip.size',Math.max(20,raw('c.chip.size')-6))],
+   ['دائري',()=>setv('c.chip.radius',50)],['مربّع',()=>setv('c.chip.radius',0)],['مستدير',()=>setv('c.chip.radius',26)]],
+ 'logo.badge':[
+   ['أكبر',()=>setv('c.badge.size',+raw('c.badge.size')+4)],['أصغر',()=>setv('c.badge.size',Math.max(14,raw('c.badge.size')-4))],
+   ['مربّع',()=>setv('c.badge.variant','square')],['دائري',()=>setv('c.badge.variant','circle')],
+   ['بلا لوح',()=>setv('c.badge.variant','plain')],['حلقة',()=>setv('c.badge.variant','ring')],
+   ['بلا كلمة',()=>setv('c.logoword.on',false)],['مع الكلمة',()=>setv('c.logoword.on',true)]],
+ 'header.wordmark':[
+   ['أكبر',()=>setv('c.wordmark.size',+raw('c.wordmark.size')+2)],
+   ['أصغر',()=>setv('c.wordmark.size',Math.max(8,raw('c.wordmark.size')-2))],
+   ['أوسع تباعدًا',()=>setv('c.wordmark.tracking',round(+raw('c.wordmark.tracking')+.04,3))],
+   ['أضيق تباعدًا',()=>setv('c.wordmark.tracking',round(+raw('c.wordmark.tracking')-.04,3))],
+   ['أخفِها',()=>setv('c.wordmark.on',false)]],
+ 'qcard.ring':[
+   ['دائرة',()=>setv('c.ring.variant','circle')],['خطّ تحت الرقم',()=>setv('c.ring.variant','line')],
+   ['شريط ممتلئ',()=>setv('c.ring.variant','bar')],['مربّع مستدير',()=>setv('c.ring.variant','square')],
+   ['بلا إطار',()=>setv('c.ring.variant','plain')],
+   ['أكبر',()=>setv('c.ring.size',+raw('c.ring.size')+16)],['أصغر',()=>setv('c.ring.size',Math.max(60,raw('c.ring.size')-16))],
+   ['إطار أسمك',()=>setv('c.ring.w',+raw('c.ring.w')+2)],['إطار أرقّ',()=>setv('c.ring.w',Math.max(1,raw('c.ring.w')-2))]],
+ 'card':[
+   ['تباعد أوسع',()=>setv('c.rcard.gap',+raw('c.rcard.gap')+5)],
+   ['تباعد أضيق',()=>setv('c.rcard.gap',Math.max(0,raw('c.rcard.gap')-5))],
+   ['حشو أوسع',()=>setv('c.rcard.pad',+raw('c.rcard.pad')+4)],
+   ['حشو أضيق',()=>setv('c.rcard.pad',Math.max(0,raw('c.rcard.pad')-4))],
+   ['زوايا أكثر',()=>setv('c.rcard.radius',+raw('c.rcard.radius')+6)],
+   ['زوايا أقلّ',()=>setv('c.rcard.radius',Math.max(0,raw('c.rcard.radius')-6))],
+   ['بلا ظلّ',()=>{TOK['c.rcard.shadow'].v=[]}]],
+ 'card.image':[
+   ['أكبر',()=>setv('c.rc.img',+raw('c.rc.img')+10)],['أصغر',()=>setv('c.rc.img',Math.max(24,raw('c.rc.img')-10))],
+   ['دائرية',()=>setv('c.rc.img.radius',50)],['مربّعة',()=>setv('c.rc.img.radius',0)],['مستديرة',()=>setv('c.rc.img.radius',17)]],
+ 'nav':[
+   ['أطول',()=>setv('c.nav.height',+raw('c.nav.height')+6)],['أقصر',()=>setv('c.nav.height',Math.max(30,raw('c.nav.height')-6))],
+   ['بلا مؤشّر',()=>setv('c.nav.indicator.on',false)],['بمؤشّر',()=>setv('c.nav.indicator.on',true)],
+   ['اعكس الترتيب',()=>setv('c.nav.reverse',!raw('c.nav.reverse'))]],
+ 'tabs':[
+   ['أطول',()=>setv('c.tb.py',+raw('c.tb.py')+4)],['أقصر',()=>setv('c.tb.py',Math.max(4,raw('c.tb.py')-4))],
+   ['زوايا أكثر',()=>setv('c.tb.radius',+raw('c.tb.radius')+5)],['زوايا أقلّ',()=>setv('c.tb.radius',Math.max(0,raw('c.tb.radius')-5))],
+   ['بلا ظلّ',()=>{TOK['c.tabs.shadow'].v=[];TOK['c.tb.on.shadow'].v=[]}]],
+ 'button.primary':[
+   ['أعرض',()=>setv('c.button.pad','19px')],['أضيق',()=>setv('c.button.pad','11px')],
+   ['زوايا كاملة',()=>setv('c.button.radius',99)],['زوايا حادّة',()=>setv('c.button.radius',0)],
+   ['بلا ظلّ',()=>{TOK['c.button.shadow'].v=[]}]],
+ 'group':[
+   ['أوسع',()=>{setv('c.grp.pt',+raw('c.grp.pt')+6);setv('c.grp.pb',+raw('c.grp.pb')+6)}],
+   ['أضيق',()=>{setv('c.grp.pt',Math.max(0,raw('c.grp.pt')-6));setv('c.grp.pb',Math.max(0,raw('c.grp.pb')-6))}],
+   ['بلا خطّ',()=>setv('c.line.w',0)]],
+ 'avatar':[
+   ['أكبر',()=>setv('c.avatar.size',+raw('c.avatar.size')+12)],['أصغر',()=>setv('c.avatar.size',Math.max(40,raw('c.avatar.size')-12))],
+   ['دائري',()=>setv('c.avatar.radius',50)],['مربّع مستدير',()=>setv('c.avatar.radius',24)],
+   ['أنزله',()=>setv('c.avatar.drop',+raw('c.avatar.drop')+10)],['ارفعه',()=>setv('c.avatar.drop',Math.max(0,raw('c.avatar.drop')-10))]]
+};
+/* أزرار تصلح لأي عنصر */
+const QUICKANY=[
+ ['أوسع هامشًا',()=>setv('c.gutter',+raw('c.gutter')+4)],
+ ['أضيق هامشًا',()=>setv('c.gutter',Math.max(0,raw('c.gutter')-4))]];
+
+let POP=null;
+function closePop(){if(POP){POP.remove();POP=null;document.removeEventListener('mousedown',_popOut,true)}}
+function _popOut(e){if(POP&&!POP.contains(e.target)&&!e.target.closest('#app'))closePop()}
+function openPop(node){
+  closePop();
+  const name=elName(node);
+  const toks=(node.dataset.tok||'').split(',').map(x=>x.trim()).filter(x=>TOK[x]);
+  const m=el('div','elpop');POP=m;
+  /* الترويسة */
+  const hd=el('div','ephd');
+  hd.innerHTML='<b>'+name+'</b>';
+  const x=el('button','epx','✕');x.onclick=closePop;
+  const all=el('button','eplink','كل الخيارات');
+  all.onclick=()=>{selectEl(node);TREEMODE=false;buildInspector();closePop()};
+  hd.append(all,x);m.appendChild(hd);
+  /* الأزرار السريعة */
+  const acts=(QUICK[name]||[]).concat(QUICKANY);
+  if(acts.length){
+    const pr=el('div','pillrow');
+    acts.forEach(([l,fn])=>{const b=el('button','pill',l);
+      b.onclick=()=>{fn();push(l+' · '+name);apply();render();refreshCode();
+        const again=$$('#app [data-el]').find(n=>elName(n)===name);
+        if(again)openPop(again);else closePop()};
+      pr.appendChild(b)});
+    m.appendChild(pr)}
+  /* الزحزحة */
+  const nud=el('div','epnud');
+  nud.innerHTML='<span class="mini">حرّكه:</span>';
+  [['→',-1,0],['←',1,0],['↑',0,-1],['↓',0,1]].forEach(([g,dx,dy])=>{
+    const b=el('button','pill',g);
+    b.onclick=()=>{const[kx,ky]=ensureFM(name);
+      TOK[kx].v=round(+raw(kx)+dx*2,2);TOK[ky].v=round(+raw(ky)+dy*2,2);
+      push('زحزحة '+name);apply();render();refreshCode();
+      const again=$$('#app [data-el]').find(n=>elName(n)===name);
+      if(again)openPop(again)};
+    nud.appendChild(b)});
+  const rst=el('button','pill','صفّر الموضع');
+  rst.onclick=()=>{const[kx,ky]=ensureFM(name);TOK[kx].v=0;TOK[ky].v=0;
+    push('تصفير موضع '+name);apply();render();refreshCode()};
+  nud.appendChild(rst);
+  m.appendChild(nud);
+  /* التوكنات */
+  if(toks.length){
+    const body=el('div','epbody');
+    toks.forEach(id=>body.appendChild(fieldFor(id)));
+    m.appendChild(body)}
+  else m.appendChild(el('div','mini','هذا العنصر يرث تنسيقه من أبيه — اضغط ما حوله.'));
+  document.body.appendChild(m);
+  /* الموضع: بجانب العنصر، وداخل الشاشة */
+  const r=node.getBoundingClientRect();
+  const w=m.offsetWidth,h=m.offsetHeight;
+  let left=r.right+10, top=r.top-4;
+  if(left+w>innerWidth-8)left=r.left-w-10;
+  if(left<8)left=Math.max(8,(innerWidth-w)/2);
+  if(top+h>innerHeight-8)top=Math.max(8,innerHeight-h-8);
+  m.style.left=left+'px';m.style.top=Math.max(8,top)+'px';
+  setTimeout(()=>document.addEventListener('mousedown',_popOut,true),0)}
 let CLIP=null;
 function buildTree(host){
   $('#ititle').textContent='شجرة العناصر';
@@ -3746,7 +3915,9 @@ $('#app').addEventListener('click',e=>{
     if(n.dataset.lock==='1')return toast('العنصر مقفل');
     if(MEASURE){MPICK.push(n);if(MPICK.length>2)MPICK=[n];drawSel();
       if(MPICK.length===2)toast('المسافة معروضة');return}
-    selectEl(n,e.shiftKey);return}
+    selectEl(n,e.shiftKey);
+    if(!e.shiftKey)openPop(n);          /* الخيارات تطلع عند العنصر نفسه */
+    return}
   const b=e.target.closest('[data-rest],[data-go],[data-tab],[data-party]');if(!b)return;
   if(b.dataset.rest){S.rest=+b.dataset.rest;S.view='rest';return render()}
   if(b.dataset.tab){S.tab=b.dataset.tab;S.view='list';return render()}
@@ -3954,7 +4125,7 @@ document.addEventListener('keydown',e=>{
   if(e.key.toLowerCase()==='s')return snap();
   if(e.key.toLowerCase()==='x')return $('#bExport').click();
   if(e.key.toLowerCase()==='g'){OVL.grid8=!OVL.grid8;drawOverlays();return}
-  if(/^[1-6]$/.test(e.key))return gotoScreen(SCREENS[+e.key-1][0]);
+  if(/^[1-9]$/.test(e.key)&&SCREENS[+e.key-1])return closePop(),gotoScreen(SCREENS[+e.key-1][0]);
   if(e.key.startsWith('Arrow')&&SEL.length){
     const step=e.shiftKey?10:1;const k=elName(SEL[0]);ensureFM(k);
     const ax=e.key==='ArrowLeft'||e.key==='ArrowRight'?'x':'y';
