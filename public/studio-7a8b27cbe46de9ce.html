@@ -3046,7 +3046,7 @@ function groupFields(host,g,title,open){
    ══════════════════════════════════════════════════════════════ */
 const TABS=[['identity','الهوية'],['color','الألوان'],['type','الخطوط'],['space','المسافات'],['surface','الأسطح والخامات'],
  ['shadow','الظلال'],['border','الحدود والزوايا'],['comp','المكوّنات'],['layout','التخطيط والمواضع'],['motion','الحركة'],
- ['content','المحتوى'],['audit','التدقيق'],['kits','الأطقم واللقطات'],['export','التصدير']];
+ ['content','المحتوى'],['guide','★ المرشد'],['audit','التدقيق'],['kits','الأطقم واللقطات'],['export','التصدير']];
 let TAB='identity';
 function buildTabs(){const n=$('#ctabs');n.innerHTML='';
   TABS.forEach(([k,l])=>{const b=el('button','',l);if(k===TAB)b.className='on';
@@ -3054,7 +3054,7 @@ function buildTabs(){const n=$('#ctabs');n.innerHTML='';
 function buildPanel(){
   const h=$('#cbody');h.innerHTML='';
   ({identity:pIdentity,color:pColor,type:pType,space:pSpace,surface:pSurface,shadow:pShadow,border:pBorder,
-    comp:pComp,layout:pLayout,motion:pMotion,content:pContent,audit:pAudit,kits:pKits,export:pExport}[TAB])(h);
+    comp:pComp,layout:pLayout,motion:pMotion,content:pContent,guide:pGuide,audit:pAudit,kits:pKits,export:pExport}[TAB])(h);
   drawSel()}
 
 function pIdentity(h){
@@ -3748,6 +3748,141 @@ function contrastScan(){
           +' · '+fg+' على '+bg+' · «'+txt.replace(/\s+/g,' ').slice(0,18)+'»',sc:sk,sel:nm,got:got,need:need,fg:fg,bg:bg})}
     })});
   return out.sort((a,b)=>a.got-b.got)}
+/* ══════════════════════════════════════════════════════════════
+   المرشد — عين مصمّم تعمل وأنت تصمّم. لا تجامل ولا تعمّم: كل ملاحظة
+   مقيسة برقم من تصميمك أنت، ومعها الإصلاح بضغطة حين يكون له إصلاح
+   واحد صحيح. الدرجة ليست حكمًا على ذوقك — هي عدّاد للأخطاء التي
+   يعرفها كل مصمّم ولا تُرى بالعين وحدها.
+   ══════════════════════════════════════════════════════════════ */
+const AREAS=['الطباعة','اللون','المسافات','الشكل','الهرمية','الهوية'];
+const uniq=a=>[...new Set(a)];
+const usedSizes=()=>uniq(ORDER.filter(id=>TOK[id].t==='dim'&&TOK[id].u==='px'&&/size$/.test(id)&&+raw(id)>=8&&+raw(id)<=40)
+  .map(id=>+raw(id))).sort((a,b)=>a-b);
+const usedFonts=()=>uniq(ORDER.filter(id=>TOK[id].t==='font').map(id=>fontNameOf(raw(id))).filter(n=>n&&n!=='inherit'));
+const RULES=[
+/* ── الطباعة ── */
+{a:'الطباعة',w:8,f:()=>{const S=usedSizes();const near=[];
+  for(let i=1;i<S.length;i++)if(S[i]-S[i-1]<1.2)near.push(S[i-1]+'/'+S[i]);
+  return near.length>1&&{m:'أحجام خطّ متقاربة بلا فرق مرئي: '+near.slice(0,4).join(' · ')
+    +'. الفرق دون ١٫٢px لا تراه العين، فهو تشتيت لا تدرّج — ادمجها في حجم واحد.',sel:'row.name'}}},
+{a:'الطباعة',w:10,f:()=>{const n=+raw('c.name.size'),m=+raw('c.meta.size');
+  return (n/m)<1.25&&{m:'اسم المطعم '+n+'px وسطره الثانوي '+m+'px — النسبة '+round(n/m,2)
+    +'. تحت ١٫٢٥ لا يُقرأ أيّهما الأهمّ.',sel:'row.name',
+    fix:()=>{TOK['c.meta.size'].v=round(n/1.45,1)},fl:'اجعل الثانوي '+round(n/1.45,1)+'px'}}},
+{a:'الطباعة',w:7,f:()=>{const lh=+raw('c.base.lh');
+  return lh<1.5&&{m:'ارتفاع السطر '+lh+' — العربي متّصل الحروف ويحتاج نفَسًا أكثر من اللاتيني. دون ١٫٥ يزدحم.',
+    sel:null,fix:()=>{TOK['c.base.lh'].v=1.7},fl:'اجعله ١٫٧'}}},
+{a:'الطباعة',w:6,f:()=>{const F=usedFonts();
+  return F.length>3&&{m:'تستعمل '+NUM(F.length)+' عائلات خطّ: '+F.join(' · ')
+    +'. ثلاث عائلات سقف ما يُحتمل — عربي ولاتيني وثالثة للتميّز.',sel:null}}},
+{a:'الطباعة',w:9,f:()=>{const neg=ORDER.filter(id=>/tracking/.test(id)&&!/wordmark|sect|logoword/.test(id)&&+raw(id)<-.005);
+  return neg.length>0&&{m:'تباعد حروف سالب على نصّ عربي ('+neg.length+' موضعًا). العربي متّصل، وتضييقه يشوّه وصلات الحروف — السالب للاتيني وحده.',
+    sel:'row.name',fix:()=>{neg.forEach(id=>TOK[id].v=0)},fl:'صفّرها'}}},
+/* ── اللون ── */
+{a:'اللون',w:9,f:()=>{const c=uniq(ORDER.filter(id=>id[0]==='s'&&TOK[id].t==='color').map(id=>raw(id).toLowerCase()));
+  return c.length>7&&{m:'لوحتك '+NUM(c.length)+' لونًا مختلفًا. فوق سبعة تفقد الشاشة وحدتها — الفروق الصغيرة تُقرأ خطأً لا تدرّجًا.',sel:null}}},
+{a:'اللون',w:10,f:()=>{const o=raw('s.state.open'),w2=raw('s.state.wait'),c=raw('s.state.closed');
+  const same=(a,b)=>contrast(a,b)<1.25;
+  return (same(o,w2)||same(o,c)||same(w2,c))&&{m:'حالتان أو أكثر بلون واحد تقريبًا (مفتوح '+o+' · فيه دور '+w2+' · مغلق '+c
+    +'). الحالة يجب أن تُقرأ قبل نصّها — وإلا فالنقطة زينة.',sel:'row.status'}}},
+{a:'اللون',w:10,f:()=>{const k=contrast(raw('s.ink'),raw('s.surface'));
+  return k<7&&{m:'الحبر الأساسي على السطح تباينه '+k+'. النصّ الرئيسي يستحقّ ٧ فأكثر — على جوّال في الشمس ٤٫٥ بالكاد تكفي.',
+    sel:'row.name'}}},
+{a:'اللون',w:7,f:()=>{const n=$$('#app *').filter(x=>{const c=getComputedStyle(x).backgroundColor;
+    return c===raw('s.brand')||c===rgba(raw('s.brand'),1)}).length;
+  return n>3&&{m:'لون العلامة يملأ '+NUM(n)+' عنصرًا في هذه الشاشة. اللون الأساسي يفقد قوّته كلّما تكرّر — احجزه للفعل الواحد.',
+    sel:null}}},
+/* ── المسافات ── */
+{a:'المسافات',w:7,f:()=>{const g=+raw('c.gutter'),p=+raw('c.rcard.pad');
+  return Math.abs(g-p)<3&&{m:'الهامش الجانبي '+g+'px وحشو البطاقة '+p+'px — متساويان تقريبًا فلا إيقاع بين الخارج والداخل.',
+    sel:'card',fix:()=>{TOK['c.rcard.pad'].v=round(g*.65,0)},fl:'اجعل الحشو '+round(g*.65,0)+'px'}}},
+{a:'المسافات',w:6,f:()=>{const sp=[];for(let i=1;i<9;i++)sp.push(+raw('p.space.'+i)-(+raw('p.space.'+(i-1))));
+  return uniq(sp).length<=2&&{m:'سلّم المسافات قفزاته متساوية — أوّل ما يفضح الشكل الآلي. اجعل القفزات تتسارع.',sel:null,
+    fix:()=>{SPACESCALES['درامي (افتراضي)'].forEach((v,i)=>{if(TOK['p.space.'+i])TOK['p.space.'+i].v=v})},fl:'سلّم متسارع'}}},
+/* ── الشكل ── */
+{a:'الشكل',w:8,f:()=>{const R=['c.badge.radius','c.chip.radius','c.button.radius','c.row.radius','c.rcard.radius'];
+  const rv=uniq(R.map(k=>+raw(k)));
+  return rv.length<=2&&{m:'كل زواياك من قيمتين ('+rv.join(' · ')+') — الشارة والبطاقة والزرّ ليست شيئًا واحدًا، وتساويها يلغي الهرمية.',
+    sel:'card'}}},
+{a:'الشكل',w:6,f:()=>{const sh=TOK['c.row.shadow'].v.concat(TOK['c.button.shadow'].v);
+  return sh.length&&sh.every(x=>{const[r,g,b]=hex2rgb(x.c);return Math.abs(r-g)<10&&Math.abs(g-b)<10})&&+raw('c.shadow.tint')<.15
+    &&{m:'كل الظلال رمادية بلا تلوين. الظلّ المحايد يطفئ دفء اللون — اصبغه بعائلة هويتك.',sel:'row',
+      fix:()=>{TOK['c.shadow.tint'].v=.45},fl:'اصبغها ٠٫٤٥'}}},
+{a:'الشكل',w:7,f:()=>{const three=TOK['c.row.shadow'].v.length&&+raw('c.row.divider.on')>0&&
+    contrast(raw('s.surface'),raw('s.bg'))>1.05;
+  return three&&{m:'الصفّ يفصله ظلّ وحدّ وتباين لون معًا — ثلاث أدوات لعمل واحد. اختر واحدة.',sel:'row',
+    fix:()=>{TOK['c.row.divider.on'].v=0},fl:'ألغِ الحدّ'}}},
+{a:'الشكل',w:5,f:()=>{const tex=SURF.map(([k])=>+raw('c.tex.'+k+'.grain')+ +raw('c.tex.'+k+'.paper')+ +raw('c.tex.'+k+'.linen'));
+  return tex.every(v=>v===0)&&{m:'لا خامة على أيّ سطح. السطح الأملس التامّ هو أوضح علامة على شكل مولَّد آليًّا — حبيبات ٠٫٠٣ تكفي.',
+    sel:null,fix:()=>{TOK['c.tex.app.grain'].v=.03},fl:'حبيبات خفيفة'}}},
+/* ── الهرمية ── */
+{a:'الهرمية',w:10,f:()=>{const k=currentKey();
+  const bold=$$('#app [data-el]').filter(n=>parseFloat(getComputedStyle(n).fontSize)>=Math.max(28,+raw('c.base.size')*2.2));
+  if(bold.length>1)return{m:'أكثر من عنصر جريء في «'+scLabel(k)+'» ('+NUM(bold.length)+'). الجرأة تُنفق مرّة واحدة في الشاشة، وإلا ألغى كلٌّ منها الآخر.',
+    sel:bold[0].dataset.el};
+  if(bold.length===0)return{m:'لا عنصر جريء في «'+scLabel(k)+'» — كل شيء «وسط»، فلا شيء يمسك العين.',sel:null};
+  return false}},
+{a:'الهرمية',w:8,f:()=>{const p=$$('#app .act').length;
+  return p>1&&{m:'زرّان أساسيّان أو أكثر في الشاشة ('+NUM(p)+'). زرّان يتنافسان يساويان صفر زرّ.',sel:'button.primary'}}},
+{a:'الهرمية',w:6,f:()=>{const w=uniq(ORDER.filter(id=>/weight$/.test(id)&&TOK[id].t==='num').map(id=>+raw(id)));
+  return w.length<=2&&{m:'كل الأوزان من قيمتين ('+w.join(' · ')+') — لا نبرة في الطباعة. الوزن أرخص أداة للهرمية.',sel:null}}},
+/* ── الهوية ── */
+{a:'الهوية',w:9,f:()=>{const k=currentKey();
+  return !SIG[k]&&{m:'ما حدّدت عنصر التوقيع لشاشة «'+scLabel(k)+'» — العنصر الذي يحمل الجرأة ويُذكر بعد إغلاق التطبيق. حدّده في تبويب «الهوية».',sel:null}}},
+{a:'الهوية',w:7,f:()=>{const has=$$('#app .b8, #app .wm').length;
+  return has===0&&{m:'العلامة غائبة عن هذه الشاشة كلّها — لا شارة ولا كلمة. شاشة بلا علامة شاشة لأي أحد.',sel:null}}},
+{a:'الهوية',w:5,f:()=>{const emo=$$('#app *').filter(n=>n.children.length===0&&/[\u{1F300}-\u{1FAFF}]/u.test(n.textContent));
+  return emo.length>0&&{m:'اعتماد على إيموجي عامّة ('+NUM(emo.length)+') بدل علامات مرسومة. الإيموجي يختلف شكله بين أندرويد وآيفون فتفقد السيطرة.',sel:null}}}
+];
+function critique(){
+  const found=[],per={};AREAS.forEach(a=>per[a]={got:0,max:0});
+  RULES.forEach((r,i)=>{
+    per[r.a].max+=r.w;
+    let res=null;try{res=r.f()}catch(e){res=null}
+    if(res){per[r.a].got+=r.w;found.push(Object.assign({a:r.a,w:r.w,i:i},res))}});
+  const max=RULES.reduce((n,r)=>n+r.w,0), lost=found.reduce((n,f)=>n+f.w,0);
+  return {found:found.sort((a,b)=>b.w-a.w),score:Math.round(100*(max-lost)/max),per:per}}
+function pGuide(h){
+  const R=critique();
+  const v=R.score>=90?'قويّ — سلّمه':R.score>=75?'جيّد، وفيه ما يُشدّ':R.score>=55?'وسط — عالِج الأحمر أوّلًا':'ضعيف بعد — ابدأ من الأعلى';
+  const head=el('div');
+  head.style.cssText='background:#15151a;border:1px solid var(--u-line);border-radius:12px;padding:12px;margin-bottom:9px';
+  head.innerHTML=`<div style="display:flex;align-items:baseline;gap:9px">
+    <b style="font-size:34px;color:${R.score>=75?'#9ad4b1':R.score>=55?'#e2c68d':'#e6a1a1'};font-family:ui-monospace,monospace">${R.score}</b>
+    <span style="color:var(--u-dim2);font-size:11px">من ١٠٠</span>
+    <span style="margin-inline-start:auto;font-size:12px;color:#b9c4d2">${v}</span></div>`;
+  const bars=el('div');bars.style.cssText='margin-top:9px;display:flex;flex-direction:column;gap:4px';
+  AREAS.forEach(a=>{const p=R.per[a],ok=p.max?Math.round(100*(p.max-p.got)/p.max):100;
+    const row=el('div');row.style.cssText='display:flex;align-items:center;gap:7px;font-size:10.5px;color:var(--u-dim)';
+    row.innerHTML=`<span style="width:52px">${a}</span>
+      <span style="flex:1;height:5px;border-radius:99px;background:#26262c;overflow:hidden;display:block">
+        <i style="display:block;height:100%;width:${ok}%;background:${ok>=80?'#9ad4b1':ok>=50?'#e2c68d':'#e6a1a1'}"></i></span>
+      <span style="width:26px;text-align:end;font-family:ui-monospace,monospace">${ok}</span>`;
+    bars.appendChild(row)});
+  head.appendChild(bars);h.appendChild(head);
+  h.appendChild(el('div','hint','هذه ليست أحكامًا على ذوقك — هي أخطاء يعرفها كل مصمّم ولا تُرى بالعين وحدها. '
+    +'كل ملاحظة مقيسة برقم من تصميمك أنت، ومعها إصلاح بضغطة حين يكون له إصلاح واحد صحيح. '
+    +'بعض الملاحظات تخصّ الشاشة المعروضة الآن، فبدّل الشاشة وأعِد الفحص.'));
+  const rf=el('button','tbtn','أعِد الفحص');rf.onclick=()=>buildPanel();h.appendChild(rf);
+  if(!R.found.length){h.appendChild(el('div','goodbox','لا ملاحظة. التصميم متماسك في المقاييس الستّة.'));return}
+  AREAS.forEach(a=>{
+    const list=R.found.filter(f=>f.a===a);if(!list.length)return;
+    const sec=section(a,true,list.length);
+    list.forEach(f=>{
+      const d=el('div',f.w>=9?'badbox':f.w>=7?'warnbox':'mini');
+      d.style.marginBottom='6px';
+      d.innerHTML=f.m+' ';
+      if(f.sel){const b=el('button','lnk','أرني');b.style.marginInlineStart='6px';
+        b.onclick=()=>{const t=$$('#app [data-el]').find(x=>elName(x)===f.sel);
+          if(t){t.classList.add('flash');t.scrollIntoView({block:'center'});setTimeout(()=>t.classList.remove('flash'),2400)}
+          else toast('غير ظاهر في هذه الشاشة')};
+        d.appendChild(b)}
+      if(f.fix){const b=el('button','lnk',f.fl||'أصلحها');b.style.marginInlineStart='8px';b.style.color='#9ad4b1';
+        b.onclick=()=>{f.fix();push('إصلاح: '+a);apply();render();refreshCode();buildPanel();toast('طُبِّق')};
+        d.appendChild(b)}
+      sec.body.appendChild(d)});
+    h.appendChild(sec)});
+}
 function pAudit(h){
   const dn=section('توكنات بلا وجهة في المشروع',true);
   const miss=ORDER.filter(id=>!destOf(id));
