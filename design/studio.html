@@ -593,6 +593,64 @@ body.freemove .app [data-el].fmsel{cursor:move}
 .app [data-hidden="1"]{display:none!important}
 .app .fm{position:relative}
 @media(prefers-reduced-motion:reduce){body.rm .app *{animation:none!important;transition:none!important}}
+/* ══════════════════════════════════════════════════════════════
+   وضع الجوّال — الورشة كاملة على شاشة صغيرة.
+   لا ميزة تُحذف؛ يتغيّر التخطيط فقط: المسرح فوق واللوحة تحته،
+   والتبويبات شريط أفقي، والمفتّش يُستدعى بزرّ.
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width:900px){
+  #top{flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:0 8px;-webkit-overflow-scrolling:touch}
+  #top::-webkit-scrollbar{height:0}
+  #top .grow{display:none}
+  #top .logo{font-size:12px}
+  .tbtn{padding:7px 10px;font-size:12px;min-height:34px}
+  #main{flex-direction:column;height:calc(100% - 44px)}
+  #insp{position:fixed;inset:44px 0 0 0;width:auto;z-index:520;display:none;
+    border:0;border-top:1px solid var(--u-line);background:var(--u-bg2)}
+  body.mshow-insp #insp{display:flex}
+  #stagewrap{flex:none;height:var(--m-stage,52vh);min-height:220px}
+  #ctrl{width:auto;flex:1;min-height:0;border-inline-start:0;border-top:1px solid var(--u-line);
+    flex-direction:column}
+  #ctrl>#ctabs{order:1}
+  #ctrl>#cbody{order:2}
+  #ctabs{width:auto;display:flex;overflow-x:auto;overflow-y:hidden;border-inline-start:0;
+    border-bottom:1px solid var(--u-line);padding:0;flex:none;-webkit-overflow-scrolling:touch}
+  #ctabs::-webkit-scrollbar{height:0}
+  #ctabs button{width:auto;white-space:nowrap;padding:11px 13px;font-size:12.5px;
+    border-inline-start:0;border-bottom:2px solid transparent}
+  #ctabs button.on{border-inline-start-color:transparent;border-bottom-color:var(--u-acc)}
+  #cbody{padding:9px 10px 90px}
+  .rsz{display:none}
+  /* صفوف التحكّم تنزل سطرين على الجوّال — أوسع للإصبع */
+  .row{grid-template-columns:1fr;gap:3px}
+  .row>label{padding-top:0;font-size:12.5px}
+  .ctl{justify-content:flex-start}
+  .ctl input[type=range]{width:100%;max-width:none;flex:1;height:26px}
+  input.num{width:64px;font-size:13px;padding:6px 5px}
+  .sel,.uni{font-size:12.5px;padding:6px 6px;min-height:32px}
+  .hex{width:88px;font-size:12px;padding:6px 5px}
+  .chk{width:20px;height:20px}
+  .pill{padding:7px 12px;font-size:12px}
+  .fdesc{font-size:11.5px}
+  .fontbtn{min-width:0;max-width:none;flex:1;padding:8px 10px}
+  .fontbtn .fbn{font-size:15px}
+  .fmenu{inset-inline:8px;left:8px!important;width:auto;max-width:none;
+    top:52px!important;max-height:calc(100vh - 70px)}
+  .fmenu .frow{padding:9px 10px}
+  #codewrap{display:none}
+  body.mshow-code #codewrap{display:flex}
+}
+#mbar{display:none;position:fixed;inset-inline:0;bottom:0;z-index:530;
+  background:#141418;border-top:1px solid var(--u-line);padding:6px 8px calc(6px + env(safe-area-inset-bottom));
+  gap:6px;align-items:center}
+#mbar button{flex:1;padding:10px 6px;font-size:12px;color:var(--u-dim);border:1px solid var(--u-line);
+  border-radius:9px;background:#0f0f12;min-height:40px}
+#mbar button.on{background:#2e3a48;color:#fff;border-color:var(--u-acc)}
+#nostore{display:none;position:fixed;inset-inline:8px;top:50px;z-index:540;background:#3a1f1f;color:#f0c9c9;
+  border:1px solid #5a2e2e;border-radius:9px;padding:8px 10px;font-size:11.5px;line-height:1.7}
+#nostore button{color:#ffd9d9;text-decoration:underline;background:none;border:0;font-size:11.5px}
+@media (max-width:900px){#mbar{display:flex}}
+
 </style>
 </head>
 <body>
@@ -673,6 +731,13 @@ body.freemove .app [data-el].fmsel{cursor:move}
   <input id="cmdq" placeholder="ابحث عن توكن أو أمر…">
   <div class="list" id="cmdl"></div>
 </div></div>
+<div id="mbar">
+  <button id="mPrev" class="on">المعاينة</button>
+  <button id="mCtl">التحكّم</button>
+  <button id="mInsp">المفتّش</button>
+  <button id="mCode">المخرَج</button>
+</div>
+<div id="nostore"></div>
 <div id="utoast"></div>
 <script>
 /* ══════════════════════════════════════════════════════════════
@@ -3306,6 +3371,11 @@ function refreshCode(){
    ١٣) المسرح — لوح ومقارنة وتكبير
    ══════════════════════════════════════════════════════════════ */
 let SHEET=false,ABON=false,PURE=false,ZOOM=1;
+function applyZoom(){
+  $('#zoomv').textContent=Math.round(ZOOM*100)+'%';$('#zoom').value=Math.round(ZOOM*100);
+  $('#stage').style.transform='scale('+ZOOM+')';
+  $('#stage').style.transformOrigin=isPhone()?'top center':'top center';
+  $('#stage').style.marginBottom=(ZOOM<1?0:(ZOOM-1)*900)+'px'}
 function layoutStage(){
   $('#single').classList.toggle('off',SHEET||ABON);
   $('#sheet').classList.toggle('on',SHEET);
@@ -3487,6 +3557,60 @@ $('#bSheet').onclick=()=>{SHEET=!SHEET;if(SHEET)ABON=false;$('#bSheet').classLis
   $('#bAB').classList.remove('on');layoutStage()};
 $('#bAB').onclick=()=>{ABON=!ABON;if(ABON)SHEET=false;$('#bAB').classList.toggle('on',ABON);
   $('#bSheet').classList.remove('on');layoutStage()};
+/* ══════════════════════════════════════════════════════════════
+   وضع الجوّال — تبديل الأوضاع، ملاءمة المسرح، وبديل الحفظ
+   حين يمنع المتصفّح التخزين المحلّي (يحدث كثيرًا عند فتح ملف
+   من مدير الملفات في أندرويد).
+   ══════════════════════════════════════════════════════════════ */
+const isPhone=()=>matchMedia('(max-width:900px)').matches;
+let MMODE='prev';
+function mSet(mode){
+  MMODE=mode;
+  document.body.classList.toggle('mshow-insp',mode==='insp');
+  document.body.classList.toggle('mshow-code',mode==='code');
+  const st=$('#stagewrap'),ct=$('#ctrl');
+  if(mode==='prev'){st.style.height='calc(100vh - 44px - 54px)';ct.classList.add('collapsed')}
+  else if(mode==='ctl'){st.style.height='34vh';ct.classList.remove('collapsed')}
+  else if(mode==='code'){st.style.height='30vh';ct.classList.remove('collapsed')}
+  else{st.style.height='34vh';ct.classList.add('collapsed')}
+  [['mPrev','prev'],['mCtl','ctl'],['mInsp','insp'],['mCode','code']].forEach(([id,k])=>
+    $('#'+id).classList.toggle('on',mode===k));
+  setTimeout(fitStage,60)}
+['mPrev','prev','mCtl','ctl','mInsp','insp','mCode','code'].forEach((_,i,a)=>{
+  if(i%2)return;$('#'+a[i]).onclick=()=>mSet(a[i+1])});
+/* يلائم إطار الجوّال عرضَ الشاشة تلقائيًّا */
+function fitStage(){
+  if(!isPhone())return;
+  const wrap=$('#stagewrap'),f=$('#frame');if(!wrap||!f)return;
+  const fw=f.offsetWidth||390,fh=f.offsetHeight||844;
+  const k=Math.min((wrap.clientWidth-24)/fw,(wrap.clientHeight-24)/fh,1);
+  ZOOM=Math.max(.3,k);applyZoom();}
+addEventListener('resize',()=>{fitStage()});
+if(isPhone()){mSet('prev');setTimeout(fitStage,250)}
+/* هل التخزين المحلّي متاح فعلًا؟ */
+(function(){let ok=false;
+  try{localStorage.setItem('__t','1');localStorage.removeItem('__t');ok=true}catch(e){}
+  if(ok)return;
+  const n=$('#nostore');n.style.display='block';
+  n.innerHTML='<b>المتصفّح يمنع الحفظ التلقائي هنا</b> — يحدث حين يُفتح الملف من مدير الملفات. '
+    +'شغلك يضيع لو أقفلت الصفحة. احفظه ملفًّا بين حين وآخر: ';
+  const sv=el('button','','احفظ الآن');sv.onclick=saveWorkFile;
+  const ld=el('button','','استعد من ملف');ld.onclick=loadWorkFile;
+  const hd=el('button','','إخفاء');hd.onclick=()=>n.style.display='none';
+  n.append(sv,document.createTextNode(' · '),ld,document.createTextNode(' · '),hd)})();
+function saveWorkFile(){
+  const blob=new Blob([JSON.stringify({s:snapshotState(),snaps:SNAPS,rev:REV,seq:PARTSEQ},null,1)],
+    {type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='eight-studio-rev'+REV+'.json';a.click();toast('حُفظ ملف عملك')}
+function loadWorkFile(){
+  const i=document.createElement('input');i.type='file';i.accept='application/json';
+  i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+    r.onload=()=>{try{const j=JSON.parse(r.result);SNAPS=j.snaps||[];REV=j.rev||0;PARTSEQ=j.seq||1;
+      restoreState(j.s,true);toast('استُعيد عملك · rev '+REV)}catch(err){toast('ملف غير صالح')}};
+    r.readAsText(f)};
+  i.click()}
+
 $('#bDesc').onclick=()=>{document.body.classList.toggle('nodesc');
   $('#bDesc').classList.toggle('on',!document.body.classList.contains('nodesc'));
   try{localStorage.setItem('eight.studio.desc',document.body.classList.contains('nodesc')?'0':'1')}catch(e){}};
@@ -3503,8 +3627,7 @@ $('#bFull').onclick=()=>{FULL=!FULL;$('#bFull').classList.toggle('on',FULL);refr
 ['scColors','scType','scLayout'].forEach(k=>$('#'+k).onchange=refreshCode);
 $('#device').onchange=()=>{const v=$('#device').value;
   $('#frame').className='frame '+v;layoutStage();drawOverlays()};
-$('#zoom').oninput=()=>{ZOOM=+$('#zoom').value/100;$('#zoomv').textContent=$('#zoom').value+'%';
-  $('#stage').style.transform='scale('+ZOOM+')';$('#stage').style.marginBottom=(ZOOM<1?0:(ZOOM-1)*900)+'px'};
+$('#zoom').oninput=()=>{ZOOM=+$('#zoom').value/100;applyZoom()};
 $$('.rsz').forEach(r=>{r.onmousedown=e=>{
   const t=$('#'+r.dataset.rsz),sx=e.clientX,sw=t.offsetWidth,dir=r.dataset.rsz==='insp'?-1:1;
   const mm=ev=>{t.style.width=clamp(sw+dir*(ev.clientX-sx)*(document.dir==='rtl'?-1:1),200,640)+'px'};
