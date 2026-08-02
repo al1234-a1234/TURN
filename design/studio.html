@@ -45,7 +45,7 @@ button{background:none;border:0;cursor:pointer;padding:0}
 #stagewrap{flex:1;min-width:0;position:relative;overflow:auto;background:
   linear-gradient(0deg,rgba(255,255,255,.014) 1px,transparent 1px) 0 0/22px 22px,
   linear-gradient(90deg,rgba(255,255,255,.014) 1px,transparent 1px) 0 0/22px 22px, #0b0b0d}
-#ctrl{width:352px;flex:none;display:flex;background:var(--u-bg2);border-inline-start:1px solid var(--u-line);min-width:0}
+#ctrl{width:482px;flex:none;display:flex;background:var(--u-bg2);border-inline-start:1px solid var(--u-line);min-width:0}
 .rsz{width:5px;cursor:col-resize;background:transparent;flex:none}
 .rsz:hover{background:#2f2f38}
 .collapsed{display:none!important}
@@ -63,16 +63,21 @@ button{background:none;border:0;cursor:pointer;padding:0}
 .sec>h4 .cnt{margin-inline-start:auto;font-size:10px;color:var(--u-dim2);font-family:ui-monospace,monospace}
 .sec>.body{padding:8px 10px}
 .sec.closed>.body{display:none}
-.row{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;padding:4px 0;min-height:28px}
-.row>label{font-size:11.5px;color:var(--u-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default}
+.row{display:grid;grid-template-columns:104px minmax(0,1fr);gap:6px;align-items:center;padding:4px 0;min-height:28px}
+.row>label{font-size:11.5px;color:var(--u-dim);overflow:hidden;cursor:default;line-height:1.5}
+.lockb{font-size:9px;opacity:.5;margin-inline-end:3px;padding:0;background:none;border:0;vertical-align:1px}
+.lockb:hover{opacity:1}
 .row>label b{color:var(--u-ink);font-weight:500}
-.ctl{display:flex;align-items:center;gap:5px}
+.ctl{display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:flex-end;min-width:0}
+.ctl input[type=range]{width:96px;min-width:52px;max-width:96px;accent-color:var(--u-acc)}
+.ctl input[type=color]{width:26px;height:22px;padding:0;border:1px solid var(--u-line);border-radius:5px;background:none}
+.row>label{align-self:start;padding-top:3px}
 /* input.num لا .num المجرّدة: المعاينة نفسها تستعمل .num لرقم التذكرة (div)،
    والقاعدة المجرّدة كانت تتسرّب إليه فتصبغه بخلفية الورشة الداكنة. */
-input.num{width:62px;background:#0f0f12;border:1px solid var(--u-line);border-radius:6px;padding:3px 5px;font-size:11px;
+input.num{width:56px;background:#0f0f12;border:1px solid var(--u-line);border-radius:6px;padding:3px 5px;font-size:11px;
   font-family:ui-monospace,monospace;direction:ltr;text-align:center}
 .txt{width:100%;background:#0f0f12;border:1px solid var(--u-line);border-radius:6px;padding:5px 7px;font-size:11.5px}
-.uni{background:#0f0f12;border:1px solid var(--u-line);border-radius:6px;padding:3px;font-size:10.5px}
+.uni{background:#0f0f12;max-width:52px;border:1px solid var(--u-line);border-radius:6px;padding:3px;font-size:10.5px}
 input[type=range]{width:118px;accent-color:var(--u-acc);background:transparent}
 input[type=color]{width:26px;height:22px;padding:0;border:1px solid var(--u-line);border-radius:5px;background:#0f0f12;cursor:pointer}
 .hex{width:78px;background:#0f0f12;border:1px solid var(--u-line);border-radius:6px;padding:3px 5px;font-size:10.5px;
@@ -83,6 +88,36 @@ input[type=color]{width:26px;height:22px;padding:0;border:1px solid var(--u-line
 .mini code{font-family:ui-monospace,monospace;color:#a9b7c9;direction:ltr}
 .hint{font-size:10.5px;color:var(--u-dim2);line-height:1.75;padding:4px 0 6px}
 .pillrow{display:flex;flex-wrap:wrap;gap:5px;padding:3px 0}
+/* منتقي الخطّ */
+.fontbtn{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:150px;max-width:190px;
+  background:#0f0f12;border:1px solid var(--u-line);border-radius:7px;padding:4px 8px;text-align:start;overflow:hidden}
+.fontbtn:hover{border-color:var(--u-acc)}
+.fontbtn .fbn{font-size:13px;line-height:1.25;color:var(--u-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.fontbtn .fbt{font-size:9px;color:var(--u-dim2)}
+.fmenu{position:fixed;z-index:600;width:390px;max-height:452px;display:flex;flex-direction:column;gap:6px;
+  background:#141418;border:1px solid var(--u-line);border-radius:12px;padding:9px;
+  box-shadow:0 24px 60px -18px rgba(0,0,0,.85)}
+.fmenu .flist{overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:3px;min-height:120px}
+.fmenu .frow{border:1px solid transparent;border-radius:8px;padding:6px 8px;cursor:pointer}
+.fmenu .frow:hover{background:#1d1d23;border-color:#2c2c34}
+.fmenu .frow.on{background:#2e3a48;border-color:var(--u-acc)}
+.fmenu .frow .fn{font-size:16px;line-height:1.3;color:#f2f2f4}
+.fmenu .frow .ftag{font-size:9px;color:var(--u-dim2);margin-top:1px}
+.fmenu .frow .fsample{font-size:13px;color:#c9c9d0;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fmenu .frow .fnote{font-size:9.5px;color:var(--u-dim2);line-height:1.6;margin-top:2px}
+.fmfoot{border-top:1px solid var(--u-line);padding-top:6px;display:flex;flex-direction:column;gap:4px}
+#fontwarn{display:none;background:#3a1f1f;color:#e6a1a1;border:1px solid #5a2e2e;border-radius:6px;
+  padding:2px 7px;font-size:10px}
+/* شرح تحت كل عنصر تحكّم */
+.row>.fdesc,.row>.mini{grid-column:1/-1}
+.fdesc{font-size:10px;color:var(--u-dim2);line-height:1.75;padding:1px 0 5px;border-bottom:1px dashed #232329;margin-bottom:3px}
+.fdesc b{color:#b9c4d2;font-weight:500}
+.fdesc .where{color:#8fa5bd}
+.fdesc .show{white-space:nowrap}
+.fdesc .show{color:var(--u-acc);text-decoration:underline;cursor:pointer;background:none;border:0;font-size:10px;padding:0 3px}
+body.nodesc .fdesc{display:none}
+.flash{animation:flashk 1.1s ease 2}
+@keyframes flashk{0%,100%{box-shadow:none}35%{box-shadow:0 0 0 3px #ffb020,0 0 0 9999px rgba(0,0,0,.28)}}
 .pill{border:1px solid var(--u-line);border-radius:99px;padding:4px 9px;font-size:10.5px;color:var(--u-dim)}
 .pill:hover{color:var(--u-ink);border-color:#454550}
 .pill.on{background:#2b2b33;color:#fff;border-color:#50505d}
@@ -192,7 +227,15 @@ body.freemove .app [data-el].fmsel{cursor:move}
   font-family:var(--c-font-ui);
   font-size:var(--c-base-size);
   line-height:var(--c-base-lh);
+  font-weight:var(--c-base-weight);
+  letter-spacing:var(--c-base-tracking);
+  word-spacing:var(--c-base-word);
   font-variant-numeric:var(--c-numeric);
+  font-feature-settings:var(--c-font-features);
+  font-variation-settings:var(--x-font-vf);
+  font-optical-sizing:var(--c-font-opsz-auto);
+  text-rendering:var(--c-text-rendering);
+  -webkit-font-smoothing:var(--c-font-smoothing);
   background:var(--x-app-bg);
 }
 .app *{box-sizing:border-box}
@@ -204,7 +247,7 @@ body.freemove .app [data-el].fmsel{cursor:move}
   border-bottom:var(--c-line-w) solid var(--s-line)}
 .app .hd .r1{display:flex;align-items:center;gap:var(--c-hd-gap);min-height:var(--c-badge-size);
   flex-direction:var(--x-hd-dir);justify-content:var(--c-hd-justify)}
-.app .wm{color:var(--s-brand-text);line-height:1;
+.app .wm{color:var(--s-brand-text);text-transform:var(--c-wordmark-case);line-height:1;
   font-family:var(--c-wordmark-font);font-size:var(--c-wordmark-size);font-weight:var(--c-wordmark-weight);
   letter-spacing:var(--c-wordmark-tracking);margin-inline-end:var(--x-wm-comp);
   transform:translate(var(--c-wordmark-x),var(--c-wordmark-y))}
@@ -271,9 +314,9 @@ body.freemove .app [data-el].fmsel{cursor:move}
 .app .tx{flex:1;min-width:0;padding:0 var(--c-text-pad)}
 .app .rw h4{margin:0;font-size:var(--c-name-size);font-weight:var(--c-name-weight);
   line-height:var(--c-name-lh);letter-spacing:var(--c-name-tracking);font-family:var(--c-name-font)}
-.app .rw .m{font-size:var(--c-meta-size);color:var(--s-ink3);letter-spacing:var(--c-meta-tracking);
+.app .rw .m{font-family:var(--c-meta-font);font-size:var(--c-meta-size);color:var(--s-ink3);letter-spacing:var(--c-meta-tracking);
   margin-top:var(--c-meta-gap)}
-.app .stt{flex:none;font-size:var(--c-status-size);font-weight:var(--c-status-weight);color:var(--s-state-closed);
+.app .stt{flex:none;font-family:var(--c-status-font);font-size:var(--c-status-size);font-weight:var(--c-status-weight);color:var(--s-state-closed);
   display:inline-flex;align-items:center;gap:var(--c-status-gap)}
 .app .rw[data-ok="1"] .stt{color:var(--s-state-open)}
 .app .rw[data-wt="1"] .stt{color:var(--s-state-wait)}
@@ -299,7 +342,7 @@ body.freemove .app [data-el].fmsel{cursor:move}
 /* التبويب */
 .app .nav{display:flex;background:var(--s-nav-bg);border-top:var(--c-line-w) solid var(--s-line);
   padding:0 var(--c-nav-px) var(--c-nav-pb);flex-direction:var(--x-nav-dir)}
-.app .nav button{flex:1;min-height:var(--c-nav-height);padding:var(--c-nav-pt) 0 0;
+.app .nav button{flex:1;font-family:var(--c-nav-font);text-transform:var(--c-nav-case);min-height:var(--c-nav-height);padding:var(--c-nav-pt) 0 0;
   font-size:var(--c-nav-size);color:var(--s-ink3);position:relative}
 .app .nav button.on{color:var(--s-ink);font-weight:var(--c-nav-on-weight)}
 .app .nav button.on:after{content:"";position:absolute;inset-inline:var(--c-nav-indicator-inset);
@@ -313,7 +356,7 @@ body.freemove .app [data-el].fmsel{cursor:move}
 .app .hero .big{width:var(--c-hero-logo);height:var(--c-hero-logo);border-radius:var(--c-hero-logo-r);
   overflow:hidden;background:var(--s-chip-bg);flex:none;
   box-shadow:inset 0 0 0 var(--c-chip-ring-w) var(--x-chip-ring)}
-.app .hero h1{margin:0;font-size:var(--c-title-size);font-weight:var(--c-title-weight);
+.app .hero h1{margin:0;text-transform:var(--c-title-case);font-size:var(--c-title-size);font-weight:var(--c-title-weight);
   letter-spacing:var(--c-title-tracking);font-family:var(--c-title-font)}
 .app .hero .m{font-size:var(--c-hero-meta);color:var(--s-ink3);margin-top:var(--c-hero-meta-gap)}
 .app .meta{display:flex;background:var(--s-surface);border-bottom:var(--c-line-w) solid var(--s-line)}
@@ -323,16 +366,16 @@ body.freemove .app [data-el].fmsel{cursor:move}
 .app .meta b{display:block;font-family:var(--c-num-font);font-size:var(--c-metanum-size);color:var(--s-ink);
   direction:ltr;line-height:1.1;font-weight:var(--c-num-weight)}
 .app .meta span{font-size:var(--c-metalab-size);color:var(--s-ink3)}
-.app .sect{padding:var(--c-sect-pt) var(--c-gutter) var(--c-sect-pb);font-size:var(--c-sect-size);
+.app .sect{font-family:var(--c-sect-font);text-transform:var(--c-sect-case);padding:var(--c-sect-pt) var(--c-gutter) var(--c-sect-pb);font-size:var(--c-sect-size);
   color:var(--s-ink3);letter-spacing:var(--c-sect-tracking)}
-.app .line{display:flex;justify-content:space-between;padding:var(--c-line-py) var(--c-gutter);
+.app .line{display:flex;font-family:var(--c-line-font);justify-content:space-between;padding:var(--c-line-py) var(--c-gutter);
   border-bottom:var(--c-line-w) solid var(--s-line);font-size:var(--c-line-size);background:var(--s-surface)}
 .app .line span:last-child{color:var(--s-ink3)}
 .app .pad{padding:var(--c-pad-py) var(--c-gutter)}
-.app .act{display:block;width:100%;border-radius:var(--c-button-radius);background:var(--s-brand);
+.app .act{display:block;font-family:var(--c-button-font);text-transform:var(--c-button-case);width:100%;border-radius:var(--c-button-radius);background:var(--s-brand);
   color:var(--s-brand-ink);padding:var(--c-button-pad);font-weight:var(--c-button-weight);
   font-size:var(--c-button-size);text-align:center;box-shadow:var(--x-button-shadow)}
-.app .ghost{display:block;width:100%;border-radius:var(--c-button-radius);padding:var(--c-ghost-pad);
+.app .ghost{display:block;font-family:var(--c-button-font);text-transform:var(--c-button-case);width:100%;border-radius:var(--c-button-radius);padding:var(--c-ghost-pad);
   font-size:var(--c-ghost-fs);text-align:center;color:var(--s-ink2);
   box-shadow:inset 0 0 0 var(--c-line-w) var(--s-line)}
 .app .stepper{display:flex;align-items:center;border-radius:var(--c-button-radius);
@@ -359,7 +402,7 @@ body.freemove .app [data-el].fmsel{cursor:move}
   font-size:var(--c-step-num);font-weight:var(--c-step-num-weight);background:var(--s-surface-pressed);color:var(--s-ink3);flex:none}
 .app .step.on{color:var(--s-ink)}
 .app .step.on b{background:var(--s-brand);color:var(--s-brand-ink)}
-.app .empty{display:grid;place-items:center;text-align:center;height:100%;padding:var(--c-empty-pad)}
+.app .empty{display:grid;font-family:var(--c-empty-font);place-items:center;text-align:center;height:100%;padding:var(--c-empty-pad)}
 .app .toastr{position:absolute;inset-inline:var(--c-toast-x);bottom:var(--c-toast-y);background:var(--s-ink);
   color:var(--s-brand-ink);padding:var(--c-toast-pad);border-radius:var(--c-toast-radius);
   font-size:var(--c-toast-size);opacity:0;transform:translateY(8px);transition:var(--p-dur-mid);
@@ -386,6 +429,167 @@ body.freemove .app [data-el].fmsel{cursor:move}
 .app .ins-kv{display:flex;justify-content:space-between;width:100%;font-size:var(--c-line-size)}
 .app .ins-kv span:last-child{color:var(--s-ink3)}
 .app .ins-head{font-size:var(--c-grp-size);color:var(--s-ink2);letter-spacing:var(--c-sect-tracking)}
+
+/* ══════════════════════════════════════════════════════════════
+   شاشات التطبيق الحيّ — الرئيسية وصفحة المطعم بتبويباتها وبطاقة الدور.
+   كل قيمة هنا توكن كذلك؛ لا رقم مكتوب.
+   ══════════════════════════════════════════════════════════════ */
+.app .hd2{background:var(--s-header2-bg);padding:var(--c-hd2-pt) var(--c-gutter) var(--c-hd2-pb);
+  border-end-start-radius:var(--c-hd2-radius);border-end-end-radius:var(--c-hd2-radius);
+  display:flex;align-items:center;gap:var(--c-hd-gap);flex:none}
+.app .cbtn{width:var(--c-cbtn-size);height:var(--c-cbtn-size);border-radius:var(--c-cbtn-radius);
+  background:var(--x-cbtn-bg);display:grid;place-items:center;color:var(--s-brand-text);flex:none}
+.app .cbtn svg{width:var(--c-cbtn-icon);height:var(--c-cbtn-icon);stroke:currentColor;fill:none;
+  stroke-width:var(--c-icon-stroke);stroke-linecap:round;stroke-linejoin:round}
+.app .hdmid{margin-inline:auto;display:flex;align-items:center;gap:var(--c-hd-gap)}
+.app .avwrap{display:flex;justify-content:center;margin-top:calc(-1 * var(--c-avatar-drop));flex:none}
+.app .avatar{width:var(--c-avatar-size);height:var(--c-avatar-size);border-radius:var(--c-avatar-radius);
+  overflow:hidden;box-shadow:0 0 0 var(--c-avatar-ring) var(--s-bg),var(--x-avatar-shadow);position:relative;z-index:3}
+.app .avatar .mk{border-radius:inherit}
+
+/* شريط التبويبات المجزّأ */
+.app .tabs{display:flex;gap:var(--c-tabs-gap);background:var(--s-surface);border-radius:var(--c-tabs-radius);
+  padding:var(--c-tabs-pad);margin:var(--c-tabs-mt) var(--c-gutter) 0;box-shadow:var(--x-tabs-shadow);flex:none}
+.app .tb{flex:1;display:grid;gap:var(--c-tb-gap);place-items:center;padding:var(--c-tb-py) 0;
+  border-radius:var(--c-tb-radius);background:var(--s-bg);color:var(--s-brand-text);
+  box-shadow:inset 0 0 0 var(--c-line-w) var(--s-line);font-size:var(--c-tb-size);font-weight:var(--c-tb-weight)}
+.app .tb svg{width:var(--c-tb-icon);height:var(--c-tb-icon);stroke:currentColor;fill:none;
+  stroke-width:var(--c-icon-stroke);stroke-linecap:round;stroke-linejoin:round}
+.app .tb.on{background:var(--s-brand);color:var(--s-brand-ink);box-shadow:var(--x-tb-on-shadow)}
+
+/* الرئيسية: شريط التصفية وعنوان القسم */
+.app .fbar{display:flex;justify-content:flex-start;padding:var(--c-fbar-pt) var(--c-gutter) 0;flex:none}
+.app .fpill{display:flex;align-items:center;gap:var(--c-fpill-gap);background:var(--s-brand);
+  color:var(--s-brand-ink);border-radius:var(--p-radius-full);padding:var(--c-fpill-pad);
+  font-size:var(--c-fpill-size);font-weight:var(--c-fpill-weight)}
+.app .fpill svg{width:var(--c-fpill-icon);height:var(--c-fpill-icon);stroke:currentColor;fill:none;
+  stroke-width:var(--c-icon-stroke);stroke-linecap:round}
+.app .slabel{display:flex;align-items:center;gap:var(--c-slabel-gap);
+  padding:var(--c-slabel-pt) var(--c-gutter) var(--c-slabel-pb);font-size:var(--c-slabel-size);
+  font-weight:var(--c-slabel-weight);color:var(--s-ink)}
+.app .slabel i{width:var(--c-slabel-bar-w);height:var(--c-slabel-bar-h);border-radius:var(--p-radius-full);
+  background:var(--s-brand);flex:none}
+.app .slabel b{font-family:var(--c-num-font);font-weight:400;font-size:var(--c-slabel-count);color:var(--s-ink3)}
+
+/* بطاقة المطعم في الرئيسية */
+.app .rcard{background:var(--s-bg);border-radius:var(--c-rcard-radius);margin:0 var(--c-gutter) var(--c-rcard-gap);
+  padding:var(--c-rcard-pad);box-shadow:var(--x-rcard-shadow)}
+.app .rc-top{display:flex;align-items:flex-start;gap:var(--c-rcard-inner-gap)}
+.app .rc-img{width:var(--c-rc-img);height:var(--c-rc-img);border-radius:var(--c-rc-img-radius);flex:none;
+  background:var(--x-photo-a);background-size:cover;background-position:center}
+.app .rc-tx{flex:1;min-width:0}
+.app .rc-tx h4{margin:0;font-family:var(--c-name-font);font-size:var(--c-rc-name);font-weight:var(--c-rc-name-weight);color:var(--s-ink)}
+.app .rc-tx .m{display:block;font-size:var(--c-rc-meta);color:var(--s-ink3);margin-top:var(--c-rc-meta-mt)}
+.app .rc-tx .dist{display:flex;align-items:center;gap:var(--c-rc-dist-gap);font-size:var(--c-rc-dist);
+  color:var(--s-brand-text);font-weight:var(--c-rc-dist-weight);margin-top:var(--c-rc-dist-mt)}
+.app .rc-tx .dist svg{width:var(--c-rc-dist);height:var(--c-rc-dist);stroke:currentColor;fill:none;stroke-width:var(--c-icon-stroke)}
+.app .rc-rate{display:flex;align-items:center;gap:var(--c-rc-rate-gap);font-family:var(--c-num-font);
+  font-size:var(--c-rc-rate);color:var(--s-ink);flex:none;direction:ltr}
+.app .rc-rate .st{color:var(--s-gold)}
+.app .rc-cta{display:flex;align-items:center;gap:var(--c-cta-gap);width:100%;margin-top:var(--c-cta-mt);
+  background:var(--s-brand);color:var(--s-brand-ink);border-radius:var(--c-cta-radius);
+  padding:var(--c-cta-pad);font-size:var(--c-cta-size);font-weight:var(--c-cta-weight);text-align:start}
+.app .rc-cta.shut{background:var(--x-cta-shut)}
+.app .rc-cta .d{width:var(--c-cta-dot);height:var(--c-cta-dot);border-radius:50%;background:currentColor;flex:none;opacity:var(--c-cta-dot-opacity)}
+.app .rc-cta .go{margin-inline-start:auto;opacity:var(--c-cta-go-opacity);font-weight:400}
+
+/* زرّ عائم */
+.app .fab{position:absolute;inset-inline-start:var(--c-fab-x);bottom:var(--c-fab-y);
+  width:var(--c-fab-size);height:var(--c-fab-size);border-radius:50%;background:var(--s-brand);
+  color:var(--s-brand-ink);display:grid;place-items:center;box-shadow:var(--x-fab-shadow);z-index:5}
+.app .fab svg{width:var(--c-fab-icon);height:var(--c-fab-icon);stroke:currentColor;fill:none;
+  stroke-width:var(--c-icon-stroke);stroke-linecap:round}
+
+/* بطاقة عامّة داخل صفحة المطعم */
+.app .pcard{background:var(--s-bg);border-radius:var(--c-pcard-radius);margin:var(--c-pcard-mt) var(--c-gutter) 0;
+  padding:var(--c-pcard-pad);box-shadow:var(--x-rcard-shadow)}
+.app .pcard h5{margin:0 0 var(--c-pcard-title-mb);font-size:var(--c-pcard-title);font-weight:var(--c-pcard-title-weight);color:var(--s-ink)}
+
+/* القائمة */
+.app .mhead{display:flex;align-items:center;width:100%;padding:var(--c-mhead-py) 0;
+  font-size:var(--c-mhead-size);font-weight:var(--c-mhead-weight);color:var(--s-ink)}
+.app .mhead .ch{margin-inline-start:auto;color:var(--s-ink3)}
+.app .mhead svg{width:var(--c-mhead-chev);height:var(--c-mhead-chev);stroke:currentColor;fill:none;stroke-width:var(--c-icon-stroke)}
+.app .mrow{display:flex;align-items:flex-start;gap:var(--c-mrow-gap);padding:var(--c-mrow-py) 0;
+  border-top:var(--c-line-w) solid var(--s-line)}
+.app .mrow .mimg{width:var(--c-mrow-img);height:var(--c-mrow-img);border-radius:var(--c-mrow-img-radius);flex:none;
+  background:var(--x-photo-b);background-size:cover;background-position:center}
+.app .mrow .mtx{flex:1;min-width:0}
+.app .mrow h6{margin:0;font-size:var(--c-mrow-name);font-weight:var(--c-mrow-name-weight);color:var(--s-ink)}
+.app .mrow p{margin:var(--c-mrow-desc-mt) 0 0;font-size:var(--c-mrow-desc);color:var(--s-ink3);line-height:var(--c-mrow-desc-lh)}
+.app .mprice{font-family:var(--c-num-font);font-size:var(--c-mrow-price);font-weight:var(--c-mrow-price-weight);
+  color:var(--s-brand-text);flex:none}
+
+/* التقييمات */
+.app .stars{display:flex;gap:var(--c-stars-gap);font-size:var(--c-stars-size);color:var(--s-star-empty);direction:ltr}
+.app .stars .on{color:var(--s-gold)}
+.app .finp{border:var(--c-line-w) solid var(--s-line);border-radius:var(--c-finp-radius);
+  padding:var(--c-finp-pad);font-size:var(--c-finp-size);color:var(--s-ink3);margin-top:var(--c-finp-mt)}
+.app .finp.ta{min-height:var(--c-finp-ta-h)}
+.app .act.soft{background:var(--x-soft-brand)}
+.app .rsum{display:flex;align-items:center;gap:var(--c-rsum-gap)}
+.app .rsum .big{text-align:center;flex:none}
+.app .rsum .big b{display:block;font-family:var(--c-num-font);font-size:var(--c-rsum-num);
+  font-weight:var(--c-rsum-num-weight);color:var(--s-ink);line-height:1}
+.app .rsum .big span{font-size:var(--c-rsum-count);color:var(--s-ink3)}
+.app .bars{flex:1;display:flex;flex-direction:column;gap:var(--c-bars-gap)}
+.app .bars .b{display:flex;align-items:center;gap:var(--c-bars-gap)}
+.app .bars .b span{font-family:var(--c-num-font);font-size:var(--c-bars-label);color:var(--s-ink3);flex:none}
+.app .bars .b i{flex:1;height:var(--c-bars-h);border-radius:var(--p-radius-full);background:var(--s-surface-pressed);overflow:hidden;display:block}
+.app .bars .b i u{display:block;height:100%;background:var(--s-gold);text-decoration:none}
+
+/* الفروع والمعرض */
+.app .bwrap{display:flex;gap:var(--c-bwrap-gap);padding:var(--c-bwrap-pt) var(--c-gutter) 0;overflow-x:auto;flex:none}
+.app .bwrap::-webkit-scrollbar{height:0}
+.app .bcard{flex:none;width:var(--c-bcard-w);background:var(--s-bg);border-radius:var(--c-bcard-radius);
+  overflow:hidden;box-shadow:var(--x-rcard-shadow)}
+.app .bimg{height:var(--c-bimg-h);background:var(--x-photo-a);background-size:cover;background-position:center;
+  display:flex;flex-direction:column;justify-content:flex-end;padding:var(--c-bimg-pad);position:relative}
+.app .bimg:after{content:"";position:absolute;inset:0;background:var(--x-bimg-scrim)}
+.app .bimg b,.app .bimg em{position:relative;z-index:2;color:var(--s-brand-ink);font-style:normal}
+.app .bimg b{font-size:var(--c-bimg-title);font-weight:var(--c-bimg-title-weight)}
+.app .bimg em{font-size:var(--c-bimg-sub);opacity:var(--c-bimg-sub-opacity)}
+.app .bcta{margin:var(--c-bcta-m);width:calc(100% - 2*var(--c-bcta-m))}
+.app .dots{display:flex;justify-content:center;gap:var(--c-dots-gap);padding:var(--c-dots-pt) 0 0;flex:none}
+.app .dots i{width:var(--c-dot-size);height:var(--c-dot-size);border-radius:var(--p-radius-full);
+  background:var(--s-line);display:block}
+.app .dots i.on{width:var(--c-dot-on-w);background:var(--s-brand)}
+.app .gift{display:flex;align-items:center;gap:var(--c-gift-gap);width:calc(100% - 2*var(--c-gutter));
+  margin:var(--c-gift-mt) var(--c-gutter) 0;background:var(--s-brand);color:var(--s-brand-ink);
+  border-radius:var(--c-gift-radius);padding:var(--c-gift-pad);font-size:var(--c-gift-size);
+  font-weight:var(--c-gift-weight);text-align:start}
+.app .gift svg{width:var(--c-gift-icon);height:var(--c-gift-icon);stroke:currentColor;fill:none;stroke-width:var(--c-icon-stroke)}
+.app .gift .go{margin-inline-start:auto;font-weight:400;opacity:var(--c-cta-go-opacity)}
+.app .gal{display:flex;gap:var(--c-gal-gap);padding:var(--c-gal-pt) var(--c-gutter) 0;overflow-x:auto;flex:none}
+.app .gal::-webkit-scrollbar{height:0}
+.app .gal span{flex:none;width:var(--c-gal-w);height:var(--c-gal-h);border-radius:var(--c-gal-radius);
+  background:var(--x-photo-b);background-size:cover;background-position:center;display:block}
+
+/* بطاقة الدور */
+.app .qhero{height:var(--c-qhero-h);background:var(--x-photo-a);background-size:cover;background-position:center;
+  margin:var(--c-qhero-m);border-radius:var(--c-qhero-radius);flex:none}
+.app .qtitle{text-align:center;padding:var(--c-qtitle-pt) var(--c-gutter) 0;flex:none}
+.app .qtitle h2{margin:0;font-family:var(--c-title-font);font-size:var(--c-qtitle-size);
+  font-weight:var(--c-qtitle-weight);color:var(--s-ink)}
+.app .qtitle span{display:block;font-size:var(--c-qgreet-size);font-weight:var(--c-qgreet-weight);
+  color:var(--s-brand-text);margin-top:var(--c-qgreet-mt)}
+.app .qbox{background:var(--s-bg);border-radius:var(--c-qbox-radius);margin:var(--c-qbox-mt) var(--c-gutter) 0;
+  padding:var(--c-qbox-pad);box-shadow:var(--x-rcard-shadow);text-align:center}
+.app .ring{width:var(--c-ring-size);height:var(--c-ring-size);border-radius:50%;margin:0 auto;
+  display:grid;place-items:center;align-content:center;box-shadow:inset 0 0 0 var(--c-ring-w) var(--s-brand)}
+.app .ring b{display:block;font-family:var(--c-num-font);font-size:var(--c-ring-num);
+  font-weight:var(--c-ring-num-weight);color:var(--s-brand-text);line-height:1}
+.app .ring span{font-size:var(--c-ring-lab);color:var(--s-ink3);letter-spacing:var(--c-ring-lab-tracking);
+  margin-top:var(--c-ring-lab-mt);display:block}
+.app .qbox h3{margin:var(--c-qstate-mt) 0 0;font-size:var(--c-qstate-size);font-weight:var(--c-qstate-weight);color:var(--s-ink)}
+.app .qbox .qsub{font-size:var(--c-qsub-size);color:var(--s-ink3);margin-top:var(--c-qsub-mt)}
+.app .tiles{display:flex;gap:var(--c-tiles-gap);margin-top:var(--c-tiles-mt)}
+.app .tiles div{flex:1;background:var(--s-surface-pressed);border-radius:var(--c-tile-radius);padding:var(--c-tile-pad)}
+.app .tiles b{display:block;font-size:var(--c-tile-num);font-weight:var(--c-tile-num-weight);color:var(--s-brand-text)}
+.app .tiles span{font-size:var(--c-tile-lab);color:var(--s-ink3)}
+.app .act.icon{display:flex;align-items:center;justify-content:center;gap:var(--c-acticon-gap)}
+.app .act.icon svg{width:var(--c-acticon-size);height:var(--c-acticon-size);stroke:currentColor;fill:none;
+  stroke-width:var(--c-icon-stroke);stroke-linecap:round}
 .app [data-hidden="1"]{display:none!important}
 .app .fm{position:relative}
 @media(prefers-reduced-motion:reduce){body.rm .app *{animation:none!important;transition:none!important}}
@@ -407,6 +611,8 @@ body.freemove .app [data-el].fmsel{cursor:move}
   <button class="tbtn" id="bSheet" title="لوح">لوح</button>
   <button class="tbtn" id="bAB" title="C">قبل/بعد</button>
   <button class="tbtn" id="bPure" title="P">معاينة</button>
+  <button class="tbtn" id="bDesc" title="إظهار/إخفاء الشروح تحت كل عنصر تحكّم">الشروح</button>
+  <span id="fontwarn"></span>
   <span class="sep"></span>
   <select class="sel" id="device" style="max-width:none">
     <option value="">iPhone 15 Pro · 390×844</option>
@@ -551,6 +757,58 @@ C('font.ui','font','"IBM Plex Sans Arabic",sans-serif',{g:'type',l:'خط الو�
 C('base.size','dim',13,{u:'px',g:'type',l:'حجم النصّ الأساس',min:9,max:22,step:.5});
 C('base.lh','lh',1.55,{g:'type',l:'ارتفاع السطر الأساس',min:1,max:2.4,step:.01});
 C('numeric','enum','tabular-nums',{g:'type',l:'نمط الأرقام',opts:['tabular-nums','proportional-nums','normal']});
+/* ── الطباعة العامّة: تُطبَّق على كل نصّ في التطبيق دفعةً واحدة ── */
+C('base.weight','num',400,{g:'type',l:'وزن النصّ الأساس',min:100,max:900,step:25,
+  d:'ثِخَن الحرف لكل نصّ لم يُحدَّد له وزن خاص. رفعه يثقّل الشاشة كلها.'});
+C('base.tracking','dim',0,{u:'em',g:'type',l:'تباعد الحروف الأساس',min:-.06,max:.3,step:.002,
+  d:'المسافة بين حرف وحرف في كل النصوص. العربي يضيق بالسالب فلا تنزل تحت −0.01.'});
+C('base.word','dim',0,{u:'em',g:'type',l:'تباعد الكلمات الأساس',min:-.2,max:1,step:.01,
+  d:'المسافة بين كلمة وكلمة. أداة نافعة لتهوية سطر عربي مزدحم دون تكبير الخطّ.'});
+C('font.features','text','normal',{g:'type',l:'ميزات الخطّ (OpenType)',
+  d:'وسوم OpenType خام مثل: "ss01" 1, "dlig" 1, "calt" 0. تكتبها كما هي وتؤثّر فورًا.'});
+C('font.smoothing','enum','antialiased',{g:'type',l:'تنعيم الحروف',opts:['antialiased','auto','subpixel-antialiased'],
+  d:'كيف يرسم المتصفّح حواف الحرف. antialiased أنحف — وهو ما يستعمله خط الأساس.'});
+C('text.rendering','enum','auto',{g:'type',l:'أولوية الرسم',opts:['auto','optimizeLegibility','geometricPrecision'],
+  d:'optimizeLegibility يفعّل الكيرننغ واللِّجاتير ويبطئ قليلًا. geometricPrecision يمنع تدوير الأحجام الكسريّة.'});
+C('font.vf.on','bool',false,{g:'type',l:'تفعيل محاور الخطّ المتغيّر',
+  d:'يشغّل المحاور تحت. لا تشغّله إلا مع خطّ متغيّر (مكتوب بجانبه «متغيّر») وإلا فلا أثر.'});
+C('font.wght','num',400,{g:'type',l:'محور الوزن wght',min:100,max:900,step:1,
+  d:'وزن مستمرّ لا يقفز خمسينات — يعمل فقط مع الخطوط المتغيّرة.'});
+C('font.wdth','num',100,{g:'type',l:'محور العرض wdth',min:50,max:150,step:1,
+  d:'يضغط الحروف أو يمطّها. Archivo وReadex Pro يدعمانه.'});
+C('font.slnt','num',0,{g:'type',l:'محور الميل slnt',min:-15,max:15,step:.5,
+  d:'ميل حقيقي لا مائل مصطنع. يعمل مع الخطوط التي تحمل المحور فقط.'});
+C('font.opsz','num',14,{g:'type',l:'محور المقاس البصري opsz',min:6,max:144,step:1,
+  d:'يعدّل شكل الحرف حسب حجمه — عروق أدقّ للكبير وأسمك للصغير.'});
+C('font.opsz.auto','enum','auto',{g:'type',l:'المقاس البصري تلقائيًّا',opts:['auto','none'],
+  d:'auto يترك المتصفّح يختار opsz من حجم الخطّ. اجعله none إن أردت التحكّم بالمحور يدويًّا.'});
+/* ── خطّ لكل دور. 'inherit' = يتبع خطّ الواجهة، وهو الافتراضي
+   حتى يبقى الشكل كما هو حرفيًّا حتى تغيّره أنت. ── */
+C('meta.font','font','inherit',{g:'type',l:'خط سطر المطبخ والفروع',
+  d:'الخطّ الخاص بالسطر الصغير تحت اسم المطعم. اتركه موروثًا ليتبع خطّ الواجهة.'});
+C('status.font','font','inherit',{g:'type',l:'خط نصّ الحالة',
+  d:'خطّ «الباب مفتوح» و«٢ قبلك · ٨ د» في يسار الصفّ.'});
+C('button.font','font','inherit',{g:'type',l:'خط الأزرار',
+  d:'خطّ نصّ الزرّ الأساسي والزرّ الشبح معًا.'});
+C('nav.font','font','inherit',{g:'type',l:'خط شريط التبويب',
+  d:'خطّ «المطاعم · دوري · أنا» في الأسفل.'});
+C('sect.font','font','inherit',{g:'type',l:'خط عناوين الأقسام',
+  d:'خطّ «المعلومات» و«التفضيلات» — العناوين الصغيرة المتباعدة الحروف.'});
+C('line.font','font','inherit',{g:'type',l:'خط أسطر المعلومات',
+  d:'خطّ صفوف «الدوام / الفروع / الحالة الآن».'});
+C('empty.font','font','inherit',{g:'type',l:'خط الشاشة الفارغة',
+  d:'خطّ شاشة «ما عندك دور الآن».'});
+/* ── حالة الأحرف: تؤثّر في اللاتيني فقط، والعربي لا يتأثّر ── */
+C('nav.case','enum','none',{g:'nav',l:'حالة أحرف التبويب',opts:['none','uppercase','lowercase','capitalize'],
+  d:'تحويل حالة الأحرف. بلا أثر على العربية — للاتيني فقط.'});
+C('sect.case','enum','none',{g:'rest',l:'حالة أحرف عناوين الأقسام',opts:['none','uppercase','lowercase','capitalize'],
+  d:'تحويل حالة الأحرف. بلا أثر على العربية.'});
+C('button.case','enum','none',{g:'button',l:'حالة أحرف الأزرار',opts:['none','uppercase','lowercase','capitalize'],
+  d:'تحويل حالة الأحرف. بلا أثر على العربية.'});
+C('title.case','enum','none',{g:'rest',l:'حالة أحرف عنوان المطعم',opts:['none','uppercase','lowercase','capitalize'],
+  d:'تحويل حالة الأحرف. بلا أثر على العربية.'});
+C('wordmark.case','enum','none',{g:'logo',l:'حالة أحرف كلمة العلامة',opts:['none','uppercase','lowercase','capitalize'],
+  d:'EIGHT مكتوبة كبيرة أصلًا؛ هذا يفيد لو غيّرت النصّ إلى حروف صغيرة.'});
 C('gutter','dim',20,{u:'px',g:'layout',l:'الهامش الجانبي',min:0,max:48,step:1});
 C('line.w','dim',1,{u:'px',g:'layout',l:'سمك الخط الفاصل',min:0,max:4,step:.5});
 /* الترويسة */
@@ -817,8 +1075,35 @@ function texture(k,tintHex){
   const li=g('linen');if(li>0)L.push(`repeating-linear-gradient(45deg,${rgba(tintHex,li)} 0 1px,transparent 1px 3px)`,
     `repeating-linear-gradient(-45deg,${rgba(tintHex,li)} 0 1px,transparent 1px 3px)`);
   return L}
+/* ظلّ من توكن ظلّ، بنفس صبغة بقيّة الظلال */
+function shadowOf(id){const S=TOK[id].v;if(!S||!S.length)return'none';
+  const tint=+raw('c.shadow.tint');
+  return S.map(s=>{const c=mixTint(s.c,tint);
+    return`${s.inset?'inset ':''}${s.x}px ${s.y}px ${s.b}px ${s.s}px ${rgba(c,s.a)}`}).join(',')}
+/* صورة: المرفوعة إن وُجدت، وإلا بديل متدرّج من لون الهوية */
+function photoBG(id,shift,lift){const v=raw(id);
+  if(v)return`url("${v}")`;
+  const h=(+raw('c.photo.hue')+(shift||0))%360,sa=+raw('c.photo.sat')*100,L=lift||0;
+  return`linear-gradient(155deg,${hsl2hex(h,sa*.7,74+L*.5)},${hsl2hex(h,sa,52+L)} 58%,${hsl2hex(h,sa*1.1,34+L)})`}
 const COMPUTED={
+  '--x-font-vf':()=>raw('c.font.vf.on')
+      ?`"wght" ${raw('c.font.wght')},"wdth" ${raw('c.font.wdth')},"slnt" ${raw('c.font.slnt')},"opsz" ${raw('c.font.opsz')}`
+      :'normal',
   '--x-app-bg':()=>[...texture('app',raw('s.brand')),out('s.bg')].join(','),
+  /* ── شاشات التطبيق الحيّ ── */
+  '--x-cbtn-bg':()=>rgba(mixTint(raw('s.brand'),.25),+raw('c.cbtn.tint')*.24),
+  '--x-avatar-shadow':()=>shadowOf('c.avatar.shadow'),
+  '--x-tabs-shadow':()=>shadowOf('c.tabs.shadow'),
+  '--x-tb-on-shadow':()=>shadowOf('c.tb.on.shadow'),
+  '--x-rcard-shadow':()=>shadowOf('c.rcard.shadow'),
+  '--x-fab-shadow':()=>shadowOf('c.fab.shadow'),
+  '--x-cta-shut':()=>{const d=+raw('c.cta.shut.desat');
+    const[h,sa,l]=hex2hsl(raw('s.brand'));return hsl2hex(h,sa*(1-d),l+d*22)},
+  '--x-soft-brand':()=>{const m=+raw('c.soft.mix');
+    const[h,sa,l]=hex2hsl(raw('s.brand'));return hsl2hex(h,sa*(1-m*.62),l+m*30)},
+  '--x-bimg-scrim':()=>`linear-gradient(180deg,transparent 32%,${rgba('#1a0f07',+raw('c.bimg.scrim'))})`,
+  '--x-photo-a':()=>photoBG('c.photo.a',0),
+  '--x-photo-b':()=>photoBG('c.photo.b',0,14),
   '--x-row-tex':()=>{const t=texture('row',raw('s.brand'));return t.length?t.join(',')+','+out('s.surface'):out('s.surface')},
   '--x-hd-tex':()=>{const t=texture('header',raw('s.brand'));return t.length?t.join(',')+','+out('s.header-bg'):out('s.header-bg')},
   '--x-row-shadow':()=>{const S=TOK['c.row.shadow'].v;if(!S.length)return'none';
@@ -935,6 +1220,217 @@ C('card.pad','dim',16,{u:'px',g:'misc',l:'حشو بطاقة التوقّع',min:
 C('card.radius','dim',14,{u:'px',g:'misc',l:'زاوية بطاقة التوقّع',min:0,max:34,step:1});
 /* 16px لا 17px: خطّ الأساس يفرّق بين رقم بطاقة التوقّع ورمز شريط الدور. */
 C('card.value','dim',16,{u:'px',g:'misc',l:'حجم قيمة بطاقة التوقّع',min:9,max:32,step:.5});
+/* ══════════════════════════════════════════════════════════════
+   شاشات التطبيق الحيّ — توكناتها. (هذه الشاشات إضافة على خط
+   الأساس، لا تعديل له: الشاشات الستّ الأصلية باقية كما هي.)
+   ══════════════════════════════════════════════════════════════ */
+/* ألوان دلاليّة إضافية */
+D('s.header2.bg',{t:'color',v:'#e6dbc8',a:1,g:'semantic',l:'خلفية ترويسة الرئيسية',
+  d:'الشريط البيج العلوي في الرئيسية وصفحة المطعم — أغمق من السطح ليفصل الترويسة.'});
+D('s.gold',{t:'color',v:'#c8922a',a:1,g:'semantic',l:'ذهبي التقييم',
+  d:'نجمة التقييم وأعمدة توزيع التقييمات.'});
+D('s.star.empty',{t:'color',v:'#e0d2c0',a:1,g:'semantic',l:'نجمة فارغة',
+  d:'النجوم غير المختارة في «قيّم تجربتك».'});
+/* أيقونات */
+C('icon.stroke','dim',1.7,{u:'px',g:'icons',l:'سمك خطّ الأيقونات',min:.5,max:4,step:.1,
+  d:'كل الأيقونات مرسومة بخطّ لا بمِلء. هذا سمك ذلك الخطّ في كل الشاشات دفعةً واحدة.'});
+/* ترويسة الرئيسية */
+C('hd2.pt','dim',16,{u:'px',g:'home',l:'حشو الترويسة أعلى',min:0,max:60,step:1});
+C('hd2.pb','dim',20,{u:'px',g:'home',l:'حشو الترويسة أسفل',min:0,max:60,step:1});
+C('hd2.radius','dim',22,{u:'px',g:'home',l:'استدارة أسفل الترويسة',min:0,max:60,step:1,
+  d:'الشريط البيج ينتهي بحافّة مقوّسة. صفّرها لتصير حافّة مستقيمة.'});
+C('cbtn.size','dim',44,{u:'px',g:'home',l:'مقاس الزرّ الدائري',min:24,max:80,step:1,
+  d:'زرّ البحث والرجوع والمشاركة — كلها بهذا المقاس.'});
+C('cbtn.radius','dim',14,{u:'px',g:'home',l:'استدارة الزرّ الدائري',min:0,max:40,step:1});
+C('cbtn.icon','dim',19,{u:'px',g:'home',l:'حجم أيقونة الزرّ',min:8,max:40,step:.5});
+C('cbtn.tint','num',.55,{g:'home',l:'شدّة خلفية الزرّ',min:0,max:1,step:.01,
+  d:'كم يغمق مربّع الزرّ عن لون الترويسة. صفر = شفّاف تمامًا.'});
+/* الصورة الدائرية للمطعم */
+C('avatar.size','dim',108,{u:'px',g:'home',l:'مقاس شعار المطعم الدائري',min:40,max:200,step:1});
+C('avatar.radius','dim',50,{u:'%',g:'home',l:'استدارة شعار المطعم',min:0,max:50,step:1,
+  d:'٥٠٪ = دائرة كاملة. أنزلها لتصير مربّعًا مستدير الزوايا.'});
+C('avatar.ring','dim',5,{u:'px',g:'home',l:'سمك الإطار حول الشعار',min:0,max:20,step:.5,
+  d:'حلقة بلون خلفية التطبيق تفصل الشعار عن الترويسة خلفه.'});
+C('avatar.drop','dim',44,{u:'px',g:'home',l:'نزول الشعار خارج الترويسة',min:0,max:140,step:1,
+  d:'كم يهبط الشعار تحت حافّة الشريط البيج. صفّره ليجلس داخل الترويسة.'});
+C('avatar.shadow','shadow',[{x:0,y:8,b:18,s:-6,c:'#3c2314',a:.28,inset:false}],{g:'home',l:'ظلّ الشعار الدائري'});
+/* التبويبات المجزّأة */
+C('tabs.mt','dim',22,{u:'px',g:'tabs',l:'مسافة التبويبات من فوق',min:0,max:60,step:1});
+C('tabs.gap','dim',8,{u:'px',g:'tabs',l:'الفجوة بين التبويبات',min:0,max:24,step:.5});
+C('tabs.pad','dim',9,{u:'px',g:'tabs',l:'حشو حاوية التبويبات',min:0,max:28,step:.5});
+C('tabs.radius','dim',22,{u:'px',g:'tabs',l:'استدارة الحاوية',min:0,max:44,step:1});
+C('tabs.shadow','shadow',[{x:0,y:6,b:16,s:-8,c:'#3c2314',a:.22,inset:false}],{g:'tabs',l:'ظلّ حاوية التبويبات'});
+C('tb.py','dim',13,{u:'px',g:'tabs',l:'ارتفاع التبويب',min:4,max:40,step:1});
+C('tb.radius','dim',15,{u:'px',g:'tabs',l:'استدارة التبويب',min:0,max:34,step:1});
+C('tb.gap','dim',7,{u:'px',g:'tabs',l:'الفجوة بين الأيقونة والكلمة',min:0,max:20,step:.5});
+C('tb.icon','dim',22,{u:'px',g:'tabs',l:'حجم أيقونة التبويب',min:8,max:44,step:.5});
+C('tb.size','dim',12.5,{u:'px',g:'tabs',l:'حجم كلمة التبويب',min:7,max:22,step:.5});
+C('tb.weight','num',600,{g:'tabs',l:'وزن كلمة التبويب',min:100,max:900,step:50});
+C('tb.on.shadow','shadow',[{x:0,y:5,b:13,s:-5,c:'#3c2314',a:.3,inset:false}],{g:'tabs',l:'ظلّ التبويب النشط'});
+/* شريط التصفية وعنوان القسم */
+C('fbar.pt','dim',18,{u:'px',g:'home',l:'مسافة شريط التصفية',min:0,max:50,step:1});
+C('fpill.pad','text','11px 18px',{g:'home',l:'حشو زرّ التصفية'});
+C('fpill.gap','dim',9,{u:'px',g:'home',l:'فجوة زرّ التصفية',min:0,max:24,step:.5});
+C('fpill.size','dim',14,{u:'px',g:'home',l:'حجم نصّ التصفية',min:8,max:24,step:.5});
+C('fpill.weight','num',600,{g:'home',l:'وزن نصّ التصفية',min:100,max:900,step:50});
+C('fpill.icon','dim',15,{u:'px',g:'home',l:'حجم أيقونة التصفية',min:8,max:30,step:.5});
+C('slabel.pt','dim',20,{u:'px',g:'home',l:'مسافة عنوان القسم أعلى',min:0,max:50,step:1});
+C('slabel.pb','dim',12,{u:'px',g:'home',l:'مسافة عنوان القسم أسفل',min:0,max:50,step:1});
+C('slabel.gap','dim',9,{u:'px',g:'home',l:'فجوة عنوان القسم',min:0,max:24,step:.5});
+C('slabel.size','dim',15,{u:'px',g:'home',l:'حجم عنوان القسم',min:8,max:28,step:.5});
+C('slabel.weight','num',700,{g:'home',l:'وزن عنوان القسم',min:100,max:900,step:50});
+C('slabel.count','dim',11,{u:'px',g:'home',l:'حجم عدّاد القسم',min:7,max:22,step:.5});
+C('slabel.bar.w','dim',4,{u:'px',g:'home',l:'سمك شرطة القسم',min:0,max:12,step:.5,
+  d:'الشرطة العنابية الصغيرة قبل العنوان.'});
+C('slabel.bar.h','dim',17,{u:'px',g:'home',l:'طول شرطة القسم',min:0,max:40,step:1});
+/* بطاقة المطعم */
+C('rcard.radius','dim',20,{u:'px',g:'card',l:'استدارة البطاقة',min:0,max:44,step:1});
+C('rcard.pad','dim',13,{u:'px',g:'card',l:'حشو البطاقة',min:0,max:36,step:1});
+C('rcard.gap','dim',15,{u:'px',g:'card',l:'الفجوة بين بطاقتين',min:0,max:44,step:1});
+C('rcard.inner.gap','dim',13,{u:'px',g:'card',l:'الفجوة داخل البطاقة',min:0,max:36,step:1});
+C('rcard.shadow','shadow',[{x:0,y:5,b:16,s:-8,c:'#3c2314',a:.2,inset:false}],{g:'card',l:'ظلّ البطاقة'});
+C('rc.img','dim',72,{u:'px',g:'card',l:'مقاس صورة البطاقة',min:30,max:160,step:1});
+C('rc.img.radius','dim',17,{u:'px',g:'card',l:'استدارة صورة البطاقة',min:0,max:80,step:1});
+C('rc.name','dim',19,{u:'px',g:'card',l:'حجم اسم المطعم',min:9,max:40,step:.5});
+C('rc.name.weight','num',700,{g:'card',l:'وزن اسم المطعم',min:100,max:900,step:50});
+C('rc.meta','dim',13,{u:'px',g:'card',l:'حجم سطر المطبخ والمدينة',min:7,max:24,step:.5});
+C('rc.meta.mt','dim',4,{u:'px',g:'card',l:'مسافة سطر المطبخ',min:0,max:20,step:.5});
+C('rc.dist','dim',12.5,{u:'px',g:'card',l:'حجم سطر المسافة',min:7,max:22,step:.5});
+C('rc.dist.weight','num',600,{g:'card',l:'وزن سطر المسافة',min:100,max:900,step:50});
+C('rc.dist.gap','dim',5,{u:'px',g:'card',l:'فجوة أيقونة المسافة',min:0,max:16,step:.5});
+C('rc.dist.mt','dim',5,{u:'px',g:'card',l:'مسافة سطر المسافة',min:0,max:20,step:.5});
+C('rc.rate','dim',15,{u:'px',g:'card',l:'حجم التقييم',min:8,max:30,step:.5});
+C('rc.rate.gap','dim',5,{u:'px',g:'card',l:'فجوة نجمة التقييم',min:0,max:16,step:.5});
+/* شريط الحثّ داخل البطاقة */
+C('cta.mt','dim',13,{u:'px',g:'card',l:'مسافة شريط الحثّ',min:0,max:36,step:1});
+C('cta.pad','text','14px 16px',{g:'card',l:'حشو شريط الحثّ'});
+C('cta.radius','dim',14,{u:'px',g:'card',l:'استدارة شريط الحثّ',min:0,max:44,step:1});
+C('cta.gap','dim',10,{u:'px',g:'card',l:'فجوة شريط الحثّ',min:0,max:28,step:.5});
+C('cta.size','dim',14,{u:'px',g:'card',l:'حجم نصّ شريط الحثّ',min:8,max:26,step:.5});
+C('cta.weight','num',700,{g:'card',l:'وزن نصّ شريط الحثّ',min:100,max:900,step:50});
+C('cta.dot','dim',9,{u:'px',g:'card',l:'مقاس نقطة الحالة',min:0,max:22,step:.5});
+C('cta.dot.opacity','num',.9,{g:'card',l:'شفافية نقطة الحالة',min:0,max:1,step:.01});
+C('cta.go.opacity','num',.85,{g:'card',l:'شفافية «خذ دورك ←»',min:0,max:1,step:.01});
+C('cta.shut.desat','num',.45,{g:'card',l:'بهتان الشريط للمغلق',min:0,max:1,step:.01,
+  d:'المطعم المغلق يأخذ نفس الشريط لكن أبهت. صفر = بنفس قوّة المفتوح.'});
+/* الزرّ العائم */
+C('fab.size','dim',68,{u:'px',g:'home',l:'مقاس الزرّ العائم',min:30,max:120,step:1});
+C('fab.icon','dim',26,{u:'px',g:'home',l:'حجم أيقونة الزرّ العائم',min:8,max:60,step:.5});
+C('fab.x','dim',22,{u:'px',g:'home',l:'بُعد الزرّ العائم عن الجانب',min:0,max:160,step:1});
+C('fab.y','dim',26,{u:'px',g:'home',l:'ارتفاع الزرّ العائم عن الأسفل',min:0,max:200,step:1});
+C('fab.shadow','shadow',[{x:0,y:9,b:22,s:-7,c:'#3c2314',a:.4,inset:false}],{g:'home',l:'ظلّ الزرّ العائم'});
+/* بطاقة عامّة */
+C('pcard.radius','dim',20,{u:'px',g:'panel',l:'استدارة بطاقة المحتوى',min:0,max:44,step:1});
+C('pcard.pad','dim',17,{u:'px',g:'panel',l:'حشو بطاقة المحتوى',min:0,max:44,step:1});
+C('pcard.mt','dim',16,{u:'px',g:'panel',l:'مسافة بطاقة المحتوى',min:0,max:50,step:1});
+C('pcard.title','dim',17,{u:'px',g:'panel',l:'حجم عنوان البطاقة',min:8,max:34,step:.5});
+C('pcard.title.weight','num',700,{g:'panel',l:'وزن عنوان البطاقة',min:100,max:900,step:50});
+C('pcard.title.mb','dim',12,{u:'px',g:'panel',l:'مسافة تحت عنوان البطاقة',min:0,max:36,step:1});
+/* القائمة */
+C('mhead.py','dim',14,{u:'px',g:'menu',l:'ارتفاع عنوان التصنيف',min:0,max:40,step:1});
+C('mhead.size','dim',19,{u:'px',g:'menu',l:'حجم عنوان التصنيف',min:8,max:36,step:.5});
+C('mhead.weight','num',700,{g:'menu',l:'وزن عنوان التصنيف',min:100,max:900,step:50});
+C('mhead.chev','dim',17,{u:'px',g:'menu',l:'حجم سهم الطيّ',min:6,max:34,step:.5});
+C('mrow.py','dim',14,{u:'px',g:'menu',l:'ارتفاع صفّ الصنف',min:0,max:44,step:1});
+C('mrow.gap','dim',13,{u:'px',g:'menu',l:'فجوة صفّ الصنف',min:0,max:36,step:1});
+C('mrow.img','dim',72,{u:'px',g:'menu',l:'مقاس صورة الصنف',min:0,max:160,step:1});
+C('mrow.img.radius','dim',14,{u:'px',g:'menu',l:'استدارة صورة الصنف',min:0,max:80,step:1});
+C('mrow.name','dim',16,{u:'px',g:'menu',l:'حجم اسم الصنف',min:8,max:32,step:.5});
+C('mrow.name.weight','num',700,{g:'menu',l:'وزن اسم الصنف',min:100,max:900,step:50});
+C('mrow.desc','dim',12.5,{u:'px',g:'menu',l:'حجم وصف الصنف',min:7,max:22,step:.5});
+C('mrow.desc.lh','lh',1.75,{g:'menu',l:'ارتفاع سطر الوصف',min:1,max:2.6,step:.01});
+C('mrow.desc.mt','dim',5,{u:'px',g:'menu',l:'مسافة الوصف',min:0,max:20,step:.5});
+C('mrow.price','dim',15,{u:'px',g:'menu',l:'حجم السعر',min:8,max:30,step:.5});
+C('mrow.price.weight','num',700,{g:'menu',l:'وزن السعر',min:100,max:900,step:50});
+/* التقييمات */
+C('stars.size','dim',31,{u:'px',g:'review',l:'حجم نجوم التقييم',min:10,max:70,step:1});
+C('stars.gap','dim',9,{u:'px',g:'review',l:'فجوة النجوم',min:0,max:30,step:.5});
+C('finp.pad','text','14px 15px',{g:'review',l:'حشو حقل الإدخال'});
+C('finp.radius','dim',13,{u:'px',g:'review',l:'استدارة حقل الإدخال',min:0,max:34,step:1});
+C('finp.size','dim',14,{u:'px',g:'review',l:'حجم نصّ الحقل',min:8,max:24,step:.5});
+C('finp.mt','dim',12,{u:'px',g:'review',l:'مسافة بين الحقول',min:0,max:36,step:1});
+C('finp.ta.h','dim',86,{u:'px',g:'review',l:'ارتفاع مربّع الرأي',min:20,max:220,step:2});
+C('soft.mix','num',.42,{g:'review',l:'بهتان زرّ الإرسال',min:0,max:1,step:.01,
+  d:'زرّ «أرسل التقييم» أبهت من العنابي الكامل لأنه غير مفعَّل قبل اختيار النجوم.'});
+C('rsum.gap','dim',18,{u:'px',g:'review',l:'فجوة ملخّص التقييم',min:0,max:44,step:1});
+C('rsum.num','dim',44,{u:'px',g:'review',l:'حجم رقم المعدّل',min:14,max:100,step:1});
+C('rsum.num.weight','num',700,{g:'review',l:'وزن رقم المعدّل',min:100,max:900,step:50});
+C('rsum.count','dim',12,{u:'px',g:'review',l:'حجم عدد التقييمات',min:7,max:24,step:.5});
+C('bars.gap','dim',7,{u:'px',g:'review',l:'فجوة الأعمدة',min:0,max:24,step:.5});
+C('bars.h','dim',7,{u:'px',g:'review',l:'سمك العمود',min:1,max:24,step:.5});
+C('bars.label','dim',12,{u:'px',g:'review',l:'حجم رقم العمود',min:7,max:22,step:.5});
+/* الفروع والمعرض */
+C('bwrap.pt','dim',16,{u:'px',g:'branch',l:'مسافة شريط الفروع',min:0,max:50,step:1});
+C('bwrap.gap','dim',13,{u:'px',g:'branch',l:'الفجوة بين الفروع',min:0,max:40,step:1});
+C('bcard.w','dim',290,{u:'px',g:'branch',l:'عرض بطاقة الفرع',min:120,max:420,step:2});
+C('bcard.radius','dim',20,{u:'px',g:'branch',l:'استدارة بطاقة الفرع',min:0,max:44,step:1});
+C('bimg.h','dim',176,{u:'px',g:'branch',l:'ارتفاع صورة الفرع',min:60,max:340,step:2});
+C('bimg.pad','dim',16,{u:'px',g:'branch',l:'حشو نصّ الصورة',min:0,max:44,step:1});
+C('bimg.title','dim',20,{u:'px',g:'branch',l:'حجم اسم الفرع',min:8,max:40,step:.5});
+C('bimg.title.weight','num',700,{g:'branch',l:'وزن اسم الفرع',min:100,max:900,step:50});
+C('bimg.sub','dim',13,{u:'px',g:'branch',l:'حجم مدينة الفرع',min:7,max:26,step:.5});
+C('bimg.sub.opacity','num',.88,{g:'branch',l:'شفافية مدينة الفرع',min:0,max:1,step:.01});
+C('bimg.scrim','num',.42,{g:'branch',l:'شدّة تعتيم الصورة',min:0,max:1,step:.01,
+  d:'طبقة داكنة فوق الصورة حتى يُقرأ النصّ الأبيض. صفّرها لترى الصورة صافية.'});
+C('bcta.m','dim',12,{u:'px',g:'branch',l:'هامش شريط الفرع',min:0,max:36,step:1});
+C('dots.pt','dim',14,{u:'px',g:'branch',l:'مسافة النقاط',min:0,max:40,step:1});
+C('dots.gap','dim',7,{u:'px',g:'branch',l:'فجوة النقاط',min:0,max:24,step:.5});
+C('dot.on.w','dim',22,{u:'px',g:'branch',l:'عرض النقطة النشطة',min:2,max:60,step:1,
+  d:'النقطة الحالية تصير شرطة. اجعلها بمقاس النقطة لتبقى دائرة.'});
+C('gift.mt','dim',22,{u:'px',g:'branch',l:'مسافة شريط الهدايا',min:0,max:60,step:1});
+C('gift.pad','text','17px 18px',{g:'branch',l:'حشو شريط الهدايا'});
+C('gift.radius','dim',17,{u:'px',g:'branch',l:'استدارة شريط الهدايا',min:0,max:44,step:1});
+C('gift.gap','dim',11,{u:'px',g:'branch',l:'فجوة شريط الهدايا',min:0,max:30,step:.5});
+C('gift.size','dim',14,{u:'px',g:'branch',l:'حجم نصّ الهدايا',min:8,max:26,step:.5});
+C('gift.weight','num',600,{g:'branch',l:'وزن نصّ الهدايا',min:100,max:900,step:50});
+C('gift.icon','dim',19,{u:'px',g:'branch',l:'حجم أيقونة الهدية',min:8,max:40,step:.5});
+C('gal.pt','dim',12,{u:'px',g:'branch',l:'مسافة المعرض',min:0,max:44,step:1});
+C('gal.gap','dim',11,{u:'px',g:'branch',l:'فجوة المعرض',min:0,max:34,step:1});
+C('gal.w','dim',196,{u:'px',g:'branch',l:'عرض صورة المعرض',min:60,max:340,step:2});
+C('gal.h','dim',152,{u:'px',g:'branch',l:'ارتفاع صورة المعرض',min:40,max:300,step:2});
+C('gal.radius','dim',16,{u:'px',g:'branch',l:'استدارة صور المعرض',min:0,max:44,step:1});
+/* بطاقة الدور */
+C('qhero.h','dim',176,{u:'px',g:'qcard',l:'ارتفاع صورة الرأس',min:0,max:340,step:2});
+C('qhero.m','text','0',{g:'qcard',l:'هامش صورة الرأس'});
+C('qhero.radius','dim',0,{u:'px',g:'qcard',l:'استدارة صورة الرأس',min:0,max:44,step:1});
+C('qtitle.pt','dim',22,{u:'px',g:'qcard',l:'مسافة عنوان المدينة',min:0,max:60,step:1});
+C('qtitle.size','dim',26,{u:'px',g:'qcard',l:'حجم اسم المدينة',min:10,max:56,step:.5});
+C('qtitle.weight','num',700,{g:'qcard',l:'وزن اسم المدينة',min:100,max:900,step:50});
+C('qgreet.size','dim',17,{u:'px',g:'qcard',l:'حجم «حيّاك الله»',min:8,max:34,step:.5});
+C('qgreet.weight','num',700,{g:'qcard',l:'وزن «حيّاك الله»',min:100,max:900,step:50});
+C('qgreet.mt','dim',6,{u:'px',g:'qcard',l:'مسافة «حيّاك الله»',min:0,max:30,step:1});
+C('qbox.mt','dim',18,{u:'px',g:'qcard',l:'مسافة بطاقة الدور',min:0,max:60,step:1});
+C('qbox.pad','dim',26,{u:'px',g:'qcard',l:'حشو بطاقة الدور',min:0,max:60,step:1});
+C('qbox.radius','dim',24,{u:'px',g:'qcard',l:'استدارة بطاقة الدور',min:0,max:50,step:1});
+C('ring.size','dim',176,{u:'px',g:'qcard',l:'قطر حلقة الرقم',min:50,max:320,step:2});
+C('ring.w','dim',9,{u:'px',g:'qcard',l:'سمك الحلقة',min:1,max:30,step:.5});
+C('ring.num','dim',68,{u:'px',g:'qcard',l:'حجم رقم الدور',min:16,max:160,step:1});
+C('ring.num.weight','num',700,{g:'qcard',l:'وزن رقم الدور',min:100,max:900,step:50});
+C('ring.lab','dim',13,{u:'px',g:'qcard',l:'حجم «رقم دورك»',min:7,max:26,step:.5});
+C('ring.lab.tracking','dim',.08,{u:'em',g:'qcard',l:'تباعد «رقم دورك»',min:-.05,max:.5,step:.005});
+C('ring.lab.mt','dim',5,{u:'px',g:'qcard',l:'مسافة «رقم دورك»',min:0,max:30,step:1});
+C('qstate.mt','dim',26,{u:'px',g:'qcard',l:'مسافة «أنت التالي»',min:0,max:60,step:1});
+C('qstate.size','dim',26,{u:'px',g:'qcard',l:'حجم «أنت التالي»',min:10,max:52,step:.5});
+C('qstate.weight','num',700,{g:'qcard',l:'وزن «أنت التالي»',min:100,max:900,step:50});
+C('qsub.size','dim',14,{u:'px',g:'qcard',l:'حجم السطر التوضيحي',min:7,max:26,step:.5});
+C('qsub.mt','dim',7,{u:'px',g:'qcard',l:'مسافة السطر التوضيحي',min:0,max:30,step:1});
+C('tiles.gap','dim',12,{u:'px',g:'qcard',l:'فجوة المربّعين',min:0,max:36,step:1});
+C('tiles.mt','dim',22,{u:'px',g:'qcard',l:'مسافة المربّعين',min:0,max:60,step:1});
+C('tile.pad','dim',15,{u:'px',g:'qcard',l:'حشو المربّع',min:0,max:40,step:1});
+C('tile.radius','dim',15,{u:'px',g:'qcard',l:'استدارة المربّع',min:0,max:40,step:1});
+C('tile.num','dim',20,{u:'px',g:'qcard',l:'حجم رقم المربّع',min:8,max:44,step:.5});
+C('tile.num.weight','num',700,{g:'qcard',l:'وزن رقم المربّع',min:100,max:900,step:50});
+C('tile.lab','dim',12,{u:'px',g:'qcard',l:'حجم تسمية المربّع',min:7,max:24,step:.5});
+C('acticon.gap','dim',10,{u:'px',g:'qcard',l:'فجوة أيقونة الزرّ',min:0,max:30,step:.5});
+C('acticon.size','dim',19,{u:'px',g:'qcard',l:'حجم أيقونة الزرّ',min:8,max:40,step:.5});
+/* الصور — بديل رمادي متدرّج، أو صورة ترفعها أنت */
+C('photo.a','text','',{g:'photo',l:'صورة ١ (رأس/غلاف)',
+  d:'الصور في الورشة بديل متدرّج. ارفع صورةً حقيقيّة من تبويب المحتوى لترى الشكل النهائي.'});
+C('photo.b','text','',{g:'photo',l:'صورة ٢ (أصناف/معرض)',
+  d:'تُستعمل في صور القائمة والمعرض.'});
+C('photo.hue','dim',28,{u:'deg',g:'photo',l:'درجة لون الصورة البديلة',min:0,max:360,step:1});
+C('photo.sat','num',.3,{g:'photo',l:'إشباع الصورة البديلة',min:0,max:1,step:.01});
+
 C('empty.title','dim',14,{u:'px',g:'misc',l:'حجم عنوان الشاشة الفارغة',min:9,max:26,step:.5});
 C('empty.sub','dim',11.5,{u:'px',g:'misc',l:'حجم شرح الشاشة الفارغة',min:7,max:20,step:.5});
 C('logo.vector.scale','num',1,{g:'logo',l:'تكبير الشعار المتجه',min:.5,max:1.6,step:.01});
@@ -943,21 +1439,21 @@ C('logo.vector.scale','num',1,{g:'logo',l:'تكبير الشعار المتجه'
    ٤) APP — التطبيق (منقول من خط الأساس) + وسوم data-el/data-tok
    ══════════════════════════════════════════════════════════════ */
 const DATA=[
-{id:1,n:"كي",c:"ياباني",br:2,r:4.7,st:"ok",q:0,m:0,area:"حي الياسمين",city:"الرياض",hrs:"١٢ ظهرًا — ١٢ منتصف الليل",
+{id:1,n:"كي",c:"ياباني",km:412,br:2,r:4.7,st:"ok",q:0,m:0,area:"حي الياسمين",city:"الرياض",hrs:"١٢ ظهرًا — ١٢ منتصف الليل",
  mk:`<div class="mk" style="background:#111"><span style="font-family:'Alexandria',sans-serif;font-weight:700;font-size:1.2em;color:#fff">KI</span></div>`},
-{id:2,n:"إفيكتو",c:"بيتزا نابولية",br:1,r:4.8,st:"ok",q:0,m:0,area:"طريق الملك عبدالله",city:"بريدة",hrs:"١ ظهرًا — ١ صباحًا",
+{id:2,n:"إفيكتو",c:"بيتزا نابولية",km:328,br:1,r:4.8,st:"ok",q:0,m:0,area:"طريق الملك عبدالله",city:"بريدة",hrs:"١ ظهرًا — ١ صباحًا",
  mk:`<div class="mk" style="background:#1e5137"><span style="width:88%;aspect-ratio:1;border:1px solid #d9bf9c;border-radius:50%;display:grid;place-items:center;font-family:'DM Serif Display',serif;font-size:.72em;color:#e3c9a6">eficto</span></div>`},
-{id:3,n:"بيت المونة",c:"شعبي",br:2,r:4.5,st:"ok",q:0,m:0,area:"حي المروج",city:"الرياض",hrs:"٧ صباحًا — ١١ مساءً",
+{id:3,n:"بيت المونة",c:"شعبي",km:293,br:2,r:4.5,st:"ok",q:0,m:0,area:"حي المروج",city:"الرياض",hrs:"٧ صباحًا — ١١ مساءً",
  mk:`<div class="mk" style="background:#fff"><span style="width:86%;aspect-ratio:1;border-radius:50%;background:#264d3a;display:grid;place-items:center;font-family:'Reem Kufi',sans-serif;font-size:.58em;color:#eadfc9">المونة</span></div>`},
-{id:4,n:"تكية",c:"سعودي معاصر",br:3,r:4.6,st:"wait",q:2,m:8,area:"حي حطين",city:"الرياض",hrs:"١ ظهرًا — ١٢ منتصف الليل",
+{id:4,n:"تكية",c:"سعودي معاصر",km:307,br:3,r:4.6,st:"wait",q:2,m:8,area:"حي حطين",city:"الرياض",hrs:"١ ظهرًا — ١٢ منتصف الليل",
  mk:`<div class="mk" style="background:#f2ebdd"><span style="font-family:'Reem Kufi',sans-serif;font-size:.9em;color:#4a3423">تكية</span></div>`},
-{id:5,n:"لوكو",c:"برجر",br:1,r:4.7,st:"wait",q:3,m:12,area:"حي النرجس",city:"الرياض",hrs:"٤ عصرًا — ٢ صباحًا",
+{id:5,n:"لوكو",c:"برجر",km:311,br:1,r:4.7,st:"wait",q:3,m:12,area:"حي النرجس",city:"الرياض",hrs:"٤ عصرًا — ٢ صباحًا",
  mk:`<div class="mk" style="background:#fff"><span style="font-family:'DM Serif Display',serif;font-style:italic;font-size:1.15em;color:#0d0d0d">Loco</span></div>`},
-{id:6,n:"لازونا",c:"مطعم",br:5,r:4.7,st:"wait",q:6,m:20,area:"حي الملقا",city:"الرياض",hrs:"١٢ ظهرًا — ١٢ منتصف الليل",
+{id:6,n:"لازونا",c:"مطعم",km:302,br:5,r:4.7,st:"wait",q:6,m:20,area:"حي الملقا",city:"الرياض",hrs:"١٢ ظهرًا — ١٢ منتصف الليل",
  mk:`<div class="mk" style="background:#d9c9b0"><span style="font-family:'DM Serif Display',serif;font-size:.62em;letter-spacing:.12em;color:#6a4a2f">LAZONA</span></div>`},
-{id:7,n:"نُوّ",c:"بحري",br:1,r:4.8,st:"shut",q:0,m:0,area:"الكورنيش",city:"جدة",hrs:"٤ عصرًا — ١٢ منتصف الليل",
+{id:7,n:"نُوّ",c:"بحري",km:738,br:1,r:4.8,st:"shut",q:0,m:0,area:"الكورنيش",city:"جدة",hrs:"٤ عصرًا — ١٢ منتصف الليل",
  mk:`<div class="mk" style="background:#0c0c0c"><span style="font-family:'DM Serif Display',serif;font-size:.66em;letter-spacing:.22em;color:#fff">NOU</span></div>`},
-{id:8,n:"برايم كت",c:"مشاوي",br:4,r:4.3,st:"shut",q:0,m:0,area:"حي السليمانية",city:"الرياض",hrs:"٤ عصرًا — ١٢ منتصف الليل",
+{id:8,n:"برايم كت",c:"مشاوي",km:299,br:4,r:4.3,st:"shut",q:0,m:0,area:"حي السليمانية",city:"الرياض",hrs:"٤ عصرًا — ١٢ منتصف الليل",
  mk:`<div class="mk" style="background:#fff"><span style="font-family:'Alexandria',sans-serif;font-weight:700;font-size:.56em;letter-spacing:.06em;color:#111">PRIME CUT</span></div>`}];
 
 const STR={open:"الباب مفتوح",wait:"{q} قبلك · {m} د",shut:"مغلق الآن",gOpen:"الباب مفتوح",gWait:"فيه دور",
@@ -972,7 +1468,7 @@ const STR={open:"الباب مفتوح",wait:"{q} قبلك · {m} د",shut:"مغ
  about:"عن إيت",turnsN:"عدد أدوارك",fav:"مطعمك الأكثر زيارة",favV:"تكية",saved:"دورك محفوظ",info:"المعلومات",
  hours:"الدوام",branches:"الفروع",now:"الحالة الآن",people:"{p} أشخاص",rating:"تقييم",waitMin:"دقيقة انتظار",
  nowAhead:"قبلك الآن",noWait:"بلا انتظار",myName:"محمد",myPhone:"‎+966 5X XXX XXXX"};
-const SIG={list:'',rest:'',confirm:'',ticket:'',turns:'',me:''};
+const SIG={list:'',rest:'',confirm:'',ticket:'',turns:'',me:'',home:'',live:'',qcard:''};
 const S={tab:"list",view:"list",rest:null,party:2,ticket:null,done:[],scene:'full'};
 
 /* خط الأساس يخلط: القائمة بأرقام لاتينية والتذكرة بعربية-هندية.
@@ -1137,7 +1633,164 @@ function scrMe(){return `${HD(STR.tabMe)}<div class="scroll">
   <span data-el="me.saved" data-tok="c.me.saved,s.ink3" style="font-size:var(--c-me-saved);color:var(--s-ink3)">${STR.saved}</span></div>
  <div style="height:12px"></div></div>${NAVB()}`}
 
-const SCREENS=[['list','القائمة'],['rest','المطعم'],['confirm','التأكيد'],['ticket','التذكرة'],['turns','دوري'],['me','أنا']];
+/* ══════════════════════════════════════════════════════════════
+   شاشات التطبيق الحيّ — ما يراه العميل اليوم في ei8ht.app
+   ══════════════════════════════════════════════════════════════ */
+const IC={
+ search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+ back:'<path d="M9 6l6 6-6 6"/>',
+ share:'<path d="M12 15V4m0 0L8.5 7.5M12 4l3.5 3.5"/><path d="M5 13v5a2 2 0 002 2h10a2 2 0 002-2v-5"/>',
+ filter:'<path d="M4 7h16M7 12h10M10 17h4"/>',
+ chev:'<path d="M6 9l6 6 6-6"/>',
+ chevup:'<path d="M6 15l6-6 6 6"/>',
+ pin:'<path d="M12 21s7-5.7 7-11a7 7 0 10-14 0c0 5.3 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+ fork:'<path d="M7 3v7a2 2 0 002 2v9M7 3v5M10 3v5"/><path d="M16 3c-1.5 1.5-2 3-2 5s.7 2.5 2 2.5V21"/>',
+ list:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+ people:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-5 6-5s6 1.7 6 5"/><path d="M16 6.5a3 3 0 010 5.5M17 15c2.4.5 4 2.2 4 5"/>',
+ card:'<rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="11" r="2"/><path d="M13 10h5M13 14h5M5.5 16c.8-1.4 4.4-1.4 5.2 0"/>',
+ chat:'<path d="M20 12a7 7 0 01-7 7H8l-4 3v-5.6A7 7 0 0111 5h2a7 7 0 017 7z"/>',
+ image:'<rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="8.5" cy="10" r="1.6"/><path d="m4.5 18 5-5 4.5 4.5 2.5-2.5 3 3"/>',
+ gift:'<rect x="3" y="9" width="18" height="11" rx="2"/><path d="M3 13h18M12 9v11"/><path d="M12 9S9.5 4 7.5 5.5 9 9 12 9zM12 9s2.5-5 4.5-3.5S15 9 12 9z"/>',
+ bell:'<path d="M18 15V10a6 6 0 10-12 0v5l-2 3h16z"/><path d="M10 21h4"/>',
+ arrow:'<path d="M14 6l-6 6 6 6"/>'};
+const svg=k=>`<svg viewBox="0 0 24 24" aria-hidden="true">${IC[k]}</svg>`;
+const STARS=(n,cls)=>`<span class="stars${cls?' '+cls:''}">${
+  [1,2,3,4,5].map(i=>`<span class="${i<=n?'on':''}">★</span>`).join('')}</span>`;
+
+/* حالة الشاشات الحيّة */
+const LIVE={tab:'wait',cat:true,stars:0,branch:0};
+
+const HD2=(left,mid)=>`<div class="hd2" data-el="header2"
+  data-tok="c.hd2.pt,c.hd2.pb,c.hd2.radius,c.hd-gap,c.gutter,s.header2.bg">
+  ${BADGE('','logo.badge')}<span class="hdmid">${mid}</span>${left}</div>`;
+const CBTN=(icon,el2)=>`<span class="cbtn" data-el="${el2||'circlebtn'}"
+  data-tok="c.cbtn.size,c.cbtn.radius,c.cbtn.icon,c.cbtn.tint,c.icon.stroke,s.brand.text">${svg(icon)}</span>`;
+const RCTA=(x)=>{const open=x.st!=='shut';
+  const txt=x.st==='ok'?'متاح الآن · بدون انتظار':x.st==='wait'?`استقبال مباشر · ${NUM(x.q)} قبلك`:'مغلق الآن';
+  return `<button class="rc-cta${open?'':' shut'}" data-rest="${x.id}" data-el="card.cta"
+   data-tok="c.cta.mt,c.cta.pad,c.cta.radius,c.cta.gap,c.cta.size,c.cta.weight,c.cta.dot,c.cta.dot.opacity,c.cta.go.opacity,c.cta.shut.desat,s.brand,s.brand.ink">
+   <i class="d"></i><span class="t">${txt}</span><span class="go">${open?'خذ دورك ←':'التفاصيل ←'}</span></button>`};
+const RCARD=x=>`<div class="rcard" data-el="card"
+  data-tok="c.rcard.radius,c.rcard.pad,c.rcard.gap,c.rcard.inner.gap,c.rcard.shadow,c.gutter,s.bg">
+  <div class="rc-top">
+    <span class="rc-img" data-el="card.image" data-tok="c.rc.img,c.rc.img.radius,c.photo.a,c.photo.hue,c.photo.sat"></span>
+    <span class="rc-tx">
+      <h4 data-el="card.name" data-tok="c.rc.name,c.rc.name.weight,c.name.font,s.ink">${x.n}</h4>
+      <span class="m" data-el="card.meta" data-tok="c.rc.meta,c.rc.meta.mt,s.ink3">${x.c} · ${x.city}</span>
+      <span class="dist" data-el="card.distance" data-tok="c.rc.dist,c.rc.dist.weight,c.rc.dist.gap,c.rc.dist.mt,c.icon.stroke,s.brand.text">${svg('pin')} يبعد ${NUM(x.km)} كم</span>
+    </span>
+    <span class="rc-rate" data-el="card.rating" data-tok="c.rc.rate,c.rc.rate.gap,c.num.font,s.gold,s.ink"><span class="st">★</span>${x.r}</span>
+  </div>${RCTA(x)}</div>`;
+
+function scrHome(){
+  const rows=DATA.filter(x=>x.st!=='shut');
+  return `${HD2(CBTN('search','header2.search'),WM())}
+  <div class="scroll">
+   <div class="fbar"><button class="fpill" data-el="filter"
+     data-tok="c.fpill.pad,c.fpill.gap,c.fpill.size,c.fpill.weight,c.fpill.icon,c.fbar.pt,c.icon.stroke,s.brand,s.brand.ink">
+     ${svg('filter')}<span>تصفية</span>${svg('chev')}</button></div>
+   <div class="slabel" data-el="section.label"
+     data-tok="c.slabel.pt,c.slabel.pb,c.slabel.gap,c.slabel.size,c.slabel.weight,c.slabel.count,c.slabel.bar.w,c.slabel.bar.h,c.gutter,s.brand,s.ink,s.ink3">
+     <i></i><span>متاح الآن · بدون انتظار</span><b>${NUM(rows.length)}</b></div>
+   ${rows.map(RCARD).join('')}
+   <div style="height:var(--c-fab-size)"></div>
+  </div>
+  <button class="fab" data-el="fab" data-tok="c.fab.size,c.fab.icon,c.fab.x,c.fab.y,c.fab.shadow,c.icon.stroke,s.brand,s.brand.ink">${svg('fork')}</button>
+  ${NAVB()}`}
+
+const RTABS=()=>{const T=[['wait','الانتظار','people'],['menu','القائمة','card'],['rev','التقييمات','chat'],['media','ميديا','image']];
+  return `<div class="tabs" data-el="tabs"
+    data-tok="c.tabs.mt,c.tabs.gap,c.tabs.pad,c.tabs.radius,c.tabs.shadow,c.gutter,s.surface">${
+    T.map(([k,l,ic])=>`<button class="tb${LIVE.tab===k?' on':''}" data-ltab="${k}" data-el="tab.${k}"
+      data-tok="c.tb.py,c.tb.radius,c.tb.gap,c.tb.icon,c.tb.size,c.tb.weight,c.tb.on.shadow,c.icon.stroke,s.brand,s.brand.ink,s.bg,s.line">
+      ${svg(ic)}<span>${l}</span></button>`).join('')}</div>`};
+
+function liveHead(x){
+  return `${HD2(CBTN('share','header2.share')+CBTN('back','header2.back'),'')}
+  <div class="avwrap"><span class="avatar" data-el="avatar"
+    data-tok="c.avatar.size,c.avatar.radius,c.avatar.ring,c.avatar.drop,c.avatar.shadow,s.bg">${x.mk}</span></div>
+  ${RTABS()}`}
+
+function liveWait(x){
+  return `<div class="bwrap" data-el="branches" data-tok="c.bwrap.pt,c.bwrap.gap,c.gutter">${
+   [0,1].map(i=>`<div class="bcard" data-el="branch.card" data-tok="c.bcard.w,c.bcard.radius,c.rcard.shadow,s.bg">
+     <div class="bimg" data-el="branch.image" data-tok="c.bimg.h,c.bimg.pad,c.bimg.title,c.bimg.title.weight,c.bimg.sub,c.bimg.sub.opacity,c.bimg.scrim,c.photo.a,c.photo.hue,c.photo.sat">
+      <b>${i?'فرع الشمال':'الفرع الرئيسي'}</b><em>${x.city}</em></div>
+     <div class="bcta" data-el="branch.cta" data-tok="c.bcta.m">${RCTA(x)}</div></div>`).join('')}</div>
+  <div class="dots" data-el="dots" data-tok="c.dots.pt,c.dots.gap,c.dot.size,c.dot.on.w,s.brand,s.line"><i class="on"></i><i></i></div>
+  <div class="sect" data-el="sect" data-tok="c.sect.pt,c.sect.pb,c.sect.size,c.sect.tracking,c.sect.font,c.sect.case,s.ink3">الهدايا والمكافآت</div>
+  <button class="gift" data-el="gift"
+    data-tok="c.gift.mt,c.gift.pad,c.gift.radius,c.gift.gap,c.gift.size,c.gift.weight,c.gift.icon,c.cta.go.opacity,c.gutter,c.icon.stroke,s.brand,s.brand.ink">
+    ${svg('gift')}<span>عندك هديّة خاصة؟ اعرفها برقمك</span><span class="go">←</span></button>
+  <div class="sect" data-el="sect" data-tok="c.sect.pt,c.sect.pb,c.sect.size,c.sect.tracking,c.sect.font,c.sect.case,s.ink3">صور من المطعم</div>
+  <div class="gal" data-el="gallery" data-tok="c.gal.pt,c.gal.gap,c.gal.w,c.gal.h,c.gal.radius,c.photo.b,c.gutter"><span></span><span></span><span></span></div>`}
+
+const MENUD=[['البريسكت المدخن','بيتزا فاخرة بصلصة البارميزان والبروفلون، تُغنى بمزيج لحم الريز…',59],
+ ['بيروني','طعة فنية في عالم البيتزا، بقاعدة هشة ومقرمشة، وصلصة طماط…',48],
+ ['بيستو','طعة فنية في عالم البيتزا، بقاعدة هشة ومقرمشة، وصلصة طماط…',48],
+ ['بولو آلا جريليا','ناعدة رقيقة ومقرمشة مع قطع دجاج مشوي، صلصة بيضاء غنية،…',48]];
+function liveMenu(){
+  return `<div class="pcard" data-el="panel.card" data-tok="c.pcard.radius,c.pcard.pad,c.pcard.mt,c.rcard.shadow,c.gutter,s.bg">
+   <button class="mhead" data-lcat="1" data-el="menu.head"
+     data-tok="c.mhead.py,c.mhead.size,c.mhead.weight,c.mhead.chev,c.icon.stroke,s.ink,s.ink3">
+     <span>بيتزا</span><span class="ch">${svg(LIVE.cat?'chevup':'chev')}</span></button>
+   ${LIVE.cat?MENUD.map(([n,d,pr])=>`<div class="mrow" data-el="menu.row"
+     data-tok="c.mrow.py,c.mrow.gap,c.mrow.img,c.mrow.img.radius,c.mrow.name,c.mrow.name.weight,c.mrow.desc,c.mrow.desc.lh,c.mrow.desc.mt,c.mrow.price,c.mrow.price.weight,c.photo.b,c.line.w,s.line,s.ink,s.ink3,s.brand.text">
+     <span class="mimg"></span><span class="mtx"><h6>${n}</h6><p>${d}</p></span>
+     <span class="mprice">${NUM(pr)} ر.س</span></div>`).join(''):''}</div>`}
+
+function liveRev(x){
+  const dist=[62,22,9,4,3];
+  return `<div class="pcard" data-el="panel.card" data-tok="c.pcard.radius,c.pcard.pad,c.pcard.mt,c.pcard.title,c.pcard.title.weight,c.pcard.title.mb,c.rcard.shadow,c.gutter,s.bg">
+   <h5>قيّم تجربتك</h5>
+   <div data-el="review.stars" data-tok="c.stars.size,c.stars.gap,s.gold,s.star.empty">${STARS(LIVE.stars)}</div>
+   <div class="finp" data-el="review.input" data-tok="c.finp.pad,c.finp.radius,c.finp.size,c.finp.mt,c.line.w,s.line,s.ink3">05xxxxxxxx</div>
+   <div class="finp ta" data-tok="c.finp.ta.h">شاركنا رأيك (اختياري)</div>
+   <div style="margin-top:var(--c-finp-mt)"><button class="act soft" data-el="review.submit"
+     data-tok="c.soft.mix,c.button.radius,c.button.pad,c.button.size,c.button.weight,s.brand.ink">أرسل التقييم</button></div>
+   <div class="note" style="font-size:var(--c-note-size);color:var(--s-ink3);text-align:center;margin-top:12px;line-height:var(--c-note-lh)">التقييم لمن زار فعلًا خلال آخر ٧ أيام — نتحقّق برقم جوّالك.</div>
+  </div>
+  <div class="pcard" data-el="review.summary" data-tok="c.rsum.gap,c.rsum.num,c.rsum.num.weight,c.rsum.count,c.bars.gap,c.bars.h,c.bars.label,s.gold,s.surface.pressed">
+   <div class="rsum"><div class="big"><b>${x.r}</b>${STARS(Math.round(x.r))}<span>${NUM(66)} تقييم</span></div>
+    <div class="bars">${dist.map((v,i)=>`<div class="b"><span>${NUM(5-i)}</span><i><u style="width:${v}%"></u></i></div>`).join('')}</div>
+   </div></div>`}
+
+function liveMedia(x){
+  return `<div class="pcard" data-el="panel.card" data-tok="c.pcard.radius,c.pcard.pad,c.pcard.mt,c.rcard.shadow,c.gutter,s.bg">
+   <div class="rc-top"><span class="rc-img" data-el="card.image" style="border-radius:50%;background:var(--s-chip-bg)">${x.mk}</span>
+    <span class="rc-tx"><h4>${x.n}</h4><span class="m">${x.c}</span>
+     <span class="dist">★ ${x.r} · ${NUM(66)} تقييم</span></span></div></div>
+  <div class="pad" style="padding:var(--c-pcard-mt) var(--c-gutter) 0"><button class="act" data-el="button.primary"
+    data-tok="c.button.radius,c.button.pad,c.button.size,c.button.weight,s.brand,s.brand.ink">متابعة</button></div>
+  <div class="pcard" style="text-align:center;color:var(--s-ink3);font-size:var(--c-line-size)">الطعم الايطالي على أصوله</div>
+  <div class="pcard" style="text-align:center">
+   <span class="cbtn" style="margin:0 auto;border-radius:50%;background:var(--s-brand);color:var(--s-brand-ink);width:var(--c-fab-size);height:var(--c-fab-size)">${svg('bell')}</span>
+   <h5 style="margin-top:12px">تابع المطعم</h5>
+   <div style="font-size:var(--c-note-size);color:var(--s-ink3);line-height:var(--c-note-lh)">تظهر في مفضّلتك للوصول السريع لقائمته وطابوره وهداياه من جهازك.</div></div>`}
+
+function scrLive(){const x=DATA.find(r=>r.id===S.rest)||DATA[1];
+  const body=LIVE.tab==='menu'?liveMenu():LIVE.tab==='rev'?liveRev(x):LIVE.tab==='media'?liveMedia(x):liveWait(x);
+  return `${liveHead(x)}<div class="scroll">${body}<div style="height:18px"></div></div>${NAVB()}`}
+
+function scrQcard(){const x=DATA.find(r=>r.id===S.rest)||DATA[1];
+  return `${BACK(STR.back)}<div class="scroll">
+   <div class="qhero" data-el="qcard.hero" data-tok="c.qhero.h,c.qhero.m,c.qhero.radius,c.photo.a,c.photo.hue,c.photo.sat"></div>
+   <div class="qtitle" data-el="qcard.title" data-tok="c.qtitle.pt,c.qtitle.size,c.qtitle.weight,c.qgreet.size,c.qgreet.weight,c.qgreet.mt,c.title.font,c.gutter,s.ink,s.brand.text">
+    <h2>${x.city}</h2><span>حيّاك الله</span></div>
+   <div class="qbox" data-el="qcard.box" data-tok="c.qbox.mt,c.qbox.pad,c.qbox.radius,c.rcard.shadow,c.gutter,s.bg">
+    <div class="ring" data-el="qcard.ring" data-tok="c.ring.size,c.ring.w,c.ring.num,c.ring.num.weight,c.ring.lab,c.ring.lab.tracking,c.ring.lab.mt,c.num.font,s.brand,s.brand.text,s.ink3">
+     <b>${NUM(1)}</b><span>رقم دورك</span></div>
+    <h3 data-el="qcard.state" data-tok="c.qstate.mt,c.qstate.size,c.qstate.weight,s.ink">أنت التالي</h3>
+    <div class="qsub" data-el="qcard.sub" data-tok="c.qsub.size,c.qsub.mt,s.ink3">استعد — جاي دورك</div>
+    <div class="tiles" data-el="qcard.tiles" data-tok="c.tiles.gap,c.tiles.mt,c.tile.pad,c.tile.radius,c.tile.num,c.tile.num.weight,c.tile.lab,s.surface.pressed,s.brand.text,s.ink3">
+     <div><b>التالي</b><span>أنت</span></div><div><b>${NUM(1)}</b><span>إجمالي الطابور</span></div></div>
+    <div style="margin-top:var(--c-tiles-mt)"><button class="act icon" data-el="qcard.notify"
+      data-tok="c.acticon.gap,c.acticon.size,c.button.radius,c.button.pad,c.button.size,c.button.weight,c.icon.stroke,s.brand,s.brand.ink">
+      ${svg('bell')}<span>نبّهني قبل دوري</span></button></div>
+   </div><div style="height:18px"></div></div>${NAVB()}`}
+
+const SCREENS=[['list','القائمة'],['rest','المطعم'],['confirm','التأكيد'],['ticket','التذكرة'],['turns','دوري'],['me','أنا'],
+ ['home','الرئيسية ★'],['live','المطعم الحيّ ★'],['qcard','بطاقة الدور ★']];
 function screenHTML(key){
   const save={tab:S.tab,view:S.view,rest:S.rest,ticket:S.ticket};
   if(key==='rest'){S.view='rest';S.rest=S.rest||4}
@@ -1145,16 +1798,23 @@ function screenHTML(key){
   else if(key==='ticket'){S.view='ticket'}
   else if(key==='turns'){S.tab='turns';S.view='list'}
   else if(key==='me'){S.tab='me';S.view='list'}
+  else if(key==='home'||key==='live'||key==='qcard'){S.view=key;S.rest=S.rest||2}
   else{S.tab='list';S.view='list'}
   const h=key==='rest'?scrRest():key==='confirm'?scrConfirm():key==='ticket'?scrTicket()
+    :key==='home'?scrHome():key==='live'?scrLive():key==='qcard'?scrQcard()
     :key==='turns'?scrTurns():key==='me'?scrMe():scrList();
   Object.assign(S,save);return h}
-function currentKey(){return S.view==='rest'?'rest':S.view==='confirm'?'confirm':S.view==='ticket'?'ticket'
+function currentKey(){
+  if(S.view==='home'||S.view==='live'||S.view==='qcard')return S.view;
+  return S.view==='rest'?'rest':S.view==='confirm'?'confirm':S.view==='ticket'?'ticket'
   :S.tab==='turns'?'turns':S.tab==='me'?'me':'list'}
 function render(){
-  const h=(S.view==='rest'?scrRest():S.view==='confirm'?scrConfirm():S.view==='ticket'?scrTicket()
+  const h=(S.view==='home'?scrHome():S.view==='live'?scrLive():S.view==='qcard'?scrQcard()
+    :S.view==='rest'?scrRest():S.view==='confirm'?scrConfirm():S.view==='ticket'?scrTicket()
     :S.tab==='turns'?scrTurns():S.tab==='me'?scrMe():scrList());
   $('#app').innerHTML=h+`<div class="toastr" id="tr"></div>`;
+  /* في RTL يبدأ كروم الشريط الأفقي من اليسار — نعيده إلى اليمين */
+  $$('#app .bwrap, #app .gal').forEach(n=>{n.scrollLeft=n.scrollWidth});
   applyFreeMove($('#app'));
   if(SHEET)renderSheet();
   if(ABON)renderAB();
@@ -1251,6 +1911,351 @@ function snap(name){
   SNAPS.push({n:n,t:new Date().toLocaleString('ar-SA'),s:snapshotState()});save();buildPanel();toast('حُفظت اللقطة: '+n)}
 
 /* ══════════════════════════════════════════════════════════════
+   ٦٫٥) مكتبة الخطوط
+   كل سطر: [الاسم, النصّ, التصنيف, البديل, الأوزان المتاحة, ملاحظة]
+   النصّ: 'ar' يكتب العربية · 'la' لاتيني فقط
+   الأوزان: نصّ يُحقن في رابط جوجل. '100..900' = خطّ متغيّر.
+   ══════════════════════════════════════════════════════════════ */
+const FONTLIB=[
+/* ── عربي · هندسي وحديث ── */
+['IBM Plex Sans Arabic','ar','هندسي','sans-serif','100;200;300;400;500;600;700','واضح ومحايد، يُقرأ صغيرًا بلا تعب. خطّ خط الأساس الحالي.'],
+['Tajawal','ar','هندسي','sans-serif','200;300;400;500;700;800;900','سعودي المزاج، دافئ ومألوف. خطّ واجهة «دور» في المشروع.'],
+['Almarai','ar','هندسي','sans-serif','300;400;700;800','عريض واثق في الثقيل، هادئ في العادي. للعناوين.'],
+['Cairo','ar','هندسي','sans-serif','200..1000','الأوسع انتشارًا. آمن لكنه شائع — يقلّل تميّز الشكل.'],
+['Cairo Play','ar','عرض','sans-serif','200..1000','نسخة مرحة من Cairo بحركة في الأطراف.'],
+['Alexandria','ar','هندسي','sans-serif','100..900','حادّ ومعاصر، ممتاز للعناوين القصيرة والشعارات.'],
+['Readex Pro','ar','هندسي','sans-serif','160..700','متغيّر بمحور عرض حقيقي. مصمَّم للقراءة الطويلة.'],
+['Rubik','ar','هندسي','sans-serif','300..900','زوايا مدوّرة قليلًا، ودود بلا طفولة.'],
+['Vazirmatn','ar','هندسي','sans-serif','100..900','فارسي الأصل، متّزن جدًّا في الأحجام الصغيرة.'],
+['Noto Sans Arabic','ar','هندسي','sans-serif','100..900','مرجع الحياد. لا شخصية له — وهذا أحيانًا المطلوب.'],
+['Noto Kufi Arabic','ar','كوفي','sans-serif','100..900','كوفي معاصر، هندسي صارم. قويّ للشعارات.'],
+['Reem Kufi','ar','كوفي','sans-serif','400;500;600;700','كوفي أنيق بأطراف مربّعة. مستعمل في شعارات المطاعم بالمعاينة.'],
+['Reem Kufi Fun','ar','كوفي','sans-serif','400;500;600;700','Reem بروح ألعب — أطراف أطرى.'],
+['Reem Kufi Ink','ar','كوفي','sans-serif','400','كوفي بحبر سائل، أثر ريشة.'],
+['Kufam','ar','كوفي','sans-serif','400..700','كوفي عريض بمساحات سوداء واسعة.'],
+['Changa','ar','هندسي','sans-serif','200..800','ضيّق قليلًا فيوفّر عرضًا — نافع للأسماء الطويلة.'],
+['El Messiri','ar','عرض','sans-serif','400..700','شخصية قوية بأطراف حادّة، بين الكوفي والحديث.'],
+['Mada','ar','هندسي','sans-serif','200;300;400;500;600;700;900','بسيط جدًّا وواسع الفتحات.'],
+['Marhey','ar','عرض','sans-serif','300..700','مرح ومنحني، مناسب لعروض وهدايا.'],
+['Baloo Bhaijaan 2','ar','عرض','sans-serif','400..800','سمين ومستدير، صوت طفولي دافئ.'],
+['Harmattan','ar','نسخ','sans-serif','400;700','نسخ مبسّط خفيف الحبر.'],
+['Alkalami','ar','نسخ','serif','400','قلم عريض بأثر الخطّ اليدوي المغربي.'],
+/* ── عربي · كلاسيكي ── */
+['Amiri','ar','نسخ','serif','400;700','نسخ كلاسيكي فاخر. أجمل خطّ عربي للنصّ الطويل الرسمي.'],
+['Amiri Quran','ar','نسخ','serif','400','Amiri بضبط تامّ للحركات.'],
+['Scheherazade New','ar','نسخ','serif','400;500;600;700','نسخ واسع مريح للعين، ممتاز للفقرات.'],
+['Lateef','ar','نسخ','serif','200;300;400;500;600;700;800','نسخ رفيع طويل النزول، شرقي الطابع.'],
+['Noto Naskh Arabic','ar','نسخ','serif','400;500;600;700','نسخ محايد بجودة عالية في كل المقاسات.'],
+['Markazi Text','ar','نسخ','serif','400..700','نسخ معاصر مصمَّم للنصّ لا للعنوان.'],
+['Aref Ruqaa','ar','رقعة','serif','400;700','رقعة فاخرة — للعنوان وحده، لا يُقرأ فقرةً.'],
+['Aref Ruqaa Ink','ar','رقعة','serif','400;700','رقعة بحبر سائل وأثر ريشة.'],
+['Mirza','ar','رقعة','serif','400;500;600;700','نستعليق مبسّط بميل شرقي.'],
+['Gulzar','ar','رقعة','serif','400','نستعليق حقيقي — جمالي بحت.'],
+['Noto Nastaliq Urdu','ar','رقعة','serif','400..700','نستعليق كامل بارتفاعات سطر عالية.'],
+/* ── عربي · عرض وشعارات ── */
+['Lalezar','ar','عرض','sans-serif','400','عريض بوستري بصوت عالٍ.'],
+['Rakkas','ar','عرض','serif','400','مستوحى من لافتات الشوارع القديمة.'],
+['Jomhuria','ar','عرض','serif','400','ضخم جدًّا — عنوان واحد يملأ الشاشة.'],
+['Katibeh','ar','عرض','serif','400','رفيع ممتدّ، أثر لوحة معدنية.'],
+['Qahiri','ar','كوفي','sans-serif','400','كوفي هندسي صارم جدًّا.'],
+['Blaka','ar','عرض','serif','400','تجريبي بأثر حبر متفجّر.'],
+['Handjet','ar','عرض','sans-serif','100..900','بكسلي/شبكي — للتجريب لا للإنتاج.'],
+/* ── لاتيني · رقيق ── */
+['DM Serif Display','la','رقيق','serif','400','رقيق عالي التباين. خطّ الرقم والشعار في خط الأساس.'],
+['DM Serif Text','la','رقيق','serif','400','نسخة DM للنصّ لا للعنوان — عروق أسمك.'],
+['Playfair Display','la','رقيق','serif','400..900','تباين حادّ وأنوثة واضحة. شائع جدًّا.'],
+['Prata','la','رقيق','serif','400','ديدون نظيف — كان أقرب مرشّح لخطّ الشعار المعتمد.'],
+['Bodoni Moda','la','رقيق','serif','400..900','بودوني حقيقي بعروق شعرية. فاخر وبارد.'],
+['Cormorant Garamond','la','عريق','serif','300..700','جارامون رفيع، أرستقراطي وخفيف.'],
+['EB Garamond','la','عريق','serif','400..800','جارامون كلاسيكي دافئ للنصّ الطويل.'],
+['Libre Baskerville','la','عريق','serif','400;700','باسكرفيل للشاشة — عريض ومريح.'],
+['Lora','la','عريق','serif','400..700','عصري بأطراف منحنية قليلًا.'],
+['Crimson Pro','la','عريق','serif','200..900','قديم الطراز، ممتاز للفقرات.'],
+['Spectral','la','عريق','serif','200;300;400;500;600;700;800','مصمَّم للشاشة أصلًا، متّزن ومريح.'],
+['Source Serif 4','la','عريق','serif','200..900','رصين تقني، جيّد للنصوص المختلطة.'],
+['Newsreader','la','عريق','serif','200..800','صحفي بمحور بصري opsz حقيقي.'],
+['Literata','la','عريق','serif','200..900','خطّ قارئ جوجل — كان مرشّح مواصفة الشعار.'],
+['Petrona','la','عريق','serif','100..900','دافئ بأطراف طريّة.'],
+['Young Serif','la','عرض','serif','400','ثقيل بأطراف قصيرة — عنوان قويّ جدًّا.'],
+['Instrument Serif','la','رقيق','serif','400','ضيّق وأنيق، مساحة اقتصادية.'],
+['Fraunces','la','عرض','serif','100..900','متغيّر بمحاور «طراوة» و«تباين» — أكثر خطّ يلعب.'],
+['Cinzel','la','عرض','serif','400..900','حروف رومانية منقوشة — فخامة أثرية.'],
+['Marcellus','la','عرض','serif','400','نقشي هادئ بمحارف كبيرة جميلة.'],
+['Italiana','la','رقيق','serif','400','رفيع جدًّا وواسع — مجلّات الأزياء.'],
+['Tenor Sans','la','هندسي','sans-serif','400','بلا أذناب لكن بروح نقشية.'],
+/* ── لاتيني · بلا أذناب ── */
+['Inter','la','هندسي','sans-serif','100..900','مرجع واجهات اليوم. محايد ومقروء.'],
+['Archivo','la','هندسي','sans-serif','100..900','بمحور عرض حقيقي — كان مرشّح كلمة الشعار.'],
+['Work Sans','la','هندسي','sans-serif','100..900','واسع وودود، جيّد للعناوين المتوسّطة.'],
+['Space Grotesk','la','هندسي','sans-serif','300..700','تقني بأطراف غريبة — شخصية واضحة.'],
+['Manrope','la','هندسي','sans-serif','200..800','هندسي نظيف بأرقام جميلة.'],
+['Outfit','la','هندسي','sans-serif','100..900','دائري متساوي — حديث جدًّا.'],
+['Sora','la','هندسي','sans-serif','100..800','مربّع الأطراف، صوت منتَج تقني.'],
+['Syne','la','عرض','sans-serif','400..800','غريب ومتنافر عمدًا — للهويات الجريئة.'],
+['Figtree','la','هندسي','sans-serif','300..900','ودود ومحايد في آن.'],
+['Plus Jakarta Sans','la','هندسي','sans-serif','200..800','دافئ بأطراف مقصوصة بزاوية.'],
+['Public Sans','la','هندسي','sans-serif','100..900','رسمي حكومي — وضوح قبل كل شيء.'],
+['Urbanist','la','هندسي','sans-serif','100..900','دائري بحت، خفيف الحضور.'],
+['Jost','la','هندسي','sans-serif','100..900','باوهاوس هندسي — دوائر كاملة.'],
+['Karla','la','هندسي','sans-serif','200..800','نحيف الأطراف بروح غريبة لطيفة.'],
+['Onest','la','هندسي','sans-serif','100..900','معاصر متّزن بأرقام واضحة.'],
+['Gabarito','la','عرض','sans-serif','400..900','سمين ودود — أزرار وعناوين.'],
+['Schibsted Grotesk','la','هندسي','sans-serif','400..900','صحفي معاصر، حادّ قليلًا.'],
+['Bricolage Grotesque','la','عرض','sans-serif','200..800','متغيّر بمحاور عرض وبصر — يلعب كثيرًا.'],
+['Familjen Grotesk','la','هندسي','sans-serif','400..700','اسكندنافي هادئ.'],
+['Anton','la','عرض','sans-serif','400','ثقيل ضيّق جدًّا — لافتة.'],
+['Oswald','la','عرض','sans-serif','200..700','ضيّق طويل — عناوين عمودية.'],
+['Bebas Neue','la','عرض','sans-serif','400','محارف كبيرة فقط، ضيّق وحادّ.'],
+['Big Shoulders Display','la','عرض','sans-serif','100..900','ضيّق جدًّا وصناعي.'],
+['DM Sans','la','هندسي','sans-serif','100..900','هندسي صغير الفتحات، هادئ.'],
+/* ── أحادي المسافة ── */
+['JetBrains Mono','la','أحادي','monospace','100..800','أحادي بأرقام مميّزة — للأكواد والأرقام الصارمة.'],
+['IBM Plex Mono','la','أحادي','monospace','100;200;300;400;500;600;700','أحادي رصين يشبه خطّ الواجهة الحالي.'],
+['Space Mono','la','أحادي','monospace','400;700','أحادي غريب الأطراف — شخصية قوية.'],
+['Geist Mono','la','أحادي','monospace','100..900','أحادي معاصر نظيف.']
+];
+const FONTBY={};FONTLIB.forEach(f=>FONTBY[f[0]]=f);
+const UPFONTS=[];              /* خطوط رفعها المالك من جهازه */
+const FONTSTATE={};            /* الاسم → 'load' | 'ok' | 'fail' | 'local' */
+const FONTCATS=['هندسي','كوفي','نسخ','رقعة','رقيق','عريق','عرض','أحادي'];
+const VARFONT=n=>/\.\./.test((FONTBY[n]||[])[4]||'');
+
+function fontFallback(n){const f=FONTBY[n];if(f)return f[3];
+  return (UPFONTS.find(u=>u.n===n)||{}).fb||'sans-serif'}
+const fontValue=n=>n==='inherit'?'inherit':`"${n}",${fontFallback(n)}`;
+function fontNameOf(v){if(!v||v==='inherit')return 'inherit';
+  const m=String(v).match(/^\s*"([^"]+)"/);return m?m[1]:String(v).split(',')[0].trim()}
+
+/* التحميل: نطلب الأوزان المسجّلة، وإن فشل الطلب نعيد المحاولة بالاسم وحده.
+   بهذا لا يسقط خطّ أبدًا بسبب خطأ في جدول الأوزان. */
+function loadFont(name,retry){
+  if(!name||name==='inherit')return;
+  if(UPFONTS.find(u=>u.n===name)){FONTSTATE[name]='local';return}
+  if(FONTSTATE[name]&&!retry)return;
+  const id='gf-'+name.replace(/\s+/g,'-')+(retry?'-r':'');
+  if(document.getElementById(id))return;
+  FONTSTATE[name]='load';
+  const f=FONTBY[name],w=f?f[4]:'';
+  const l=document.createElement('link');l.id=id;l.rel='stylesheet';
+  l.href='https://fonts.googleapis.com/css2?family='+name.replace(/ /g,'+')
+        +(!retry&&w?':wght@'+w:'')+'&display=swap';
+  l.onerror=()=>{if(!retry)loadFont(name,true);else{FONTSTATE[name]='fail';fontBadge()}};
+  l.onload=()=>{FONTSTATE[name]='ok';
+    if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{
+      if(!document.fonts.check('16px "'+name+'"')){
+        if(!retry)loadFont(name,true);else{FONTSTATE[name]='fail';fontBadge()}}
+      else fontBadge()})};
+  document.head.appendChild(l)}
+function fontBadge(){const n=Object.keys(FONTSTATE).filter(k=>FONTSTATE[k]==='fail');
+  const b=$('#fontwarn');if(!b)return;
+  b.style.display=n.length?'inline-block':'none';
+  b.textContent='تعذّر تحميل '+n.length+' خطّ';b.title=n.join(' · ')+'\nغالبًا لا اتصال بالإنترنت — الشكل يسقط لخطّ النظام.'}
+function preloadUsedFonts(){ORDER.filter(id=>TOK[id].t==='font').forEach(id=>loadFont(fontNameOf(raw(id))))}
+
+/* رفع خطّ من الجهاز → @font-face بترميز data */
+function addUploadedFont(file){return new Promise(res=>{
+  const r=new FileReader();
+  r.onload=()=>{const nm=file.name.replace(/\.(woff2?|ttf|otf)$/i,'').replace(/[-_]/g,' ').trim();
+    const st=document.createElement('style');
+    st.textContent=`@font-face{font-family:"${nm}";src:url(${r.result});font-display:swap}`;
+    document.head.appendChild(st);
+    UPFONTS.push({n:nm,fb:'sans-serif',src:r.result});FONTSTATE[nm]='local';res(nm)};
+  r.readAsDataURL(file)})}
+
+/* ══════════════════════════════════════════════════════════════
+   ٦٫٦) منتقي الخطّ — بحث وتصنيف ومعاينة كل عائلة بنفسها
+   ══════════════════════════════════════════════════════════════ */
+const SAMPLE_AR='خذ دورك الآن · تكية · ٤٫٦ · ٢٠ دقيقة';
+const SAMPLE_LA='EIGHT · Take your turn · 4.6 · 20 min';
+let FMENU=null;
+function closeFontMenu(){if(FMENU){FMENU.remove();FMENU=null;document.removeEventListener('mousedown',_fmOut,true)}}
+function _fmOut(e){if(FMENU&&!FMENU.contains(e.target))closeFontMenu()}
+function openFontMenu(anchor,current,pick,allowInherit){
+  closeFontMenu();
+  const m=el('div','fmenu');FMENU=m;
+  const q=el('input','txt');q.placeholder='ابحث باسم الخطّ…';q.style.width='100%';
+  const rowf=el('div','pillrow');
+  let scr='all',cat='all';
+  const list=el('div','flist');
+  const mk=(txt,on,fn)=>{const b=el('button','pill'+(on?' on':''),txt);b.onclick=fn;return b};
+  function chips(){rowf.innerHTML='';
+    [['all','الكل'],['ar','عربي'],['la','لاتيني'],['up','مرفوع']].forEach(([k,l])=>
+      rowf.appendChild(mk(l,scr===k,()=>{scr=k;chips();draw()})));
+    rowf.appendChild(el('span','sep'));
+    rowf.appendChild(mk('كل التصنيفات',cat==='all',()=>{cat='all';chips();draw()}));
+    FONTCATS.forEach(c=>rowf.appendChild(mk(c,cat===c,()=>{cat=c;chips();draw()})))}
+  function draw(){
+    list.innerHTML='';
+    const term=q.value.trim().toLowerCase();
+    if(allowInherit&&!term){
+      const r=el('div','frow'+(current==='inherit'?' on':''),
+        `<div class="fn">موروث — نفس خطّ الواجهة</div><div class="fnote">لا يفرض خطًّا خاصًّا؛ يتبع «خط الواجهة» العام.</div>`);
+      r.onclick=()=>{pick('inherit');closeFontMenu()};list.appendChild(r)}
+    const up=UPFONTS.map(u=>[u.n,'ar','مرفوع',u.fb,'','خطّ رفعته من جهازك.']);
+    const all=(scr==='up'?up:up.concat(FONTLIB));
+    all.filter(f=>(scr==='all'||scr==='up'||f[1]===scr)&&(cat==='all'||f[2]===cat)
+                 &&(!term||f[0].toLowerCase().includes(term)))
+      .forEach(f=>{
+        const r=el('div','frow'+(f[0]===current?' on':''));
+        r.innerHTML=`<div class="fn" style="font-family:'${f[0]}',${f[3]}">${f[0]}</div>
+          <div class="ftag">${f[2]}${VARFONT(f[0])?' · متغيّر':''}${f[1]==='ar'?'':' · لاتيني فقط'}</div>
+          <div class="fsample" style="font-family:'${f[0]}',${f[3]}">${f[1]==='la'?SAMPLE_LA:SAMPLE_AR}</div>
+          <div class="fnote">${f[5]||''}</div>`;
+        r.onmouseenter=()=>loadFont(f[0]);
+        r.onclick=()=>{loadFont(f[0]);pick(f[0]);closeFontMenu()};
+        list.appendChild(r);
+        /* حمّل ما يظهر فعلًا فقط */
+        if(list.children.length<14)loadFont(f[0])})}
+  q.oninput=draw;
+  const foot=el('div','fmfoot');
+  const fi=el('input');fi.type='file';fi.accept='.woff2,.woff,.ttf,.otf';fi.style.width='100%';
+  fi.onchange=async e=>{const f=e.target.files[0];if(!f)return;
+    const nm=await addUploadedFont(f);pick(nm);closeFontMenu();toast('أُضيف «'+nm+'» إلى المكتبة')};
+  foot.append(el('div','mini','أو ارفع ملف خطّ من جهازك (woff2 / ttf / otf) — يدخل المكتبة ويُصدَّر مضمَّنًا.'),fi);
+  m.append(q,rowf,list,foot);
+  document.body.appendChild(m);
+  const b=anchor.getBoundingClientRect();
+  m.style.top=Math.min(b.bottom+4,innerHeight-460)+'px';
+  /* موضع بالإحداثي الأفقي المطلق لا المنطقي — في RTL يعكس insetInlineStart الجهة */
+  m.style.left=Math.max(8,Math.min(b.left,innerWidth-(m.offsetWidth||390)-8))+'px';
+  chips();draw();q.focus();
+  setTimeout(()=>document.addEventListener('mousedown',_fmOut,true),0)}
+
+/* ══════════════════════════════════════════════════════════════
+   ٦٫٧) الشروح — «هذا يتحكّم بماذا، وأين أراه»
+   الشرح يُبنى من ثلاثة مصادر: نصّ مكتوب بيدي إن وُجد، ثم وصف
+   مشتقّ من نوع الخاصية ومكوّنها، ثم «أين يظهر» محسوبًا من الشاشات
+   نفسها لا من التخمين — نمسح data-tok في كل شاشة ونعدّ العناصر.
+   ══════════════════════════════════════════════════════════════ */
+const PROPWORDS=[
+ [/\.font$/,'عائلة الخطّ'],[/\.size$|^c\.[a-z.]*size$/,'حجم الخطّ'],[/weight$/,'ثِخَن الحرف (الوزن)'],
+ [/tracking$/,'التباعد بين الحروف'],[/\.lh$/,'ارتفاع السطر — المسافة الرأسية بين سطرين'],
+ [/case$/,'حالة الأحرف (كبيرة/صغيرة)'],[/radius$|\.r$/,'استدارة الزوايا'],
+ [/shadow$/,'الظلّ — طبقاته وألوانها'],[/opacity$/,'الشفافية'],[/\.gap$/,'الفجوة بين العناصر المتجاورة'],
+ [/\.pad$|\.py$|\.px$|\.pt$|\.pb$/,'الحشو الداخلي (المسافة بين الحدّ والمحتوى)'],
+ [/margin$|\.mt$|\.mb$/,'الهامش الخارجي'],[/height$/,'الارتفاع'],[/width$|\.w$|\.w2$/,'السمك أو العرض'],
+ [/\.on$/,'إظهاره أو إخفاؤه كليًّا'],[/reverse$/,'عكس ترتيب العناصر داخله'],
+ [/variant$|\.mode$|stack$/,'الشكل الذي يأخذه'],[/\.x$/,'الإزاحة الأفقية'],[/\.y$/,'الإزاحة الرأسية'],
+ [/color$|\.bg$|tint$/,'اللون'],[/angle$/,'زاوية التدرّج'],[/\.text$/,'النصّ المكتوب فيه'],
+ [/justify$/,'توزيع العناصر على العرض'],[/scale$/,'نسبة التكبير'],[/press$/,'مقدار الانكماش عند الضغط'],
+ [/gloss$/,'شدّة اللمعة العلوية'],[/inset$/,'المسافة من الحواف'],[/\.src$/,'مصدر الصورة'],
+ [/dur$|duration$/,'مدّة الحركة'],[/ease$/,'منحنى تسارع الحركة'],
+ [/\.name$/,'حجم الاسم'],[/\.num$/,'حجم الرقم'],[/\.lab$/,'حجم التسمية'],[/\.count$/,'حجم العدّاد'],
+ [/\.title$/,'حجم العنوان'],[/\.sub$/,'حجم السطر الثانوي'],[/\.desc$/,'حجم الوصف'],
+ [/\.price$/,'حجم السعر'],[/\.icon$/,'حجم الأيقونة'],[/\.dot$/,'مقاس النقطة'],
+ [/\.img$/,'مقاس الصورة'],[/\.h$/,'الارتفاع'],[/\.rate$/,'حجم التقييم'],
+ [/\.dist$/,'حجم سطر المسافة'],[/\.chev$/,'حجم السهم'],[/\.mt$/,'المسافة من فوق'],
+ [/\.mix$|desat$|scrim$|sat$/,'شدّة التأثير'],[/hue$/,'درجة اللون']];
+const COMPWORDS={
+ type:'كل نصوص التطبيق',layout:'التخطيط العام لكل الشاشات',header:'الترويسة العليا',
+ logo:'الشعار — الشارة والكلمة',row:'صفّ المطعم في القائمة',group:'عنوان المجموعة («الباب مفتوح ٠٣»)',
+ nav:'شريط التبويب السفلي',end:'ذيل القائمة («هذا كل شيء الآن»)',ticket:'شريط الدور فوق التبويب',
+ ticketpg:'شاشة التذكرة',rest:'صفحة المطعم',button:'الأزرار',empty:'شاشة «ما عندك دور»',
+ insert:'الأجزاء التي تُدرجها بنفسك',misc:'متفرّقات',semantic:'دور لوني يُستعمل في كل مكان',
+ space:'سلّم المسافات — أوليّة',size:'سلّم الأحجام — أوليّة',weight:'سلّم الأوزان — أوليّة',
+ radius:'سلّم الزوايا — أوليّة',dur:'سلّم المدد — أوليّة',ease:'منحنيات الحركة — أوليّة',
+ motion:'الحركة والانتقالات',toast:'الرسالة الطائرة أسفل الشاشة',
+ home:'الرئيسية — الترويسة والتصفية والزرّ العائم',card:'بطاقة المطعم في الرئيسية',
+ tabs:'شريط التبويبات المجزّأ في صفحة المطعم',panel:'بطاقة المحتوى داخل صفحة المطعم',
+ menu:'قائمة الأصناف',review:'التقييمات — النموذج والملخّص',branch:'الفروع والهدايا والمعرض',
+ qcard:'بطاقة الدور',photo:'صور الشاشات الحيّة',icons:'كل الأيقونات'};
+function autoDesc(id){
+  const t=TOK[id];let pw='';
+  for(const[re,w]of PROPWORDS)if(re.test(id)){pw=w;break}
+  if(!pw)pw={color:'اللون',dim:'المقاس',num:'الرقم',bool:'التشغيل والإطفاء',enum:'الخيار',
+    text:'النصّ',font:'عائلة الخطّ',shadow:'الظلّ',lh:'ارتفاع السطر',dur:'المدّة',ease:'المنحنى'}[t.t]||'القيمة';
+  const g=t.g||'';
+  const cw=COMPWORDS[g]||(g.startsWith('ramp:')?'سلّم لوني — أوليّة':g.startsWith('tex:')?'خامة السطح':'');
+  return cw?`${pw} — في ${cw}.`:`${pw}.`}
+
+/* أين يظهر: مسح حقيقي لوسم data-tok في كل شاشة */
+let _USAGE=null;
+function tokenUsage(){
+  if(_USAGE)return _USAGE;
+  const u={};const tmp=document.createElement('div');
+  SCREENS.forEach(([k,lab])=>{
+    tmp.innerHTML=screenHTML(k);
+    tmp.querySelectorAll('[data-tok]').forEach(n=>{
+      const elname=n.dataset.el||'';
+      n.dataset.tok.split(',').map(x=>x.trim()).filter(Boolean).forEach(id=>{
+        (u[id]=u[id]||{screens:[],els:[],n:0});
+        if(!u[id].screens.includes(k))u[id].screens.push(k);
+        if(elname&&!u[id].els.includes(elname))u[id].els.push(elname);
+        u[id].n++})})});
+  /* الأوليّات لا تُوسَم مباشرة — نرثها ممّن يرتبط بها */
+  ORDER.forEach(id=>{if(id[0]!=='p')return;
+    const kids=ORDER.filter(k=>TOK[k].ref===id);
+    if(!kids.length)return;
+    const acc={screens:[],els:[],n:0,via:kids};
+    kids.forEach(k=>{const x=u[k];if(!x)return;
+      x.screens.forEach(sc=>{if(!acc.screens.includes(sc))acc.screens.push(sc)});
+      x.els.forEach(e=>{if(!acc.els.includes(e))acc.els.push(e)});acc.n+=x.n});
+    if(acc.n||kids.length)u[id]=acc});
+  _USAGE=u;return u}
+const scLabel=k=>(SCREENS.find(x=>x[0]===k)||[,k])[1];
+/* توكنات تُطبَّق على جذر التطبيق فلا تُوسَم على عنصر بعينه */
+const GLOBALTOK={
+ 'c.font.ui':'خطّ كل نصّ لم يُحدَّد له خطّ خاص — في الشاشات التسع كلّها.',
+ 'c.base.size':'حجم كل نصّ لم يُحدَّد له حجم — والأحجام الأخرى تُقاس منه حين تكون بوحدة em.',
+ 'c.base.lh':'ارتفاع السطر في كل نصّ لم يُحدَّد له ارتفاع.',
+ 'c.base.weight':'وزن كل نصّ لم يُحدَّد له وزن.',
+ 'c.base.tracking':'تباعد الحروف في كل نصّ في التطبيق.',
+ 'c.base.word':'تباعد الكلمات في كل نصّ في التطبيق.',
+ 'c.numeric':'شكل الأرقام (جدولية/متناسبة) في كل نصّ.',
+ 'c.font.features':'ميزات OpenType على كل نصّ.',
+ 'c.font.smoothing':'تنعيم الحروف على كل نصّ.',
+ 'c.text.rendering':'أولوية الرسم على كل نصّ.',
+ 'c.font.vf.on':'يشغّل محاور الخطّ المتغيّر على كل نصّ.',
+ 'c.font.wght':'محور الوزن على كل نصّ — مع خطّ متغيّر فقط.',
+ 'c.font.wdth':'محور العرض على كل نصّ — مع خطّ متغيّر فقط.',
+ 'c.font.slnt':'محور الميل على كل نصّ — مع خطّ متغيّر فقط.',
+ 'c.font.opsz':'محور المقاس البصري على كل نصّ — مع خطّ متغيّر فقط.',
+ 'c.font.opsz.auto':'يحدّد من يختار المقاس البصري: المتصفّح أم أنت.',
+ 'c.icon.stroke':'سمك خطّ كل أيقونة في الشاشات الحيّة.',
+ 'c.numerals':'شكل الأرقام (عربية-هندية/لاتينية/مختلط) في كل الشاشات.',
+ 'c.gutter':'الهامش الجانبي الذي تنتظم عليه كل الشاشات.',
+ 'c.shadow.tint':'صبغة كل الظلال في التطبيق دفعةً واحدة.'};
+function whereLine(id){
+  if(GLOBALTOK[id])return '<span class="where">يظهر في: '+GLOBALTOK[id]+'</span>';
+  const u=tokenUsage()[id];
+  if(!u)return TOK[id]&&TOK[id].g&&TOK[id].g.startsWith('tex:')
+    ? '<span class="where">يظهر في: خلفية السطح في كل الشاشات.</span>' : '';
+  const parts=[];
+  if(u.screens&&u.screens.length)parts.push('يظهر في: '+u.screens.map(scLabel).join(' · '));
+  if(u.els&&u.els.length)parts.push('على: '+u.els.slice(0,4).join('، ')+(u.els.length>4?' وغيرها':''));
+  if(u.via&&u.via.length)parts.push('عبر: '+u.via.slice(0,3).join('، ')+(u.via.length>3?'…':''));
+  return parts.length?'<span class="where">'+parts.join(' — ')+'</span>':''}
+function showTok(id){
+  if(GLOBALTOK[id]){const a=$('#app');if(!a)return;
+    a.classList.add('flash');setTimeout(()=>a.classList.remove('flash'),2400);
+    return toast('يُطبَّق على الشاشة كلّها')}
+  const u=tokenUsage()[id];
+  const screens=(u&&u.screens)||[];
+  if(!screens.length)return toast('هذا التوكن لا يظهر في أي شاشة الآن — غيّر الحالة أو أدرِج الجزء أولًا');
+  const go=()=>{
+    const ns=$$('#app [data-tok]').filter(n=>n.dataset.tok.split(',').map(x=>x.trim()).includes(id));
+    const via=(u.via||[]);
+    const ns2=ns.length?ns:$$('#app [data-tok]').filter(n=>
+      n.dataset.tok.split(',').map(x=>x.trim()).some(t=>via.includes(t)));
+    if(!ns2.length)return toast('لا يظهر في هذه الشاشة');
+    ns2.forEach(n=>{n.classList.add('flash');setTimeout(()=>n.classList.remove('flash'),2400)});
+    ns2[0].scrollIntoView({block:'center'});
+    toast(ns2.length+' عنصر في «'+scLabel(currentKey())+'»')};
+  if(!screens.includes(currentKey())){gotoScreen(screens[0]);setTimeout(go,120)}else go()}
+function descBlock(id){
+  const t=TOK[id];
+  const d=t.d||autoDesc(id);
+  const w=descBlock.showWhere===false?'':whereLine(id);
+  const n=el('div','fdesc');
+  n.innerHTML=`<b>${d}</b> ${w} `;
+  const b=el('button','show','أرني');b.onclick=e=>{e.stopPropagation();showTok(id)};
+  n.appendChild(b);
+  const code=el('span','');code.style.cssText='color:#5c6675;font-family:ui-monospace,monospace;font-size:9px;margin-inline-start:6px;direction:ltr;unicode-bidi:isolate;white-space:nowrap';
+  code.textContent=cssvar(id);
+  n.appendChild(code);
+  return n}
+
+/* ══════════════════════════════════════════════════════════════
    ٧) بناء عناصر التحكّم العامّة
    ══════════════════════════════════════════════════════════════ */
 function fieldFor(id,compact){
@@ -1296,13 +2301,13 @@ function fieldFor(id,compact){
       if(o===raw(id))op.selected=true;s.appendChild(op)});
     s.onchange=()=>{set(s.value);render()};c.append(s);
   }else if(t.t==='font'){
-    const s=el('select','sel');
-    const FONTS=['IBM Plex Sans Arabic','Reem Kufi','Alexandria','Almarai','Cairo','Tajawal','Noto Kufi Arabic',
-      'DM Serif Display','Literata','Archivo','Playfair Display','Prata','Bodoni Moda','Cormorant Garamond',
-      'Inter','Work Sans','Space Grotesk','Fraunces'];
-    FONTS.forEach(f=>{const o=el('option');o.value=`"${f}",${/Serif|Playfair|Prata|Bodoni|Cormorant|Literata|Fraunces/.test(f)?'serif':'sans-serif'}`;
-      o.textContent=f;if(o.value===raw(id))o.selected=true;s.appendChild(o)});
-    s.onchange=()=>{loadFont(s.options[s.selectedIndex].textContent);set(s.value);render()};c.append(s);
+    const btn=el('button','fontbtn');
+    const paint=()=>{const n=fontNameOf(raw(id));loadFont(n);
+      btn.innerHTML=`<span class="fbn" style="font-family:${n==='inherit'?'inherit':`'${n}',${fontFallback(n)}`}">${n==='inherit'?'موروث':n}</span>`
+        +`<span class="fbt">${n==='inherit'?'—':((FONTBY[n]||[])[2]||'مرفوع')}${VARFONT(n)?' · متغيّر':''}</span>`};
+    paint();
+    btn.onclick=()=>openFontMenu(btn,fontNameOf(raw(id)),n=>{set(fontValue(n));paint();render()},t.inh!==false);
+    c.append(btn);
   }else if(t.t==='ease'){
     const s=el('select','sel');['cubic-bezier(.42,0,.58,1)','cubic-bezier(.22,.9,.3,1)','cubic-bezier(.5,0,1,.5)',
       'cubic-bezier(.2,1.3,.4,1)','linear'].forEach(v=>{const o=el('option');o.value=v;o.textContent=v;
@@ -1316,14 +2321,17 @@ function fieldFor(id,compact){
     i.onchange=()=>{set(i.value);render()};c.append(i);
   }
   if(!compact){
-    const lk=el('button','tbtn',LOCKED[id]?'🔒':'🔓');lk.style.padding='2px 5px';lk.title='قفل التوكن';
-    lk.onclick=()=>{LOCKED[id]=!LOCKED[id];buildPanel()};c.append(lk);
+    /* القفل في خانة التسمية لا في خانة التحكّم — يوفّر عرضًا فيبقى الصفّ سطرًا واحدًا */
+    const lk=el('button','lockb',LOCKED[id]?'🔒':'🔓');lk.title='قفل التوكن — يمنع أي طقم أو مولّد من تغييره';
+    lk.onclick=e=>{e.stopPropagation();LOCKED[id]=!LOCKED[id];buildPanel()};
+    lab.insertBefore(lk,lab.firstChild);
   }
   wrap.appendChild(c);
+  if(!compact)wrap.appendChild(descBlock(id));
   if(t.ref&&!compact){
     const src=el('div','mini',`من <code>${t.ref}</code> = <code>${out(t.ref)}</code> · <button class="lnk" data-un="${id}">فكّ الارتباط</button>`);
     src.querySelector('[data-un]').onclick=()=>{t.ref=null;push('فكّ ارتباط');buildPanel()};
-    wrap.style.display='block';wrap.appendChild(src);
+    wrap.appendChild(src);
   }
   return wrap}
 function section(title,open,count){
@@ -1334,11 +2342,6 @@ function section(title,open,count){
 function groupFields(host,g,title,open){
   const ids=ORDER.filter(id=>TOK[id].g===g);if(!ids.length)return;
   const s=section(title,open,ids.length);ids.forEach(id=>s.body.appendChild(fieldFor(id)));host.appendChild(s)}
-function loadFont(name){
-  if(document.getElementById('gf-'+name))return;
-  const l=document.createElement('link');l.id='gf-'+name;l.rel='stylesheet';
-  l.href='https://fonts.googleapis.com/css2?family='+name.replace(/ /g,'+')+':wght@100;200;300;400;500;600;700;800;900&display=swap';
-  document.head.appendChild(l)}
 
 /* ══════════════════════════════════════════════════════════════
    ٨) STUDIO UI — التبويبات واللوحات
@@ -1454,28 +2457,170 @@ function pColor(h){
   const rr=el('div','ctl');rr.append(a,b2,go);sw.body.append(rr,cnt);h.appendChild(sw);
 }
 function pType(h){
-  groupFields(h,'type','النصّ الأساس',true);
-  const s=section('أزواج خطوط جاهزة',true);const pr=el('div','pillrow');
+  h.appendChild(el('div','hint','لوحة الخطوط كلّها. الأعلى يغيّر كل شيء دفعةً واحدة، وما تحته يغيّر عنصرًا عنصرًا. '
+    +'كل خطّ في المكتبة يُحمّل عند اختياره — فإن كنت بلا إنترنت ظهر تحذير أحمر في الشريط العلوي.'));
+
+  /* ══ ١) بالإجمال — يمسّ كل النصوص ══ */
+  const g=section('بالإجمال — يغيّر كل شيء مرّة واحدة',true);
+  const mk=(txt,title,fn)=>{const b=el('button','pill',txt);if(title)b.title=title;b.onclick=fn;return b};
+
+  const r1=el('div','row');r1.appendChild(el('label','','<b>خطّ واحد لكل النصّ العربي</b>'));
+  const c1=el('div','ctl');
+  const bAll=el('button','fontbtn');
+  const paintAll=()=>{const n=fontNameOf(raw('c.font.ui'));loadFont(n);
+    bAll.innerHTML=`<span class="fbn" style="font-family:'${n}',${fontFallback(n)}">${n}</span><span class="fbt">اضغط للتبديل</span>`};
+  paintAll();
+  bAll.onclick=()=>openFontMenu(bAll,fontNameOf(raw('c.font.ui')),n=>{
+    loadFont(n);const v=fontValue(n);
+    ['c.font.ui','c.name.font','c.title.font'].forEach(k=>{TOK[k].ref=null;TOK[k].v=v});
+    push('خطّ عربي شامل');apply();render();buildPanel()},false);
+  c1.appendChild(bAll);r1.appendChild(c1);
+  r1.appendChild(el('div','fdesc','<b>يضبط خطّ الواجهة واسم المطعم وعنوان الصفحة معًا.</b> <span class="where">لا يمسّ الأرقام ولا الشعار — لهما سطر خاص تحت.</span>'));
+  g.body.appendChild(r1);
+
+  const r2=el('div','row');r2.appendChild(el('label','','<b>خطّ واحد لكل الأرقام والشعار</b>'));
+  const c2=el('div','ctl');
+  const bNum=el('button','fontbtn');
+  const paintNum=()=>{const n=fontNameOf(raw('c.num.font'));loadFont(n);
+    bNum.innerHTML=`<span class="fbn" style="font-family:'${n}',${fontFallback(n)}">${n}</span><span class="fbt">اضغط للتبديل</span>`};
+  paintNum();
+  bNum.onclick=()=>openFontMenu(bNum,fontNameOf(raw('c.num.font')),n=>{
+    loadFont(n);const v=fontValue(n);
+    ['c.num.font','c.grp.num.font','c.wordmark.font','c.digit.font'].forEach(k=>{TOK[k].ref=null;TOK[k].v=v});
+    push('خطّ أرقام شامل');apply();render();buildPanel()},false);
+  c2.appendChild(bNum);r2.appendChild(c2);
+  r2.appendChild(el('div','fdesc','<b>يضبط أرقام الإحصاء ورقم المجموعة ورقم ٨ وكلمة EIGHT معًا.</b> <span class="where">هذه كلها لاتينية، فاختر لها خطًّا لاتينيًّا.</span>'));
+  g.body.appendChild(r2);
+
+  ['c.base.size','c.base.lh','c.base.weight','c.base.tracking','c.base.word','c.numeric']
+    .forEach(id=>g.body.appendChild(fieldFor(id)));
+
+  /* مضاعِفات — تضرب كل قيم السلّم دفعة واحدة */
+  const mul=el('div','row');mul.appendChild(el('label','','<b>كبّر أو صغّر كل الأحجام</b>'));
+  const mc=el('div','ctl');
+  [['×0.9',.9],['×0.95',.95],['×1.05',1.05],['×1.1',1.1],['×1.2',1.2]].forEach(([t,f])=>
+    mc.appendChild(mk(t,'يضرب كل حجم خطّ في الملف بهذا المعامل',()=>{
+      ORDER.forEach(id=>{const k=TOK[id];
+        if(k.t==='dim'&&k.u==='px'&&/size$/.test(id)&&!k.ref)k.v=round(k.v*f,1)});
+      push('تكبير الأحجام '+t);apply();buildPanel()})));
+  mc.appendChild(mk('صفّر','يعيد كل الأحجام إلى قيم خط الأساس',()=>{
+    if(!BASELINE)return toast('لا يوجد خطّ أساس محفوظ');
+    ORDER.forEach(id=>{const k=TOK[id];
+      if(k.t==='dim'&&/size$/.test(id)&&BASELINE.t[id]!=null)k.v=BASELINE.t[id]});
+    push('إرجاع الأحجام');apply();buildPanel()}));
+  mul.appendChild(mc);
+  mul.appendChild(el('div','fdesc','<b>يضرب كل توكن ينتهي بـ size في المعامل — سلّم الأوليّات وأحجام المكوّنات معًا.</b> <span class="where">أسرع طريقة لتجربة «الشاشة أكبر شوي» بلا لمس ٤٠ رقمًا.</span>'));
+  g.body.appendChild(mul);
+
+  const wr=el('div','row');wr.appendChild(el('label','','<b>ثقّل أو خفّف كل الأوزان</b>'));
+  const wc=el('div','ctl');
+  [['−100',-100],['−50',-50],['+50',50],['+100',100]].forEach(([t,d])=>
+    wc.appendChild(mk(t,'يزيد أو ينقص كل وزن في الملف',()=>{
+      ORDER.forEach(id=>{const k=TOK[id];
+        if(k.t==='num'&&/weight$/.test(id)&&!k.ref)k.v=clamp(k.v+d,100,900)});
+      push('تعديل الأوزان '+t);apply();buildPanel()})));
+  wr.appendChild(wc);
+  wr.appendChild(el('div','fdesc','<b>يزيح كل توكن ينتهي بـ weight بالمقدار المختار.</b> <span class="where">انتبه: الخطّ غير المتغيّر يقفز إلى أقرب وزن متاح لديه.</span>'));
+  g.body.appendChild(wr);
+  h.appendChild(g);
+
+  /* ══ ٢) عيّنة حيّة ══ */
+  const sp=section('عيّنة الخطّ — جرّب قبل ما تعتمد',true);
+  const spWrap=el('div');spWrap.style.cssText='background:#101014;border:1px solid var(--u-line);border-radius:10px;padding:11px;margin-top:4px';
+  const spTxt=el('input','txt');spTxt.value='تكية · خذ دورك الآن · ٤٫٦ · EIGHT 2026';
+  spTxt.style.marginBottom='8px';
+  const spBody=el('div');
+  let spFont='c.font.ui';
+  const spPick=el('div','pillrow');
+  const drawSp=()=>{
+    spPick.innerHTML='';
+    [['c.font.ui','الواجهة'],['c.num.font','الأرقام'],['c.name.font','اسم المطعم'],
+     ['c.title.font','العنوان'],['c.wordmark.font','كلمة العلامة'],['c.digit.font','الرقم ٨']]
+      .forEach(([k,l])=>{const b=el('button','pill'+(spFont===k?' on':''),l);
+        b.onclick=()=>{spFont=k;drawSp()};spPick.appendChild(b)});
+    const n=fontNameOf(raw(spFont));loadFont(n);
+    const ff=n==='inherit'?'inherit':`'${n}',${fontFallback(n)}`;
+    const meta=FONTBY[n];
+    spBody.innerHTML=
+      `<div style="font-family:${ff};color:#f0f0f2;line-height:1.5">
+        <div style="font-size:30px">${spTxt.value}</div>
+        <div style="font-size:19px;margin-top:5px">${spTxt.value}</div>
+        <div style="font-size:13px;margin-top:5px">${spTxt.value}</div>
+        <div style="font-size:10px;margin-top:5px;opacity:.8">${spTxt.value}</div>
+        <div style="font-size:17px;margin-top:9px;letter-spacing:.02em">
+          ${[300,400,500,600,700,800].map(w=>`<span style="font-weight:${w};margin-inline-end:11px">${w}</span>`).join('')}</div>
+        <div style="font-size:15px;margin-top:6px;direction:ltr;text-align:start">0123456789 · ٠١٢٣٤٥٦٧٨٩</div>
+      </div>
+      <div class="mini" style="margin-top:8px">${n==='inherit'?'موروث — يتبع خطّ الواجهة.'
+        :`<b style="color:#b9c4d2">${n}</b> · ${meta?meta[2]:'مرفوع'}${VARFONT(n)?' · متغيّر':''}${meta&&meta[1]==='la'?' · <span style="color:#e2c68d">لا يكتب العربية</span>':''}<br>${meta?meta[5]:'خطّ رفعته من جهازك.'}`}</div>`};
+  spTxt.oninput=drawSp;
+  spWrap.append(spTxt,spPick,spBody);sp.body.appendChild(spWrap);drawSp();
+  h.appendChild(sp);
+
+  /* ══ ٣) أزواج جاهزة ══ */
+  const s2=section('أزواج خطوط جاهزة',false);const pr=el('div','pillrow');
   FONTPAIRS.forEach(([ar,la])=>{const b=el('button','pill',ar+' + '+la);
+    b.title='عربي: '+ar+' · لاتيني وأرقام: '+la;
     b.onclick=()=>{loadFont(ar);loadFont(la);
-      const arv=`"${ar}",sans-serif`,lav=`"${la}",${/Serif|Playfair|Prata|Bodoni|Cormorant|Literata/.test(la)?'serif':'sans-serif'}`;
-      ['c.font.ui','c.name.font','c.title.font'].forEach(k=>{TOK[k].v=arv});
-      ['c.num.font','c.grp.num.font','c.wordmark.font','c.digit.font'].forEach(k=>{TOK[k].v=lav});
+      const arv=fontValue(ar),lav=fontValue(la);
+      ['c.font.ui','c.name.font','c.title.font'].forEach(k=>{TOK[k].ref=null;TOK[k].v=arv});
+      ['c.num.font','c.grp.num.font','c.wordmark.font','c.digit.font'].forEach(k=>{TOK[k].ref=null;TOK[k].v=lav});
       push('زوج خطوط');apply();render();buildPanel()};pr.appendChild(b)});
-  s.body.appendChild(pr);h.appendChild(s);
+  s2.body.appendChild(pr);
+  s2.body.appendChild(el('div','mini','الزوج يضبط ستّة توكنات: ثلاثة عربية وثلاثة لاتينية. بعده اضبط ما شئت يدويًّا.'));
+  h.appendChild(s2);
+
+  /* ══ ٤) خطّ لكل دور ══ */
+  const rl=section('خطّ لكل دور — واحدًا واحدًا',true);
+  ['c.font.ui','c.name.font','c.title.font','c.meta.font','c.status.font','c.button.font',
+   'c.nav.font','c.sect.font','c.line.font','c.empty.font','c.num.font','c.grp.num.font',
+   'c.wordmark.font','c.digit.font'].forEach(id=>{if(TOK[id])rl.body.appendChild(fieldFor(id))});
+  h.appendChild(rl);
+
+  /* ══ ٥) محاور الخطّ المتغيّر ══ */
+  const vf=section('محاور الخطّ المتغيّر',false);
+  ['c.font.vf.on','c.font.wght','c.font.wdth','c.font.slnt','c.font.opsz','c.font.opsz.auto']
+    .forEach(id=>vf.body.appendChild(fieldFor(id)));
+  vf.body.appendChild(el('div','warnbox','المحاور لا تعمل إلا مع خطّ مكتوب بجانبه «متغيّر» في المنتقي. '
+    +'مع خطّ ثابت لن يتغيّر شيء — وهذا ليس عطلًا.'));
+  h.appendChild(vf);
+
+  /* ══ ٦) تفاصيل الرسم ══ */
+  const fx=section('ميزات الخطّ وطريقة رسمه',false);
+  ['c.font.features','c.font.smoothing','c.text.rendering','c.numeric'].forEach(id=>fx.body.appendChild(fieldFor(id)));
+  const ft=el('div','pillrow');
+  [['أرقام جدولية','"tnum" 1'],['أرقام قديمة','"onum" 1'],['كسور','"frac" 1'],
+   ['بديل ١','"ss01" 1'],['بديل ٢','"ss02" 1'],['بلا لجاتير','"liga" 0'],['بلا كيرننغ','"kern" 0'],['عادي','normal']]
+    .forEach(([l,v])=>{const b=el('button','pill',l);b.title=v;
+      b.onclick=()=>{TOK['c.font.features'].v=v;push('ميزة خطّ');apply();buildPanel()};ft.appendChild(b)});
+  fx.body.appendChild(ft);
+  fx.body.appendChild(el('div','mini','ليست كل الخطوط تحمل كل الميزات. جرّب وانظر إلى العيّنة فوق — إن لم يتغيّر شيء فالخطّ لا يدعمها.'));
+  h.appendChild(fx);
+
+  /* ══ ٧) حالة الأحرف ══ */
+  const cs=section('حالة الأحرف',false);
+  ['c.nav.case','c.sect.case','c.button.case','c.title.case','c.wordmark.case']
+    .forEach(id=>{if(TOK[id])cs.body.appendChild(fieldFor(id))});
+  h.appendChild(cs);
+
+  /* ══ ٨) السلالم ══ */
   const sc=section('مولّد سلّم نصّي',false);
   const rr=el('div','ctl');const base=el('input','num');base.type='number';base.value=13;base.step=.5;
-  const ratio=el('select','sel');[1.125,1.2,1.25,1.333,1.414].forEach(v=>{const o=el('option');o.value=v;o.textContent=v;ratio.appendChild(o)});
+  const ratio=el('select','sel');[1.067,1.125,1.2,1.25,1.333,1.414,1.5].forEach(v=>{const o=el('option');o.value=v;o.textContent=v;if(v===1.2)o.selected=true;ratio.appendChild(o)});
   const go=el('button','tbtn','ولّد');
   go.onclick=()=>{const b=+base.value,r=+ratio.value;const keys=['xs','sm','s2','md','lg','xl','h3','h2','h1'];
     keys.forEach((k,i)=>{TOK['p.size.'+k].v=round(b*Math.pow(r,i-3),1)});push('سلّم نصّي');apply();buildPanel()};
   rr.append(base,ratio,go);sc.body.appendChild(rr);
-  sc.body.appendChild(el('div','mini','السلّم أوليّة؛ اربط بها المكوّنات يدويًّا أو اترك القيم حرّة.'));
+  sc.body.appendChild(el('div','mini','النسبة الصغيرة (1.125) تعطي سلّمًا هادئًا، والكبيرة (1.414) تعطي تباينًا دراميًّا بين العنوان والنصّ.'));
   ORDER.filter(id=>TOK[id].g==='size').forEach(id=>sc.body.appendChild(fieldFor(id)));h.appendChild(sc);
-  const w=section('الأوزان',false);ORDER.filter(id=>TOK[id].g==='weight').forEach(id=>w.body.appendChild(fieldFor(id)));h.appendChild(w);
-  ['row','group','rest','ticketpg','button','nav','header'].forEach(g=>{
-    const ids=ORDER.filter(id=>TOK[id].g===g&&/size|weight|tracking|lh|font/.test(id));
-    if(!ids.length)return;const sec=section('طباعة: '+g,false,ids.length);
+  const w=section('سلّم الأوزان',false);ORDER.filter(id=>TOK[id].g==='weight').forEach(id=>w.body.appendChild(fieldFor(id)));h.appendChild(w);
+
+  /* ══ ٩) طباعة كل مكوّن ══ */
+  [['row','صفّ المطعم'],['group','عنوان المجموعة'],['rest','صفحة المطعم'],['ticketpg','شاشة التذكرة'],
+   ['button','الأزرار'],['nav','التبويب السفلي'],['header','الترويسة'],['logo','الشعار'],
+   ['ticket','شريط الدور'],['empty','الشاشة الفارغة'],['end','ذيل القائمة'],['misc','متفرّقات']].forEach(([gk,lab])=>{
+    const ids=ORDER.filter(id=>TOK[id].g===gk&&/size|weight|tracking|\.lh$|font|case/.test(id));
+    if(!ids.length)return;const sec=section('طباعة: '+lab,false,ids.length);
     ids.forEach(id=>sec.body.appendChild(fieldFor(id)));h.appendChild(sec)});
 }
 function pSpace(h){
@@ -1574,6 +2719,16 @@ function pComp(h){
   mk('الشعار',[['مربّع',()=>TOK['c.badge.variant'].v='square'],['دائري',()=>TOK['c.badge.variant'].v='circle'],
     ['بلا حاوية',()=>TOK['c.badge.variant'].v='plain'],['حلقة',()=>TOK['c.badge.variant'].v='ring']]);
   h.appendChild(v);
+  /* ── مكوّنات الشاشات الحيّة ── */
+  const LG=[['home','ترويسة الرئيسية والتصفية والزرّ العائم'],['card','بطاقة المطعم في الرئيسية'],
+   ['tabs','شريط التبويبات المجزّأ'],['panel','بطاقة المحتوى داخل صفحة المطعم'],
+   ['menu','قائمة الأصناف'],['review','التقييمات'],['branch','الفروع والهدايا والمعرض'],
+   ['qcard','بطاقة الدور'],['photo','الصور'],['icons','الأيقونات']];
+  const lv=section('★ الشاشات الحيّة — ما يراه العميل اليوم',true);
+  lv.body.appendChild(el('div','hint','هذه الشاشات إضافة على خط الأساس لا تعديل له. '
+    +'الشاشات الستّ الأولى في الشريط العلوي هي المرجع الأصلي، والثلاث المعلَّمة بنجمة هي التطبيق الحيّ.'));
+  h.appendChild(lv);
+  LG.forEach(([g,lab])=>groupFields(h,g,'حيّ: '+lab,false));
   const st=section('معاينة حالات المكوّن',false);
   const pr=el('div','pillrow');
   [['عادي','full'],['فارغ','empty'],['قصير','short'],['كل شيء مغلق','shut'],['عندي دور','active'],['تحميل','load']]
@@ -1657,6 +2812,26 @@ function pMotion(h){
   h.appendChild(s);
 }
 function pContent(h){
+  h.appendChild(el('div','hint','هذه اللوحة تغيّر <b>المحتوى</b> لا الشكل: أسماء المطاعم وأرقامها وكل كلمة مكتوبة في الواجهة. '
+    +'غيّرها لتجرّب الشكل على نصّ حقيقي — الأسماء الطويلة والأرقام الكبيرة تكشف مشاكل لا تظهر على نصّ قصير.'));
+  /* صور الشاشات الحيّة */
+  const ph=section('صور الشاشات الحيّة',true);
+  ph.body.appendChild(el('div','hint','الصور في الورشة بديل متدرّج من لون هويتك. '
+    +'ارفع صورتين حقيقيّتين لترى الشكل النهائي كما يراه العميل.'));
+  [['c.photo.a','صورة الغلاف — بطاقات الرئيسية وصور الفروع ورأس بطاقة الدور'],
+   ['c.photo.b','صورة الأصناف — صور القائمة والمعرض']].forEach(([id,lab])=>{
+    const r=el('div','row');r.appendChild(el('label','','<b>'+lab+'</b>'));
+    const c=el('div','ctl');
+    const fi=el('input');fi.type='file';fi.accept='image/*';fi.style.width='150px';
+    fi.onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();
+      rd.onload=()=>{TOK[id].v=rd.result;push('صورة');apply();render()};rd.readAsDataURL(f)};
+    const cl=el('button','tbtn','امسح');
+    cl.onclick=()=>{TOK[id].v='';push('مسح صورة');apply();render();buildPanel()};
+    c.append(fi,cl);r.appendChild(c);
+    r.appendChild(el('div','fdesc','<b>'+(raw(id)?'صورة مرفوعة — تظهر الآن في الشاشات الحيّة.':'لا صورة — يُستعمل البديل المتدرّج.')+'</b>'));
+    ph.body.appendChild(r)});
+  ['c.photo.hue','c.photo.sat'].forEach(id=>ph.body.appendChild(fieldFor(id)));
+  h.appendChild(ph);
   const d=section('المطاعم',true,DATA.length);
   DATA.forEach((x,i)=>{
     const w=el('div');w.style.cssText='border:1px solid var(--u-line);border-radius:8px;padding:6px;margin-bottom:6px';
@@ -2209,6 +3384,8 @@ $('#app').addEventListener('click',e=>{
     S.ticket={name:x.n,code:'A'+(10+Math.floor(Math.random()*80)),ahead:x.q,start:Math.max(x.q,1),eta:x.m||5};
     S.view='ticket';S.tab='turns';render();setTimeout(()=>atoast('خذيت دورك — ننبّهك قبل دورك بعشر دقائق'),60);return}
   if(g==='ticket'){S.view='ticket';S.tab='turns';return render()}
+  if(b.dataset.ltab){LIVE.tab=b.dataset.ltab;render();return}
+  if(b.dataset.lcat){LIVE.cat=!LIVE.cat;render();return}
   if(g==='advance'){if(!S.ticket)return;
     if(S.ticket.ahead>0){S.ticket.ahead--;S.ticket.eta=Math.max(1,S.ticket.eta-4);render();
       atoast(S.ticket.ahead===0?'أنت التالي — توجّه للباب':'تقدّم دورك، '+ANUM(S.ticket.ahead)+' قبلك')}
@@ -2288,6 +3465,7 @@ function gotoScreen(k){
   else if(k==='ticket'){S.view='ticket';if(!S.ticket)S.ticket={name:DATA[3].n,code:'A47',ahead:2,start:4,eta:8}}
   else if(k==='turns'){S.tab='turns';S.view='list'}
   else if(k==='me'){S.tab='me';S.view='list'}
+  else if(k==='home'||k==='live'||k==='qcard'){S.view=k;S.rest=S.rest||2}
   else{S.tab='list';S.view='list'}
   render();buildScreens();refreshCode()}
 function buildScreens(){
@@ -2309,6 +3487,11 @@ $('#bSheet').onclick=()=>{SHEET=!SHEET;if(SHEET)ABON=false;$('#bSheet').classLis
   $('#bAB').classList.remove('on');layoutStage()};
 $('#bAB').onclick=()=>{ABON=!ABON;if(ABON)SHEET=false;$('#bAB').classList.toggle('on',ABON);
   $('#bSheet').classList.remove('on');layoutStage()};
+$('#bDesc').onclick=()=>{document.body.classList.toggle('nodesc');
+  $('#bDesc').classList.toggle('on',!document.body.classList.contains('nodesc'));
+  try{localStorage.setItem('eight.studio.desc',document.body.classList.contains('nodesc')?'0':'1')}catch(e){}};
+if(localStorage.getItem('eight.studio.desc')==='0')document.body.classList.add('nodesc');
+$('#bDesc').classList.toggle('on',!document.body.classList.contains('nodesc'));
 $('#bPure').onclick=()=>{PURE=!PURE;$('#insp').classList.toggle('collapsed',PURE);
   $('#ctrl').classList.toggle('collapsed',PURE);$('#bPure').classList.toggle('on',PURE)};
 $('#bUndo').onclick=undo;$('#bRedo').onclick=redo;$('#bSnap').onclick=()=>snap();
