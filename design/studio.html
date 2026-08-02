@@ -221,6 +221,10 @@ body.nodesc .fdesc{display:none}
 .dragging{opacity:.4}
 .dropline{position:absolute;background:var(--u-acc);z-index:46;pointer-events:none;border-radius:2px}
 .snapline{position:absolute;background:#ff5aa7;z-index:46;pointer-events:none}
+.measbadge{position:absolute;z-index:47;background:#111418;color:#dfe7f2;border:1px solid #4d9cff;
+  font-size:9.5px;padding:2px 6px;border-radius:5px;pointer-events:none;white-space:nowrap;
+  font-family:ui-monospace,monospace;direction:ltr}
+.measbadge b{color:#8fd0ff}
 body.editing .app *{cursor:crosshair}
 body.freemove .app [data-el].fmsel{cursor:move}
 
@@ -1137,10 +1141,18 @@ C('shadow.tint','num',0,{g:'shadow',l:'درجة تلوين الظلال',min:0,m
 /* توكنات الإزاحة الحرّة والبنية — تُنشأ عند الحاجة */
 const FMKEYS=[];
 function ensureFM(elid){
-  const kx='c.fm.'+elid+'.x', ky='c.fm.'+elid+'.y';
-  if(!TOK[kx]){D(kx,{t:'dim',v:0,u:'px',g:'freemove',l:'إزاحة '+elid+' أفقيًّا',min:-260,max:260,step:.5});
-    D(ky,{t:'dim',v:0,u:'px',g:'freemove',l:'إزاحة '+elid+' رأسيًّا',min:-260,max:260,step:.5});FMKEYS.push(elid)}
-  return[kx,ky]}
+  const kx='c.fm.'+elid+'.x', ky='c.fm.'+elid+'.y', kr='c.fm.'+elid+'.rot', ks='c.fm.'+elid+'.scale';
+  if(!TOK[kx]){
+    D(kx,{t:'dim',v:0,u:'px',g:'freemove',l:'إزاحة '+elid+' أفقيًّا',min:-260,max:260,step:.5,
+      d:'يمين موجب ويسار سالب. يُسجَّل توكنًا فيخرج في الكود.'});
+    D(ky,{t:'dim',v:0,u:'px',g:'freemove',l:'إزاحة '+elid+' رأسيًّا',min:-260,max:260,step:.5,
+      d:'أسفل موجب وأعلى سالب.'});
+    D(kr,{t:'dim',v:0,u:'deg',g:'freemove',l:'لفّ '+elid,min:-180,max:180,step:.5,
+      d:'دوران العنصر حول مركزه بالدرجات.'});
+    D(ks,{t:'num',v:1,g:'freemove',l:'تكبير '+elid,min:.2,max:3,step:.01,
+      d:'نسبة حجمه — ١ يعني كما هو.'});
+    FMKEYS.push(elid)}
+  return[kx,ky,kr,ks]}
 
 /* ══════════════════════════════════════════════════════════════
    ٢) محرّك التوكنات — القراءة والحلّ والحقن
@@ -1946,8 +1958,12 @@ function render(){
   drawSel();}
 function applyFreeMove(root){
   FMKEYS.forEach(e=>{const n=root.querySelector(`[data-el="${e}"]`);if(!n)return;
-    const x=raw('c.fm.'+e+'.x'),y=raw('c.fm.'+e+'.y');
-    if(+x||+y){n.style.position='relative';n.style.insetInlineStart=x+'px';n.style.top=y+'px'}})}
+    const x=+raw('c.fm.'+e+'.x'),y=+raw('c.fm.'+e+'.y');
+    const r=+raw('c.fm.'+e+'.rot')||0, sc=+raw('c.fm.'+e+'.scale');
+    if(x||y){n.style.position='relative';n.style.insetInlineStart=x+'px';n.style.top=y+'px'}
+    const t=[];if(r)t.push('rotate('+r+'deg)');
+    if(sc&&sc!==1)t.push('scale('+sc+')');
+    if(t.length){n.style.transform=t.join(' ');n.style.transformOrigin='center'}})}
 function atoast(t){const e=$('#tr');if(!e)return;e.textContent=t;e.classList.add('on');
   clearTimeout(window._at);window._at=setTimeout(()=>e.classList.remove('on'),1900)}
 
@@ -3568,16 +3584,36 @@ function openPop(node){
       const again=$$('#app [data-el]').find(n=>elName(n)===name);
       if(again)openPop(again)};
     nud.appendChild(b)});
+  [['↺ لفّ يسار',-5],['↻ لفّ يمين',5]].forEach(([g,d])=>{
+    const b=el('button','pill',g);
+    b.onclick=()=>{const kr=ensureFM(name)[2];TOK[kr].v=round(clamp(+raw(kr)+d,-180,180),1);
+      push('لفّ '+name);apply();render();refreshCode();
+      const again=$$('#app [data-el]').find(n=>elName(n)===name);if(again)openPop(again)};
+    nud.appendChild(b)});
+  [['＋ كبّر',.05],['－ صغّر',-.05]].forEach(([g,d])=>{
+    const b=el('button','pill',g);
+    b.onclick=()=>{const ks=ensureFM(name)[3];TOK[ks].v=round(clamp(+raw(ks)+d,.2,3),3);
+      push('تكبير '+name);apply();render();refreshCode();
+      const again=$$('#app [data-el]').find(n=>elName(n)===name);if(again)openPop(again)};
+    nud.appendChild(b)});
   const hid=el('button','pill','أخفِه');
   hid.onclick=()=>{HIDDEN[name]=!HIDDEN[name];
     $$('#app [data-el]').filter(x=>elName(x)===name).forEach(x=>x.dataset.hidden=HIDDEN[name]?'1':'0');
     toast(HIDDEN[name]?'أُخفي':'أُظهر')};
   nud.appendChild(hid);
   const rst=el('button','pill','صفّر الموضع');
-  rst.onclick=()=>{const[kx,ky]=ensureFM(name);TOK[kx].v=0;TOK[ky].v=0;
-    push('تصفير موضع '+name);apply();render();refreshCode()};
+  rst.onclick=()=>{const[kx,ky,kr,ks]=ensureFM(name);
+    TOK[kx].v=0;TOK[ky].v=0;TOK[kr].v=0;TOK[ks].v=1;
+    push('تصفير موضع '+name);apply();render();refreshCode();
+    const again=$$('#app [data-el]').find(n=>elName(n)===name);if(again)openPop(again)};
   nud.appendChild(rst);
   m.appendChild(nud);
+  /* قيم الحركة — تظهر فقط بعد أول تحريك، وتُعدَّل بالرقم كذلك */
+  const fmk='c.fm.'+name+'.x';
+  if(TOK[fmk]&&(+raw(fmk)||+raw('c.fm.'+name+'.y')||+raw('c.fm.'+name+'.rot')||+raw('c.fm.'+name+'.scale')!==1)){
+    const mv=el('div','epbody');
+    ['x','y','rot','scale'].forEach(sfx=>{const id='c.fm.'+name+'.'+sfx;if(TOK[id])mv.appendChild(fieldFor(id))});
+    m.appendChild(mv)}
   /* التوكنات */
   if(toks.length){
     const body=el('div','epbody');
@@ -3745,7 +3781,10 @@ function componentsCSS(){
 @keyframes live{0%,100%{opacity:${out('c.dot.min')}}45%{opacity:1}}`}
 function diffRows(base){
   const b=base||BASELINE,rows=[];
-  ORDER.forEach(id=>{if(!inScope(id))return;const t=TOK[id],o=b.tok[id];if(!o)return;
+  ORDER.forEach(id=>{if(!inScope(id))return;const t=TOK[id];
+    /* التوكنات المستحدَثة بعد لقطة الأساس — كتوكنات السحب واللفّ — لا
+       مقابل لها في اللقطة، فكانت تسقط من الفرق ولا تصل الكود. */
+    const o=b.tok[id]||{v:(t.t==='num'&&/\.scale$/.test(id))?1:0,a:t.a,ref:null};
     const a=JSON.stringify([o.v,o.a,o.ref]),c=JSON.stringify([t.v,t.a,t.ref]);
     if(a!==c){const tmp={v:o.v,a:o.a,ref:o.ref};
       const cur={v:t.v,a:t.a,ref:t.ref};t.v=tmp.v;t.a=tmp.a;t.ref=tmp.ref;const before=out(id);
@@ -3974,7 +4013,7 @@ $('#app').addEventListener('click',e=>{
     if(MEASURE){MPICK.push(n);if(MPICK.length>2)MPICK=[n];drawSel();
       if(MPICK.length===2)toast('المسافة معروضة');return}
     selectEl(n,e.shiftKey);
-    if(!e.shiftKey)openPop(n);          /* الخيارات تطلع عند العنصر نفسه */
+    if(!e.shiftKey&&!(DRAG&&DRAG.moved))openPop(n);   /* الخيارات عند العنصر — إلا بعد سحبة */
     return}
   const b=e.target.closest('[data-rest],[data-go],[data-tab],[data-party]');if(!b)return;
   if(b.dataset.rest){S.rest=+b.dataset.rest;S.view='rest';return render()}
@@ -4001,20 +4040,67 @@ $('#app').addEventListener('click',e=>{
 /* السحب الحرّ */
 let DRAG=null;
 $('#app').addEventListener('mousedown',e=>{
-  if(!FREE||!EDIT)return;const n=e.target.closest('[data-el]');if(!n)return;
+  if(!EDIT)return;dragStart(e.target,e.clientX,e.clientY,e)});
+/* ══════════════════════════════════════════════════════════════
+   السحب — بالإصبع كما بالماوس، وبلا وضع منفصل: في التحرير يكفي أن
+   تمسك العنصر وتسحبه. وكل حركة تُكتب توكنًا فتظهر في الكود.
+   ══════════════════════════════════════════════════════════════ */
+function dragStart(target,cx,cy,ev){
+  let n=target.closest&&target.closest('[data-el]');if(!n)return;
+  if(n.dataset.auto){const named=n.closest('[data-el]:not([data-auto])');if(named)n=named}
+  if(n.dataset.lock==='1')return;
   const k=elName(n);ensureFM(k);
-  DRAG={k:k,x0:e.clientX,y0:e.clientY,ox:+raw('c.fm.'+k+'.x'),oy:+raw('c.fm.'+k+'.y'),node:n};
-  e.preventDefault();selectEl(n)});
-document.addEventListener('mousemove',e=>{
-  if(!DRAG)return;
-  const snapg=e.altKey?1:(e.shiftKey?8:4);
-  let dx=e.clientX-DRAG.x0,dy=e.clientY-DRAG.y0;
+  DRAG={k:k,x0:cx,y0:cy,ox:+raw('c.fm.'+k+'.x'),oy:+raw('c.fm.'+k+'.y'),node:n,moved:false};
+  if(ev&&ev.preventDefault)ev.preventDefault();selectEl(n)}
+function dragMove(cx,cy,mods){
+  if(!DRAG)return false;
+  const snapg=(mods&&mods.alt)?1:((mods&&mods.shift)?8:4);
+  let dx=cx-DRAG.x0,dy=cy-DRAG.y0;
+  if(!DRAG.moved&&Math.abs(dx)<4&&Math.abs(dy)<4)return false;   /* لمسة لا سحبة */
+  DRAG.moved=true;
   dx=Math.round(dx/snapg)*snapg;dy=Math.round(dy/snapg)*snapg;
-  TOK['c.fm.'+DRAG.k+'.x'].v=round(DRAG.ox-dx,1);/* RTL: يمين موجب */
-  TOK['c.fm.'+DRAG.k+'.y'].v=round(DRAG.oy+dy,1);
-  render();showSnapLines(DRAG.node)});
-document.addEventListener('mouseup',()=>{if(DRAG){push('سحب حرّ: '+DRAG.k);DRAG=null;
-  $$('.snapline',$('#ovl')).forEach(n=>n.remove());buildPanel()}});
+  const X=round(DRAG.ox-dx,1),Y=round(DRAG.oy+dy,1);   /* RTL: يمين موجب */
+  TOK['c.fm.'+DRAG.k+'.x'].v=X;
+  TOK['c.fm.'+DRAG.k+'.y'].v=Y;
+  /* لا نعيد رسم الشاشة أثناء السحب: إعادة الرسم تنتزع العنصر من تحت
+     الإصبع فينقطع تتبّع اللمس بعد أول خطوة. نزيحه مباشرة، ونعيد الرسم
+     مرّةً واحدة عند الإفلات. وهذا أخفّ وأنعم كذلك. */
+  const n=DRAG.node;
+  if(n&&n.isConnected){
+    n.style.position='relative';n.style.insetInlineStart=X+'px';n.style.top=Y+'px';
+    showSnapLines(n);showMeasure(n,DRAG.k)}
+  return true}
+function dragEnd(){
+  if(!DRAG)return;
+  const k=DRAG.k,moved=DRAG.moved;
+  DRAG=null;
+  if(moved){push('سحب: '+k);apply();render();refreshCode();buildPanel();
+    setTimeout(()=>{const node=$$('#app [data-el]').find(x=>elName(x)===k);
+      if(node)openPop(node)},30)}
+  $$('.snapline,.measbadge',$('#ovl')).forEach(n=>n.remove())}
+/* شارة القياس الحيّ */
+function showMeasure(node,k){
+  $$('.measbadge',$('#ovl')).forEach(n=>n.remove());
+  const f=$('#frame').getBoundingClientRect(),r=node.getBoundingClientRect();
+  const b=el('div','measbadge');
+  b.innerHTML=`<b>${round(+raw('c.fm.'+k+'.x'),1)}</b> س · <b>${round(+raw('c.fm.'+k+'.y'),1)}</b> ص`
+    +` · ${Math.round(r.width)}×${Math.round(r.height)}`;
+  b.style.cssText=`left:${clamp(r.left-f.left,2,f.width-120)}px;top:${clamp(r.top-f.top-20,2,f.height-20)}px`;
+  $('#ovl').appendChild(b)}
+document.addEventListener('mousemove',e=>{dragMove(e.clientX,e.clientY,{alt:e.altKey,shift:e.shiftKey})});
+document.addEventListener('mouseup',dragEnd);
+$('#app').addEventListener('touchstart',e=>{
+  if(!EDIT||e.touches.length!==1)return;
+  const t=e.touches[0];dragStart(t.target,t.clientX,t.clientY,null)},{passive:true});
+/* المتابعة على المستند لا على العنصر: كل حركة تعيد رسم الشاشة فينفصل
+   العنصر الملموس عن الصفحة، ولمس منفصل لا تصعد أحداثه — فكانت السحبة
+   تتوقّف بعد أول خطوة ولا يصل touchend أصلًا. */
+document.addEventListener('touchmove',e=>{
+  if(!DRAG||e.touches.length!==1)return;
+  const t=e.touches[0];
+  if(dragMove(t.clientX,t.clientY,null)&&e.cancelable)e.preventDefault()},{passive:false});
+document.addEventListener('touchend',dragEnd);
+document.addEventListener('touchcancel',dragEnd);
 function showSnapLines(node){
   $$('.snapline',$('#ovl')).forEach(n=>n.remove());
   const f=$('#frame').getBoundingClientRect(),r=node.getBoundingClientRect();
