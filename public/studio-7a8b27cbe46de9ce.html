@@ -129,6 +129,11 @@ input[type=color]{width:26px;height:22px;padding:0;border:1px solid var(--u-line
 .elpop .epnav .pill{font-size:9.5px;padding:3px 7px;font-family:ui-monospace,monospace;direction:ltr}
 .elpop .epnud{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:5px 0;border-top:1px dashed #232329;margin-top:5px}
 .elpop .epbody{border-top:1px dashed #232329;margin-top:6px;padding-top:4px}
+.elpop .epident{border-top:1px dashed #232329;margin-top:6px;padding-top:5px}
+.swrow{display:flex;align-items:center;gap:3px;flex-wrap:wrap}
+.sw{width:17px;height:17px;border-radius:5px;border:1px solid #34343c;padding:0;flex:none}
+.sw:hover{outline:1px solid var(--u-acc)}
+.sw-none{background:#0f0f12;color:var(--u-dim2);font-size:10px;line-height:1}
 .elpop .row{grid-template-columns:96px minmax(0,1fr)}
 .elpop .fdest{display:none}
 @media (max-width:900px){.elpop{width:auto;inset-inline:8px;left:8px!important;max-height:62vh}}
@@ -273,7 +278,7 @@ body.freemove .app [data-el].fmsel{cursor:move}
 .app .scroll::-webkit-scrollbar{width:0}
 
 /* الترويسة */
-.app .hd{background:var(--s-header-bg);padding:var(--c-hd-pt) var(--c-gutter) var(--c-hd-pb);
+.app .hd{background:var(--x-hd-tex);padding:var(--c-hd-pt) var(--c-gutter) var(--c-hd-pb);
   border-bottom:var(--c-line-w) solid var(--s-line)}
 .app .hd .r1{display:flex;align-items:center;gap:var(--c-hd-gap);min-height:var(--c-badge-size);
   flex-direction:var(--x-hd-dir);justify-content:var(--c-hd-justify)}
@@ -326,7 +331,7 @@ body.freemove .app [data-el].fmsel{cursor:move}
 
 /* الصف */
 .app .rw{position:relative;display:flex;align-items:center;width:100%;text-align:start;
-  min-height:var(--c-row-height);padding:0 var(--c-gutter);background:var(--s-surface);color:var(--s-ink);
+  min-height:var(--c-row-height);padding:0 var(--c-gutter);background:var(--x-row-tex);color:var(--s-ink);
   box-shadow:var(--x-row-shadow);transition:background var(--p-dur-fast);
   border-radius:var(--c-row-radius);margin:var(--c-row-margin);
   flex-direction:var(--x-row-dir)}
@@ -364,7 +369,7 @@ body.freemove .app [data-el].fmsel{cursor:move}
 
 /* شريط الدور */
 .app .tick{display:flex;align-items:center;gap:var(--c-ticket-gap);
-  padding:var(--c-ticket-pt) var(--c-gutter);background:var(--s-ticket-bg);color:var(--s-ticket-ink);
+  padding:var(--c-ticket-pt) var(--c-gutter);background:var(--x-ticket-tex);color:var(--s-ticket-ink);
   font-size:var(--c-ticket-size);width:100%;text-align:start;flex-direction:var(--x-tick-dir)}
 .app .tick b{font-family:var(--c-num-font);font-size:var(--c-ticket-code);direction:ltr;font-weight:var(--c-num-weight)}
 .app .tick .go{margin-inline-start:auto;opacity:var(--c-ticket-arrow-opacity)}
@@ -464,7 +469,7 @@ body.freemove .app [data-el].fmsel{cursor:move}
    شاشات التطبيق الحيّ — الرئيسية وصفحة المطعم بتبويباتها وبطاقة الدور.
    كل قيمة هنا توكن كذلك؛ لا رقم مكتوب.
    ══════════════════════════════════════════════════════════════ */
-.app .hd2{background:var(--s-header2-bg);padding:var(--c-hd2-pt) var(--c-gutter) var(--c-hd2-pb);
+.app .hd2{background:var(--x-hd2-tex);padding:var(--c-hd2-pt) var(--c-gutter) var(--c-hd2-pb);
   border-end-start-radius:var(--c-hd2-radius);border-end-end-radius:var(--c-hd2-radius);
   display:flex;align-items:center;gap:var(--c-hd-gap);flex:none}
 .app .cbtn{width:var(--c-cbtn-size);height:var(--c-cbtn-size);border-radius:var(--c-cbtn-radius);
@@ -502,7 +507,7 @@ body.freemove .app [data-el].fmsel{cursor:move}
 .app .slabel b{font-family:var(--c-num-font);font-weight:400;font-size:var(--c-slabel-count);color:var(--s-ink3)}
 
 /* بطاقة المطعم في الرئيسية */
-.app .rcard{background:var(--s-bg);border-radius:var(--c-rcard-radius);margin:0 var(--c-gutter) var(--c-rcard-gap);
+.app .rcard{background:var(--x-card-tex);border-radius:var(--c-rcard-radius);margin:0 var(--c-gutter) var(--c-rcard-gap);
   padding:var(--c-rcard-pad);box-shadow:var(--x-rcard-shadow)}
 .app .rc-top{display:flex;align-items:flex-start;gap:var(--c-rcard-inner-gap)}
 .app .rc-img{width:var(--c-rc-img);height:var(--c-rc-img);border-radius:var(--c-rc-img-radius);flex:none;
@@ -531,7 +536,7 @@ body.freemove .app [data-el].fmsel{cursor:move}
   stroke-width:var(--c-icon-stroke);stroke-linecap:round}
 
 /* بطاقة عامّة داخل صفحة المطعم */
-.app .pcard{background:var(--s-bg);border-radius:var(--c-pcard-radius);margin:var(--c-pcard-mt) var(--c-gutter) 0;
+.app .pcard{background:var(--x-card-tex);border-radius:var(--c-pcard-radius);margin:var(--c-pcard-mt) var(--c-gutter) 0;
   padding:var(--c-pcard-pad);box-shadow:var(--x-rcard-shadow)}
 .app .pcard h5{margin:0 0 var(--c-pcard-title-mb);font-size:var(--c-pcard-title);font-weight:var(--c-pcard-title-weight);color:var(--s-ink)}
 
@@ -603,7 +608,7 @@ body.freemove .app [data-el].fmsel{cursor:move}
   font-weight:var(--c-qtitle-weight);color:var(--s-ink)}
 .app .qtitle span{display:block;font-size:var(--c-qgreet-size);font-weight:var(--c-qgreet-weight);
   color:var(--s-brand-text);margin-top:var(--c-qgreet-mt)}
-.app .qbox{background:var(--s-bg);border-radius:var(--c-qbox-radius);margin:var(--c-qbox-mt) var(--c-gutter) 0;
+.app .qbox{background:var(--x-card-tex);border-radius:var(--c-qbox-radius);margin:var(--c-qbox-mt) var(--c-gutter) 0;
   padding:var(--c-qbox-pad);box-shadow:var(--x-rcard-shadow);text-align:center}
 .app .ring{width:var(--c-ring-size);height:var(--c-ring-size);border-radius:50%;margin:0 auto;
   display:grid;place-items:center;align-content:center;box-shadow:inset 0 0 0 var(--c-ring-w) var(--s-brand)}
@@ -1124,7 +1129,8 @@ C('ins.img.r','dim',10,{u:'px',g:'insert',l:'زاوية الصورة المُد�
 C('ins.card.pad','text','14px',{g:'insert',l:'حشو البطاقة'});
 C('ins.card.r','dim',14,{u:'px',g:'insert',l:'زاوية البطاقة',min:0,max:34,step:1});
 /* الخامات — لكل سطح على حدة */
-const SURF=[['app','خلفية التطبيق'],['row','الصفوف'],['header','الترويسة'],['card','البطاقات'],['ticket','شريط الدور']];
+const SURF=[['app','خلفية التطبيق'],['row','الصفوف'],['header','الترويسة'],['card','البطاقات'],
+  ['ticket','شريط الدور'],['header2','ترويسة الرئيسية']];
 SURF.forEach(([k,l])=>{
   C(`tex.${k}.glow`,'opacity',k==='app'?.03:0,{g:'tex:'+k,l:l+' · توهّج داخلي',min:0,max:.3,step:.002});
   C(`tex.${k}.diag`,'opacity',k==='app'?.015:0,{g:'tex:'+k,l:l+' · خطوط قطرية',min:0,max:.2,step:.001});
@@ -1216,7 +1222,10 @@ const COMPUTED={
   '--x-photo-a':()=>photoBG('c.photo.a',0),
   '--x-photo-b':()=>photoBG('c.photo.b',0,14),
   '--x-row-tex':()=>{const t=texture('row',raw('s.brand'));return t.length?t.join(',')+','+out('s.surface'):out('s.surface')},
-  '--x-hd-tex':()=>{const t=texture('header',raw('s.brand'));return t.length?t.join(',')+','+out('s.header-bg'):out('s.header-bg')},
+  '--x-hd-tex':()=>{const t=texture('header',raw('s.brand'));return t.length?t.join(',')+','+out('s.header.bg'):out('s.header.bg')},
+  '--x-hd2-tex':()=>{const t=texture('header2',raw('s.brand'));return t.length?t.join(',')+','+out('s.header2.bg'):out('s.header2.bg')},
+  '--x-card-tex':()=>{const t=texture('card',raw('s.brand'));return t.length?t.join(',')+','+out('s.bg'):out('s.bg')},
+  '--x-ticket-tex':()=>{const t=texture('ticket',raw('s.brand'));return t.length?t.join(',')+','+out('s.ticket.bg'):out('s.ticket.bg')},
   '--x-row-shadow':()=>{const S=TOK['c.row.shadow'].v;if(!S.length)return'none';
     const tint=+raw('c.shadow.tint');
     return S.map(s=>{const c=mixTint(s.c,tint);return`${s.inset?'inset ':''}${s.x}px ${s.y}px ${s.b}px ${s.s}px ${rgba(c,s.a)}`}).join(',')},
@@ -3533,6 +3542,91 @@ const QUICKANY=[
  ['أوسع هامشًا',()=>setv('c.gutter',+raw('c.gutter')+4)],
  ['أضيق هامشًا',()=>setv('c.gutter',Math.max(0,raw('c.gutter')-4))]];
 
+/* ══════════════════════════════════════════════════════════════
+   الهوية عند العنصر — خلفيته ولونه وخامته وخطّه في نافذته نفسها.
+   الأسماء تُستنتج من وسم data-tok الخاص به، فلا جدول يدوي يشيخ.
+   ══════════════════════════════════════════════════════════════ */
+const TEXFOR={header:'header',header2:'header2','header2.search':'header2','header2.back':'header2',
+  row:'row','row.chip':'row',card:'card','card.image':'card','panel.card':'card','qcard.box':'card',
+  'review.summary':'card','branch.card':'card',ticketbar:'ticket',stats:'row',kvline:'row',hero:'row'};
+const TEXKINDS=[['بلا خامة',{glow:0,diag:0,grain:0,paper:0,linen:0}],
+ ['توهّج',{glow:.05,diag:0,grain:0,paper:0,linen:0}],
+ ['خطوط قطرية',{glow:0,diag:.02,grain:0,paper:0,linen:0}],
+ ['حبيبات',{glow:0,diag:0,grain:.05,paper:0,linen:0}],
+ ['ورق',{glow:0,diag:0,grain:.02,paper:.03,linen:0}],
+ ['كتّان',{glow:0,diag:0,grain:0,paper:0,linen:.025}],
+ ['توهّج + حبيبات',{glow:.045,diag:0,grain:.04,paper:0,linen:0}]];
+function identOf(node,name){
+  const toks=(node.dataset.tok||'').split(',').map(t=>t.trim()).filter(t=>TOK[t]);
+  const bg=toks.find(t=>/^s\.(bg|surface|surface\.pressed|header\.bg|header2\.bg|nav\.bg|ticket\.bg|chip\.bg|brand)$/.test(t));
+  const ink=toks.find(t=>/^s\.(ink3|ink2|ink|brand\.text|brand\.ink|state\.|gold)/.test(t));
+  const font=toks.find(t=>/\.font$/.test(t));
+  let tex=TEXFOR[name];
+  if(!tex){const up=node.closest('[data-el]');let q=node;
+    while(q&&!tex){q=q.parentElement&&q.parentElement.closest('[data-el]');if(q)tex=TEXFOR[elName(q)]}}
+  return {bg:bg,ink:ink,font:font,tex:tex||'app'}}
+function swatchRow(id,onSet){
+  const r=el('div','swrow');
+  const pick=el('input');pick.type='color';pick.value=raw(id);
+  pick.oninput=()=>{TOK[id].ref=null;TOK[id].v=pick.value;apply();refreshCode()};
+  pick.onchange=()=>{push('لون '+TOK[id].l);onSet&&onSet()};
+  r.appendChild(pick);
+  /* عيّنات من سلالم الهوية نفسها — لا ألوان عشوائية */
+  ['p.maroon.700','p.maroon.500','p.cream.100','p.cream.200','p.neutral.0','p.neutral.50',
+   'p.neutral.200','p.ink.800','p.ink.500','p.ink.300'].forEach(pid=>{
+    if(!TOK[pid])return;
+    const b=el('button','sw');b.style.background=raw(pid);b.title=TOK[pid].l;
+    b.onclick=()=>{TOK[id].ref=pid;TOK[id].v=raw(pid);push('لون من السلّم');apply();refreshCode();onSet&&onSet()};
+    r.appendChild(b)});
+  const cl=el('button','sw sw-none');cl.textContent='◌';cl.title='شفّاف';
+  cl.onclick=()=>{TOK[id].ref=null;TOK[id].a=0;push('شفّاف');apply();refreshCode();onSet&&onSet()};
+  r.appendChild(cl);
+  return r}
+function identBlock(node,name,reopen){
+  const I=identOf(node,name);
+  const sec=el('div','epident');
+  const ttl=el('div','mini');ttl.innerHTML='<b style="color:#b9c4d2">الهوية هنا</b>';
+  sec.appendChild(ttl);
+  if(I.bg){const r=el('div','row');r.appendChild(el('label','','<b>الخلفية</b>'));
+    const c=el('div','ctl');c.appendChild(swatchRow(I.bg,reopen));r.appendChild(c);
+    r.appendChild(el('div','fdesc','<b>'+TOK[I.bg].l+'</b> <span class="where">يغيّرها في كل مكان تُستعمل فيه.</span>'));
+    sec.appendChild(r)}
+  if(I.ink){const r=el('div','row');r.appendChild(el('label','','<b>لون النصّ</b>'));
+    const c=el('div','ctl');c.appendChild(swatchRow(I.ink,reopen));r.appendChild(c);
+    r.appendChild(el('div','fdesc','<b>'+TOK[I.ink].l+'</b>'));
+    sec.appendChild(r)}
+  /* الخامة */
+  const tr=el('div','row');tr.appendChild(el('label','','<b>الخامة</b>'));
+  const tc=el('div','ctl');tc.style.flexWrap='wrap';
+  TEXKINDS.forEach(([l,vals])=>{const b=el('button','pill',l);
+    b.onclick=()=>{for(const k in vals){const id='c.tex.'+I.tex+'.'+k;if(TOK[id]){TOK[id].ref=null;TOK[id].v=vals[k]}}
+      push('خامة: '+l);apply();render();refreshCode();reopen&&reopen()};
+    tc.appendChild(b)});
+  tr.appendChild(tc);
+  tr.appendChild(el('div','fdesc','<b>نقش خفيف فوق السطح — CSS خالص بلا صور.</b> '
+    +'<span class="where">يُطبَّق على سطح «'+((SURF.find(x=>x[0]===I.tex)||[,I.tex])[1])+'» كلّه.</span>'));
+  sec.appendChild(tr);
+  /* شدّة الخامة */
+  ['glow','diag','grain','paper','linen'].forEach(k=>{
+    const id='c.tex.'+I.tex+'.'+k;
+    if(TOK[id]&&+raw(id)>0)sec.appendChild(fieldFor(id))});
+  /* الخطّ */
+  const fid=I.font||'c.font.ui';
+  if(TOK[fid]){const r=el('div','row');r.appendChild(el('label','','<b>الخطّ</b>'));
+    const c=el('div','ctl');
+    const btn=el('button','fontbtn');
+    const paint=()=>{const n=fontNameOf(raw(fid));loadFont(n);
+      btn.innerHTML=`<span class="fbn" style="font-family:${n==='inherit'?'inherit':`'${n}',${fontFallback(n)}`}">${n==='inherit'?'موروث':n}</span>`
+        +`<span class="fbt">${TOK[fid].l}</span>`};
+    paint();
+    btn.onclick=()=>openFontMenu(btn,fontNameOf(raw(fid)),n=>{
+      TOK[fid].ref=null;TOK[fid].v=fontValue(n);push('خطّ');apply();render();refreshCode();paint();reopen&&reopen()},
+      TOK[fid].inh!==false);
+    c.appendChild(btn);r.appendChild(c);
+    r.appendChild(el('div','fdesc',I.font?'<b>خطّ هذا العنصر وحده.</b>'
+      :'<b>هذا العنصر ما له خطّ خاص، فتغييره يغيّر خطّ الواجهة كلّه.</b>'));
+    sec.appendChild(r)}
+  return sec}
 let POP=null;
 function closePop(){if(POP){POP.remove();POP=null;
   document.removeEventListener('mousedown',_popOut,true);
@@ -3610,6 +3704,9 @@ function openPop(node){
     const again=$$('#app [data-el]').find(n=>elName(n)===name);if(again)openPop(again)};
   nud.appendChild(rst);
   m.appendChild(nud);
+  /* الهوية: خلفية ولون وخامة وخطّ */
+  m.appendChild(identBlock(node,name,()=>{
+    const again=$$('#app [data-el]').find(x=>elName(x)===name);if(again)openPop(again)}));
   /* قيم الحركة — تظهر فقط بعد أول تحريك، وتُعدَّل بالرقم كذلك */
   const fmk='c.fm.'+name+'.x';
   if(TOK[fmk]&&(+raw(fmk)||+raw('c.fm.'+name+'.y')||+raw('c.fm.'+name+'.rot')||+raw('c.fm.'+name+'.scale')!==1)){
