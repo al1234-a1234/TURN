@@ -1979,33 +1979,122 @@ function atoast(t){const e=$('#tr');if(!e)return;e.textContent=t;e.classList.add
 /* ══════════════════════════════════════════════════════════════
    ٥) PRESETS — أطقم كاملة + جاهزيات صغيرة + جاهزيات الشعار
    ══════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   الأطقم — هويّة كاملة بضغطة. كل طقم يمسّ الشاشات التسع لا الستّ،
+   ويضبط الخطوط كذلك، فيتغيّر التطبيق كلّه لا نصفه.
+   ══════════════════════════════════════════════════════════════ */
+const F={plex:'"IBM Plex Sans Arabic",sans-serif',tajawal:'"Tajawal",sans-serif',
+ almarai:'"Almarai",sans-serif',alex:'"Alexandria",sans-serif',reem:'"Reem Kufi",sans-serif',
+ cairo:'"Cairo",sans-serif',readex:'"Readex Pro",sans-serif',amiri:'"Amiri",serif',
+ messiri:'"El Messiri",sans-serif',changa:'"Changa",sans-serif',
+ dm:'"DM Serif Display",serif',playfair:'"Playfair Display",serif',prata:'"Prata",serif',
+ bodoni:'"Bodoni Moda",serif',inter:'"Inter",sans-serif',archivo:'"Archivo",sans-serif',
+ space:'"Space Grotesk",sans-serif',fraunces:'"Fraunces",serif',jet:'"JetBrains Mono",monospace',
+ instr:'"Instrument Serif",serif',cormorant:'"Cormorant Garamond",serif'};
+/* خطّ عربي لكل الأدوار النصّية، ولاتيني للأرقام والشعار */
+const pair=(ar,la)=>({'c.font.ui':ar,'c.name.font':ar,'c.title.font':ar,
+  'c.num.font':la,'c.grp.num.font':la,'c.wordmark.font':la,'c.digit.font':la});
 const KITS=[
-{k:'baseline',l:'خط الأساس',d:'الشكل الحالي كما هو',t:{}},
-{k:'paper',l:'ورقي دافئ',d:'خامة ورق + صفوف مسطّحة',t:{'s.bg':'p.cream.50','s.surface':'p.cream.0','c.row.shadow':[],
- 'c.tex.app.paper':.03,'c.tex.row.paper':.012,'c.row.divider.on':1,'c.row.height':78,'c.name.weight':500}},
-{k:'raised',l:'بطاقات مرفوعة',d:'كل صف بطاقة منفصلة',t:{'s.bg':'p.neutral.100','c.row.radius':18,'c.row.margin':6,
- 'c.row.divider.on':0,'c.row.shadow':[{x:0,y:10,b:24,s:-14,c:'#3c2314',a:.5,inset:false}],'c.gutter':16}},
-{k:'flat',l:'مسطّح صارم',d:'بلا ظلال ولا لمعان',t:{'c.row.shadow':[],'c.badge.gloss':0,'c.chip.gloss':0,
- 'c.row.divider.on':1,'c.tex.app.glow':0,'c.tex.app.diag':0,'c.badge.radius':0,'c.chip.radius':0,'c.button.radius':0}},
-{k:'typo',l:'طباعي',d:'الاسم أكبر والحالة نصّ',t:{'c.name.size':19,'c.name.weight':400,'c.name.tracking':-.018,
- 'c.status.variant':'text','c.status.weight':400,'c.meta.size':10,'c.row.height':92,'c.title.size':32}},
-{k:'noir',l:'معتم فاخر',d:'خلفية داكنة وحبر كريمي',t:{'s.bg':'p.ink.900','s.surface':'p.ink.800','s.surface.pressed':'p.ink.700',
+{k:'baseline',l:'خط الأساس',d:'الشكل الحالي كما هو — نقطة الرجوع',t:{}},
+
+{k:'paper',l:'ورقي دافئ',d:'خامة ورق وصفوف مسطّحة · Tajawal + Prata',
+ t:Object.assign({},pair(F.tajawal,F.prata),{'s.bg':'p.cream.50','s.surface':'p.cream.0','c.row.shadow':[],
+ 'c.tex.app.paper':.03,'c.tex.row.paper':.012,'c.row.divider.on':1,'c.row.height':78,'c.name.weight':500,
+ 'c.rcard.radius':16,'c.tabs.radius':16,'c.tb.radius':11,'c.qbox.radius':18,'c.ring.w':6,
+ 'c.rcard.shadow':[],'c.tabs.shadow':[],'c.hd2.radius':16})},
+
+{k:'raised',l:'بطاقات مرفوعة',d:'كل صف بطاقة تطفو · Almarai + DM Serif',
+ t:Object.assign({},pair(F.almarai,F.dm),{'s.bg':'p.neutral.100','c.row.radius':18,'c.row.margin':6,
+ 'c.row.divider.on':0,'c.row.shadow':[{x:0,y:10,b:24,s:-14,c:'#3c2314',a:.5,inset:false}],'c.gutter':16,
+ 'c.rcard.radius':22,'c.rcard.shadow':[{x:0,y:12,b:26,s:-14,c:'#3c2314',a:.4,inset:false}],
+ 'c.tabs.radius':24,'c.tb.radius':17,'c.qbox.radius':26})},
+
+{k:'flat',l:'مسطّح صارم',d:'بلا ظلال ولا لمعان ولا زوايا · Inter + Archivo',
+ t:Object.assign({},pair(F.plex,F.archivo),{'c.row.shadow':[],'c.badge.gloss':0,'c.chip.gloss':0,
+ 'c.row.divider.on':1,'c.tex.app.glow':0,'c.tex.app.diag':0,'c.badge.radius':0,'c.chip.radius':0,
+ 'c.button.radius':0,'c.rcard.radius':0,'c.rcard.shadow':[],'c.tabs.radius':0,'c.tb.radius':0,
+ 'c.tabs.shadow':[],'c.tb.on.shadow':[],'c.qbox.radius':0,'c.hd2.radius':0,'c.ring.variant':'square',
+ 'c.avatar.radius':0,'c.rc.img.radius':0,'c.cbtn.radius':0,'c.gift.radius':0,'c.cta.radius':0})},
+
+{k:'typo',l:'طباعي',d:'الاسم أكبر والحالة نصّ · Readex + Playfair',
+ t:Object.assign({},pair(F.readex,F.playfair),{'c.name.size':19,'c.name.weight':400,'c.name.tracking':-.018,
+ 'c.status.variant':'text','c.status.weight':400,'c.meta.size':10,'c.row.height':92,'c.title.size':32,
+ 'c.rc.name':22,'c.rc.name.weight':500,'c.qtitle.size':32,'c.ring.num':82,'c.mhead.size':22})},
+
+{k:'noir',l:'ليلي فاخر',d:'داكن كامل — كل الشاشات · Alexandria + Bodoni',
+ t:Object.assign({},pair(F.alex,F.bodoni),{'s.bg':'p.ink.900','s.surface':'p.ink.800','s.surface.pressed':'p.ink.700',
  's.ink':'p.cream.100','s.ink2':'p.cream.300','s.ink3':'p.cream.500','s.line':'p.ink.600','s.header.bg':'p.ink.900',
  's.nav.bg':'p.ink.900','s.chip.bg':'p.ink.700','s.state.open':'p.maroon.300','s.brand.text':'p.maroon.300',
- 'c.row.shadow':[{x:0,y:14,b:30,s:-20,c:'#000000',a:.8,inset:false}]}},
-{k:'cafe',l:'مقاهي',d:'كريمي عميق ونصّ دافئ',t:{'s.bg':'p.cream.100','s.surface':'p.cream.50','s.surface.pressed':'p.cream.200',
- 's.line':'p.cream.300','s.header.bg':'p.cream.200','s.nav.bg':'p.cream.200','c.tex.app.grain':.04,'c.row.shadow':[]}},
-{k:'clean',l:'فاتح شديد النظافة',d:'أبيض وخطوط شعرية',t:{'s.bg':'p.neutral.0','s.surface':'p.neutral.0',
+ 's.header2.bg':'p.ink.800','s.star.empty':'p.ink.600','s.gold':'#c9a227',
+ 'c.row.shadow':[{x:0,y:14,b:30,s:-20,c:'#000000',a:.8,inset:false}],
+ 'c.rcard.shadow':[{x:0,y:14,b:30,s:-18,c:'#000000',a:.75,inset:false}],
+ 'c.tabs.shadow':[{x:0,y:8,b:20,s:-12,c:'#000000',a:.7,inset:false}],
+ 'c.bimg.scrim':.55,'c.photo.sat':.22,'c.cbtn.tint':.9})},
+
+{k:'cafe',l:'مقاهي',d:'كريمي عميق وحبيبات · Amiri + Cormorant',
+ t:Object.assign({},pair(F.amiri,F.cormorant),{'s.bg':'p.cream.100','s.surface':'p.cream.50','s.surface.pressed':'p.cream.200',
+ 's.line':'p.cream.300','s.header.bg':'p.cream.200','s.header2.bg':'p.cream.300','s.nav.bg':'p.cream.200',
+ 'c.tex.app.grain':.04,'c.tex.row.grain':.02,'c.tex.card.grain':.02,'c.row.shadow':[],'c.base.lh':1.75})},
+
+{k:'clean',l:'فاتح شديد النظافة',d:'أبيض وخطوط شعرية · Plex + Inter',
+ t:Object.assign({},pair(F.plex,F.inter),{'s.bg':'p.neutral.0','s.surface':'p.neutral.0',
  's.line':'p.neutral.200','c.row.shadow':[],'c.row.divider.on':1,'c.row.divider.end':20,'c.tex.app.glow':0,
- 'c.tex.app.diag':0,'c.name.weight':600}},
-{k:'grain',l:'حبيبي مطبوع',d:'حبيبات على كل سطح',t:{'c.tex.app.grain':.09,'c.tex.row.grain':.05,'c.tex.header.grain':.05,
- 'c.ink.density':.4,'c.row.shadow':[{x:0,y:8,b:18,s:-12,c:'#4a2a18',a:.5,inset:false}]}},
-{k:'edito',l:'مجلّة',d:'عناوين ضخمة وتباعد واسع',t:{'c.name.size':21,'c.name.weight':300,'c.title.size':38,
- 'c.title.weight':300,'c.grp.size':10,'c.sect.tracking':.22,'c.row.height':98,'c.gutter':26,'c.meta.tracking':.12}},
-{k:'compact',l:'مضغوط',d:'صفوف كثيفة لقوائم طويلة',t:{'c.row.height':62,'c.chip.size':42,'c.name.size':14.5,
- 'c.meta.size':9,'c.gutter':16,'c.grp.pt':12,'c.grp.pb':5,'c.row.shadow':[]}},
-{k:'stamp',l:'ختم يدوي',d:'زوايا متفاوتة وظلّ ملوّن',t:{'c.badge.radius':32,'c.chip.radius':6,'c.button.radius':22,
- 'c.row.radius':4,'c.shadow.tint':1,'c.status.variant':'square','c.dot.radius':0,'c.name.tracking':.01}}];
+ 'c.tex.app.diag':0,'c.name.weight':600,'c.rcard.shadow':[{x:0,y:2,b:8,s:-4,c:'#3c2314',a:.12,inset:false}],
+ 'c.tabs.shadow':[],'c.line.w':1,'c.hd2.radius':0})},
+
+{k:'grain',l:'حبيبي مطبوع',d:'حبيبات على كل سطح · Changa + Fraunces',
+ t:Object.assign({},pair(F.changa,F.fraunces),{'c.tex.app.grain':.09,'c.tex.row.grain':.05,'c.tex.header.grain':.05,
+ 'c.tex.card.grain':.05,'c.tex.header2.grain':.05,'c.ink.density':.4,
+ 'c.row.shadow':[{x:0,y:8,b:18,s:-12,c:'#4a2a18',a:.5,inset:false}]})},
+
+{k:'edito',l:'مجلّة',d:'عناوين ضخمة وتباعد واسع · El Messiri + Instrument',
+ t:Object.assign({},pair(F.messiri,F.instr),{'c.name.size':21,'c.name.weight':300,'c.title.size':38,
+ 'c.title.weight':300,'c.grp.size':10,'c.sect.tracking':.22,'c.row.height':98,'c.gutter':26,'c.meta.tracking':.12,
+ 'c.rc.name':24,'c.qtitle.size':38,'c.mhead.size':24,'c.pcard.title':20,'c.slabel.size':17})},
+
+{k:'compact',l:'مضغوط',d:'صفوف كثيفة لقوائم طويلة · Cairo + Inter',
+ t:Object.assign({},pair(F.cairo,F.inter),{'c.row.height':62,'c.chip.size':42,'c.name.size':14.5,
+ 'c.meta.size':9,'c.gutter':16,'c.grp.pt':12,'c.grp.pb':5,'c.row.shadow':[],
+ 'c.rcard.pad':9,'c.rcard.gap':9,'c.rc.img':56,'c.rc.name':16,'c.cta.pad':'10px 13px','c.tb.py':9,'c.avatar.size':78})},
+
+{k:'stamp',l:'ختم يدوي',d:'زوايا متفاوتة وظلّ ملوّن · Reem Kufi + Prata',
+ t:Object.assign({},pair(F.reem,F.prata),{'c.badge.radius':32,'c.chip.radius':6,'c.button.radius':22,
+ 'c.row.radius':4,'c.shadow.tint':1,'c.status.variant':'square','c.dot.radius':0,'c.name.tracking':.01,
+ 'c.rcard.radius':6,'c.rc.img.radius':4,'c.tb.radius':6,'c.avatar.radius':14,'c.ring.variant':'square'})},
+
+/* ── ستّة جديدة ── */
+{k:'soft',l:'طريّ مستدير',d:'كل زاوية دائرية والألوان هادئة · Tajawal + Fraunces',
+ t:Object.assign({},pair(F.tajawal,F.fraunces),{'c.row.radius':22,'c.row.margin':7,'c.row.divider.on':0,
+ 'c.chip.radius':34,'c.badge.radius':34,'c.button.radius':99,'c.rcard.radius':26,'c.rc.img.radius':24,
+ 'c.tabs.radius':28,'c.tb.radius':20,'c.qbox.radius':30,'c.cta.radius':99,'c.gift.radius':99,'c.finp.radius':22,
+ 'c.avatar.radius':50,'c.hd2.radius':30,'s.surface':'p.neutral.0','c.base.lh':1.7})},
+
+{k:'brutal',l:'صريح حادّ',d:'حدود سميكة وبلا ظلال · Alexandria + Archivo',
+ t:Object.assign({},pair(F.alex,F.archivo),{'c.line.w':2,'c.row.divider.on':1,'c.row.shadow':[],
+ 'c.rcard.shadow':[],'c.tabs.shadow':[],'c.tb.on.shadow':[],'c.button.shadow':[],
+ 'c.badge.radius':0,'c.chip.radius':0,'c.rcard.radius':0,'c.tb.radius':0,'c.button.radius':0,
+ 'c.name.weight':700,'c.status.weight':700,'c.rc.name.weight':800,'c.ring.w':14,'c.cbtn.radius':0})},
+
+{k:'lux',l:'فخم ذهبي',d:'تباين عالٍ ونجوم ذهبية · Amiri + Bodoni',
+ t:Object.assign({},pair(F.amiri,F.bodoni),{'s.bg':'p.cream.50','s.surface':'p.neutral.0','s.gold':'#b8860b',
+ 's.line':'p.cream.300','c.name.weight':400,'c.name.tracking':.01,'c.sect.tracking':.26,
+ 'c.title.size':32,'c.rc.rate':17,'c.stars.size':34,'c.tex.app.glow':.05,'c.row.shadow':[],
+ 'c.rcard.shadow':[{x:0,y:16,b:34,s:-20,c:'#5a3a12',a:.3,inset:false}],'c.rcard.radius':4,'c.rc.img.radius':2})},
+
+{k:'kufi',l:'كوفي معاصر',d:'هوية عربية خالصة بحروف هندسية · Reem Kufi',
+ t:Object.assign({},pair(F.reem,F.archivo),{'c.name.weight':600,'c.title.weight':600,'c.sect.tracking':.18,
+ 'c.grp.size':11,'c.base.lh':1.8,'c.numerals':'arabic','c.row.height':88,'c.gutter':22,
+ 'c.rc.name':20,'c.qtitle.weight':600,'c.mhead.weight':600})},
+
+{k:'mono',l:'أحادي تقني',d:'أرقام أحادية المسافة وشبكة صارمة · Plex + JetBrains',
+ t:Object.assign({},pair(F.plex,F.jet),{'c.numeric':'tabular-nums','c.num.font':F.jet,'c.grp.num.font':F.jet,
+ 'c.row.height':74,'c.row.radius':6,'c.rcard.radius':8,'c.tb.radius':6,'c.button.radius':6,
+ 'c.meta.tracking':.04,'c.sect.tracking':.14,'c.line.w':1,'c.row.shadow':[],'c.ring.variant':'square'})},
+
+{k:'photo',l:'الصور أولًا',d:'صور أكبر ونصّ أقلّ · Readex + Instrument',
+ t:Object.assign({},pair(F.readex,F.instr),{'c.rc.img':96,'c.rc.img.radius':20,'c.chip.size':68,
+ 'c.mrow.img':92,'c.gal.w':240,'c.gal.h':180,'c.bimg.h':210,'c.avatar.size':126,'c.qhero.h':230,
+ 'c.meta.size':10,'c.rc.meta':12,'c.rcard.pad':10,'c.photo.sat':.42})}];
 function applyKit(k,preview){
   const kit=KITS.find(x=>x.k===k);if(!kit)return;
   if(!preview)push('طقم: '+kit.l);
@@ -2013,6 +2102,53 @@ function applyKit(k,preview){
   for(const id in kit.t){const v=kit.t[id];if(!TOK[id])continue;
     if(typeof v==='string'&&TOK[v]){TOK[id].ref=v;TOK[id].v=raw(v)}else{TOK[id].ref=null;TOK[id].v=v}}
   apply();render();buildPanel();refreshCode()}
+/* ══════════════════════════════════════════════════════════════
+   تخطيطات جاهزة — تغيّر ترتيب العناصر لا ألوانها. هذه بنية،
+   فتظهر في المخرَج تحت «تغييرات بنيوية» لا تحت قيم التوكنات.
+   ══════════════════════════════════════════════════════════════ */
+const LAYOUTS=[
+{k:'row-default',g:'صفّ المطعم',l:'شعار · اسم · حالة',d:'الترتيب الحالي',
+ slots:{row:['chip','text','status']},t:{'c.row.reverse':false}},
+{k:'row-flip',g:'صفّ المطعم',l:'حالة · اسم · شعار',d:'الشعار يسارًا والحالة يمينًا',
+ slots:{row:['status','text','chip']},t:{'c.row.reverse':false}},
+{k:'row-nochip',g:'صفّ المطعم',l:'بلا شعار',d:'اسم وحالة فقط — قائمة نصّية',
+ slots:{row:['text','status']},t:{}},
+{k:'row-tall',g:'صفّ المطعم',l:'صفّ عالٍ بشعار كبير',d:'شعار ٧٢ وصفّ ١٠٤',
+ slots:{row:['chip','text','status']},t:{'c.chip.size':72,'c.row.height':104,'c.name.size':17,'c.text.pad':'0 16px'}},
+
+{k:'hd-right',g:'الترويسة',l:'الشعار يمين',d:'الشارة ثم الكلمة',
+ slots:{header:['badge','wordmark','place']},t:{'c.hd.justify':'flex-start'}},
+{k:'hd-center',g:'الترويسة',l:'الشعار في الوسط',d:'كلمة العلامة متوسّطة',
+ slots:{header:['wordmark','badge','place']},t:{'c.hd.justify':'center'}},
+{k:'hd-left',g:'الترويسة',l:'الشعار يسار',d:'الموضع أوّلًا ثم الشعار',
+ slots:{header:['place','wordmark','badge']},t:{'c.hd.justify':'flex-end'}},
+{k:'hd-split',g:'الترويسة',l:'متباعد على الطرفين',d:'شعار يمين وموضع يسار',
+ slots:{header:['badge','wordmark','place']},t:{'c.hd.justify':'space-between'}},
+
+{k:'nav-3',g:'التبويب السفلي',l:'المطاعم · دوري · أنا',d:'الترتيب الحالي',
+ slots:{nav:['list','turns','me']},t:{'c.nav.reverse':false}},
+{k:'nav-turns',g:'التبويب السفلي',l:'دوري في الوسط',d:'الدور محور الشاشة',
+ slots:{nav:['list','turns','me']},t:{'c.nav.reverse':false,'c.nav.indicator.on':true}},
+{k:'nav-flip',g:'التبويب السفلي',l:'اعكس الترتيب',d:'أنا أوّلًا',
+ slots:{nav:['me','turns','list']},t:{}},
+
+{k:'end-both',g:'ذيل القائمة',l:'رقم شبح ونصّ',d:'الترتيب الحالي',
+ slots:{end:['ghost','endtext']},t:{}},
+{k:'end-text',g:'ذيل القائمة',l:'نصّ فقط',d:'بلا الرقم الشبح',
+ slots:{end:['endtext']},t:{}},
+{k:'end-none',g:'ذيل القائمة',l:'بلا ذيل',d:'القائمة تنتهي مباشرة',
+ slots:{end:[]},t:{}}];
+function applyLayout(k){
+  const L=LAYOUTS.find(x=>x.k===k);if(!L)return;
+  for(const sl in L.slots){
+    const want=L.slots[sl];
+    const cur=STRUCT.slots[sl]||[];
+    /* نحافظ على الأجزاء المُدرَجة يدويًّا ونعيد ترتيب الأصلية فقط */
+    const ins=cur.filter(x=>x.k.startsWith('ins:'));
+    STRUCT.slots[sl]=want.map(kk=>({k:kk,on:1})).concat(ins)}
+  for(const id in L.t){if(TOK[id]){TOK[id].ref=null;TOK[id].v=L.t[id]}}
+  push('تخطيط: '+L.g+' — '+L.l);apply();render();buildPanel();refreshCode()}
+
 const LOGOPRESETS=[
  {k:'spec',l:'الشعار المعتمد (Literata + Archivo)',t:{'c.logo.mode':'glyphs','c.digit.font':'"Literata",serif',
   'c.digit.size':.515,'c.digit.weight':300,'c.digit.opsz':65,'c.digit.lh':.9,'c.logoword.on':true,
@@ -3126,6 +3262,18 @@ function scene(k){
   else{restoreState(BASELINE_CONTENT,true)}
   render();refreshCode()}
 function pLayout(h){
+  const lay=section('★ تخطيطات جاهزة — ترتيب لا لون',true);
+  lay.body.appendChild(el('div','hint','هذه تغيّر <b>ترتيب</b> العناصر داخل الصفّ والترويسة والتبويب، '
+    +'فتظهر في المخرَج تحت «تغييرات بنيوية» لأنها تلمس بنية المكوّن لا قيمه.'));
+  [...new Set(LAYOUTS.map(x=>x.g))].forEach(g=>{
+    const r=el('div','row');r.appendChild(el('label','','<b>'+g+'</b>'));
+    const c=el('div','ctl');c.style.flexWrap='wrap';
+    LAYOUTS.filter(x=>x.g===g).forEach(L=>{const b=el('button','pill',L.l);b.title=L.d;
+      b.onclick=()=>applyLayout(L.k);c.appendChild(b)});
+    r.appendChild(c);
+    r.appendChild(el('div','fdesc','<b>'+LAYOUTS.filter(x=>x.g===g).map(x=>x.l+' — '+x.d).join(' · ')+'</b>'));
+    lay.body.appendChild(r)});
+  h.appendChild(lay);
   h.appendChild(el('div','hint','اسحب الأجزاء لإعادة ترتيبها داخل الفتحة. العين تُخفي، والسلّة تحذف، و«+» يُدرج جزءًا جديدًا.'));
   const names={header:'الترويسة',row:'الصف',nav:'التبويب السفلي',end:'نهاية القائمة'};
   for(const sl in STRUCT.slots){
