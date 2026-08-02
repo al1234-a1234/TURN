@@ -1716,6 +1716,12 @@ const frs=x=>x.br>2?`${NUM(x.br)} فروع`:x.br===2?"فرعان":"فرع واح
 const OK=()=>DATA.filter(x=>x.st==="ok"),WT=()=>DATA.filter(x=>x.st==="wait"),SH=()=>DATA.filter(x=>x.st==="shut");
 const VECTOR_MARK='M479 224c-9 1-13 2-18 3s-7 1-13 4-18 7-24 12-13 12-18 18-9 15-12 22-5 13-6 20-1 15 0 21 2 11 3 17 4 11 6 16 7 11 10 15 7 8 11 12 10 8 16 12 17 9 17 9-11 3-18 7-13 8-19 12-5 3-9 7-15 14-15 18-19 26-4 9-6 14-7 19-1 7-2 19-1 26 1 8 3 15 6 21s7 10 11 14 12 9 18 13 11 6 18 8 14 3 20 4 6 1 13 1 20 0 28 0 6 0 13-2 22-6 30-10 15-11 21-15 4-2 8-6 9-11 12-15 3-4 4-5 6-10 5-13 7-19 2-11 2-18 0-15-1-23-4-16-6-23-4-9-9-16-19-19-27-25-11-7-18-11-21-10-21-10 22-15 31-22 12-11 16-19 6-14 8-20 1-6 2-11 1-6 1-11-1-8-3-13-3-9-5-13-3-5-6-9-9-9-15-15-9-6-14-9-8-3-14-5-15-4-21-6-6-1-6-1-14-2-16 0-25 0z M469 412s34 13 46 19 21 11 28 16 12 10 16 15 8 11 10 17 3 13 4 18 1 9 1 15-1 15-2 22-2 10-4 16-8 14-12 19-8 8-12 11-8 6-11 8-5 2-10 4-11 3-17 4-16 1-25 0-21-5-28-7-6-3-11-6-8-7-12-11-6-7-8-12-6-11-7-17-3-11-3-16-1-8 0-16 2-21 3-28 2-9 4-13 4-11 7-16 7-11 11-16 6-8 11-12 14-11 14-11z M459 241c5-2 15-5 23-6s18 0 23 0 7 1 11 2 6 2 11 4 15 6 19 9 8 10 10 13 1 3 3 8 5 13 6 21 0 17 0 24-2 13-4 20-5 16-11 25-25 34-30 39-1-1-6-2-14-5-23-9-25-13-33-17-8-5-14-10-11-11-14-15-2-3-4-7-5-15-6-21-1-13-1-20 2-19 3-25 4-11 6-14 2-4 5-7 8-10 11-12 4-3 5-4 10-6z';
 
+/* مرجع مطعم آمن: القائمة قد تفرغ أو تتغيّر أسماؤها في اختبار الحدود،
+   وكل بحث فيها بلا حارس كان يُسقط الشاشة كلّها. */
+const NOREST={id:0,n:'—',c:'',br:1,r:0,st:'shut',q:0,m:0,km:0,area:'',city:'',hrs:'',
+  mk:'<div class="mk"></div>'};
+const rest=(f)=>DATA.find(f)||DATA[0]||NOREST;
+const restBy=(v,k)=>DATA.find(r=>r[k||'n']===v)||DATA[0]||NOREST;
 function BADGE(cls,elid){
   const mode=raw('c.logo.mode'),extra=(raw('c.badge.variant')!=='square'?' '+raw('c.badge.variant'):'');
   let inner;
@@ -1785,7 +1791,7 @@ function scrList(){return `${HD()}<div class="scroll">
    endtext:`<p data-el="end.text">${STR.endTitle}<br>${STR.endSub}</p>`})}</div>
 </div>${TICK()}${NAVB()}`}
 
-function scrRest(){const x=DATA.find(r=>r.id===S.rest)||DATA[3];
+function scrRest(){const x=rest(r=>r.id===S.rest);
  return `${BACK(STR.back)}<div class="scroll">
  <div class="hero" data-el="hero" data-tok="c.hero.pt,c.hero.pb,c.hero.gap,c.gutter,s.surface,s.line,c.row.shadow"><div class="big" data-el="hero.logo" data-tok="c.hero.logo,c.hero.logo.r,c.chip.ring.w,c.chip.ring.color,s.chip.bg">${x.mk}</div>
   <div><h1 data-el="hero.title" data-tok="c.title.font,c.title.size,c.title.weight,c.title.tracking,s.ink">${x.n}</h1><div class="m" data-el="hero.meta" data-tok="c.hero.meta,c.hero.meta.gap,s.ink3">${x.c} · ${x.area} · ${x.city}</div></div></div>
@@ -1804,7 +1810,7 @@ function scrRest(){const x=DATA.find(r=>r.id===S.rest)||DATA[3];
    ${x.st==="ok"?STR.openNote:STR.waitNote}</div></div>
  </div>${NAVB()}`}
 
-function scrConfirm(){const x=DATA.find(r=>r.id===S.rest)||DATA[3];
+function scrConfirm(){const x=rest(r=>r.id===S.rest);
  return `${BACK(x.n)}<div class="scroll"><div class="pad">
  <h1 data-el="confirm.title" data-tok="c.confirm.title,s.ink" style="margin:4px 0 4px;font-size:var(--c-confirm-title);font-weight:var(--c-title-weight)">${STR.qHow}</h1>
  <div data-el="confirm.sub" data-tok="c.confirm.sub,s.ink3" style="font-size:var(--c-confirm-sub);color:var(--s-ink3);margin-bottom:18px">${STR.qSub.replace('{n}',x.n)}</div>
@@ -1818,7 +1824,7 @@ function scrConfirm(){const x=DATA.find(r=>r.id===S.rest)||DATA[3];
  <div class="note" style="font-size:var(--c-note-size);color:var(--s-ink3);text-align:center;margin-top:12px">${STR.cancelNote}</div>
  </div></div>${NAVB()}`}
 
-function scrTicket(){const t=S.ticket||{name:DATA[3].n,code:"A47",ahead:2,start:3,eta:8};
+function scrTicket(){const t=S.ticket||{name:rest(r=>r.id===4).n,code:"A47",ahead:2,start:3,eta:8};
  const pct=Math.max(7,Math.round((1-t.ahead/Math.max(t.start,1))*100));
  return `${BACK(STR.tabList)}<div class="scroll"><div class="tk" data-el="ticket.page" data-tok="c.tk.py,c.gutter">
  ${BADGE('sm','logo.badge')}
@@ -1845,11 +1851,11 @@ function scrTurns(){
  </div></div></div>${NAVB()}`;
  return `${HD(STR.tabTurns)}<div class="scroll">
  ${S.ticket?GRP("الآن",1)+`<button class="rw" data-go="ticket" data-ok="1" data-el="row">
-  <span class="chip">${DATA.find(r=>r.n===S.ticket.name).mk}</span>
+  <span class="chip">${restBy(S.ticket.name).mk}</span>
   <span class="tx"><h4>${S.ticket.name}</h4><span class="m">${STR.people.replace('{p}',ANUM(S.party))} · ${S.ticket.code}</span></span>
   <span class="stt">${S.ticket.ahead===0?"أنت التالي":ANUM(S.ticket.ahead)+" قبلك"}</span></button>`:""}
  ${S.done.length?GRP("سابقًا",S.done.length)+S.done.map(d=>`<div class="rw" data-el="row">
-  <span class="chip">${DATA.find(r=>r.n===d.name).mk}</span>
+  <span class="chip">${restBy(d.name).mk}</span>
   <span class="tx"><h4>${d.name}</h4><span class="m">${d.note}</span></span>
   <span class="stt">${d.code}</span></div>`).join(""):""}
  <div style="height:16px"></div></div>${NAVB()}`}
@@ -2004,11 +2010,11 @@ function liveMedia(x){
    <h5 style="margin-top:12px">تابع المطعم</h5>
    <div style="font-size:var(--c-note-size);color:var(--s-ink3);line-height:var(--c-note-lh)">تظهر في مفضّلتك للوصول السريع لقائمته وطابوره وهداياه من جهازك.</div></div>`}
 
-function scrLive(){const x=DATA.find(r=>r.id===S.rest)||DATA[1];
+function scrLive(){const x=rest(r=>r.id===S.rest);
   const body=LIVE.tab==='menu'?liveMenu():LIVE.tab==='rev'?liveRev(x):LIVE.tab==='media'?liveMedia(x):liveWait(x);
   return `${liveHead(x)}<div class="scroll">${body}<div style="height:18px"></div></div>${NAVB()}`}
 
-function scrQcard(){const x=DATA.find(r=>r.id===S.rest)||DATA[1];
+function scrQcard(){const x=rest(r=>r.id===S.rest);
   return `${BACK(STR.back)}<div class="scroll">
    <div class="qhero" data-el="qcard.hero" data-tok="c.qhero.h,c.qhero.m,c.qhero.radius,c.photo.a,c.photo.hue,c.photo.sat"></div>
    <div class="qtitle" data-el="qcard.title" data-tok="c.qtitle.pt,c.qtitle.size,c.qtitle.weight,c.qgreet.size,c.qgreet.weight,c.qgreet.mt,c.title.font,c.gutter,s.ink,s.brand.text">
@@ -3434,7 +3440,7 @@ function scene(k){
   if(k==='empty'){S.ticket=null;S.done=[];S.tab='turns';S.view='list'}
   else if(k==='short'){DATA.length=3;S.tab='list';S.view='list'}
   else if(k==='shut'){DATA.forEach(d=>{d.st='shut';d.q=0;d.m=0});S.tab='list';S.view='list'}
-  else if(k==='active'){S.ticket={name:DATA[3].n,code:'A47',ahead:2,start:4,eta:8};S.tab='list';S.view='list'}
+  else if(k==='active'){S.ticket={name:rest(r=>r.id===4).n,code:'A47',ahead:2,start:4,eta:8};S.tab='list';S.view='list'}
   else if(k==='load'){S.tab='list';S.view='list'}
   else{restoreState(BASELINE_CONTENT,true)}
   render();refreshCode()}
@@ -3630,6 +3636,116 @@ function highlight(sel){
   const r=n.getBoundingClientRect(),f=$('#frame').getBoundingClientRect();
   HILITE=el('div','selbox');HILITE.style.cssText=`left:${r.left-f.left}px;top:${r.top-f.top}px;width:${r.width}px;height:${r.height}px`;
   $('#ovl').appendChild(HILITE);setTimeout(()=>{if(HILITE){HILITE.remove();HILITE=null}},2200)}
+/* ══════════════════════════════════════════════════════════════
+   اختبار الحدود — يكسر التصميم عمدًا ببيانات واقعية سيّئة، ثم يقيس
+   ما انكسر: فيض أفقي، نصّ مقصوص، تراكب، هدف لمس صغير.
+   التصميم لا يُختبر على بيانات مثالية — الاسم القصير والرقم من خانة
+   واحدة يخفيان كل عيب.
+   ══════════════════════════════════════════════════════════════ */
+let STRESS=null;
+const STRESSCASES=[
+ {k:'long',l:'أسماء وأرقام طويلة',d:'اسم من خمس كلمات، ١٢٠ دقيقة، ٩٩ قبلك، تقييم من ثلاث خانات.',
+  apply:()=>{DATA.forEach((x,i)=>{x.n='مطعم القرية النجدية للمأكولات الشعبية'+(i?' '+NUM(i+1):'');
+    x.c='مأكولات شعبية سعودية تقليدية';x.m=120;x.q=99;x.r=4.95;x.br=12;x.km=1284;x.city='المدينة المنوّرة';
+    x.area='حي الملك عبدالله بن عبدالعزيز'})}},
+ {k:'nospace',l:'كلمة واحدة بلا مسافات',d:'أسوأ حالة للفيض الأفقي — لا مكان يكسر عنده السطر.',
+  apply:()=>{DATA.forEach(x=>{x.n='مطعمالقريةالنجديةللمأكولاتالشعبيةوالمشاوي';x.c='مأكولاتشعبيةسعوديةتقليدية'})}},
+ {k:'short',l:'كل شيء قصير وفارغ',d:'حرف واحد وأصفار — يكشف الفراغ الميّت والتوسيط الخاطئ.',
+  apply:()=>{DATA.forEach(x=>{x.n='ك';x.c='';x.m=0;x.q=0;x.r=5;x.br=1;x.km=1;x.area='';x.city='ن'})}},
+ {k:'empty',l:'لا مطاعم إطلاقًا',d:'أول يوم لمدينة جديدة — هل الشاشة الفارغة مصمَّمة؟',
+  apply:()=>{DATA.length=0}},
+ {k:'one',l:'مطعم واحد فقط',d:'يكشف تخطيطًا يعتمد على امتلاء القائمة.',
+  apply:()=>{DATA.splice(1)}},
+ {k:'latin',l:'أسماء لاتينية',d:'نصف مطاعمك أسماؤها إنجليزية — يكشف خطًّا عربيًّا لا يحمل اللاتيني.',
+  apply:()=>{DATA.forEach(x=>{x.n='PRIME CUT STEAKHOUSE';x.c='Contemporary Saudi Grill'})}},
+ {k:'nophoto',l:'بلا صور',d:'مطعم جديد لم يرفع صورة — ماذا يظهر مكانها؟',
+  apply:()=>{TOK['c.photo.a'].v='';TOK['c.photo.b'].v='';DATA.forEach(x=>{x.mk='<div class="mk"></div>'})}}];
+function stressApply(k){
+  if(!STRESS)STRESS={data:JSON.parse(JSON.stringify(DATA)),str:Object.assign({},STR)};
+  DATA.length=0;JSON.parse(JSON.stringify(STRESS.data)).forEach(x=>DATA.push(x));
+  const c=STRESSCASES.find(x=>x.k===k);if(c)c.apply();
+  render();refreshCode();return c}
+function stressReset(){
+  if(!STRESS)return;
+  DATA.length=0;STRESS.data.forEach(x=>DATA.push(JSON.parse(JSON.stringify(x))));
+  Object.assign(STR,STRESS.str);STRESS=null;render();refreshCode()}
+/* الفحص: يمسح كل شاشة ويقيس ما انكسر فعلًا */
+function stressScan(){
+  const found=[];const seen=new Set();
+  SCREENS.forEach(([sk,slab])=>{
+    gotoScreen(sk);
+    const app=$('#app');if(!app)return;
+    const box=app.getBoundingClientRect();
+    /* فيض أفقي على مستوى الشاشة */
+    if(app.scrollWidth>app.clientWidth+1)
+      found.push({t:'الشاشة كلّها تفيض أفقيًّا بمقدار '+Math.round(app.scrollWidth-app.clientWidth)+'px',sc:sk,sel:null,sev:2});
+    /* حاويات التمرير: الفيض الحقيقي هو ما يجبر المستخدم على السحب جانبًا،
+       لا ما يقصّه إطار الجوّال (كالرقم الشبح، وهو مقصود). */
+    $$('#app .scroll, #app .bwrap, #app .gal, #app .chips').forEach(sc=>{
+      if(sc.scrollWidth>sc.clientWidth+2&&!/bwrap|gal|chips/.test(sc.className)){
+        const nm=sc.dataset.el||'scroll';
+        found.push({t:'«'+nm+'» يُجبر على السحب جانبًا ('+Math.round(sc.scrollWidth-sc.clientWidth)+'px زائدة)',sc:sk,sel:nm,sev:2})}});
+    $$('#app *').forEach(n=>{
+      const r=n.getBoundingClientRect();
+      if(r.width<1||r.height<1)return;
+      const nm=n.dataset.el||n.tagName.toLowerCase();
+      const key=sk+':'+nm;
+      const c=getComputedStyle(n);
+      /* نصّ مقصوص: العلامة الحقيقية هي القصّ المتعمَّد بثلاث نقاط لا أي إخفاء.
+         الشعارات والأرقام الشبحية تُخفي فائضها عمدًا ولا تُعدّ عيبًا. */
+      const hasText=[...n.childNodes].some(x=>x.nodeType===3&&x.textContent.trim());
+      if(hasText&&c.textOverflow==='ellipsis'&&c.whiteSpace==='nowrap'&&n.scrollWidth>n.clientWidth+2){
+        if(!seen.has(key+':cut')){seen.add(key+':cut');
+          found.push({t:'نصّ «'+nm+'» مقصوص بثلاث نقاط — لا يُقرأ كاملًا',sc:sk,sel:nm,sev:1})}}
+      /* هدف لمس صغير — بهامش نصف بكسل لأن القياسات كسريّة */
+      if((n.tagName==='BUTTON'||n.hasAttribute('data-go')||n.hasAttribute('data-rest'))
+         &&(r.height<43.5||r.width<43.5)){
+        if(!seen.has(key+':tap')){seen.add(key+':tap');
+          found.push({t:'هدف لمس «'+nm+'» '+Math.round(r.width)+'×'+Math.round(r.height)+' — دون ٤٤×٤٤',sc:sk,sel:nm,sev:1})}}
+    })});
+  return found}
+/* ══════════════════════════════════════════════════════════════
+   فحص التباين — يقيس كل نصّ ضدّ الخلفية التي يجلس عليها فعلًا،
+   لا ضدّ ما نظنّه. المعيار WCAG: ٤٫٥ للنصّ العادي و٣ للكبير.
+   ══════════════════════════════════════════════════════════════ */
+/* الخلفية خلف النصّ. ترجع null إن كانت صورة: التباين على صورة لا
+   يُحسب برقم واحد، وادّعاؤه أسوأ من السكوت عنه. */
+function bgBehind(n){
+  let q=n;
+  while(q&&q!==document.body){
+    const st=getComputedStyle(q);
+    if(st.backgroundImage&&st.backgroundImage!=='none'&&/url\(|gradient/.test(st.backgroundImage)
+       &&!/^repeating-|radial-gradient\(rgba\(0, 0, 0/.test(st.backgroundImage))return null;
+    const m=st.backgroundColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+    if(m&&(m[4]===undefined||+m[4]>.6))return rgb2hex(+m[1],+m[2],+m[3]);
+    q=q.parentElement}
+  return raw('s.bg')}
+function contrastScan(){
+  const out=[];const seen=new Set();
+  SCREENS.forEach(([sk,slab])=>{
+    gotoScreen(sk);
+    $$('#app *').forEach(n=>{
+      if(!n.childNodes.length)return;
+      const txt=[...n.childNodes].filter(c=>c.nodeType===3&&c.textContent.trim()).map(c=>c.textContent.trim()).join('');
+      if(!txt)return;
+      const c=getComputedStyle(n);
+      const m=c.color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);if(!m)return;
+      const fg=rgb2hex(+m[1],+m[2],+m[3]),bg=bgBehind(n);
+      if(!bg)return;                       /* نصّ فوق صورة — لا يُقاس برقم */
+      const fs=parseFloat(c.fontSize),bold=+c.fontWeight>=700;
+      const big=fs>=24||(fs>=18.66&&bold);
+      const need=big?3:4.5, got=contrast(fg,bg);
+      if(got<need){
+        /* اسم العنصر المسمّى لا الغلاف التلقائي، وإلا تكرّر العيب بأسماء
+           مختلفة لشيء واحد */
+        let host=n.closest('[data-el]:not([data-auto])')||n;
+        const nm=host.dataset.el||n.tagName.toLowerCase();
+        const key=nm+':'+fg+':'+bg+':'+Math.round(fs);
+        if(seen.has(key))return;seen.add(key);
+        out.push({t:'«'+nm+'» تباين '+got+' والمطلوب '+need+' — '+Math.round(fs)+'px'
+          +' · '+fg+' على '+bg+' · «'+txt.replace(/\s+/g,' ').slice(0,18)+'»',sc:sk,sel:nm,got:got,need:need,fg:fg,bg:bg})}
+    })});
+  return out.sort((a,b)=>a.got-b.got)}
 function pAudit(h){
   const dn=section('توكنات بلا وجهة في المشروع',true);
   const miss=ORDER.filter(id=>!destOf(id));
@@ -3641,6 +3757,54 @@ function pAudit(h){
     miss.slice(0,60).forEach(id=>dn.body.appendChild(el('div','mini','• '+TOK[id].l+' <code>'+id+'</code>')));
     if(miss.length>60)dn.body.appendChild(el('div','mini','…و'+(miss.length-60)+' غيرها.'))}
   h.appendChild(dn);
+  /* ── اختبار الحدود ── */
+  const st=section('★ اختبار الحدود — اكسره قبل ما يكسر عند العميل',true);
+  st.body.appendChild(el('div','hint','التصميم لا يُختبر على بيانات مثالية. اضغط حالة، انظر الشاشات، '
+    +'ثم «افحص ما انكسر» ليقيس الفيض والنصّ المقصوص وأهداف اللمس الصغيرة في الشاشات كلّها.'));
+  const spr=el('div','pillrow');
+  STRESSCASES.forEach(c=>{const b=el('button','pill',c.l);b.title=c.d;
+    b.onclick=()=>{const r=stressApply(c.k);toast(r.l);buildPanel()};spr.appendChild(b)});
+  const resetb=el('button','pill','⟲ رجّع البيانات');
+  resetb.onclick=()=>{stressReset();toast('رجعت البيانات الأصلية');buildPanel()};
+  spr.appendChild(resetb);
+  st.body.appendChild(spr);
+  if(STRESS)st.body.appendChild(el('div','warnbox','أنت الآن على بيانات اختبار — اضغط «رجّع البيانات» قبل التصدير. '
+    +'التوكنات لا تتأثّر، المحتوى فقط.'));
+  const sb=el('button','tbtn','افحص ما انكسر');
+  const sres=el('div');
+  sb.onclick=()=>{const keep=currentKey();const f=stressScan();gotoScreen(keep);
+    sres.innerHTML='';
+    if(!f.length){sres.appendChild(el('div','goodbox','لا شيء ينكسر في الشاشات '+NUM(SCREENS.length)+' — التصميم يحتمل.'));return}
+    sres.appendChild(el('div','badbox','<b>'+NUM(f.length)+'</b> مشكلة. الحمراء تكسر الشكل والصفراء تُتعب القراءة.'));
+    f.slice(0,40).forEach(w=>{const d=el('div',w.sev===2?'badbox':'warnbox',w.t+' <span style="opacity:.7">· '+scLabel(w.sc)+'</span>');
+      if(w.sel){const a=el('button','lnk','أرني');a.style.marginInlineStart='6px';
+        a.onclick=()=>{gotoScreen(w.sc);setTimeout(()=>{
+          const t=$$('#app [data-el]').find(x=>elName(x)===w.sel);
+          if(t){t.classList.add('flash');t.scrollIntoView({block:'center'});setTimeout(()=>t.classList.remove('flash'),2400)}},140)};
+        d.appendChild(a)}
+      sres.appendChild(d)});
+    if(f.length>40)sres.appendChild(el('div','mini','…و'+(f.length-40)+' غيرها.'))};
+  st.body.append(sb,sres);
+  h.appendChild(st);
+  /* ── التباين ── */
+  const ct=section('★ فحص التباين — هل يُقرأ في الشمس؟',true);
+  ct.body.appendChild(el('div','hint','يقيس كل نصّ ضدّ الخلفية التي يجلس عليها فعلًا لا ضدّ ما نظنّه. '
+    +'المعيار العالمي: ٤٫٥ للنصّ العادي و٣ للكبير. تحت ذلك يتعب العميل — وخاصّةً على جوّال في الشمس.'));
+  const cb=el('button','tbtn','افحص الآن');
+  const cres=el('div');
+  cb.onclick=()=>{const keep=currentKey();const f=contrastScan();gotoScreen(keep);
+    cres.innerHTML='';
+    if(!f.length){cres.appendChild(el('div','goodbox','كل النصوص تجتاز المعيار في الشاشات '+NUM(SCREENS.length)+'.'));return}
+    cres.appendChild(el('div','badbox','<b>'+NUM(f.length)+'</b> نصًّا تحت المعيار.'));
+    f.slice(0,30).forEach(w=>{const d=el('div','warnbox',w.t+' <span style="opacity:.7">· '+scLabel(w.sc)+'</span>');
+      const a=el('button','lnk','أرني');a.style.marginInlineStart='6px';
+      a.onclick=()=>{gotoScreen(w.sc);setTimeout(()=>{
+        const t=$$('#app [data-el]').find(x=>elName(x)===w.sel);
+        if(t){t.classList.add('flash');t.scrollIntoView({block:'center'});setTimeout(()=>t.classList.remove('flash'),2400)}},140)};
+      d.appendChild(a);cres.appendChild(d)});
+    if(f.length>30)cres.appendChild(el('div','mini','…و'+(f.length-30)+' غيرها.'))};
+  ct.body.append(cb,cres);
+  h.appendChild(ct);
   const l=section('مدقّق التسرّب',true);
   const b=el('button','tbtn','افحص الآن');
   const res=el('div');res.style.marginTop='6px';
@@ -4445,7 +4609,7 @@ $('#app').addEventListener('click',e=>{
   if(g==='back'){S.view=S.view==='confirm'?'rest':'list';return render()}
   if(g==='confirm'){S.view='confirm';return render()}
   if(g==='notify'){atoast('بننبّهك أول ما يفتح الباب');return}
-  if(g==='take'){const x=DATA.find(r=>r.id===S.rest);
+  if(g==='take'){const x=rest(r=>r.id===S.rest);
     S.ticket={name:x.n,code:'A'+(10+Math.floor(Math.random()*80)),ahead:x.q,start:Math.max(x.q,1),eta:x.m||5};
     S.view='ticket';S.tab='turns';render();setTimeout(()=>atoast('خذيت دورك — ننبّهك قبل دورك بعشر دقائق'),60);return}
   if(g==='ticket'){S.view='ticket';S.tab='turns';return render()}
@@ -4575,7 +4739,7 @@ function shadowEditor(id){TAB='shadow';buildTabs();buildPanel()}
 function gotoScreen(k){
   if(k==='rest'){S.view='rest';S.rest=S.rest||4}
   else if(k==='confirm'){S.view='confirm';S.rest=S.rest||4}
-  else if(k==='ticket'){S.view='ticket';if(!S.ticket)S.ticket={name:DATA[3].n,code:'A47',ahead:2,start:4,eta:8}}
+  else if(k==='ticket'){S.view='ticket';if(!S.ticket)S.ticket={name:rest(r=>r.id===4).n,code:'A47',ahead:2,start:4,eta:8}}
   else if(k==='turns'){S.tab='turns';S.view='list'}
   else if(k==='me'){S.tab='me';S.view='list'}
   else if(['home','live','qcard','search','gifts'].includes(k)){S.view=k;S.rest=S.rest||2}
