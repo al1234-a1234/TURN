@@ -1904,11 +1904,36 @@ function currentKey(){
   if(S.view==='home'||S.view==='live'||S.view==='qcard')return S.view;
   return S.view==='rest'?'rest':S.view==='confirm'?'confirm':S.view==='ticket'?'ticket'
   :S.tab==='turns'?'turns':S.tab==='me'?'me':'list'}
+/* ══════════════════════════════════════════════════════════════
+   الوسم التلقائي — لا يبقى في الشاشة عنصر لا يُضغط.
+   ما له مقبض معرَّف يبقى كما هو. وما ليس له يأخذ مقبضًا مشتقًّا من
+   صنفه وترتيبه بين إخوته من صنفه — ثابت ما دامت البنية ثابتة، فلا
+   تضيع إزاحته عند إعادة الرسم. داخل الـSVG لا يُوسَم: مسارات الشعار
+   ليست عناصر تصميم.
+   ══════════════════════════════════════════════════════════════ */
+function autoTag(root){
+  if(!root)return;
+  const seen={};
+  root.querySelectorAll('*').forEach(n=>{
+    if(n.hasAttribute('data-el'))return;
+    if(n.closest('svg'))return;
+    const r=n.getBoundingClientRect();
+    if(r.width<8||r.height<8)return;
+    const base=(typeof n.className==='string'&&n.className.trim())
+      ? n.className.trim().split(/\s+/)[0] : n.tagName.toLowerCase();
+    /* الاسم يصير جزءًا من اسم متغيّر CSS عند التحريك، فلا يُسمح فيه
+       إلا بحروف وأرقام وشرطات — وإلا سقط المتغيّر بصمت. */
+    const safe=base.replace(/[^a-zA-Z0-9_-]/g,'');
+    if(!safe)return;
+    seen[safe]=(seen[safe]||0)+1;
+    n.dataset.el='a-'+safe+(seen[safe]>1?'-'+seen[safe]:'');
+    n.dataset.auto='1'})}
 function render(){
   const h=(S.view==='home'?scrHome():S.view==='live'?scrLive():S.view==='qcard'?scrQcard()
     :S.view==='rest'?scrRest():S.view==='confirm'?scrConfirm():S.view==='ticket'?scrTicket()
     :S.tab==='turns'?scrTurns():S.tab==='me'?scrMe():scrList());
   $('#app').innerHTML=h+`<div class="toastr" id="tr"></div>`;
+  autoTag($('#app'));
   /* في RTL يبدأ كروم الشريط الأفقي من اليسار — نعيده إلى اليمين */
   $$('#app .bwrap, #app .gal').forEach(n=>{n.scrollLeft=n.scrollWidth});
   applyFreeMove($('#app'));
@@ -3522,6 +3547,11 @@ function openPop(node){
       const again=$$('#app [data-el]').find(n=>elName(n)===name);
       if(again)openPop(again)};
     nud.appendChild(b)});
+  const hid=el('button','pill','أخفِه');
+  hid.onclick=()=>{HIDDEN[name]=!HIDDEN[name];
+    $$('#app [data-el]').filter(x=>elName(x)===name).forEach(x=>x.dataset.hidden=HIDDEN[name]?'1':'0');
+    toast(HIDDEN[name]?'أُخفي':'أُظهر')};
+  nud.appendChild(hid);
   const rst=el('button','pill','صفّر الموضع');
   rst.onclick=()=>{const[kx,ky]=ensureFM(name);TOK[kx].v=0;TOK[ky].v=0;
     push('تصفير موضع '+name);apply();render();refreshCode()};
@@ -3532,6 +3562,10 @@ function openPop(node){
     const body=el('div','epbody');
     toks.forEach(id=>body.appendChild(fieldFor(id)));
     m.appendChild(body)}
+  else if(node.dataset.auto)
+    m.appendChild(el('div','mini','هذا الجزء يرث تنسيقه من أبيه، فما له توكنات خاصّة. '
+      +'تقدر تحرّكه بالأسهم فوق أو تخفيه. ولو تبي له خيارات مستقلّة (لون أو حجم خاص به) قل لي اسمه '
+      +'<code>'+name+'</code> وأضيفها.'));
   else m.appendChild(el('div','mini','هذا العنصر يرث تنسيقه من أبيه — اضغط ما حوله.'));
   document.body.appendChild(m);
   /* الموضع: بجانب العنصر، وداخل الشاشة */
