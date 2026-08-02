@@ -632,6 +632,67 @@ body.freemove .app [data-el].fmsel{cursor:move}
 .app .act.icon{display:flex;align-items:center;justify-content:center;gap:var(--c-acticon-gap)}
 .app .act.icon svg{width:var(--c-acticon-size);height:var(--c-acticon-size);stroke:currentColor;fill:none;
   stroke-width:var(--c-icon-stroke);stroke-linecap:round}
+
+/* ═══ البحث ═══ */
+.app .sbar{display:flex;align-items:center;gap:var(--c-sbar-gap);margin:var(--c-sbar-mt) var(--c-gutter) 0;
+  background:var(--x-card-tex);border-radius:var(--c-sbar-radius);padding:var(--c-sbar-pad);
+  box-shadow:var(--x-rcard-shadow);flex:none}
+.app .sbar svg{width:var(--c-sbar-icon);height:var(--c-sbar-icon);stroke:var(--s-ink3);fill:none;
+  stroke-width:var(--c-icon-stroke);stroke-linecap:round;flex:none}
+.app .sbar .q{flex:1;font-size:var(--c-sbar-size);font-weight:var(--c-sbar-weight);color:var(--s-ink);min-width:0}
+.app .sbar .q.ph{color:var(--s-ink3);font-weight:400}
+.app .sbar .x{color:var(--s-ink3);font-size:var(--c-sbar-size)}
+.app .chips{display:flex;gap:var(--c-chips-gap);padding:var(--c-chips-pt) var(--c-gutter) 0;
+  overflow-x:auto;flex:none}
+.app .chips::-webkit-scrollbar{height:0}
+.app .chips button{flex:none;border-radius:var(--p-radius-full);padding:var(--c-schip-pad);
+  font-size:var(--c-schip-size);font-weight:var(--c-schip-weight);color:var(--s-brand-text);
+  background:var(--x-chip-tint);white-space:nowrap}
+.app .chips button.on{background:var(--s-brand);color:var(--s-brand-ink)}
+.app .sres{display:flex;align-items:center;gap:var(--c-sres-gap);width:100%;text-align:start;
+  margin:0 var(--c-gutter) var(--c-sres-mb);padding:var(--c-sres-pad);border-radius:var(--c-sres-radius);
+  background:var(--x-card-tex);box-shadow:var(--x-rcard-shadow)}
+.app .sres .lg{width:var(--c-sres-img);height:var(--c-sres-img);border-radius:var(--c-sres-img-radius);
+  overflow:hidden;flex:none;background:var(--s-chip-bg)}
+.app .sres .tx{flex:1;min-width:0}
+.app .sres h4{margin:0;font-family:var(--c-name-font);font-size:var(--c-sres-name);
+  font-weight:var(--c-sres-name-weight);color:var(--s-ink)}
+.app .sres .m{display:block;font-size:var(--c-sres-meta);color:var(--s-ink3);margin-top:var(--c-sres-meta-mt)}
+.app .sres .go{color:var(--s-ink3);flex:none}
+.app .blank{display:grid;place-items:center;text-align:center;padding:var(--c-blank-pad);
+  margin:var(--c-blank-mt) var(--c-gutter) 0;border-radius:var(--c-rcard-radius);
+  background:var(--x-card-tex);box-shadow:var(--x-rcard-shadow)}
+.app .blank .ic{width:var(--c-blank-icon);height:var(--c-blank-icon);border-radius:50%;
+  display:grid;place-items:center;background:var(--x-chip-tint);color:var(--s-brand-text);
+  margin-bottom:var(--c-blank-gap)}
+.app .blank .ic svg{width:calc(var(--c-blank-icon)*.44);height:calc(var(--c-blank-icon)*.44);
+  stroke:currentColor;fill:none;stroke-width:var(--c-icon-stroke)}
+.app .blank b{font-size:var(--c-blank-title);font-weight:var(--c-blank-title-weight);color:var(--s-ink);display:block}
+.app .blank p{margin:var(--c-blank-sub-mt) 0 0;font-size:var(--c-blank-sub);color:var(--s-ink3);line-height:var(--c-note-lh)}
+/* هيكل تحميل */
+.app .skel{background:var(--s-surface-pressed);border-radius:var(--c-skel-radius);
+  animation:shim var(--c-skel-dur) linear infinite;background-image:linear-gradient(90deg,
+    transparent, var(--x-skel-hi) 50%, transparent);background-size:180% 100%}
+@keyframes shim{0%{background-position:180% 0}100%{background-position:-80% 0}}
+
+/* ═══ الهدايا وبطاقة الأختام ═══ */
+.app .stamps{display:grid;grid-template-columns:repeat(var(--c-stamp-cols),1fr);gap:var(--c-stamp-gap);
+  margin-top:var(--c-stamp-mt)}
+.app .stamps i{aspect-ratio:1;border-radius:var(--c-stamp-radius);display:grid;place-items:center;
+  background:var(--s-surface-pressed);color:var(--s-ink3);font-size:var(--c-stamp-size);font-style:normal}
+.app .stamps i.on{background:var(--s-brand);color:var(--s-brand-ink)}
+.app .gcard{display:flex;align-items:center;gap:var(--c-gcard-gap);width:100%;text-align:start;
+  margin:0 var(--c-gutter) var(--c-gcard-mb);padding:var(--c-gcard-pad);border-radius:var(--c-gcard-radius);
+  background:var(--x-card-tex);box-shadow:var(--x-rcard-shadow)}
+.app .gcard .gi{width:var(--c-gcard-icon);height:var(--c-gcard-icon);border-radius:var(--c-gcard-icon-r);
+  display:grid;place-items:center;background:var(--x-chip-tint);color:var(--s-brand-text);flex:none}
+.app .gcard .gi svg{width:calc(var(--c-gcard-icon)*.5);height:calc(var(--c-gcard-icon)*.5);
+  stroke:currentColor;fill:none;stroke-width:var(--c-icon-stroke)}
+.app .gcard .tx{flex:1;min-width:0}
+.app .gcard b{display:block;font-size:var(--c-gcard-title);font-weight:var(--c-gcard-title-weight);color:var(--s-ink)}
+.app .gcard span{display:block;font-size:var(--c-gcard-sub);color:var(--s-ink3);margin-top:2px}
+.app .gcard .code{font-family:var(--c-num-font);font-size:var(--c-gcard-code);color:var(--s-brand-text);
+  letter-spacing:var(--c-gcard-code-tracking);direction:ltr;flex:none}
 .app [data-hidden="1"]{display:none!important}
 .app .fm{position:relative}
 @media(prefers-reduced-motion:reduce){body.rm .app *{animation:none!important;transition:none!important}}
@@ -1224,6 +1285,7 @@ const COMPUTED={
   '--x-row-tex':()=>{const t=texture('row',raw('s.brand'));return t.length?t.join(',')+','+out('s.surface'):out('s.surface')},
   '--x-hd-tex':()=>{const t=texture('header',raw('s.brand'));return t.length?t.join(',')+','+out('s.header.bg'):out('s.header.bg')},
   '--x-hd2-tex':()=>{const t=texture('header2',raw('s.brand'));return t.length?t.join(',')+','+out('s.header2.bg'):out('s.header2.bg')},
+  '--x-skel-hi':()=>rgba(raw('s.bg'),+raw('c.skel.hi')),
   '--x-card-tex':()=>{const t=texture('card',raw('s.brand'));return t.length?t.join(',')+','+out('s.bg'):out('s.bg')},
   '--x-ticket-tex':()=>{const t=texture('ticket',raw('s.brand'));return t.length?t.join(',')+','+out('s.ticket.bg'):out('s.ticket.bg')},
   '--x-row-shadow':()=>{const S=TOK['c.row.shadow'].v;if(!S.length)return'none';
@@ -1552,6 +1614,59 @@ C('photo.a','text','',{g:'photo',l:'صورة ١ (رأس/غلاف)',
 C('photo.b','text','',{g:'photo',l:'صورة ٢ (أصناف/معرض)',
   d:'تُستعمل في صور القائمة والمعرض.'});
 C('photo.hue','dim',28,{u:'deg',g:'photo',l:'درجة لون الصورة البديلة',min:0,max:360,step:1});
+/* ── البحث ── */
+C('sbar.mt','dim',16,{u:'px',g:'search',l:'مسافة شريط البحث',min:0,max:50,step:1});
+C('sbar.pad','text','13px 14px',{g:'search',l:'حشو شريط البحث'});
+C('sbar.radius','dim',18,{u:'px',g:'search',l:'استدارة شريط البحث',min:0,max:44,step:1});
+C('sbar.gap','dim',10,{u:'px',g:'search',l:'فجوة شريط البحث',min:0,max:28,step:.5});
+C('sbar.icon','dim',20,{u:'px',g:'search',l:'حجم أيقونة البحث',min:8,max:40,step:.5});
+C('sbar.size','dim',15,{u:'px',g:'search',l:'حجم نصّ البحث',min:8,max:26,step:.5});
+C('sbar.weight','num',500,{g:'search',l:'وزن نصّ البحث',min:100,max:900,step:50});
+C('chips.pt','dim',14,{u:'px',g:'search',l:'مسافة شرائح التصفية',min:0,max:44,step:1});
+C('chips.gap','dim',7,{u:'px',g:'search',l:'فجوة الشرائح',min:0,max:24,step:.5});
+C('schip.pad','text','8px 14px',{g:'search',l:'حشو الشريحة'});
+C('schip.size','dim',12.5,{u:'px',g:'search',l:'حجم نصّ الشريحة',min:7,max:22,step:.5});
+C('schip.weight','num',600,{g:'search',l:'وزن نصّ الشريحة',min:100,max:900,step:50});
+C('sres.pad','dim',12,{u:'px',g:'search',l:'حشو نتيجة البحث',min:0,max:36,step:1});
+C('sres.radius','dim',18,{u:'px',g:'search',l:'استدارة النتيجة',min:0,max:44,step:1});
+C('sres.gap','dim',12,{u:'px',g:'search',l:'فجوة النتيجة',min:0,max:32,step:1});
+C('sres.mb','dim',10,{u:'px',g:'search',l:'الفجوة بين نتيجتين',min:0,max:32,step:1});
+C('sres.img','dim',56,{u:'px',g:'search',l:'مقاس شعار النتيجة',min:24,max:120,step:1});
+C('sres.img.radius','dim',16,{u:'px',g:'search',l:'استدارة شعار النتيجة',min:0,max:60,step:1});
+C('sres.name','dim',16,{u:'px',g:'search',l:'حجم اسم النتيجة',min:8,max:32,step:.5});
+C('sres.name.weight','num',700,{g:'search',l:'وزن اسم النتيجة',min:100,max:900,step:50});
+C('sres.meta','dim',13,{u:'px',g:'search',l:'حجم سطر النتيجة الثانوي',min:7,max:24,step:.5});
+C('sres.meta.mt','dim',3,{u:'px',g:'search',l:'مسافة السطر الثانوي',min:0,max:20,step:.5});
+/* ── الحالات الفارغة والتحميل ── */
+C('blank.pad','dim',34,{u:'px',g:'states',l:'حشو الحالة الفارغة',min:0,max:80,step:1});
+C('blank.mt','dim',16,{u:'px',g:'states',l:'مسافة الحالة الفارغة',min:0,max:60,step:1});
+C('blank.icon','dim',66,{u:'px',g:'states',l:'مقاس دائرة الأيقونة',min:0,max:140,step:2});
+C('blank.gap','dim',14,{u:'px',g:'states',l:'فجوة تحت الأيقونة',min:0,max:40,step:1});
+C('blank.title','dim',17,{u:'px',g:'states',l:'حجم عنوان الحالة',min:8,max:34,step:.5});
+C('blank.title.weight','num',700,{g:'states',l:'وزن عنوان الحالة',min:100,max:900,step:50});
+C('blank.sub','dim',13,{u:'px',g:'states',l:'حجم شرح الحالة',min:7,max:24,step:.5});
+C('blank.sub.mt','dim',7,{u:'px',g:'states',l:'مسافة شرح الحالة',min:0,max:30,step:1});
+C('skel.radius','dim',14,{u:'px',g:'states',l:'استدارة هيكل التحميل',min:0,max:40,step:1});
+C('skel.dur','dur',1.4,{u:'s',g:'states',l:'مدّة لمعة التحميل',min:.3,max:4,step:.1});
+C('skel.hi','opacity',.55,{g:'states',l:'شدّة لمعة التحميل',min:0,max:1,step:.01,
+  d:'الوميض الذي يمرّ على الهيكل. صفّره ليصير رماديًّا ساكنًا.'});
+/* ── الهدايا وبطاقة الأختام ── */
+C('stamp.cols','num',5,{g:'gift',l:'عدد الأختام في السطر',min:2,max:10,step:1});
+C('stamp.gap','dim',9,{u:'px',g:'gift',l:'فجوة الأختام',min:0,max:28,step:1});
+C('stamp.mt','dim',14,{u:'px',g:'gift',l:'مسافة بطاقة الأختام',min:0,max:44,step:1});
+C('stamp.radius','dim',14,{u:'px',g:'gift',l:'استدارة الختم',min:0,max:50,step:1});
+C('stamp.size','dim',18,{u:'px',g:'gift',l:'حجم علامة الختم',min:6,max:40,step:.5});
+C('gcard.pad','dim',13,{u:'px',g:'gift',l:'حشو بطاقة الهدية',min:0,max:36,step:1});
+C('gcard.radius','dim',18,{u:'px',g:'gift',l:'استدارة بطاقة الهدية',min:0,max:44,step:1});
+C('gcard.gap','dim',12,{u:'px',g:'gift',l:'فجوة بطاقة الهدية',min:0,max:32,step:1});
+C('gcard.mb','dim',10,{u:'px',g:'gift',l:'الفجوة بين هديّتين',min:0,max:32,step:1});
+C('gcard.icon','dim',48,{u:'px',g:'gift',l:'مقاس أيقونة الهدية',min:20,max:100,step:1});
+C('gcard.icon.r','dim',15,{u:'px',g:'gift',l:'استدارة أيقونة الهدية',min:0,max:50,step:1});
+C('gcard.title','dim',15,{u:'px',g:'gift',l:'حجم اسم الهدية',min:8,max:30,step:.5});
+C('gcard.title.weight','num',700,{g:'gift',l:'وزن اسم الهدية',min:100,max:900,step:50});
+C('gcard.sub','dim',12,{u:'px',g:'gift',l:'حجم شرح الهدية',min:7,max:22,step:.5});
+C('gcard.code','dim',15,{u:'px',g:'gift',l:'حجم رمز الاعتماد',min:8,max:32,step:.5});
+C('gcard.code.tracking','dim',.1,{u:'em',g:'gift',l:'تباعد رمز الاعتماد',min:-.05,max:.5,step:.005});
 C('photo.sat','num',.3,{g:'photo',l:'إشباع الصورة البديلة',min:0,max:1,step:.01});
 
 C('empty.title','dim',14,{u:'px',g:'misc',l:'حجم عنوان الشاشة الفارغة',min:9,max:26,step:.5});
@@ -1591,7 +1706,7 @@ const STR={open:"الباب مفتوح",wait:"{q} قبلك · {m} د",shut:"مغ
  about:"عن إيت",turnsN:"عدد أدوارك",fav:"مطعمك الأكثر زيارة",favV:"تكية",saved:"دورك محفوظ",info:"المعلومات",
  hours:"الدوام",branches:"الفروع",now:"الحالة الآن",people:"{p} أشخاص",rating:"تقييم",waitMin:"دقيقة انتظار",
  nowAhead:"قبلك الآن",noWait:"بلا انتظار",myName:"محمد",myPhone:"‎+966 5X XXX XXXX"};
-const SIG={list:'',rest:'',confirm:'',ticket:'',turns:'',me:'',home:'',live:'',qcard:''};
+const SIG={list:'',rest:'',confirm:'',ticket:'',turns:'',me:'',home:'',live:'',qcard:'',search:'',gifts:''};
 const S={tab:"list",view:"list",rest:null,party:2,ticket:null,done:[],scene:'full'};
 
 /* خط الأساس يخلط: القائمة بأرقام لاتينية والتذكرة بعربية-هندية.
@@ -1912,8 +2027,68 @@ function scrQcard(){const x=DATA.find(r=>r.id===S.rest)||DATA[1];
       ${svg('bell')}<span>نبّهني قبل دوري</span></button></div>
    </div><div style="height:18px"></div></div>${NAVB()}`}
 
+/* ══════════════════════════════════════════════════════════════
+   البحث · الحالات · الهدايا — شاشات قائمة في مشروعك ولم تكن في الورشة
+   ══════════════════════════════════════════════════════════════ */
+const SRCH={q:'',filter:0,state:'results'};   /* results | empty | loading */
+const SFILT=['الكل','مفتوح الآن','بلا انتظار','قريب مني','الأعلى تقييمًا'];
+function SBAR(){
+  const has=!!SRCH.q;
+  return `<div class="sbar" data-el="search.bar"
+    data-tok="c.sbar.mt,c.sbar.pad,c.sbar.radius,c.sbar.gap,c.sbar.icon,c.sbar.size,c.sbar.weight,c.gutter,c.icon.stroke,s.ink,s.ink3">
+    ${svg('search')}<span class="q${has?'':' ph'}">${has?SRCH.q:'ابحث عن مطعم أو مطبخ'}</span>
+    ${has?'<span class="x">✕</span>':''}</div>
+  <div class="chips" data-el="search.filters"
+    data-tok="c.chips.pt,c.chips.gap,c.schip.pad,c.schip.size,c.schip.weight,c.gutter,s.brand,s.brand.ink,s.brand.text">${
+    SFILT.map((f,i)=>`<button data-sfilt="${i}" class="${SRCH.filter===i?'on':''}">${f}</button>`).join('')}</div>`}
+const SRES=x=>`<button class="sres" data-rest="${x.id}" data-el="search.result"
+  data-tok="c.sres.pad,c.sres.radius,c.sres.gap,c.sres.mb,c.sres.img,c.sres.img.radius,c.sres.name,c.sres.name.weight,c.sres.meta,c.sres.meta.mt,c.gutter,s.ink,s.ink3,s.chip.bg">
+  <span class="lg">${x.mk}</span>
+  <span class="tx"><h4>${x.n}</h4><span class="m">${x.c} · ${x.city}</span></span>
+  <span class="go">←</span></button>`;
+const BLANK=(icon,title,sub)=>`<div class="blank" data-el="state.empty"
+  data-tok="c.blank.pad,c.blank.mt,c.blank.icon,c.blank.gap,c.blank.title,c.blank.title.weight,c.blank.sub,c.blank.sub.mt,c.gutter,c.icon.stroke,s.brand.text,s.ink,s.ink3">
+  <span class="ic">${svg(icon)}</span><b>${title}</b><p>${sub}</p></div>`;
+const SKEL=()=>`<div style="padding:0 var(--c-gutter)" data-el="state.loading"
+  data-tok="c.skel.radius,c.skel.dur,c.skel.hi,c.sres.img,c.sres.mb,c.gutter,s.surface.pressed">${
+  [0,1,2,3].map(()=>`<div class="sres" style="box-shadow:none;background:none;margin-inline:0">
+    <span class="skel" style="width:var(--c-sres-img);height:var(--c-sres-img);flex:none"></span>
+    <span class="tx"><span class="skel" style="display:block;height:14px;width:52%"></span>
+    <span class="skel" style="display:block;height:11px;width:34%;margin-top:7px"></span></span></div>`).join('')}</div>`;
+function scrSearch(){
+  const rows=DATA.filter(x=>SRCH.filter!==1||x.st!=='shut');
+  let body;
+  if(SRCH.state==='loading')body=SKEL();
+  else if(SRCH.state==='empty')body=BLANK('search','ما لقينا شيئًا','جرّب اسمًا أقصر أو ابحث بنوع المطبخ.');
+  else body=rows.map(SRES).join('');
+  return `${HD2(CBTN('back','header2.back'),'<span class="wm">بحث</span>')}
+   <div class="scroll">${SBAR()}<div style="height:14px"></div>${body}<div style="height:18px"></div></div>${NAVB()}`}
+
+const GIFTS=[['خصم ٢٠٪','صالحة حتى ١٥ رمضان','G7K2'],
+ ['قهوة مجّانية','هدية ترحيب — أول زيارة','B4M9'],
+ ['حلى مجّاني','بعد ٥ زيارات','—']];
+function scrGifts(){
+  const done=3,total=+raw('c.stamp.cols');
+  return `${HD2(CBTN('back','header2.back'),'<span class="wm">هداياي</span>')}
+  <div class="scroll">
+   <div class="pcard" data-el="stampcard" data-tok="c.pcard.radius,c.pcard.pad,c.pcard.mt,c.pcard.title,c.pcard.title.weight,c.pcard.title.mb,c.gutter,s.bg">
+    <h5>بطاقة أختامك في تكية</h5>
+    <div style="font-size:var(--c-note-size);color:var(--s-ink3)">باقي ${NUM(total-done)} زيارات على الحلى المجّاني</div>
+    <div class="stamps" data-el="stamps" data-tok="c.stamp.cols,c.stamp.gap,c.stamp.mt,c.stamp.radius,c.stamp.size,s.brand,s.brand.ink,s.surface.pressed">${
+      Array.from({length:total},(_,i)=>`<i class="${i<done?'on':''}">${i<done?'✓':NUM(i+1)}</i>`).join('')}</div>
+   </div>
+   <div class="sect" data-el="sect" data-tok="c.sect.pt,c.sect.pb,c.sect.size,c.sect.tracking,s.ink3">هداياك</div>
+   ${GIFTS.map(([t,sb,code])=>`<button class="gcard" data-el="gift.card"
+     data-tok="c.gcard.pad,c.gcard.radius,c.gcard.gap,c.gcard.mb,c.gcard.icon,c.gcard.icon.r,c.gcard.title,c.gcard.title.weight,c.gcard.sub,c.gcard.code,c.gcard.code.tracking,c.gutter,c.icon.stroke,s.brand.text,s.ink,s.ink3">
+     <span class="gi">${svg('gift')}</span>
+     <span class="tx"><b>${t}</b><span>${sb}</span></span>
+     <span class="code">${code}</span></button>`).join('')}
+   ${BLANK('bell','ننبّهك بكل هدية جديدة','فعّل التنبيه من «أنا» ولا تفوّت هدية.')}
+   <div style="height:18px"></div></div>${NAVB()}`}
+
 const SCREENS=[['list','القائمة'],['rest','المطعم'],['confirm','التأكيد'],['ticket','التذكرة'],['turns','دوري'],['me','أنا'],
- ['home','الرئيسية ★'],['live','المطعم الحيّ ★'],['qcard','بطاقة الدور ★']];
+ ['home','الرئيسية ★'],['live','المطعم الحيّ ★'],['qcard','بطاقة الدور ★'],
+ ['search','البحث ★'],['gifts','هداياي ★']];
 function screenHTML(key){
   const save={tab:S.tab,view:S.view,rest:S.rest,ticket:S.ticket};
   if(key==='rest'){S.view='rest';S.rest=S.rest||4}
@@ -1921,14 +2096,15 @@ function screenHTML(key){
   else if(key==='ticket'){S.view='ticket'}
   else if(key==='turns'){S.tab='turns';S.view='list'}
   else if(key==='me'){S.tab='me';S.view='list'}
-  else if(key==='home'||key==='live'||key==='qcard'){S.view=key;S.rest=S.rest||2}
+  else if(['home','live','qcard','search','gifts'].includes(key)){S.view=key;S.rest=S.rest||2}
   else{S.tab='list';S.view='list'}
   const h=key==='rest'?scrRest():key==='confirm'?scrConfirm():key==='ticket'?scrTicket()
     :key==='home'?scrHome():key==='live'?scrLive():key==='qcard'?scrQcard()
+    :key==='search'?scrSearch():key==='gifts'?scrGifts()
     :key==='turns'?scrTurns():key==='me'?scrMe():scrList();
   Object.assign(S,save);return h}
 function currentKey(){
-  if(S.view==='home'||S.view==='live'||S.view==='qcard')return S.view;
+  if(['home','live','qcard','search','gifts'].includes(S.view))return S.view;
   return S.view==='rest'?'rest':S.view==='confirm'?'confirm':S.view==='ticket'?'ticket'
   :S.tab==='turns'?'turns':S.tab==='me'?'me':'list'}
 /* ══════════════════════════════════════════════════════════════
@@ -1956,7 +2132,8 @@ function autoTag(root){
     n.dataset.el='a-'+safe+(seen[safe]>1?'-'+seen[safe]:'');
     n.dataset.auto='1'})}
 function render(){
-  const h=(S.view==='home'?scrHome():S.view==='live'?scrLive():S.view==='qcard'?scrQcard()
+  const h=(S.view==='search'?scrSearch():S.view==='gifts'?scrGifts()
+    :S.view==='home'?scrHome():S.view==='live'?scrLive():S.view==='qcard'?scrQcard()
     :S.view==='rest'?scrRest():S.view==='confirm'?scrConfirm():S.view==='ticket'?scrTicket()
     :S.tab==='turns'?scrTurns():S.tab==='me'?scrMe():scrList());
   $('#app').innerHTML=h+`<div class="toastr" id="tr"></div>`;
@@ -4274,6 +4451,7 @@ $('#app').addEventListener('click',e=>{
     S.ticket={name:x.n,code:'A'+(10+Math.floor(Math.random()*80)),ahead:x.q,start:Math.max(x.q,1),eta:x.m||5};
     S.view='ticket';S.tab='turns';render();setTimeout(()=>atoast('خذيت دورك — ننبّهك قبل دورك بعشر دقائق'),60);return}
   if(g==='ticket'){S.view='ticket';S.tab='turns';return render()}
+  if(b.dataset.sfilt){SRCH.filter=+b.dataset.sfilt;render();return}
   if(b.dataset.ltab){LIVE.tab=b.dataset.ltab;render();return}
   if(b.dataset.lcat){LIVE.cat=!LIVE.cat;render();return}
   if(g==='advance'){if(!S.ticket)return;
@@ -4402,7 +4580,7 @@ function gotoScreen(k){
   else if(k==='ticket'){S.view='ticket';if(!S.ticket)S.ticket={name:DATA[3].n,code:'A47',ahead:2,start:4,eta:8}}
   else if(k==='turns'){S.tab='turns';S.view='list'}
   else if(k==='me'){S.tab='me';S.view='list'}
-  else if(k==='home'||k==='live'||k==='qcard'){S.view=k;S.rest=S.rest||2}
+  else if(['home','live','qcard','search','gifts'].includes(k)){S.view=k;S.rest=S.rest||2}
   else{S.tab='list';S.view='list'}
   render();buildScreens();refreshCode()}
 function buildScreens(){
