@@ -105,6 +105,14 @@ input[type=color]{width:26px;height:22px;padding:0;border:1px solid var(--u-line
 .fmenu .frow .ftag{font-size:9px;color:var(--u-dim2);margin-top:1px}
 .fmenu .frow .fsample{font-size:13px;color:#c9c9d0;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fmenu .frow .fnote{font-size:9.5px;color:var(--u-dim2);line-height:1.6;margin-top:2px}
+.rsbtn{display:block;width:100%;text-align:start;background:#0f0f12;border:1px solid var(--u-line);
+  border-radius:9px;padding:8px 10px;margin-top:5px}
+.rsbtn:hover{border-color:var(--u-acc);background:#17171d}
+.rsbtn b{display:block;font-size:12.5px;color:var(--u-ink)}
+.rsbtn span{display:block;font-size:10px;color:var(--u-dim2);line-height:1.65;margin-top:2px}
+.rsbtn.danger{border-color:#5a2e2e}
+.rsbtn.danger b{color:#e6a1a1}
+.rsbtn.danger:hover{border-color:#8a4444;background:#241414}
 .fmfoot{border-top:1px solid var(--u-line);padding-top:6px;display:flex;flex-direction:column;gap:4px}
 #fontwarn{display:none;background:#3a1f1f;color:#e6a1a1;border:1px solid #5a2e2e;border-radius:6px;
   padding:2px 7px;font-size:10px}
@@ -787,6 +795,7 @@ body.freemove .app [data-el].fmsel{cursor:move}
   <button class="tbtn" id="bUndo" title="Cmd+Z">↩︎</button>
   <button class="tbtn" id="bRedo" title="Shift+Cmd+Z">↪︎</button>
   <button class="tbtn" id="bSnap" title="S">لقطة</button>
+  <button class="tbtn" id="bReset" title="رجّع إلى نقطة معلومة">تصفير</button>
   <button class="tbtn" id="bCmd" title="Cmd+K">⌘K</button>
   <button class="tbtn" id="bExport" title="X">نسخ مخرج الوكيل</button>
 </header>
@@ -1331,7 +1340,8 @@ function snapshotState(){
   return o}
 function restoreState(o,silent){
   for(const id in o.tok){
-    if(!TOK[id]){/* توكن إزاحة حرّة أُنشئ لاحقًا */ const m=id.match(/^c\.fm\.(.+)\.(x|y)$/);if(m)ensureFM(m[1])}
+    if(!TOK[id]){/* توكن حركة أُنشئ لاحقًا: إزاحة أو لفّ أو تكبير */
+      const m=id.match(/^c\.fm\.(.+)\.(x|y|rot|scale)$/);if(m)ensureFM(m[1])}
     if(!TOK[id])continue;const s=o.tok[id],t=TOK[id];t.v=s.v;t.a=s.a;t.ref=s.ref;if(s.u!=null)t.u=s.u;t.exc=s.exc}
   if(o.struct)Object.assign(STRUCT,JSON.parse(JSON.stringify(o.struct)));
   if(o.content){DATA.length=0;JSON.parse(JSON.stringify(o.content)).forEach(x=>DATA.push(x))}
@@ -3747,6 +3757,74 @@ function contrastScan(){
     })});
   return out.sort((a,b)=>a.got-b.got)}
 /* ══════════════════════════════════════════════════════════════
+   التصفير — العودة إلى نقطة معلومة. أربعة مستويات لأن «تلخبط الشكل»
+   شيء و«تلخبط المحتوى» شيء آخر، وإرجاع الكلّ لأجل خطأ في موضع عنصر
+   خسارةٌ لا داعي لها.
+   ══════════════════════════════════════════════════════════════ */
+function clearMoves(){
+  FMKEYS.forEach(k=>{['x','y','rot'].forEach(sfx=>{const id='c.fm.'+k+'.'+sfx;if(TOK[id])TOK[id].v=0});
+    const sc='c.fm.'+k+'.scale';if(TOK[sc])TOK[sc].v=1});
+  $$('#app [style]').forEach(n=>{n.style.transform='';n.style.insetInlineStart='';n.style.top=''})}
+function clearHidden(){for(const k in HIDDEN)delete HIDDEN[k];
+  $$('#app [data-hidden]').forEach(n=>n.dataset.hidden='0')}
+function resetTo(mode){
+  const B=BASELINE;if(!B)return toast('لا يوجد خطّ أساس محفوظ');
+  if(mode==='all'){
+    push('تصفير كامل');
+    restoreState(B,true);clearMoves();clearHidden();
+    if(typeof STRESS!=='undefined')STRESS=null;
+    LIVE.tab='wait';LIVE.cat=true;LIVE.stars=0;LIVE.branch=0;
+    SRCH.q='';SRCH.filter=0;SRCH.state='results';
+    S.tab='list';S.view='list';S.rest=null;S.party=2;S.ticket=null;S.done=[];
+    toast('رجع كل شيء إلى خطّ الأساس')}
+  else if(mode==='look'){
+    push('تصفير الشكل');
+    const keepData=JSON.parse(JSON.stringify(DATA)),keepStr=Object.assign({},STR);
+    restoreState(B,true);
+    DATA.length=0;keepData.forEach(x=>DATA.push(x));Object.assign(STR,keepStr);
+    clearMoves();toast('رجع الشكل، والمحتوى كما هو')}
+  else if(mode==='content'){
+    push('تصفير المحتوى');
+    DATA.length=0;JSON.parse(JSON.stringify(B.content)).forEach(x=>DATA.push(x));
+    Object.assign(STR,JSON.parse(JSON.stringify(B.strings)));
+    if(typeof STRESS!=='undefined')STRESS=null;
+    toast('رجع المحتوى، والشكل كما هو')}
+  else if(mode==='moves'){
+    push('تصفير المواضع');clearMoves();clearHidden();toast('رجعت كل العناصر إلى مواضعها')}
+  apply();render();buildPanel();refreshCode();closePop()}
+let RMENU=null;
+function closeReset(){if(RMENU){RMENU.remove();RMENU=null;document.removeEventListener('mousedown',_rmOut,true)}}
+function _rmOut(e){if(RMENU&&!RMENU.contains(e.target))closeReset()}
+function openResetMenu(anchorEl){
+  closeReset();
+  const m=el('div','fmenu');m.style.width='320px';m.style.maxHeight='none';RMENU=m;
+  m.appendChild(el('div','mini','<b style="color:#b9c4d2">رجّع إلى نقطة معلومة</b>'));
+  const mk=(l,d,mode,danger)=>{
+    const b=el('button','rsbtn'+(danger?' danger':''));
+    b.innerHTML='<b>'+l+'</b><span>'+d+'</span>';
+    b.onclick=()=>{
+      if(danger&&!confirm('يرجع كل شيء إلى خطّ الأساس: الشكل والمحتوى والمواضع والمخفيّات.\n'
+        +'يمكنك التراجع بـ Cmd+Z بعدها. أواصل؟'))return;
+      resetTo(mode);closeReset()};
+    m.appendChild(b)};
+  mk('المواضع فقط','كل ما سحبته أو لففته أو أخفيته يعود مكانه. الشكل والمحتوى لا يتغيّران.','moves');
+  mk('الشكل فقط','كل الألوان والخطوط والمقاسات تعود لخطّ الأساس، ومحتواك يبقى كما هو.','look');
+  mk('المحتوى فقط','أسماء المطاعم والنصوص تعود، وتصميمك يبقى. نافع بعد اختبار الحدود.','content');
+  mk('كل شيء','عودة كاملة إلى نقطة الصفر — كأنك فتحت الورشة الآن.','all',true);
+  if(SNAPS.length){
+    m.appendChild(el('div','mini','<b style="color:#b9c4d2">أو ارجع للقطة</b>'));
+    SNAPS.slice(-6).reverse().forEach((sn,i)=>{
+      const b=el('button','rsbtn');
+      b.innerHTML='<b>'+(sn.n||('لقطة '+(SNAPS.length-i)))+'</b><span>رجوع إلى هذه الحالة</span>';
+      b.onclick=()=>{push('رجوع للقطة');restoreState(sn.s||sn);toast('رجعت اللقطة');closeReset()};
+      m.appendChild(b)})}
+  document.body.appendChild(m);
+  const r=anchorEl.getBoundingClientRect();
+  m.style.top=(r.bottom+6)+'px';
+  m.style.left=Math.max(8,Math.min(r.left,innerWidth-336))+'px';
+  setTimeout(()=>document.addEventListener('mousedown',_rmOut,true),0)}
+
+/* ══════════════════════════════════════════════════════════════
    المرشد — عين مصمّم تعمل وأنت تصمّم. لا تجامل ولا تعمّم: كل ملاحظة
    مقيسة برقم من تصميمك أنت، ومعها الإصلاح بضغطة حين يكون له إصلاح
    واحد صحيح. الدرجة ليست حكمًا على ذوقك — هي عدّاد للأخطاء التي
@@ -4962,6 +5040,7 @@ function loadWorkFile(){
     r.readAsText(f)};
   i.click()}
 
+$('#bReset').onclick=()=>openResetMenu($('#bReset'));
 $('#bDesc').onclick=()=>{document.body.classList.toggle('nodesc');
   $('#bDesc').classList.toggle('on',!document.body.classList.contains('nodesc'));
   try{localStorage.setItem('eight.studio.desc',document.body.classList.contains('nodesc')?'0':'1')}catch(e){}};
