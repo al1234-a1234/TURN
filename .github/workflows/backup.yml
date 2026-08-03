@@ -106,6 +106,41 @@ jobs:
           rm -rf ./backups
           ls -lh turn-backup-*.tar.enc
 
+      # نسخة لم تُفتح مرّة ليست نسخة، بل افتراض. هنا تُفكّ فورًا ويُتحقَّق من
+      # محتواها — فيوم الحاجة لا يكون أوّل يوم نكتشف فيه أن الملف حثالة.
+      - name: التحقّق من النسخة (فكّ فعليّ وجرد)
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          mkdir -p /tmp/verify
+          openssl enc -d -aes-256-cbc -pbkdf2 -pass env:BACKUP_PASSPHRASE \
+            -in turn-backup-*.tar.enc | tar -x -C /tmp/verify \
+            || { echo "::error::تعذّر فكّ التشفير — العبارة السرّية لا تطابق الملف"; exit 1; }
+
+          DIR="$(find /tmp/verify -mindepth 1 -maxdepth 1 -type d | head -1)"
+          [ -n "$DIR" ] || { echo "::error::الأرشيف فُكّ فارغًا"; exit 1; }
+
+          gunzip -f "$DIR"/*.sql.gz
+
+          # البنية: جداول المنتج الحرجة موجودة فعلًا لا مجرّد ملف بحجم معقول.
+          for T in restaurants branches waitlist_entries customers customer_rewards; do
+            grep -q "CREATE TABLE public\.$T" "$DIR/01-schema.sql" \
+              || { echo "::error::جدول $T مفقود من نسخة البنية"; exit 1; }
+          done
+
+          # سياسات RLS: نسخة بلا سياسات تُسترجَع مكشوفة للعالم.
+          POL="$(grep -c 'CREATE POLICY' "$DIR/01-schema.sql" || true)"
+          [ "$POL" -ge 20 ] \
+            || { echo "::error::سياسات RLS في النسخة $POL فقط — متوقَّع ٢٠ فأكثر"; exit 1; }
+
+          # الصفوف: نسخة فارغة تنجح تقنيًّا وتخذلك يوم الاسترجاع.
+          ROWS="$(awk -F',' '{s+=$2} END {print s+0}' "$DIR/04-rowcounts.csv")"
+          [ "$ROWS" -ge 100 ] \
+            || { echo "::error::مجموع الصفوف $ROWS — النسخة شبه فارغة"; exit 1; }
+
+          echo "✓ النسخة مُتحقَّق منها: $POL سياسة، $ROWS صفًّا، وكل الجداول الحرجة حاضرة"
+          rm -rf /tmp/verify
+
       - name: رفع النسخة المشفَّرة (تُحفظ ٩٠ يومًا)
         uses: actions/upload-artifact@v4
         with:

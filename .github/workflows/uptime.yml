@@ -1,0 +1,75 @@
+# ============================================================================
+#  حارس الحياة — يطرق باب «دور» كل ربع ساعة ويصرخ إن لم يُفتح.
+#
+#  لماذا هنا لا في خدمة مراقبة؟ لأن حساب المراقبة حساب آخر بكلمة سرّ أخرى
+#  تُنسى، وبريدٌ آخر يُهمَل. وهنا: لا حساب، لا اشتراك، لا سرّ. والفشل يصل
+#  للمالك بريدًا من GitHub تلقائيًّا — نفس القناة التي تصله منها بقيّة
+#  الأعطال، فلا يتفرّق انتباهه على صناديق.
+#
+#  ما الذي يُفحص فعلًا:
+#    ١) الرئيسية ترجع 200 — التطبيق حيّ ويُخدَم.
+#    ٢) الصفحة تحوي علامة من علامات الواجهة — لا صفحة خطأ أنيقة برمز 200.
+#    ٣) نبض قاعدة البيانات عبر دالة الضيف health_snapshot — الواجهة قد تعمل
+#       والقاعدة ميّتة، وهذا أسوأ الأعطال لأنه صامت.
+#
+#  الحدّ: خمس محاولات متباعدة قبل إعلان الفشل. شبكة GitHub ترتجف أحيانًا،
+#  وإنذار كاذب كل يوم يعلّم المالك تجاهل الإنذارات — وهذا أخطر من العطل.
+# ============================================================================
+name: حارس الحياة
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uptime
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: الرئيسية حيّة وتحمل واجهتها
+        run: |
+          SITE="https://ei8ht.app"
+          for i in 1 2 3 4 5; do
+            CODE="$(curl -s -o /tmp/home.html -w '%{http_code}' \
+                     --max-time 20 -A 'dour-uptime/1.0' "$SITE" || echo 000)"
+            if [ "$CODE" = "200" ] && grep -qi 'ei8ht\|إيت\|دور' /tmp/home.html; then
+              echo "✓ الرئيسية سليمة (المحاولة $i)"; exit 0
+            fi
+            echo "المحاولة $i: رمز=$CODE — إعادة بعد 20ث"
+            sleep 20
+          done
+          echo "::error::الرئيسية $SITE لا تستجيب استجابة سليمة بعد ٥ محاولات (آخر رمز: $CODE)"
+          head -c 400 /tmp/home.html || true
+          exit 1
+
+      - name: نبض قاعدة البيانات (دالة الضيف)
+        env:
+          URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: |
+          # قيمتان عامّتان أصلًا (تُشحنان داخل حزمة المتصفّح)، لكن قراءتهما من
+          # الأسرار تُبقي الملف صالحًا لو تغيّر المشروع يومًا.
+          U="${URL:-https://nkdfxmjuigslmangzuua.supabase.co}"
+          K="${KEY:-sb_publishable_TID1xCZ38N9D4IhQfhHcqA_q2Andfp3}"
+          for i in 1 2 3 4 5; do
+            CODE="$(curl -s -o /tmp/health.json -w '%{http_code}' --max-time 20 \
+                     -X POST "$U/rest/v1/rpc/health_snapshot" \
+                     -H "apikey: $K" -H "Authorization: Bearer $K" \
+                     -H 'Content-Type: application/json' -d '{}' || echo 000)"
+            if [ "$CODE" = "200" ]; then
+              echo "✓ القاعدة تنبض (المحاولة $i)"; cat /tmp/health.json; exit 0
+            fi
+            echo "المحاولة $i: رمز=$CODE — إعادة بعد 20ث"
+            sleep 20
+          done
+          echo "::error::قاعدة البيانات لا تستجيب بعد ٥ محاولات (آخر رمز: $CODE)"
+          head -c 400 /tmp/health.json || true
+          exit 1
