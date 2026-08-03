@@ -12,8 +12,13 @@
 #  حثالة بايتات لا تنفع أحدًا. لا تفقد المفتاح: نسخة بلا مفتاحها = لا نسخة.
 #
 #  يتطلّب سرّين في Settings → Secrets and variables → Actions:
-#    SUPABASE_DB_URL    رابط الاتصال (Session pooler) من إعدادات Supabase
-#    BACKUP_PASSPHRASE  عبارة سرّية طويلة تخترعها — اكتبها في «خزنة الشركة»
+#    SUPABASE_DB_PASSWORD  كلمة سرّ قاعدة البيانات وحدها (لا الرابط) — من
+#                          Supabase → Connect → Reset database password.
+#                          الرابط يُركَّب في مجرى العمل ويُرمَّز ترميزًا مئويًّا،
+#                          فالرموز الخاصة والمسافات لا تكسره.
+#    BACKUP_PASSPHRASE     عبارة سرّية طويلة تخترعها — اكتبها في «خزنة الشركة»
+#
+#  (يبقى SUPABASE_DB_URL مقبولًا للتوافق: رابط Session pooler كاملًا.)
 #
 #  فكّ النسخة على أي جهاز:
 #    openssl enc -d -aes-256-cbc -pbkdf2 -in turn-backup-<تاريخ>.tar.enc \
@@ -38,13 +43,37 @@ jobs:
       - name: جلب المستودع
         uses: actions/checkout@v4
 
-      - name: التحقق من وجود السرّين
+      - name: التحقق من الأسرار وتركيب رابط الاتصال
         env:
           DB: ${{ secrets.SUPABASE_DB_URL }}
+          DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           PASS: ${{ secrets.BACKUP_PASSPHRASE }}
         run: |
-          [ -n "$DB" ]   || { echo "::error::السرّ SUPABASE_DB_URL غير مضبوط — أضِفه في Settings → Secrets → Actions"; exit 1; }
           [ -n "$PASS" ] || { echo "::error::السرّ BACKUP_PASSPHRASE غير مضبوط — أضِفه في Settings → Secrets → Actions"; exit 1; }
+
+          # الطريق المفضَّل: كلمة سرّ فقط. الرابط يُركَّب هنا فلا يخطئ أحد في
+          # تركيبه بيده — مسافة زائدة أو رمز غير مرمَّز كانا يُسقطان النسخة
+          # بخطأ مبهم («تعذّر الاتصال بمقبس محلي») لا يدلّ على سببه.
+          if [ -n "$DB_PASSWORD" ]; then
+            ENC="$(python3 -c 'import os,urllib.parse;print(urllib.parse.quote(os.environ["DB_PASSWORD"].strip(),safe=""))')"
+            URL="postgresql://postgres.nkdfxmjuigslmangzuua:${ENC}@aws-0-eu-central-1.pooler.supabase.com:5432/postgres"
+            echo "▸ الرابط مُركَّب من SUPABASE_DB_PASSWORD"
+          elif [ -n "$DB" ]; then
+            # توافق مع الإعداد القديم: رابط كامل — تُقلَّم منه الفراغات فقط.
+            URL="$(printf '%s' "$DB" | tr -d '[:space:]')"
+            echo "▸ الرابط مأخوذ من SUPABASE_DB_URL"
+          else
+            echo "::error::أضِف SUPABASE_DB_PASSWORD (كلمة سرّ قاعدة البيانات) في Settings → Secrets → Actions"
+            exit 1
+          fi
+
+          case "$URL" in
+            postgresql://*@*.pooler.supabase.com:5432/postgres) : ;;
+            *) echo "::error::شكل الرابط غير صالح — تأكّد أن السرّ يحوي كلمة السرّ وحدها لا الرابط كاملًا"; exit 1 ;;
+          esac
+
+          echo "::add-mask::$URL"
+          echo "DB_URL=$URL" >> "$GITHUB_ENV"
 
       - name: تثبيت عميل Postgres 17 (إصدار الخادم)
         run: |
@@ -61,7 +90,7 @@ jobs:
 
       - name: تشغيل النسخة (نفس سكربت الاستقلال اليدوي)
         env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          SUPABASE_DB_URL: ${{ env.DB_URL }}
         run: |
           chmod +x scripts/backup.sh
           ./scripts/backup.sh ./backups
