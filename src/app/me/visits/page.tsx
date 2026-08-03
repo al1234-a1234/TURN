@@ -6,6 +6,7 @@ import { CustomerShell } from "@/components/customer-shell";
 import { useLang } from "@/components/lang-provider";
 import { tr } from "@/lib/i18n";
 import { getTurns, type TurnRecord } from "@/lib/local-store";
+import Image from "next/image";
 
 export default function VisitsPage() {
   const lang = useLang();
@@ -44,8 +45,7 @@ export default function VisitsPage() {
               <Link key={`${t.slug}-${i}`} href={`/r/${t.slug}`} className="rq-card flex items-center gap-3 p-4 transition active:scale-[0.99]">
                 <span className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-800 font-serif text-lg font-bold text-cream-100">
                   {t.logo ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={t.logo} alt="" className="h-full w-full object-cover" />
+                    <Image src={t.logo} alt="" width={56} height={56} sizes="56px" className="h-full w-full object-cover" />
                   ) : (
                     initial
                   )}

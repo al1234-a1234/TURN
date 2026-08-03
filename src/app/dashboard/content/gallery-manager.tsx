@@ -6,6 +6,7 @@ import { uploadMedia } from "@/lib/upload-action";
 import { addRestaurantPhoto, deleteRestaurantPhoto } from "./gallery-actions";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
+import Image from "next/image";
 
 type Photo = { id: string; url: string; caption: string | null };
 
@@ -51,7 +52,7 @@ export function GalleryManager({ restaurantId, branchId, photos }: { restaurantI
         {photos.map((p) => (
           <div key={p.id} className="group relative aspect-square overflow-hidden rounded-2xl border" style={{ borderColor: "var(--border)" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={p.url} alt={p.caption ?? ""} className="h-full w-full object-cover" />
+            <Image src={p.url} alt={p.caption ?? ""} width={256} height={256} sizes="256px" className="h-full w-full object-cover" />
             <form action={deleteRestaurantPhoto} className="absolute end-1 top-1">
               <input type="hidden" name="photo_id" value={p.id} />
               <button className="flex h-7 w-7 items-center justify-center rounded-full bg-black/55 text-sm text-cream-100 transition hover:bg-[color:var(--danger)]" title={tr(lang, "حذف", "Delete")}>

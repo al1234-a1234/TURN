@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
+import Image from "next/image";
 
 type Photo = { id: string; url: string; caption: string | null };
 
@@ -42,7 +43,7 @@ export function Gallery({ photos, label }: { photos: Photo[]; label: string }) {
             style={{ borderColor: "var(--border)" }}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={ph.url} alt={ph.caption ?? ""} className="h-full w-full object-cover" />
+            <Image src={ph.url} alt={ph.caption ?? ""} width={384} height={384} sizes="(max-width: 640px) 50vw, 240px" className="h-full w-full object-cover" />
             {ph.caption && (
               <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-3 text-sm font-bold text-cream-100">{ph.caption}</span>
             )}
@@ -91,7 +92,7 @@ export function Gallery({ photos, label }: { photos: Photo[]; label: string }) {
 
           <figure className="max-h-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={photos[open].url} alt={photos[open].caption ?? ""} className="max-h-[80vh] w-full rounded-2xl object-contain" />
+            <Image src={photos[open].url} alt={photos[open].caption ?? ""} width={1080} height={1080} sizes="100vw" className="max-h-[80vh] w-full rounded-2xl object-contain" />
             {photos[open].caption && (
               <figcaption className="mt-3 text-center text-sm font-bold text-cream-100/90">{photos[open].caption}</figcaption>
             )}

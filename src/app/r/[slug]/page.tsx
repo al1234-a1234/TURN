@@ -15,6 +15,7 @@ import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 import { fmtDate, isWithinOpeningHours } from "@/lib/dates";
 import type { Metadata } from "next";
+import Image from "next/image";
 
 /* معاينة المشاركة: رابط المطعم في واتساب/تويتر كان يظهر بعنوان «دور | Turn»
    العام بلا اسم ولا شعار — هنا يظهر اسم المطعم وشعاره، فيصير الرابط الذي
@@ -183,8 +184,7 @@ export default async function RestaurantPublicPage({
             {/* نصفه داخل الهيدر ونصفه خارجه — على الحافة السفلية بالضبط. */}
             <span className="flex h-20 w-20 shrink-0 translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-white/15 font-serif text-2xl font-bold text-cream-100 ring-4 ring-[var(--background)] backdrop-blur-sm">
               {restaurant.logo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={restaurant.logo_url} alt="" className="h-full w-full object-cover" />
+                <Image src={restaurant.logo_url} alt="" width={72} height={72} sizes="72px" className="h-full w-full object-cover" />
               ) : (
                 initial
               )}
