@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useLang } from "@/components/lang-provider";
+import { IconPlate } from "@/components/icons";
 import { useEffect, useMemo, useState } from "react";
 import { toAr } from "@/lib/format";
 import { tr, type Lang } from "@/lib/i18n";
@@ -187,7 +189,9 @@ function SectionHeading({ label, count }: { label: string; count: number }) {
   );
 }
 
-export function DiscoveryList({ items, lang }: { items: DiscoveryItem[]; lang: Lang }) {
+export function DiscoveryList({ items }: { items: DiscoveryItem[] }) {
+  // اللغة من السياق لا من الخادم: هكذا تبقى الصفحة قابلة للتخزين على الحافة.
+  const lang = useLang();
   const [cuisine, setCuisine] = useState<string>("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -249,6 +253,19 @@ export function DiscoveryList({ items, lang }: { items: DiscoveryItem[]; lang: L
       : { background: "var(--brand-solid)", color: "var(--brand-ink)", border: "1px solid transparent" };
 
   let delay = 0;
+
+  // حالة الفراغ انتقلت إلى هنا من الصفحة: نصُّها مترجَم، وبقاؤه على الخادم
+  // كان يُلزم الصفحةَ بقراءة اللغة فتفقد قابليّة التخزين على الحافة.
+  if (items.length === 0) {
+    return (
+      <div className="rq-card p-10 text-center text-[color:var(--muted)]">
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full text-cream-100" style={{ background: "var(--brand-solid)" }}>
+          <IconPlate size={26} />
+        </span>
+        <p className="mt-3 text-sm">{tr(lang, "لا توجد مطاعم متاحة بعد.", "No restaurants available yet.")}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

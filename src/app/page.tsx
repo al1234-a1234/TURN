@@ -1,16 +1,14 @@
 import { getDiscovery, getHomeQueueCounts } from "@/lib/supabase/public-cache";
-import { IconPlate } from "@/components/icons";
 import { CustomerShell } from "@/components/customer-shell";
 import { DiscoveryList } from "./discovery-list";
-import { getLang } from "@/lib/i18n-server";
-import { tr } from "@/lib/i18n";
 import { isWithinOpeningHours } from "@/lib/dates";
 
-export const dynamic = "force-dynamic";
+// تُخزَّن على الحافة ٣٠ ثانية فتصل للزائر جاهزةً بدل توليدٍ كامل لكل طلب.
+// المدّة نفسها التي تُكاش بها بيانات الاكتشاف، فلا تسبق الصفحةُ بياناتها.
+// وأرقام الطابور الحيّة ليست هنا: التذكرة وصفحة المطعم والاستقبال بلا كاش.
+export const revalidate = 30;
 
 export default async function Home() {
-  const lang = await getLang();
-
   // قائمة الاكتشاف + التقييمات — مكاشة (٣٠ث) لا تضرب القاعدة في كل زيارة
   const { list, ratings } = await getDiscovery();
   const ratingAgg = new Map(Object.entries(ratings));
@@ -69,14 +67,7 @@ export default async function Home() {
 
   return (
     <CustomerShell active="restaurants">
-      {withStatus.length === 0 ? (
-        <div className="rq-card p-10 text-center text-[color:var(--muted)]">
-          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full text-cream-100" style={{ background: "var(--brand-solid)" }}><IconPlate size={26} /></span>
-          <p className="mt-3 text-sm">{tr(lang, "لا توجد مطاعم متاحة بعد.", "No restaurants available yet.")}</p>
-        </div>
-      ) : (
-        <DiscoveryList items={withStatus} lang={lang} />
-      )}
+      <DiscoveryList items={withStatus} />
     </CustomerShell>
   );
 }

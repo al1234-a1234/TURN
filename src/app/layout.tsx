@@ -1,8 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans_Arabic, DM_Serif_Display } from "next/font/google";
 import "./globals.css";
-import { getLang } from "@/lib/i18n-server";
-import { dirOf } from "@/lib/i18n";
 import { LangProvider } from "@/components/lang-provider";
 
 // خط الشعار والأرقام اللاتينية — الرقم ٨ في الشارة.
@@ -57,20 +55,22 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default async function RootLayout({
+// الغلاف ثابتٌ بالعربية عمدًا. قراءة كوكي اللغة هنا كانت تُجبر كل صفحة في
+// التطبيق على التوليد لكل زائر، فيرى العميل فراغًا قبل المحتوى. واللغة الآن
+// تُقرأ في المتصفّح داخل LangProvider — انظر تعليله هناك.
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const lang = await getLang();
   return (
     <html
-      lang={lang}
-      dir={dirOf(lang)}
+      lang="ar"
+      dir="rtl"
       className={`${plexArabic.variable} ${dmSerif.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
-        <LangProvider lang={lang}>{children}</LangProvider>
+        <LangProvider>{children}</LangProvider>
       </body>
     </html>
   );
