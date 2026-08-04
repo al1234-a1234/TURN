@@ -13,7 +13,7 @@ export default function RootLoading() {
       <main className="mx-auto w-full max-w-2xl flex-1 px-5 pb-28 pt-5">
         <div className="space-y-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className={`${bar} h-32`} style={{ background: "var(--surface-2)" }} />
+            <div key={i} className={`${bar} h-32`} style={{ background: "rgba(120,30,12,0.07)" }} />
           ))}
         </div>
       </main>
