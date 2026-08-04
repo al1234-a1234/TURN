@@ -9,6 +9,7 @@ import { toAr, normalizePhone } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 import { recordTurn, lastTurnFor, clearTurnRecovery } from "@/lib/local-store";
+import Image from "next/image";
 
 type Branch = {
   id: string;
@@ -62,8 +63,7 @@ function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; o
       {/* الصورة */}
       <span className="relative block h-52 w-full overflow-hidden">
         {art ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={art} alt="" className="h-full w-full object-cover" />
+          <Image src={art} alt="" width={828} height={414} sizes="(max-width: 640px) 100vw, 640px" className="h-full w-full object-cover" />
         ) : (
           <span className="flex h-full w-full items-center justify-center font-serif text-5xl font-bold text-cream-100"
                 style={{ background: "var(--brand-solid)" }}>

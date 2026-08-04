@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ScanLanding } from "./scan-landing";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
+import Image from "next/image";
 
 export const dynamic = "force-dynamic";
 
@@ -30,8 +31,7 @@ export default async function CheckinPage({ params, searchParams }: { params: Pr
       <header className="rq-header px-6 pb-16 pt-10 text-center">
         <span className="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl font-serif text-4xl font-bold text-[color:var(--brand-maroon)] ring-1 ring-[rgba(120,30,12,0.14)]">
           {restaurant.logo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={restaurant.logo_url} alt="" className="h-full w-full object-cover" />
+            <Image src={restaurant.logo_url} alt="" width={64} height={64} sizes="64px" className="h-full w-full object-cover" />
           ) : (
             initial
           )}

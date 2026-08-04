@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Image from "next/image";
 import { ImageUploader } from "@/components/image-uploader";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
@@ -118,8 +119,7 @@ function CategoryBlock({
           <li key={it.id} className="flex items-center gap-3 rounded-2xl border border-[var(--border)] p-2">
             <span className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-sand-100 ">
               {it.image_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={it.image_url} alt="" className="h-full w-full object-cover" />
+                <Image src={it.image_url} alt="" width={96} height={96} sizes="96px" className="h-full w-full object-cover" />
               )}
             </span>
             <div className="min-w-0 flex-1">

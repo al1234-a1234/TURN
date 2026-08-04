@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { SITE_HOST } from "@/lib/site";
 import { TvBoard } from "./tv-board";
+import Image from "next/image";
 
 export const dynamic = "force-dynamic";
 
@@ -40,8 +41,7 @@ export default async function TvPage({ params }: { params: Promise<{ id: string 
       <header className="flex items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           {meta.restaurant_logo ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={meta.restaurant_logo} alt="" className="h-20 w-20 rounded-3xl object-cover" style={{ border: "2px solid rgba(102,28,10,0.15)" }} />
+            <Image src={meta.restaurant_logo} alt="" width={80} height={80} sizes="80px" className="h-20 w-20 rounded-3xl object-cover" style={{ border: "2px solid rgba(102,28,10,0.15)" }} />
           ) : null}
           <div>
             <h1 className="font-display text-5xl font-bold" style={{ color: "var(--ink)" }}>{meta.restaurant_name}</h1>

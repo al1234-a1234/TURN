@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { toAr } from "@/lib/format";
 import { tr, type Lang } from "@/lib/i18n";
@@ -81,8 +82,7 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
       <div className="flex items-center gap-3">
         <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-800 font-serif text-xl font-bold text-cream-100">
           {r.logo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={r.logo_url} alt="" className="h-full w-full object-cover" />
+            <Image src={r.logo_url} alt="" width={56} height={56} sizes="56px" className="h-full w-full object-cover" />
           ) : (
             initial
           )}
