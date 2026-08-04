@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useLang } from "@/components/lang-provider";
+import { storePeek } from "@/lib/peek";
 import { IconPlate } from "@/components/icons";
 import { useEffect, useMemo, useState } from "react";
 import { toAr } from "@/lib/format";
@@ -78,6 +79,7 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
   return (
     <Link
       href={href}
+      onClick={() => storePeek(r.slug, { name: r.name, logo: r.logo_url, waiting: r.waiting, closed: r.closedNow })}
       className={`reveal rq-card block overflow-hidden p-3 transition active:scale-[0.985]${r.closedNow ? " opacity-70" : ""}`}
       style={{ animationDelay: `${delay}ms` }}
     >

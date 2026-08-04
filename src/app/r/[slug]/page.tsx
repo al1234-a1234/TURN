@@ -2,6 +2,7 @@ import Link from "next/link";
 import { IconGift } from "@/components/icons";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getRestaurantMeta } from "@/lib/supabase/public-cache";
 import { Logo } from "@/components/logo";
 import { SharedHeader } from "@/components/page-header";
 import { WaitlistForm } from "./waitlist-form";
@@ -22,13 +23,8 @@ import Image from "next/image";
    يوزّعه صاحب المطعم لعملائه دعاية له لا لنا فقط. */
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const supabase = await createClient();
-  const { data: r } = await supabase
-    .from("restaurants")
-    .select("name, cuisine, logo_url, cover_url")
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .maybeSingle();
+  // مكاش ٥ دقائق — كان استعلامًا حيًّا يحجب الرأس في كل فتحة (انظر public-cache)
+  const r = await getRestaurantMeta(slug);
   if (!r) return { title: "إيت | EIGHT" };
   const title = `${r.name} | إيت`;
   const description = `خذ دورك في ${r.name}${r.cuisine ? ` — ${r.cuisine}` : ""} بلا انتظار على الباب. شوف الطابور الحيّ والقائمة والهدايا.`;
