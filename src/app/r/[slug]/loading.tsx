@@ -20,12 +20,12 @@ export default function RestaurantLoading() {
       <main className="mx-auto w-full max-w-2xl flex-1 px-5 pb-14 pt-24">
         <div className="grid grid-cols-4 gap-2.5">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className={`${bar} h-16`} style={{ background: "var(--surface-2)" }} />
+            <div key={i} className={`${bar} h-16`} style={{ background: "rgba(120,30,12,0.07)" }} />
           ))}
         </div>
         <div className="mt-5 space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className={`${bar} h-24`} style={{ background: "var(--surface-2)" }} />
+            <div key={i} className={`${bar} h-24`} style={{ background: "rgba(120,30,12,0.07)" }} />
           ))}
         </div>
       </main>
