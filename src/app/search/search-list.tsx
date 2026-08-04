@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/components/lang-provider";
 import { tr } from "@/lib/i18n";
 import Image from "next/image";
+import { storePeek } from "@/lib/peek";
 
 export type SearchItem = { slug: string; name: string; logo?: string | null; city: string; cuisine: string };
 
@@ -94,7 +95,7 @@ export function SearchList({
           {results.map((r) => {
             const initial = (r.name || "م").trim().charAt(0);
             return (
-              <Link key={r.slug} href={`/r/${r.slug}`} className="rq-card flex items-center gap-3 p-3 transition active:scale-[0.985]">
+              <Link key={r.slug} href={`/r/${r.slug}`} onClick={() => storePeek(r.slug, { name: r.name, logo: r.logo ?? null })} className="rq-card flex items-center gap-3 p-3 transition active:scale-[0.985]">
                 <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-800 font-serif text-xl font-bold text-cream-100">
                   {r.logo ? (
                     <Image src={r.logo} alt="" width={56} height={56} sizes="56px" className="h-full w-full object-cover" />
