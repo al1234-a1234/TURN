@@ -1,11 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { CustomerShell } from "@/components/customer-shell";
 import { LangToggle } from "@/components/lang-toggle";
 import { RewardsBadge } from "./rewards-badge";
-import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
-
-export const metadata = { title: "حسابي · إيت" };
+import { useLang } from "@/components/lang-provider";
 
 /* أيقونات الهوية — دائرة كريميّة بلون الهوية داخلها رمز الدلالة */
 function IcGift() {
@@ -40,8 +40,11 @@ const ITEMS = [
   { href: "/me/visits", ar: "الزيارات", en: "Visits", Icon: IcClock },
 ];
 
-export default async function MePage() {
-  const lang = await getLang();
+// «حسابي» أحد تبويبَي الشريط السفلي؛ كان الوحيد الذي يذهب للخادم في كل
+// ضغطة — لا لبياناتٍ فيه، بل لقراءة كوكي اللغة فقط. صار مكوّن عميل ثابتًا
+// فيُجلَب مسبقًا وينتقل إليه الشريط بلا رحلة، كإحساس التطبيقات المثبَّتة.
+export default function MePage() {
+  const lang = useLang();
   return (
     <CustomerShell active="other" search={false}>
       <div className="space-y-5">
