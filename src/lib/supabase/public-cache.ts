@@ -85,3 +85,24 @@ export const getHomeQueueCounts = unstable_cache(
   ["home-queue-counts"],
   { revalidate: 10, tags: ["discovery"] },
 );
+
+/**
+ * تعريف المطعم لمعاينة المشاركة — كاش ٥ دقائق.
+ * generateMetadata يسبق بثّ أي بكسل، وكان يستعلم القاعدة حيًّا في كل فتحة
+ * لصفحة أي مطعم — رحلة كاملة تحجب الرأس لبياناتٍ لا تتغيّر إلا حين يعدّل
+ * المالك اسمه أو شعاره. خمس دقائق تقادمٍ في معاينة واتساب لا يلحظها أحد،
+ * وحذفُ رحلةٍ من المسار الحرج يلحظه كل عميل.
+ */
+export const getRestaurantMeta = unstable_cache(
+  async (slug: string) => {
+    const { data } = await anon()
+      .from("restaurants")
+      .select("name, cuisine, logo_url, cover_url")
+      .eq("slug", slug)
+      .eq("is_active", true)
+      .maybeSingle();
+    return data;
+  },
+  ["restaurant-meta-v1"],
+  { revalidate: 300, tags: ["discovery"] },
+);
