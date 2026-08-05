@@ -324,6 +324,7 @@ export type Database = {
       }
       customer_rewards: {
         Row: {
+          armed_at: string | null
           code: string | null
           created_at: string
           created_by: string | null
@@ -340,6 +341,7 @@ export type Database = {
           value_kind: string
         }
         Insert: {
+          armed_at?: string | null
           code?: string | null
           created_at?: string
           created_by?: string | null
@@ -356,6 +358,7 @@ export type Database = {
           value_kind?: string
         }
         Update: {
+          armed_at?: string | null
           code?: string | null
           created_at?: string
           created_by?: string | null
@@ -1456,6 +1459,24 @@ export type Database = {
         Args: { p_phone: string; p_slug: string }
         Returns: Json
       }
+      my_rewards: {
+        Args: never
+        Returns: {
+          armed_at: string
+          created_at: string
+          description: string
+          expires_at: string
+          id: string
+          kind: string
+          redeemed_at: string
+          restaurant: string
+          restaurant_slug: string
+          status: string
+          title: string
+          value: number
+          value_kind: string
+        }[]
+      }
       norm_phone_input: { Args: { p: string }; Returns: string }
       public_checkin: {
         Args: {
@@ -1543,6 +1564,14 @@ export type Database = {
         Args: { p_entry_id: string; p_lat: number; p_lng: number }
         Returns: boolean
       }
+      set_reward_armed: {
+        Args: { p_arm: boolean; p_reward_id: string }
+        Returns: boolean
+      }
+      set_staff_permission: {
+        Args: { p_granted: boolean; p_perm: string; p_staff_id: string }
+        Returns: undefined
+      }
       staff_add_walkin: {
         Args: {
           p_branch_id: string
@@ -1555,10 +1584,6 @@ export type Database = {
           entry_id: string
           queue_pos: number
         }[]
-      }
-      set_staff_permission: {
-        Args: { p_granted: boolean; p_perm: string; p_staff_id: string }
-        Returns: undefined
       }
       staff_can_read_customer: { Args: { cust_id: string }; Returns: boolean }
       staff_has_perm: {

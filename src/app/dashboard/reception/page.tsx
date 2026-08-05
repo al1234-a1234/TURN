@@ -61,21 +61,24 @@ export default async function ReceptionPage({
 
   const list = queue ?? [];
 
-  // هدايا منحها المالك ولم تُعتمد بعد — تُعرَض للموظّف وحده على سطر العميل.
-  // العميل لا يرى شيئًا في التطبيق: يمسح، يأخذ دوره، وتُسلَّم له عند الكاشير.
+  // الهدايا المسلَّحة وحدها — التي ضغط عليها العميل «استعمال» بنفسه.
+  // هدية ممنوحة ولم يستعملها لا تُعرَض هنا: هو الذي يقرّر متى يستعملها،
+  // والموظّف لا يذكّره بها ولا يحرجه. والعميل لا يرى شيئًا في صفحة المطعم.
   const queuedCustomerIds = [...new Set(list.map((q) => q.customer_id).filter(Boolean))] as string[];
-  const { data: pendingGifts } = queuedCustomerIds.length
+  const { data: armedGifts } = queuedCustomerIds.length
     ? await supabase
         .from("customer_rewards")
-        .select("customer_id")
+        .select("customer_id, title")
         .eq("restaurant_id", restaurant.id)
         .eq("status", "active")
+        .not("armed_at", "is", null)
         .in("customer_id", queuedCustomerIds)
         .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
     : { data: [] };
-  const giftCount = new Map<string, number>();
-  for (const g of pendingGifts ?? []) {
-    if (g.customer_id) giftCount.set(g.customer_id, (giftCount.get(g.customer_id) ?? 0) + 1);
+  const giftsFor = new Map<string, string[]>();
+  for (const g of armedGifts ?? []) {
+    if (!g.customer_id) continue;
+    giftsFor.set(g.customer_id, [...(giftsFor.get(g.customer_id) ?? []), g.title]);
   }
 
   const inside = list.filter((q) => q.zone === "inside");
@@ -111,11 +114,10 @@ export default async function ReceptionPage({
           <p className="mt-0.5 text-xs text-[color:var(--muted)]">
             {toAr(q.party_size)} {tr(lang, "أشخاص", "guests")} · ⏱ {toAr(waited)} {tr(lang, "دقيقة", "min")}{q.status === "notified" ? tr(lang, " · أُشعِر ✓", " · Notified ✓") : ""}
           </p>
-          {(giftCount.get(q.customer_id ?? "") ?? 0) > 0 && (
+          {(giftsFor.get(q.customer_id ?? "")?.length ?? 0) > 0 && (
             <span className="mt-1 me-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
               style={{ background: "var(--brand-solid)", color: "var(--brand-ink)" }}>
-              🎁 {tr(lang, "عنده هدية", "Has a gift")}
-              {(giftCount.get(q.customer_id ?? "") ?? 0) > 1 ? ` (${toAr(giftCount.get(q.customer_id ?? "") ?? 0)})` : ""}
+              🎁 {giftsFor.get(q.customer_id ?? "")!.join(" · ")}
             </span>
           )}
           {q.distance_m != null && (
