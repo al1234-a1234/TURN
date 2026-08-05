@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   eslint: { ignoreDuringBuilds: true },
@@ -51,4 +52,20 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+/*
+ * تغليف Sentry — يرفع خرائط المصدر وقت البناء فيصير أثر الخطأ أسماءَ ملفاتنا
+ * وأسطرَنا بدل شيفرةٍ مضغوطة لا تُقرأ. وبدون رمز الرفع (SENTRY_AUTH_TOKEN)
+ * يتخطّى الرفع بهدوء ويبقى البناء ناجحًا — فالمشروع لا يتوقّف على إعداد ناقص.
+ *
+ * وtunnelRoute يمرّر بلاغات المتصفّح عبر نطاقنا: مانعات الإعلانات تحجب طلبات
+ * Sentry المباشرة، وهي شائعة على الجوّالات — فبدونه نفقد بلاغات الزبائن
+ * تحديدًا، وهم أصلًا من لا يشتكي.
+ */
+export default withSentryConfig(nextConfig, {
+  silent: true,
+  widenClientFileUpload: true,
+  disableLogger: true,
+  tunnelRoute: "/monitoring",
+  // مراقبة وظائف Vercel المجدولة تلقائيًّا
+  automaticVercelMonitors: true,
+});

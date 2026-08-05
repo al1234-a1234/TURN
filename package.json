@@ -10,6 +10,7 @@
     "test": "node --import tsx --test \"tests/*.test.ts\""
   },
   "dependencies": {
+    "@sentry/nextjs": "^10.69.0",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.7",
     "next": "^15.5.20",
