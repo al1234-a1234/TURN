@@ -10,7 +10,7 @@ import { QueueTicket } from "./queue-ticket";
 import { Gallery } from "./gallery";
 import { ShareButton } from "./share-button";
 import { ReviewForm } from "./review-form";
-import { toAr } from "@/lib/format";
+import { toAr, safeExternalUrl } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 import { fmtDate, isWithinOpeningHours } from "@/lib/dates";
@@ -201,7 +201,7 @@ export default async function RestaurantPublicPage({
           rating={reviewCount ? String(avgRating) : "—"}
           reviewCount={String(reviewCount)}
           reviews={reviewList}
-          reviewForm={<ReviewForm slug={slug} googleUrl={((restaurant.links ?? {}) as Record<string, string>).google ?? null} />}
+          reviewForm={<ReviewForm slug={slug} googleUrl={safeExternalUrl(((restaurant.links ?? {}) as Record<string, string>).google)} />}
           dist={ratingDist}
           city={city}
           cover={restaurant.cover_url}
@@ -254,7 +254,13 @@ function LinkGlyph({ k }: { k: string }) {
 }
 
 function RestaurantLinks({ links, label }: { links: Record<string, string>; label: string }) {
-  const present = LINK_KEYS.filter((m) => (links[m.key] ?? "").trim());
+  // كل رابط يُمرَّر على حارس البروتوكول قبل أن يصل href — ما لا يصلح يُسقَط
+  // من القائمة أصلًا فلا يُعرض زرٌّ ميّت. الفحص القديم (startsWith("http"))
+  // كان يمرّر http:// غير المشفّر، ولم يكن ليمنع بروتوكولًا خبيثًا لولا أنه
+  // يلصق https:// أمامه مصادفةً.
+  const present = LINK_KEYS
+    .map((m) => ({ ...m, href: safeExternalUrl(links[m.key]) }))
+    .filter((m): m is typeof m & { href: string } => m.href !== null);
   if (present.length === 0) return null;
   return (
     <div className="mt-6 rq-card p-5 text-center">
