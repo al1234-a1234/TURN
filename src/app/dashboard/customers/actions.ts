@@ -19,11 +19,18 @@ export async function updateCustomerProfile(
   if (Object.keys(update).length === 0) return;
 
   // RLS يفرض staff_has_perm(rid,'customers') — المفتاح المركّب (المطعم + العميل)
-  await caller.supabase
+  const { error } = await caller.supabase
     .from("customer_restaurant")
     .update(update)
     .eq("restaurant_id", caller.restaurantId)
     .eq("customer_id", customerId);
+
+  // لا نُبطل الكاش على كتابةٍ فشلت: إعادة التحقّق تعرض القيمة القديمة كأنها
+  // محفوظة، فيظنّ المالك أن الحظر/الملاحظة سرت وهي لم تُكتب.
+  if (error) {
+    console.error("[updateCustomerProfile]", error.message);
+    return;
+  }
 
   revalidatePath("/dashboard/customers");
 }
@@ -56,7 +63,7 @@ export async function grantReward(formData: FormData): Promise<boolean> {
   const days = daysRaw ? Math.max(1, Number(daysRaw)) : null;
   const expires_at = days ? new Date(Date.now() + days * 864e5).toISOString() : null;
 
-  const { error: insErr } = await caller.supabase.from("customer_rewards").insert({
+  const { error } = await caller.supabase.from("customer_rewards").insert({
     restaurant_id: caller.restaurantId,
     customer_id: customerId,
     kind,
@@ -69,8 +76,13 @@ export async function grantReward(formData: FormData): Promise<boolean> {
     expires_at,
   });
 
+  if (error) {
+    console.error("[grantReward]", error.message);
+    return false;
+  }
+
   revalidatePath(`/dashboard/customers/${customerId}`);
-  return !insErr;
+  return true;
 }
 
 /** منح مكافأة لشريحة كاملة: الكل / VIP / عائدون / جدد / غائبون. */
@@ -92,7 +104,7 @@ export async function grantRewardToSegment(formData: FormData) {
   const expires_at = days ? new Date(Date.now() + days * 864e5).toISOString() : null;
 
   // إدراج set-based لكل الشريحة بجملة واحدة (يتوسّع لأي عدد عملاء)
-  await caller.supabase.rpc("grant_reward_to_segment", {
+  const { error } = await caller.supabase.rpc("grant_reward_to_segment", {
     p_restaurant_id: caller.restaurantId,
     p_segment: segment,
     p_kind: kind,
@@ -105,6 +117,13 @@ export async function grantRewardToSegment(formData: FormData) {
     p_expires_at: expires_at as unknown as string,
   });
 
+  // منحُ شريحة إما ينجح كله أو لا شيء — بثّ نجاحٍ وهمي يجعل المالك يظنّ
+  // أن الحملة انطلقت فلا يعيدها، والشريحة كلها بلا هدية.
+  if (error) {
+    console.error("[grantRewardToSegment]", error.message);
+    return;
+  }
+
   revalidatePath("/dashboard/customers");
 }
 
@@ -115,11 +134,23 @@ export async function revokeReward(formData: FormData) {
   const rewardId = String(formData.get("reward_id") ?? "");
   const customerId = String(formData.get("customer_id") ?? "");
   if (!rewardId) return;
-  await caller.supabase
+  // إلغاء يظهر ناجحًا وهو فاشل = مكافأة يظنّها المالك ملغاة والعميل يصرفها.
+  // وغياب الخطأ لا يكفي دليلًا: معرّفٌ لا يخصّ هذا المطعم يُطابق صفرَ صفوف بلا
+  // خطأ. عدد الصفوف هو الحكم — كما في redeemReward.
+  const { data: revoked, error } = await caller.supabase
     .from("customer_rewards")
     .update({ status: "expired" })
     .eq("id", rewardId)
-    .eq("restaurant_id", caller.restaurantId);
+    .eq("restaurant_id", caller.restaurantId)
+    .select("id");
+  if (error) {
+    console.error("[revokeReward]", error.message);
+    return;
+  }
+  if ((revoked?.length ?? 0) === 0) {
+    console.error("[revokeReward] no reward matched", rewardId);
+    return;
+  }
   revalidatePath(`/dashboard/customers/${customerId}`);
 }
 
@@ -130,12 +161,27 @@ export async function redeemReward(formData: FormData) {
   const rewardId = String(formData.get("reward_id") ?? "");
   const customerId = String(formData.get("customer_id") ?? "");
   if (!rewardId) return;
-  await caller.supabase
+  // .select() لا زينة: الشرط eq("status","active") يجعل الصرف الثاني يُطابق
+  // صفرَ صفوف ويعود **بلا خطأ**. ففحص error وحده يمرّره كنجاح، وموظّفان يضغطان
+  // معًا (أو ضغطة مكرّرة على شبكة بطيئة) يريان «تمّ» مرّتين على هدية واحدة.
+  // عدد الصفوف العائدة هو الحكم الوحيد الصادق: صفر = لم تُصرف الآن.
+  const { data: redeemed, error } = await caller.supabase
     .from("customer_rewards")
     .update({ status: "redeemed", redeemed_at: new Date().toISOString() })
     .eq("id", rewardId)
     .eq("restaurant_id", caller.restaurantId)
-    .eq("status", "active");
+    .eq("status", "active")
+    .select("id");
+  if (error) {
+    console.error("[redeemReward]", error.message);
+    return;
+  }
+  if ((redeemed?.length ?? 0) === 0) {
+    // إمّا صُرفت قبل قليل، أو أُلغيت، أو ليست لهذا المطعم — الحالة على الشاشة
+    // قديمة. لا نُبطل الكاش بادّعاء صرفٍ لم يحدث؛ إعادة التحميل تُظهر الحقيقة.
+    console.error("[redeemReward] no active reward matched", rewardId);
+    return;
+  }
   revalidatePath(`/dashboard/customers/${customerId}`);
 }
 
@@ -180,6 +226,11 @@ export async function saveWinback(formData: FormData): Promise<boolean> {
         { onConflict: "restaurant_id" },
       );
 
+  if (error) {
+    console.error("[saveWinback]", error.message);
+    return false;
+  }
+
   revalidatePath("/dashboard/customers");
-  return !error;
+  return true;
 }

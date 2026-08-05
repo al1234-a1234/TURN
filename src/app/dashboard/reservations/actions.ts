@@ -23,7 +23,7 @@ export async function createReservation(formData: FormData) {
   const party = Math.max(1, Number(String(formData.get("party_size") ?? "2")) || 2);
   const notes = String(formData.get("notes") ?? "").trim() || undefined;
 
-  await caller.supabase.rpc("create_reservation_guest", {
+  const { error } = await caller.supabase.rpc("create_reservation_guest", {
     p_branch_id: branchId,
     p_full_name: name,
     p_phone: phone,
@@ -33,6 +33,12 @@ export async function createReservation(formData: FormData) {
     p_party_size: party,
     p_notes: notes,
   });
+  // إعادة التحقّق بعد فشلٍ تُعيد قائمةً بلا الحجز الجديد فيُقرأ كأنه سُجّل،
+  // والطاولة تبقى محجوزة في ذهن الموظّف وحده
+  if (error) {
+    console.error("[createReservation]", error.message);
+    return;
+  }
   revalidatePath("/dashboard/reservations");
 }
 
@@ -42,10 +48,14 @@ export async function setReservationStatus(id: string, status: ResStatus) {
   if (!caller) return;
   const branchIds = await callerBranchIds(caller);
   if (branchIds.length === 0) return;
-  await caller.supabase
+  const { error } = await caller.supabase
     .from("reservations")
     .update({ status })
     .eq("id", id)
     .in("branch_id", branchIds);
+  if (error) {
+    console.error("[setReservationStatus]", error.message);
+    return;
+  }
   revalidatePath("/dashboard/reservations");
 }

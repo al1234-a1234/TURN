@@ -17,7 +17,7 @@ export async function setRestaurantFeature(
   const { data: isAdmin } = await supabase.rpc("is_platform_admin");
   if (!isAdmin) return;
 
-  await supabase.from("restaurant_features").upsert(
+  const { error } = await supabase.from("restaurant_features").upsert(
     {
       restaurant_id: restaurantId,
       module_key: moduleKey as ModuleKey,
@@ -26,6 +26,12 @@ export async function setRestaurantFeature(
     },
     { onConflict: "restaurant_id,module_key" },
   );
+
+  // موديول يظنّه الأدمن مفعّلًا وهو مطفأ = مطعمٌ يدفع ولا يرى الميزة
+  if (error) {
+    console.error("[setRestaurantFeature]", error.message);
+    return;
+  }
 
   revalidatePath(`/admin/${restaurantId}`);
 }

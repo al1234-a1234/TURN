@@ -30,7 +30,12 @@ export async function addTable(formData: FormData) {
     is_active: true,
   };
   // RLS يفرض is_manager_of عبر سياسة "managers manage tables"
-  await caller.supabase.from("tables").insert(row);
+  const { error } = await caller.supabase.from("tables").insert(row);
+  // طاولة لم تُضَف تبدو مضافة = خريطة جلوس تخالف الواقع عند الإجلاس
+  if (error) {
+    console.error("[addTable]", error.message);
+    return;
+  }
   revalidatePath("/dashboard/tables");
 }
 
@@ -39,10 +44,14 @@ export async function deleteTable(formData: FormData) {
   if (!id) return;
   const caller = await requirePerm("settings");
   if (!caller) return;
-  await caller.supabase
+  const { error } = await caller.supabase
     .from("tables")
     .delete()
     .eq("id", id)
     .in("branch_id", await callerBranchIds(caller));
+  if (error) {
+    console.error("[deleteTable]", error.message);
+    return;
+  }
   revalidatePath("/dashboard/tables");
 }
