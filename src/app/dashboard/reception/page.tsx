@@ -64,20 +64,15 @@ export default async function ReceptionPage({
   // الهدايا المسلَّحة وحدها — التي ضغط عليها العميل «استعمال» بنفسه.
   // هدية ممنوحة ولم يستعملها لا تُعرَض هنا: هو الذي يقرّر متى يستعملها،
   // والموظّف لا يذكّره بها ولا يحرجه. والعميل لا يرى شيئًا في صفحة المطعم.
-  const queuedCustomerIds = [...new Set(list.map((q) => q.customer_id).filter(Boolean))] as string[];
-  const { data: armedGifts } = queuedCustomerIds.length
-    ? await supabase
-        .from("customer_rewards")
-        .select("customer_id, title")
-        .eq("restaurant_id", restaurant.id)
-        .eq("status", "active")
-        .not("armed_at", "is", null)
-        .in("customer_id", queuedCustomerIds)
-        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+  // عبر RPC لا قراءة مباشرة: سياسة customer_rewards تشترط صلاحية customers،
+  // وموظّف الاستقبال يملك waitlist فقط — فكانت الشارة ترجع صفرًا بصمت له.
+  const queuedIds = new Set(list.map((q) => q.customer_id).filter(Boolean));
+  const { data: armedGifts } = activeBranch
+    ? await supabase.rpc("reception_armed_gifts", { p_branch_id: activeBranch.id })
     : { data: [] };
   const giftsFor = new Map<string, string[]>();
   for (const g of armedGifts ?? []) {
-    if (!g.customer_id) continue;
+    if (!g.customer_id || !queuedIds.has(g.customer_id)) continue;
     giftsFor.set(g.customer_id, [...(giftsFor.get(g.customer_id) ?? []), g.title]);
   }
 

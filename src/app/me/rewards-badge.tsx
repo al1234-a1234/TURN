@@ -3,12 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-/**
- * نقطة إشعار: عدد الهدايا الصالحة في حساب العميل.
- *
- * كانت تقرأ برقم محفوظ في التخزين المحلّي — فجهاز مشترك يعرض هدايا غيرك،
- * ومتصفّح خاص لا يعرض شيئًا. صارت بالحساب: لا رقم ولا تخزين محلّي.
- */
+/** نقطة إشعار: عدد الهدايا الصالحة على رقم الجهاز المحفوظ. */
 export function RewardsBadge() {
   const [count, setCount] = useState(0);
 
@@ -17,9 +12,9 @@ export function RewardsBadge() {
     (async () => {
       try {
         const supabase = createClient();
-        const { data: auth } = await supabase.auth.getUser();
-        if (!auth?.user) return;
-        const { data } = await supabase.rpc("my_rewards");
+        const phone = window.localStorage.getItem("turn:phone");
+        if (!phone || !/^05\d{8}$/.test(phone)) return;
+        const { data } = await supabase.rpc("rewards_by_phone", { p_phone: phone });
         const n = ((data ?? []) as { status: string }[]).filter((r) => r.status === "active").length;
         if (!cancelled) setCount(n);
       } catch { /* تجاهل */ }

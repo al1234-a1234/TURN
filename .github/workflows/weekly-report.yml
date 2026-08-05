@@ -35,7 +35,6 @@ jobs:
           SEATED=$(q "select count(*) from waitlist_entries where joined_at >= now()-interval '7 days' and status='seated'")
           CANCEL=$(q "select count(*) from waitlist_entries where joined_at >= now()-interval '7 days' and status in ('cancelled','expired','no_show')")
           AVGWAIT=$(q "select coalesce(round(avg(extract(epoch from (seated_at-joined_at))/60)),0) from waitlist_entries where joined_at >= now()-interval '7 days' and seated_at is not null")
-          SCANS=$(q "select count(*) from checkins where created_at >= now()-interval '7 days'")
           REVS=$(q "select count(*) from reviews where created_at >= now()-interval '7 days'")
           STARS=$(q "select coalesce(round(avg(rating)::numeric,1),0) from reviews where created_at >= now()-interval '7 days'")
           NEWC=$(q "select count(*) from customers where created_at >= now()-interval '7 days'")
@@ -53,7 +52,6 @@ jobs:
             echo "| أُجلسوا فعلًا | ${SEATED:-0} | — |"
             echo "| ألغوا أو لم يحضروا | ${CANCEL:-0} | — |"
             echo "| متوسط الانتظار حتى الإجلاس | ${AVGWAIT:-0} دقيقة | — |"
-            echo "| مسحات الهدايا | ${SCANS:-0} | — |"
             echo "| تقييمات جديدة | ${REVS:-0} (متوسط ⭐ ${STARS:-0}) | — |"
             echo "| عملاء جدد | ${NEWC:-0} | — |"
             echo ""

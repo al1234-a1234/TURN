@@ -3,7 +3,7 @@ import { Logo } from "@/components/logo";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
 
-export const metadata = { title: "من نحن · دور" };
+export const metadata = { title: "من نحن · إيت" };
 
 export default async function AboutPage() {
   const lang = await getLang();

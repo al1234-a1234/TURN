@@ -1301,10 +1301,6 @@ export type Database = {
         }[]
       }
       my_branch_ids: { Args: never; Returns: string[] }
-      my_restaurant_status: {
-        Args: { p_phone: string; p_slug: string }
-        Returns: Json
-      }
       my_rewards: {
         Args: never
         Returns: {
@@ -1365,11 +1361,37 @@ export type Database = {
         }[]
       }
       queue_version: { Args: { p_branch_id: string }; Returns: string }
+      reception_armed_gifts: {
+        Args: { p_branch_id: string }
+        Returns: {
+          customer_id: string
+          title: string
+        }[]
+      }
       redeem_customer_reward: {
         Args: { p_phone: string; p_reward_id: string }
         Returns: boolean
       }
       restaurant_of_branch: { Args: { b_id: string }; Returns: string }
+      retire_dormant_customers: { Args: { p_months?: number }; Returns: number }
+      rewards_by_phone: {
+        Args: { p_phone: string }
+        Returns: {
+          armed_at: string
+          created_at: string
+          description: string
+          expires_at: string
+          id: string
+          kind: string
+          redeemed_at: string
+          restaurant: string
+          restaurant_slug: string
+          status: string
+          title: string
+          value: number
+          value_kind: string
+        }[]
+      }
       rollup_all_daily_stats: { Args: { p_date: string }; Returns: number }
       rollup_daily_stats: {
         Args: { p_branch_id: string; p_date: string }
@@ -1403,6 +1425,10 @@ export type Database = {
       }
       set_reward_armed: {
         Args: { p_arm: boolean; p_reward_id: string }
+        Returns: boolean
+      }
+      set_reward_armed_by_phone: {
+        Args: { p_arm: boolean; p_phone: string; p_reward_id: string }
         Returns: boolean
       }
       set_staff_permission: {
