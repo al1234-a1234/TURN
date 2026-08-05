@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { getRestaurantMeta } from "@/lib/supabase/public-cache";
+import { getRestaurantMeta, getBranchContent, getBranchStripPhotos, getRestaurantReviews } from "@/lib/supabase/public-cache";
 import { Logo } from "@/components/logo";
 import { SharedHeader } from "@/components/page-header";
 import { WaitlistForm } from "./waitlist-form";
@@ -69,43 +69,35 @@ export default async function RestaurantPublicPage({
   const contentBranchId =
     (branches ?? []).find((b) => b.id === requestedBranch)?.id ?? branches?.[0]?.id ?? "";
   const branchList = branches ?? [];
-  const branchIdsOrPlaceholder = branchList.map((b) => b.id).length ? branchList.map((b) => b.id) : ["00000000-0000-0000-0000-000000000000"];
 
-  // ستة استعلامات مستقلة (لا يحتاج أحدها نتيجة الآخر) — موجة واحدة بدل ست
-  const [
-    { data: categories }, { data: items }, { data: photos }, { data: reviewRows },
-    { data: branchPhotos }, { data: countRows },
-  ] = await Promise.all([
-    supabase.from("menu_categories").select("id, name").eq("branch_id", contentBranchId).order("sort_order").order("created_at"),
-    supabase.from("menu_items").select("id, name, price, description, image_url, category_id").eq("branch_id", contentBranchId).eq("is_available", true).order("created_at"),
-    supabase.from("restaurant_photos").select("id, url, caption").eq("branch_id", contentBranchId).order("sort_order").order("created_at"),
-    // تقييمات حقيقية منشورة (بدل بيانات وهمية)
-    supabase.from("reviews").select("rating, comment, created_at, customers(full_name)").eq("restaurant_id", restaurant.id).eq("is_published", true).order("created_at", { ascending: false }).limit(200),
-    // صورة لكل فرع (صارت لكل فرع بعد المرحلة ٢) — يعرضها شريط الفروع
-    supabase.from("restaurant_photos").select("url, branch_id").in("branch_id", branchIdsOrPlaceholder).order("sort_order").order("created_at"),
-    // استدعاء جماعي واحد بدل RPC لكل فرع (كان N+1 — يتضاعف مع كل فرع لكل زيارة)
+  // المسار الحرج: كل ما هو ثابت (قائمة/صور/تقييمات/شريط الفروع) يُقرأ من كاش ٦٠ث
+  // — كان يُجلب حيًّا في كل مسحٍ للباركود (المسحات ≫ الانضمامات). يبقى حيًّا فقط
+  // ما يجب أن يكون لحظيًّا: عدّاد الطابور. فروع/إعداداتها جُلبت أعلاه (حيّة للحظية
+  // busy_now/manually_closed). موجة واحدة تجمع الكاش مع عدّاد الطابور الحيّ.
+  const [branchContent, photoMap, reviews, { data: countRows }] = await Promise.all([
+    getBranchContent(contentBranchId),
+    getBranchStripPhotos(branchList.map((b) => b.id)),
+    getRestaurantReviews(restaurant.id),
     branchList.length
       ? supabase.rpc("waitlist_counts_for", { p_branch_ids: branchList.map((b) => b.id) })
       : Promise.resolve({ data: [] as { branch_id: string; total: number; inside: number; outside: number }[] }),
   ]);
+  const categories = branchContent.categories;
+  const items = branchContent.items;
+  const photos = branchContent.photos;
 
-  // تجميع التقييمات الحقيقية
-  const rvRows = (reviewRows ?? []) as { rating: number; comment: string | null; created_at: string; customers: { full_name: string } | { full_name: string }[] | null }[];
-  const reviewCount = rvRows.length;
-  const avgRating = reviewCount ? Math.round((rvRows.reduce((a, r) => a + r.rating, 0) / reviewCount) * 10) / 10 : 0;
-  const ratingDist = [5, 4, 3, 2, 1].map((s) => ({ s, pct: reviewCount ? Math.round((rvRows.filter((r) => r.rating === s).length / reviewCount) * 100) : 0 }));
-  const reviewList = rvRows.slice(0, 30).map((r) => {
-    const c = Array.isArray(r.customers) ? r.customers[0] : r.customers;
-    return {
-      name: c?.full_name?.trim() || tr(lang, "عميل", "Customer"),
-      stars: r.rating,
-      when: fmtDate(r.created_at, lang),
-      text: r.comment ?? "",
-    };
-  });
+  // التقييمات محسوبة في الكاش؛ التنسيق حسب اللغة والاسم البديل هنا (الكاش محايد للّغة)
+  const reviewCount = reviews.count;
+  const avgRating = reviews.avg;
+  const ratingDist = reviews.dist;
+  const reviewList = reviews.list.map((r) => ({
+    name: r.name ?? tr(lang, "عميل", "Customer"),
+    stars: r.stars,
+    when: fmtDate(r.created_at, lang),
+    text: r.text,
+  }));
 
-  const photoOf = new Map<string, string>();
-  for (const ph of branchPhotos ?? []) if (!photoOf.has(ph.branch_id)) photoOf.set(ph.branch_id, ph.url);
+  const photoOf = new Map<string, string>(Object.entries(photoMap));
 
   const countOf = new Map((countRows ?? []).map((c) => [c.branch_id, c]));
   const withCounts = branchList.map((b) => {
