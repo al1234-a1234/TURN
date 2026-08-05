@@ -135,130 +135,6 @@ export type Database = {
           },
         ]
       }
-      checkin_settings: {
-        Row: {
-          branch_id: string
-          instant_enabled: boolean
-          instant_expires_days: number
-          instant_kind: string
-          instant_title: string
-          instant_value: number | null
-          instant_value_kind: string
-          preset_key: string | null
-          restaurant_id: string
-          scan_hourly_limit: number
-          updated_at: string
-          welcome_enabled: boolean
-          welcome_expires_days: number
-          welcome_kind: string
-          welcome_title: string
-          welcome_value: number | null
-          welcome_value_kind: string
-        }
-        Insert: {
-          branch_id: string
-          instant_enabled?: boolean
-          instant_expires_days?: number
-          instant_kind?: string
-          instant_title?: string
-          instant_value?: number | null
-          instant_value_kind?: string
-          preset_key?: string | null
-          restaurant_id: string
-          scan_hourly_limit?: number
-          updated_at?: string
-          welcome_enabled?: boolean
-          welcome_expires_days?: number
-          welcome_kind?: string
-          welcome_title?: string
-          welcome_value?: number | null
-          welcome_value_kind?: string
-        }
-        Update: {
-          branch_id?: string
-          instant_enabled?: boolean
-          instant_expires_days?: number
-          instant_kind?: string
-          instant_title?: string
-          instant_value?: number | null
-          instant_value_kind?: string
-          preset_key?: string | null
-          restaurant_id?: string
-          scan_hourly_limit?: number
-          updated_at?: string
-          welcome_enabled?: boolean
-          welcome_expires_days?: number
-          welcome_kind?: string
-          welcome_title?: string
-          welcome_value?: number | null
-          welcome_value_kind?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "checkin_settings_branch_id_fkey"
-            columns: ["branch_id"]
-            isOneToOne: true
-            referencedRelation: "branches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "checkin_settings_restaurant_id_fkey"
-            columns: ["restaurant_id"]
-            isOneToOne: false
-            referencedRelation: "restaurants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      checkins: {
-        Row: {
-          branch_id: string | null
-          created_at: string
-          customer_id: string
-          id: string
-          restaurant_id: string
-          source: string
-        }
-        Insert: {
-          branch_id?: string | null
-          created_at?: string
-          customer_id: string
-          id?: string
-          restaurant_id: string
-          source?: string
-        }
-        Update: {
-          branch_id?: string | null
-          created_at?: string
-          customer_id?: string
-          id?: string
-          restaurant_id?: string
-          source?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "checkins_branch_id_fkey"
-            columns: ["branch_id"]
-            isOneToOne: false
-            referencedRelation: "branches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "checkins_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "checkins_restaurant_id_fkey"
-            columns: ["restaurant_id"]
-            isOneToOne: false
-            referencedRelation: "restaurants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       customer_restaurant: {
         Row: {
           customer_id: string
@@ -268,10 +144,8 @@ export type Database = {
           last_visit: string | null
           no_shows: number
           note: string | null
-          points: number
           restaurant_id: string
           tags: string[]
-          tier: string
           updated_at: string
           visits: number
         }
@@ -283,10 +157,8 @@ export type Database = {
           last_visit?: string | null
           no_shows?: number
           note?: string | null
-          points?: number
           restaurant_id: string
           tags?: string[]
-          tier?: string
           updated_at?: string
           visits?: number
         }
@@ -298,10 +170,8 @@ export type Database = {
           last_visit?: string | null
           no_shows?: number
           note?: string | null
-          points?: number
           restaurant_id?: string
           tags?: string[]
-          tier?: string
           updated_at?: string
           visits?: number
         }
@@ -503,56 +373,6 @@ export type Database = {
           sort_order?: number
         }
         Relationships: []
-      }
-      loyalty_programs: {
-        Row: {
-          is_active: boolean
-          points_per_visit: number
-          restaurant_id: string
-          reward_description: string | null
-          reward_threshold: number
-          tier_config: Json
-          updated_at: string
-          winback_enabled: boolean
-          winback_title: string
-          winback_value: number | null
-          winback_value_kind: string
-        }
-        Insert: {
-          is_active?: boolean
-          points_per_visit?: number
-          restaurant_id: string
-          reward_description?: string | null
-          reward_threshold?: number
-          tier_config?: Json
-          updated_at?: string
-          winback_enabled?: boolean
-          winback_title?: string
-          winback_value?: number | null
-          winback_value_kind?: string
-        }
-        Update: {
-          is_active?: boolean
-          points_per_visit?: number
-          restaurant_id?: string
-          reward_description?: string | null
-          reward_threshold?: number
-          tier_config?: Json
-          updated_at?: string
-          winback_enabled?: boolean
-          winback_title?: string
-          winback_value?: number | null
-          winback_value_kind?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "loyalty_programs_restaurant_id_fkey"
-            columns: ["restaurant_id"]
-            isOneToOne: true
-            referencedRelation: "restaurants"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       menu_categories: {
         Row: {
@@ -1300,6 +1120,44 @@ export type Database = {
           },
         ]
       }
+      winback_settings: {
+        Row: {
+          days_inactive: number
+          is_active: boolean
+          restaurant_id: string
+          title: string
+          updated_at: string
+          value: number | null
+          value_kind: string
+        }
+        Insert: {
+          days_inactive?: number
+          is_active?: boolean
+          restaurant_id: string
+          title?: string
+          updated_at?: string
+          value?: number | null
+          value_kind?: string
+        }
+        Update: {
+          days_inactive?: number
+          is_active?: boolean
+          restaurant_id?: string
+          title?: string
+          updated_at?: string
+          value?: number | null
+          value_kind?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "winback_settings_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: true
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1388,18 +1246,6 @@ export type Database = {
       demo_live_activity: { Args: never; Returns: undefined }
       expire_stale_waitlist: { Args: never; Returns: number }
       gen_claim_code: { Args: never; Returns: string }
-      get_customer_loyalty: {
-        Args: { p_phone: string }
-        Returns: {
-          points: number
-          restaurant: string
-          restaurant_slug: string
-          reward_description: string
-          reward_threshold: number
-          tier: string
-          visits: number
-        }[]
-      }
       get_customer_rewards: {
         Args: { p_phone: string }
         Returns: {
@@ -1478,15 +1324,6 @@ export type Database = {
         }[]
       }
       norm_phone_input: { Args: { p: string }; Returns: string }
-      public_checkin: {
-        Args: {
-          p_branch_id?: string
-          p_name?: string
-          p_phone: string
-          p_slug: string
-        }
-        Returns: Json
-      }
       push_subs_for_entry: {
         Args: { p_entry_id: string }
         Returns: {
@@ -1614,10 +1451,6 @@ export type Database = {
           p_slug: string
         }
         Returns: Json
-      }
-      tier_for_visits: {
-        Args: { p_rid: string; p_visits: number }
-        Returns: string
       }
       tv_queue: {
         Args: { p_branch_id: string }
