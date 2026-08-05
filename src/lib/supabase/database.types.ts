@@ -261,6 +261,47 @@ export type Database = {
           },
         ]
       }
+      customer_segments: {
+        Row: {
+          created_at: string
+          id: string
+          inactive_days: number | null
+          max_visits: number | null
+          min_visits: number
+          name: string
+          restaurant_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inactive_days?: number | null
+          max_visits?: number | null
+          min_visits?: number
+          name: string
+          restaurant_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inactive_days?: number | null
+          max_visits?: number | null
+          min_visits?: number
+          name?: string
+          restaurant_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_segments_restaurant_id_fkey"
+            columns: ["restaurant_id"]
+            isOneToOne: false
+            referencedRelation: "restaurants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           created_at: string
@@ -1235,6 +1276,18 @@ export type Database = {
         }
         Returns: string
       }
+      customer_segments_with_counts: {
+        Args: { p_restaurant_id: string }
+        Returns: {
+          id: string
+          inactive_days: number
+          max_visits: number
+          member_count: number
+          min_visits: number
+          name: string
+          sort_order: number
+        }[]
+      }
       delete_dead_push_subscription: {
         Args: { p_endpoint: string }
         Returns: undefined
@@ -1263,6 +1316,19 @@ export type Database = {
           value: number
           value_kind: string
         }[]
+      }
+      grant_reward_to_custom_segment: {
+        Args: {
+          p_code: string
+          p_description: string
+          p_expires_at: string
+          p_kind: string
+          p_segment_id: string
+          p_title: string
+          p_value: number
+          p_value_kind: string
+        }
+        Returns: number
       }
       grant_reward_to_segment: {
         Args: {
@@ -1410,6 +1476,12 @@ export type Database = {
           p_phone: string
         }
         Returns: boolean
+      }
+      segment_member_ids: {
+        Args: { p_segment_id: string }
+        Returns: {
+          customer_id: string
+        }[]
       }
       set_branch_status: {
         Args: {

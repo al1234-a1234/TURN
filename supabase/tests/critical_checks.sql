@@ -193,16 +193,16 @@ with checks(name, pass) as (
                                       where c.relname='waitlist_entries'
                                         and t.tgname='trg_guard_waitlist_status')),
   -- (٢٠) مرجع المخطط: أي انحراف عن البصمة المثبَّتة يظهر هنا قبل أن يفاجئنا
-  --      (٢٣ جدولًا · ٧١ دالة · ٥٩ سياسة · ٣٨ مفتاحًا أجنبيًّا) — راجع
+  --      (٢٤ جدولًا · ٧٤ دالة · ٦١ سياسة · ٣٩ مفتاحًا أجنبيًّا) — راجع
   --      supabase/tests/schema_baseline.md وحدّثه عمدًا عند أي تغيير مقصود
   ('q20_schema_no_drift',      (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
-                                where n.nspname='public' and c.relkind='r') = 23
+                                where n.nspname='public' and c.relkind='r') = 24
                                and (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-                                    where n.nspname='public' and p.prokind='f') = 71
-                               and (select count(*) from pg_policies where schemaname='public') = 59
+                                    where n.nspname='public' and p.prokind='f') = 74
+                               and (select count(*) from pg_policies where schemaname='public') = 61
                                and (select count(*) from pg_constraint c join pg_class r on r.oid=c.conrelid
                                     join pg_namespace n on n.oid=r.relnamespace
-                                    where n.nspname='public' and c.contype='f') = 38)
+                                    where n.nspname='public' and c.contype='f') = 39)
 )
 select name, pass,
   case when pass then '✓' else '✗ FAIL' end as mark

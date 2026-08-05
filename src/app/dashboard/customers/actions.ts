@@ -127,6 +127,109 @@ export async function grantRewardToSegment(formData: FormData) {
   revalidatePath("/dashboard/customers");
 }
 
+/**
+ * شريحة يعرّفها المالك بمقياسه هو («فضّي» عند ٥ زيارات، «ذهبي» عند ١٠).
+ * القيم مقصوصة هنا قبل الإدراج: قيد check في القاعدة يرتدّ برسالة خام
+ * لا يفهمها المالك، وحدُّ أعلى دون الأدنى يصنع شريحة فارغة أبدًا.
+ */
+export async function createSegment(formData: FormData) {
+  const caller = await requirePerm("customers");
+  if (!caller) return;
+
+  const name = String(formData.get("name") ?? "").trim().slice(0, 40);
+  if (!name) return;
+
+  const num = (key: string): number | null => {
+    const raw = String(formData.get(key) ?? "").replace(/\D/g, "");
+    return raw === "" ? null : Number(raw);
+  };
+  const minVisits = Math.min(10000, Math.max(0, num("min_visits") ?? 0));
+  const rawMax = num("max_visits");
+  const maxVisits = rawMax === null ? null : Math.min(10000, Math.max(minVisits, rawMax));
+  const rawInactive = num("inactive_days");
+  const inactiveDays = rawInactive === null || rawInactive <= 0 ? null : Math.min(3650, rawInactive);
+
+  const { error } = await caller.supabase.from("customer_segments").insert({
+    restaurant_id: caller.restaurantId,
+    name,
+    min_visits: minVisits,
+    max_visits: maxVisits,
+    inactive_days: inactiveDays,
+  });
+
+  // اسم مكرّر أو قيد مرفوض: لا نُبطل الكاش فتظهر الشريحة كأنها حُفظت وهي لم تُكتب
+  if (error) {
+    console.error("[createSegment]", error.message);
+    return;
+  }
+
+  revalidatePath("/dashboard/customers");
+}
+
+/** حذف شريحة — مقيّد بمطعم المتصل حتى لا يمسّ معرّفٌ مسروق شريحة مطعمٍ آخر. */
+export async function deleteSegment(formData: FormData) {
+  const caller = await requirePerm("customers");
+  if (!caller) return;
+
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  const { error } = await caller.supabase
+    .from("customer_segments")
+    .delete()
+    .eq("id", id)
+    .eq("restaurant_id", caller.restaurantId);
+
+  if (error) {
+    console.error("[deleteSegment]", error.message);
+    return;
+  }
+
+  revalidatePath("/dashboard/customers");
+}
+
+/** منح مكافأة لشريحة مخصّصة — يعيد عدد من وصلتهم فعلًا. */
+export async function grantRewardToCustomSegment(formData: FormData): Promise<number> {
+  const caller = await requirePerm("customers");
+  if (!caller) return 0;
+
+  const segmentId = String(formData.get("segment_id") ?? "");
+  const title = String(formData.get("title") ?? "").trim();
+  if (!segmentId || !title) return 0;
+
+  const kind = String(formData.get("kind") ?? "gift") === "discount" ? "discount" : "gift";
+  const valueRaw = String(formData.get("value") ?? "").trim();
+  const value = valueRaw ? Number(valueRaw) : null;
+  const valueKind = String(formData.get("value_kind") ?? "percent") === "amount" ? "amount" : "percent";
+  const description = String(formData.get("description") ?? "").trim() || null;
+  const code = String(formData.get("code") ?? "").trim().toUpperCase() || null;
+  const daysRaw = String(formData.get("expires_days") ?? "").trim();
+  const days = daysRaw ? Math.max(1, Number(daysRaw)) : null;
+  const expires_at = days ? new Date(Date.now() + days * 864e5).toISOString() : null;
+
+  // الدالة تتحقّق من ملكيّة الشريحة وتُدرج للأعضاء بجملة واحدة (set-based)
+  const { data, error } = await caller.supabase.rpc("grant_reward_to_custom_segment", {
+    p_segment_id: segmentId,
+    p_kind: kind,
+    p_title: title,
+    // القيم الفارغة null مقبولة داخل الدالة — الأنواع المولَّدة أضيق من الواقع
+    p_value: value as unknown as number,
+    p_value_kind: valueKind,
+    p_description: description as unknown as string,
+    p_code: code as unknown as string,
+    p_expires_at: expires_at as unknown as string,
+  });
+
+  // كما في grantRewardToSegment: نجاحٌ وهمي يجعل المالك لا يعيد الحملة أبدًا
+  if (error) {
+    console.error("[grantRewardToCustomSegment]", error.message);
+    return 0;
+  }
+
+  revalidatePath("/dashboard/customers");
+  return data ?? 0;
+}
+
 /** إلغاء مكافأة (تعليمها منتهية). */
 export async function revokeReward(formData: FormData) {
   const caller = await requirePerm("customers");

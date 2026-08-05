@@ -1,18 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { grantRewardToSegment } from "./actions";
+import { grantRewardToSegment, grantRewardToCustomSegment } from "./actions";
+import type { CustomSegment } from "./segments-manager";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 
 type Counts = { all: number; vip: number; returning: number; new: number; dormant: number };
 
-export function CampaignForm({ counts }: { counts: Counts }) {
+export function CampaignForm({
+  counts,
+  customSegments = [],
+}: {
+  counts: Counts;
+  customSegments?: CustomSegment[];
+}) {
   const lang = useLang();
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<"gift" | "discount">("gift");
-  const [segment, setSegment] = useState<keyof Counts>("vip");
+  // مفتاح شريحة جاهزة أو معرّف شريحة مخصّصة — قيمة واحدة تمنع اختيارين متضاربين
+  const [segment, setSegment] = useState<string>("vip");
+  const custom = customSegments.find((s) => s.id === segment);
+  const reach = custom ? custom.member_count : counts[segment as keyof Counts];
 
   const SEG: { key: keyof Counts; ar: string; en: string }[] = [
     { key: "all", ar: "الكل", en: "All" },
@@ -38,7 +48,8 @@ export function CampaignForm({ counts }: { counts: Counts }) {
   return (
     <form
       action={async (fd) => {
-        await grantRewardToSegment(fd);
+        if (custom) await grantRewardToCustomSegment(fd);
+        else await grantRewardToSegment(fd);
         setOpen(false);
       }}
       className="soft-card space-y-3 p-4"
@@ -62,11 +73,37 @@ export function CampaignForm({ counts }: { counts: Counts }) {
             </button>
           ))}
         </div>
+
+        {customSegments.length > 0 && (
+          <div className="mt-2">
+            <p className="mb-1.5 text-xs font-bold text-[color:var(--muted)]">{tr(lang, "شرائحك المخصّصة", "Your custom segments")}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {customSegments.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setSegment(s.id)}
+                  className="rounded-2xl px-3 py-2 text-xs font-bold transition"
+                  style={segment === s.id
+                    ? { background: "var(--brand-solid)", color: "var(--brand-ink)" }
+                    : { background: "var(--surface-2)", color: "var(--muted)" }}
+                >
+                  {s.name}
+                  <span className="ms-1.5 opacity-80">{toAr(s.member_count)}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <p className="mt-1 text-xs text-[color:var(--muted)]">
-          {tr(lang, `ستصل إلى ${toAr(counts[segment])} عميل`, `Will reach ${toAr(counts[segment])} customers`)}
+          {tr(lang, `ستصل إلى ${toAr(reach)} عميل`, `Will reach ${toAr(reach)} customers`)}
         </p>
       </div>
-      <input type="hidden" name="segment" value={segment} />
+      {/* اسم الحقل يحدّد أيّ فعل يقرأه: الجاهزة segment والمخصّصة segment_id */}
+      {custom
+        ? <input type="hidden" name="segment_id" value={custom.id} />
+        : <input type="hidden" name="segment" value={segment} />}
 
       {/* النوع */}
       <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[color:var(--surface-2)] p-1">

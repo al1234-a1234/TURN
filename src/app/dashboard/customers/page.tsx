@@ -4,6 +4,7 @@ import { loadOwner } from "../owner-context";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { CustomerControls } from "./customer-controls";
 import { CampaignForm } from "./campaign-form";
+import { SegmentsManager, type CustomSegment } from "./segments-manager";
 import { WinbackForm } from "./winback-form";
 import { toAr, normalizePhone } from "@/lib/format";
 import { daysAgoLabel } from "@/lib/dates";
@@ -115,6 +116,14 @@ export default async function CustomersPage({
     dormant: dormantCount.count ?? 0,
   };
 
+  // شرائح المالك المخصّصة بعدّاداتها — العضوية تُحسب في القاعدة لحظةَ الاستعلام
+  const { data: segRows, error: segError } = await supabase.rpc("customer_segments_with_counts", {
+    p_restaurant_id: restaurant.id,
+  });
+  if (segError) console.error("[CustomersPage] customer_segments_with_counts", segError.message);
+  // الأنواع المولَّدة تعلن الأعمدة الاختيارية غير قابلة للعدم — القاعدة تعيدها null
+  const customSegments = ((segRows ?? []) as CustomSegment[]);
+
   const hrefFor = (s: Segment) => `/dashboard/customers?seg=${s}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
 
   return (
@@ -162,7 +171,9 @@ export default async function CustomersPage({
           })}
         </div>
 
-        <CampaignForm counts={campaignCounts} />
+        <SegmentsManager segments={customSegments} />
+
+        <CampaignForm counts={campaignCounts} customSegments={customSegments} />
 
         <WinbackForm initial={winback} />
 
