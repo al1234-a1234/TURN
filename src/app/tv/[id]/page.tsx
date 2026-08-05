@@ -33,7 +33,7 @@ export default async function TvPage({ params }: { params: Promise<{ id: string 
   const host = h.get("host") ?? SITE_HOST;
   const proto = host.includes("localhost") ? "http" : "https";
   const joinUrl = `${proto}://${host}/r/${meta.restaurant_slug}?branch=${id}`;
-  const qr = await QRCode.toString(joinUrl, { type: "svg", margin: 1, color: { dark: "var(--brand-solid)", light: "#00000000" } });
+  const qr = await QRCode.toString(joinUrl, { type: "svg", margin: 1, color: { dark: "#781e0c", light: "#0000" } });
 
   return (
     <div dir="rtl" className="flex min-h-screen flex-col gap-6 p-8" style={{ background: "var(--bg)" }}>

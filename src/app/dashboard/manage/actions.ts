@@ -82,13 +82,19 @@ export async function deleteBranch(formData: FormData) {
   if (caller.branchId) return;
   const id = String(formData.get("branch_id") ?? "");
   if (!id) return;
-  // لا تحذف آخر فرع
+  // لا تحذف آخر فرع فعّال
   const { count } = await supabase
     .from("branches")
     .select("id", { count: "exact", head: true })
-    .eq("restaurant_id", rid);
+    .eq("restaurant_id", rid)
+    .eq("is_active", true);
   if ((count ?? 0) <= 1) return;
-  await supabase.from("branches").delete().eq("id", id).eq("restaurant_id", rid);
+  // حذف ناعم لا صلب: كل جداول الفرع مرتبطة به بـ ON DELETE CASCADE، فحذفه
+  // الصلب كان يمحو معه تاريخ الطوابير والحجوزات والإحصاءات كاملًا (آلاف الصفوف
+  // للفرع الواحد) في لحظة، بلا رجعة ولا نسخة لحظية تستعيدها — وهذا التاريخ هو
+  // نفسه القيمة التي نبيعها للمالك. التعطيل يُخفي الفرع عن العميل وعن اللوحة
+  // (كل المسارات تفلتر is_active) ويُبقي التاريخ سليمًا وقابلًا للإرجاع.
+  await supabase.from("branches").update({ is_active: false }).eq("id", id).eq("restaurant_id", rid);
   revalidatePath("/dashboard/manage");
   revalidateTag("discovery");
   revalidatePath("/dashboard");
@@ -142,6 +148,11 @@ export async function addMenuItem(formData: FormData) {
   const image_url = String(formData.get("image_url") ?? "").trim() || null;
   const branchId = await resolveWriteBranch(caller, formData.get("branch_id") as string);
   if (!branchId) return;
+  // التصنيف يأتي من الطلب: نتأكّد أنه من تصنيفات هذا الفرع فعلًا، وإلا صار
+  // بالإمكان ربط صنفٍ بتصنيف مطعمٍ آخر — مفتاح أجنبي بلا معنى يفسد القائمة.
+  const { data: cat } = await supabase
+    .from("menu_categories").select("id").eq("id", categoryId).eq("branch_id", branchId).maybeSingle();
+  if (!cat) return;
   await supabase.from("menu_items").insert({
     restaurant_id: rid,
     branch_id: branchId,

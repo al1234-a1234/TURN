@@ -46,3 +46,26 @@ export function saudiMobile(input: string): string {
   if (d.startsWith("5") && d.length === 9) d = "0" + d;
   return /^05\d{8}$/.test(d) ? d : "";
 }
+
+/**
+ * رابط خارجي آمن — أو null.
+ *
+ * أي رابط يأتي من إدخال (روابط المطعم التي يضعها المالك) ويُوضع في href
+ * لا يجوز أن يُمرَّر خامًا: `javascript:...` في href ينفّذ سكربتًا في أصل
+ * موقعنا بسياق الزبون — وReact لا يحجبه (تحذير فقط). و`startsWith("http")`
+ * ليس حارسًا: يمرّر `http://` غير المشفّر ولا يتحقّق من صحّة الرابط أصلًا.
+ *
+ * القاعدة هنا قائمة بيضاء صريحة: https فقط. وما جاء بلا بروتوكول يُفترض https.
+ * ما عداه → null، فيُخفي المستدعي الزرّ بدل أن يعرض فخًّا.
+ */
+export function safeExternalUrl(raw: string | null | undefined): string | null {
+  const s = (raw ?? "").trim();
+  if (!s) return null;
+  const candidate = /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(s) ? s : `https://${s}`;
+  try {
+    const u = new URL(candidate);
+    return u.protocol === "https:" ? u.toString() : null;
+  } catch {
+    return null;
+  }
+}

@@ -9,6 +9,10 @@ const LINK_KEYS = ["maps", "instagram", "x", "tiktok", "snapchat", "whatsapp", "
 export async function saveLinks(formData: FormData) {
   const caller = await requirePerm("settings");
   if (!caller) return;
+  // روابط العلامة لمالكها لا لمدير فرع — نفس حارس updateRestaurantInfo/addBranch.
+  // كان غيابه يعني اعتمادًا على RLS وحدها (وهي تصمد)، لكن بفشلٍ صامت وخروجٍ
+  // عن نمط بقيّة دوال مستوى العلامة.
+  if (caller.branchId) return;
 
   const links: Record<string, string> = {};
   for (const key of LINK_KEYS) {
