@@ -184,13 +184,21 @@ with checks(name, pass) as (
   ('q19_no_orphan_waitlist',   not exists(select 1 from public.waitlist_entries w
                                           left join public.branches b on b.id = w.branch_id
                                           where b.id is null)),
+  -- (٢١) التنظيف التلقائي مضبوط على الجداول عالية الدوران — العتبة الافتراضية
+  --      نسبةٌ مئوية تتباعد كلّما كبر الجدول، أي أن الحاجة تزيد والتنظيف يقلّ
+  ('q21_autovacuum_tuned',     (select coalesce(array_to_string(reloptions,','),'') like '%autovacuum_vacuum_scale_factor=0.02%'
+                                from pg_class where relname='waitlist_entries')),
+  -- (٢٢) حارس آلة الحالات: لا يُعاد إحياء دورٍ منتهٍ (اختُبرت الانتقالات الأربعة)
+  ('q22_status_guard',         exists(select 1 from pg_trigger t join pg_class c on c.oid=t.tgrelid
+                                      where c.relname='waitlist_entries'
+                                        and t.tgname='trg_guard_waitlist_status')),
   -- (٢٠) مرجع المخطط: أي انحراف عن البصمة المثبَّتة يظهر هنا قبل أن يفاجئنا
-  --      (٢٣ جدولًا · ٧٠ دالة · ٥٩ سياسة · ٣٨ مفتاحًا أجنبيًّا) — راجع
+  --      (٢٣ جدولًا · ٧١ دالة · ٥٩ سياسة · ٣٨ مفتاحًا أجنبيًّا) — راجع
   --      supabase/tests/schema_baseline.md وحدّثه عمدًا عند أي تغيير مقصود
   ('q20_schema_no_drift',      (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
                                 where n.nspname='public' and c.relkind='r') = 23
                                and (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-                                    where n.nspname='public' and p.prokind='f') = 70
+                                    where n.nspname='public' and p.prokind='f') = 71
                                and (select count(*) from pg_policies where schemaname='public') = 59
                                and (select count(*) from pg_constraint c join pg_class r on r.oid=c.conrelid
                                     join pg_namespace n on n.oid=r.relnamespace
