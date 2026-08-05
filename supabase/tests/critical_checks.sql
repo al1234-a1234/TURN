@@ -11,6 +11,9 @@ with checks(name, pass) as (
   ('anon_blocked_rollup',      not has_function_privilege('anon','public.rollup_all_daily_stats(date)','EXECUTE')),
   ('anon_blocked_digest',      not has_function_privilege('anon','public.run_daily_digest()','EXECUTE')),
   ('anon_blocked_del_push',    not has_function_privilege('anon','public.delete_push_subscription(text)','EXECUTE')),
+  -- تحصينات 0068: حارس المعدّل بالقصد، وحذف الاشتراك مسحوب من المجهول
+  ('check_rate_locked',        not has_function_privilege('anon','public.check_rate(text,integer,interval)','EXECUTE')),
+  ('del_dead_push_locked',     not has_function_privilege('anon','public.delete_dead_push_subscription(text)','EXECUTE')),
   ('auth_blocked_demo',        not has_function_privilege('authenticated','public.demo_live_activity()','EXECUTE')),
   -- ── الأمان: دوال الضيف المحروسة متاحة (كسرها = تعطّل المنتج) ──
   ('anon_can_join',            has_function_privilege('anon','public.join_waitlist_guest(uuid,text,text,integer,text)','EXECUTE')),
@@ -67,8 +70,8 @@ with checks(name, pass) as (
   ('validate_before_limit',    (select position('invalid_rating' in pg_get_functiondef(oid))
                                      < position('check_rate' in pg_get_functiondef(oid))
                                 from pg_proc where proname='submit_review')),
-  -- ── «وضعي مع هذا المطعم» (0046): متاح للضيف ومحروس بحدّ المعدّل ──
-  ('anon_can_status',          has_function_privilege('anon','public.my_restaurant_status(text,text)','EXECUTE')),
+  -- «my_restaurant_status» حُذفت في 0068 (تعداد هويات بلا مستدعٍ) — نتأكّد ألّا تعود
+  ('my_restaurant_status_gone',to_regprocedure('public.my_restaurant_status(text,text)') is null),
   ('anon_can_health',          has_function_privilege('anon','public.health_snapshot()','EXECUTE')),
   -- ── المرحلة أ (0048): جهاز الحماية بلا WAL وسقف الفرع من إعداداته ──
   ('rate_limits_unlogged',     (select relpersistence = 'u' from pg_class c
