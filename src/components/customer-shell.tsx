@@ -34,7 +34,6 @@ function IcList() {
   );
 }
 const DRAWER = [
-  { label: "الهدايا", en: "Gifts", href: "/me/rewards" },
   { label: "المفضلة", en: "Favorites", href: "/me/favorites" },
   { label: "الزيارات", en: "Visits", href: "/me/visits" },
   { label: "الإعدادات", en: "Settings", href: "/me" },

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { IconGift } from "@/components/icons";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getRestaurantMeta } from "@/lib/supabase/public-cache";
@@ -227,28 +226,10 @@ export default async function RestaurantPublicPage({
           {waitlistPanel}
         </RestaurantTabs>
 
-        <GiftsSection lang={lang} />
-
         <Gallery photos={photos ?? []} label={tr(lang, "صور من المطعم", "Photos from the restaurant")} />
 
         <RestaurantLinks links={(restaurant.links ?? {}) as Record<string, string>} label={tr(lang, "تابعنا وزورنا", "Follow & visit us")} />
       </main>
-    </div>
-  );
-}
-
-/** منفذ الهدايا الشخصية — يشوفه أي عميل (بلا حساب — عبر الرقم). */
-function GiftsSection({ lang }: { lang: "ar" | "en" }) {
-  return (
-    <div className="mt-6">
-      <p className="mb-3 font-display text-base font-bold text-[color:var(--ink)]">{tr(lang, "الهدايا والمكافآت", "Gifts & rewards")}</p>
-
-      <Link href="/me/rewards" className="mt-2.5 flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: "var(--brand-solid)" }}>
-        <span className="flex items-center gap-2 text-sm font-bold text-cream-100">
-          <IconGift size={18} /> {tr(lang, "عندك هديّة خاصة؟ اعرفها برقمك", "Got a personal reward? Check with your number")}
-        </span>
-        <span className="text-cream-100">←</span>
-      </Link>
     </div>
   );
 }

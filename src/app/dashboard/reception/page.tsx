@@ -60,6 +60,24 @@ export default async function ReceptionPage({
     : [{ data: [] }, { count: 0 }, { data: null }];
 
   const list = queue ?? [];
+
+  // هدايا منحها المالك ولم تُعتمد بعد — تُعرَض للموظّف وحده على سطر العميل.
+  // العميل لا يرى شيئًا في التطبيق: يمسح، يأخذ دوره، وتُسلَّم له عند الكاشير.
+  const queuedCustomerIds = [...new Set(list.map((q) => q.customer_id).filter(Boolean))] as string[];
+  const { data: pendingGifts } = queuedCustomerIds.length
+    ? await supabase
+        .from("customer_rewards")
+        .select("customer_id")
+        .eq("restaurant_id", restaurant.id)
+        .eq("status", "active")
+        .in("customer_id", queuedCustomerIds)
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+    : { data: [] };
+  const giftCount = new Map<string, number>();
+  for (const g of pendingGifts ?? []) {
+    if (g.customer_id) giftCount.set(g.customer_id, (giftCount.get(g.customer_id) ?? 0) + 1);
+  }
+
   const inside = list.filter((q) => q.zone === "inside");
   const outside = list.filter((q) => q.zone === "outside");
   const other = list.filter((q) => q.zone !== "inside" && q.zone !== "outside");
@@ -93,6 +111,13 @@ export default async function ReceptionPage({
           <p className="mt-0.5 text-xs text-[color:var(--muted)]">
             {toAr(q.party_size)} {tr(lang, "أشخاص", "guests")} · ⏱ {toAr(waited)} {tr(lang, "دقيقة", "min")}{q.status === "notified" ? tr(lang, " · أُشعِر ✓", " · Notified ✓") : ""}
           </p>
+          {(giftCount.get(q.customer_id ?? "") ?? 0) > 0 && (
+            <span className="mt-1 me-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
+              style={{ background: "var(--brand-solid)", color: "var(--brand-ink)" }}>
+              🎁 {tr(lang, "عنده هدية", "Has a gift")}
+              {(giftCount.get(q.customer_id ?? "") ?? 0) > 1 ? ` (${toAr(giftCount.get(q.customer_id ?? "") ?? 0)})` : ""}
+            </span>
+          )}
           {q.distance_m != null && (
             <span className="mt-1 me-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
               style={{ background: "var(--surface-2)", border: "1px solid rgba(102,28,10,0.14)", color: q.distance_m > 5000 ? "var(--muted)" : "var(--brand-d)" }}>

@@ -3,20 +3,10 @@
 import Link from "next/link";
 import { CustomerShell } from "@/components/customer-shell";
 import { LangToggle } from "@/components/lang-toggle";
-import { RewardsBadge } from "./rewards-badge";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 
 /* أيقونات الهوية — دائرة كريميّة بلون الهوية داخلها رمز الدلالة */
-function IcGift() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <rect x="3.5" y="8.5" width="17" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M5 13.5V19a1.5 1.5 0 001.5 1.5h11A1.5 1.5 0 0019 19v-5.5M12 8.5v12" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-      <path d="M12 8.5S10.8 4 8.6 4c-1.3 0-2 .9-2 1.9C6.6 7.6 9 8.5 12 8.5zm0 0S13.2 4 15.4 4c1.3 0 2 .9 2 1.9C17.4 7.6 15 8.5 12 8.5z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-    </svg>
-  );
-}
 function IcClock() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -33,9 +23,8 @@ function IcHeart() {
   );
 }
 
-// ثلاثة بنود فقط بقرار المالك: الهدايا والمفضلة والزيارات — الباقي في الدرج الجانبي
+// بندان فقط: المفضلة والزيارات — الباقي في الدرج الجانبي
 const ITEMS = [
-  { href: "/me/rewards", ar: "الهدايا", en: "Gifts", Icon: IcGift },
   { href: "/me/favorites", ar: "المفضّلة", en: "Favorites", Icon: IcHeart },
   { href: "/me/visits", ar: "الزيارات", en: "Visits", Icon: IcClock },
 ];
@@ -66,7 +55,6 @@ export default function MePage() {
                 <it.Icon />
               </span>
               <span className="flex-1 font-bold text-[color:var(--ink)]">{tr(lang, it.ar, it.en)}</span>
-              {it.href === "/me/rewards" && <RewardsBadge />}
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-[color:var(--muted)]"><path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </Link>
           ))}

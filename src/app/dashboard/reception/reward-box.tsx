@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { IconGift } from "@/components/icons";
 import { lookupRewards, redeemAtCounter, type CounterReward } from "./reward-actions";
-import { RewardScanner } from "./reward-scanner";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 import { toAr, normalizePhone } from "@/lib/format";
@@ -11,7 +10,7 @@ import { fmtDate } from "@/lib/dates";
 
 /**
  * صندوق «اعتمد هدية» عند الكاشير — الحلقة الأخيرة التي كانت مفقودة:
- * العميل يعرض هديته (رمز أو رقم جوّاله)، الموظّف يتحقّق ويعتمد بضغطة،
+ * الموظّف يبحث برقم جوّال العميل، يتحقّق ويعتمد بضغطة،
  * فتُقفل الهدية نهائيًّا في القاعدة ولا تُصرف مرتين.
  */
 export function RewardBox() {
@@ -30,14 +29,6 @@ export function RewardBox() {
     });
   }
 
-  // مسح الكاميرا: الرمز يتعبّأ ويُبحث عنه فورًا — بلا ضغطة إضافية
-  const onScanned = useCallback((code: string) => {
-    setQ(code);
-    start(async () => {
-      setRows(await lookupRewards(code));
-      setDone({});
-    });
-  }, []);
 
   function redeem(id: string) {
     start(async () => {
@@ -59,7 +50,7 @@ export function RewardBox() {
         <span className="flex h-9 w-9 items-center justify-center rounded-xl text-cream-100" style={{ background: "var(--brand-solid)" }}><IconGift size={18} /></span>
         <div>
           <h2 className="font-display text-base font-bold text-[color:var(--ink)]">{tr(lang, "اعتمد هدية", "Redeem a gift")}</h2>
-          <p className="text-[11px] font-bold text-[color:var(--muted)]">{tr(lang, "رمز الهدية أو رقم جوّال العميل", "Gift code or customer mobile")}</p>
+          <p className="text-[11px] font-bold text-[color:var(--muted)]">{tr(lang, "رقم جوّال العميل", "Customer mobile")}</p>
         </div>
       </div>
 
@@ -75,7 +66,6 @@ export function RewardBox() {
         <button onClick={search} disabled={pending || !q.trim()} className="btn btn-primary shrink-0 px-5">
           {pending ? "…" : tr(lang, "بحث", "Find")}
         </button>
-        <RewardScanner lang={lang} onCode={onScanned} />
       </div>
 
       {rows !== null && (
@@ -84,7 +74,7 @@ export function RewardBox() {
              style={{ background: "var(--surface-2)", color: "var(--muted)" }}>
             {normalizePhone(q).length >= 9
               ? tr(lang, "لا هدايا فعّالة لهذا الرقم.", "No active gifts for this number.")
-              : tr(lang, "لا هدية بهذا الرمز — تأكد من الأحرف.", "No gift with this code — check the letters.")}
+              : tr(lang, "لا هدية بهذا الرقم.", "No gift for this number.")}
           </p>
         ) : (
           <ul className="mt-3 space-y-2">
