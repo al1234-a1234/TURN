@@ -2,6 +2,7 @@ import "server-only";
 import webpush from "web-push";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
  * إرسال إشعارات الدفع (Web Push) للعميل — يصل والتطبيق مُغلق.
@@ -25,6 +26,25 @@ function warnUnconfigured(where: string) {
   console.warn(
     `[push] skipped (${where}): missing ${!PUBLIC_KEY ? "NEXT_PUBLIC_VAPID_PUBLIC_KEY" : ""}${!PUBLIC_KEY && !PRIVATE_KEY ? " and " : ""}${!PRIVATE_KEY ? "VAPID_PRIVATE_KEY" : ""}. Set it in Vercel and REDEPLOY.`,
   );
+}
+
+/**
+ * مسارات الضيف تحتاج مفتاح الخدمة: دوالّها سُحبت من `anon` كي لا تُعيد بيانات
+ * اشتراك الطابور لمن يملك المفتاح العام (وهو معلومٌ لكل من فتح الصفحة).
+ *
+ * إن غاب المتغيّر نرجع لعميل المستدعي كي لا ينقطع الإشعار فجأةً بين نشرٍ ونشر،
+ * ونصرخ في السجلّ صرخةً يلتقطها Sentry — فالرجوع مؤقّتٌ لا وضعٌ دائم.
+ */
+function guestClient(
+  fallback: SupabaseClient<Database>,
+  where: string,
+): SupabaseClient<Database> {
+  const admin = createAdminClient();
+  if (admin) return admin;
+  console.error(
+    `[push] ${where}: SUPABASE_SERVICE_ROLE_KEY غير مضبوط — أضِفه في Vercel ثم أعِد النشر.`,
+  );
+  return fallback;
 }
 
 export type PushPayload = {
@@ -51,9 +71,11 @@ async function sendOne(
     return true;
   } catch (err) {
     const code = (err as { statusCode?: number })?.statusCode;
-    // 404/410 = اشتراك ميّت (أُلغي التصريح أو حُذف التطبيق) → نظّفه
+    // 404/410 = اشتراك ميّت (أُلغي التصريح أو حُذف التطبيق) → نظّفه.
+    // ملاحظة: `delete_dead_push_subscription` محجوبة عن `anon`. فمسار الضيف
+    // كان ينظّف بلا صلاحية، فيفشل بصمت وتتراكم الاشتراكات الميّتة إلى الأبد.
+    // يعمل الآن لأن مسارات الضيف تمرّ عميل الخدمة إلى هنا.
     if (code === 404 || code === 410) {
-      // تعمل من مسار الضيف أيضًا (delete_push_subscription محجوبة عن anon)
       await supabase.rpc("delete_dead_push_subscription", { p_endpoint: sub.endpoint });
     }
     return false;
@@ -134,7 +156,8 @@ export async function pushRankUpdatesAfterTicketCancel(
   if (!pushConfigured) { warnUnconfigured("ticket-cancel"); return 0; }
 
   try {
-    const { data: targets, error } = await supabase.rpc(
+    const db = guestClient(supabase, "ticket-cancel");
+    const { data: targets, error } = await db.rpc(
       "queue_push_targets_after_ticket_cancel",
       { p_entry_id: entryId },
     );
@@ -145,7 +168,7 @@ export async function pushRankUpdatesAfterTicketCancel(
       targets.map(async (t) => {
         const url = t.slug ? `/r/${t.slug}` : "/";
         const body = JSON.stringify(rankPayload(t.rank, t.venue ?? "المطعم", url));
-        if (await sendOne(supabase, t, body)) sent += 1;
+        if (await sendOne(db, t, body)) sent += 1;
       }),
     );
     return sent;
@@ -166,7 +189,8 @@ export async function pushRankUpdatesAfterSelfCancel(
   if (!pushConfigured) { warnUnconfigured("self-cancel"); return 0; }
 
   try {
-    const { data: targets, error } = await supabase.rpc("queue_push_targets_after_cancel", {
+    const db = guestClient(supabase, "self-cancel");
+    const { data: targets, error } = await db.rpc("queue_push_targets_after_cancel", {
       p_entry_id: entryId,
       p_phone: phone,
     });
@@ -178,7 +202,7 @@ export async function pushRankUpdatesAfterSelfCancel(
         const venue = t.venue ?? "المطعم";
         const url = t.slug ? `/r/${t.slug}` : "/";
         const body = JSON.stringify(rankPayload(t.rank, venue, url));
-        if (await sendOne(supabase, t, body)) sent += 1;
+        if (await sendOne(db, t, body)) sent += 1;
       }),
     );
     return sent;
