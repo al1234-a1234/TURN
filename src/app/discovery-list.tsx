@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import { SmartImage } from "@/components/smart-image";
 import { useLang } from "@/components/lang-provider";
 import { storePeek } from "@/lib/peek";
 import { IconPlate } from "@/components/icons";
@@ -86,7 +86,7 @@ function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay:
       <div className="flex items-center gap-3">
         <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-800 font-serif text-xl font-bold text-cream-100">
           {r.logo_url ? (
-            <Image src={r.logo_url} alt="" width={56} height={56} sizes="56px" className="h-full w-full object-cover" />
+            <SmartImage src={r.logo_url} fallbackText={r.name} alt="" width={56} height={56} sizes="56px" className="h-full w-full object-cover" />
           ) : (
             initial
           )}
