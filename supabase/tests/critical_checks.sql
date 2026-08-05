@@ -15,8 +15,6 @@ with checks(name, pass) as (
   -- ── الأمان: دوال الضيف المحروسة متاحة (كسرها = تعطّل المنتج) ──
   ('anon_can_join',            has_function_privilege('anon','public.join_waitlist_guest(uuid,text,text,integer,text)','EXECUTE')),
   ('anon_can_ticket',          has_function_privilege('anon','public.waitlist_ticket_status(uuid,text)','EXECUTE')),
-  ('anon_can_checkin',         has_function_privilege('anon','public.public_checkin(text,text,text,uuid)','EXECUTE')),
-  ('anon_can_review',          has_function_privilege('anon','public.submit_review(text,text,integer,text)','EXECUTE')),
   -- ── حرّاس الدوال: مدخلات فاسدة تُرفض ──
   ('guard_confirm_unknown',    public.confirm_attendance('00000000-0000-0000-0000-000000000000') = false),
   ('guard_cancel_unknown',     public.cancel_by_ticket('00000000-0000-0000-0000-000000000000') = false),
@@ -25,7 +23,6 @@ with checks(name, pass) as (
   ('guard_review_no_visit',    public.submit_review('eficto',
                                  '05' || lpad((floor(random()*100000000))::bigint::text, 8, '0'),
                                  5, null)->>'error' = 'no_visit'),
-  ('guard_checkin_bad_phone',  public.public_checkin('eficto','123',null,null)->>'error' = 'invalid_phone'),
   ('guard_push_wrong_phone',   public.save_push_subscription('00000000-0000-0000-0000-000000000000','0500000000','https://x.invalid/e','k','a') = false),
   -- ── تطبيع الرقم: كل الصيغ تتساوى ──
   ('norm_arabic',              public.norm_phone_input('٠٥٠٦٠٨٩١٦٤') = '506089164'),
@@ -48,7 +45,7 @@ with checks(name, pass) as (
                                  where schemaname='public'
                                    and tablename in ('waitlist_entries','reservations','tables','branch_settings',
                                                      'notifications','daily_stats','menu_categories','menu_items',
-                                                     'restaurant_photos','checkins','checkin_settings',
+                                                     'restaurant_photos',
                                                      'reviews','branches','staff')
                                    and (qual like '%is_staff_of%' or qual like '%staff_has_perm%' or qual like '%is_manager_of%')
                                    and qual not like '%can_access_branch%'
@@ -73,34 +70,28 @@ with checks(name, pass) as (
   -- ── «وضعي مع هذا المطعم» (0046): متاح للضيف ومحروس بحدّ المعدّل ──
   ('anon_can_status',          has_function_privilege('anon','public.my_restaurant_status(text,text)','EXECUTE')),
   ('anon_can_health',          has_function_privilege('anon','public.health_snapshot()','EXECUTE')),
-  ('status_rate_guarded',      (select pg_get_functiondef(oid) like '%check_rate%'
-                                from pg_proc where proname='my_restaurant_status')),
-  -- ── قواعد المسح (0045): الفوري موجود، وصف لكل فرع، والتريغر يخلقه ──
-  ('scan_single_overload',    (select count(*) = 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-                                where n.nspname='public' and p.proname='public_checkin')),
-  ('scan_name_fallback',      (select pg_get_functiondef(oid) like '%ضيف%'
-                                from pg_proc where proname='public_checkin')),
-  ('scan_grants_instant',      (select pg_get_functiondef(oid) like '%instant_enabled%'
-                                from pg_proc where proname='public_checkin')),
-  ('scan_settings_every_branch', not exists(
-                                 select 1 from public.branches b
-                                 where not exists (select 1 from public.checkin_settings cs where cs.branch_id = b.id))),
-  ('scan_settings_trigger',    exists(select 1 from pg_trigger where tgname='trg_default_checkin_settings')),
-  -- ── الطبقات المعرَّفة من المالك (0047): مصدر ترقية واحد للمسارين ──
-  ('tier_fn_exists',           exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-                                      where n.nspname='public' and p.proname='tier_for_visits')),
-  ('tier_in_scan_path',        (select pg_get_functiondef(oid) like '%tier_for_visits%'
-                                from pg_proc where proname='public_checkin')),
-  ('tier_in_seat_path',        (select pg_get_functiondef(oid) like '%tier_for_visits%'
-                                from pg_proc where proname='on_waitlist_status_change')),
-  ('tier_config_col',          exists(select 1 from information_schema.columns
-                                      where table_schema='public' and table_name='loyalty_programs' and column_name='tier_config')),
   -- ── المرحلة أ (0048): جهاز الحماية بلا WAL وسقف الفرع من إعداداته ──
   ('rate_limits_unlogged',     (select relpersistence = 'u' from pg_class c
                                 join pg_namespace n on n.oid=c.relnamespace
                                 where n.nspname='public' and c.relname='rate_limits')),
-  ('branch_limit_configurable',(select pg_get_functiondef(oid) like '%scan_hourly_limit%'
-                                from pg_proc where proname='public_checkin')),
+  -- ── منظومة «استعمال الهدية» (0066-0068) ──
+  ('winback_table',            exists(select 1 from information_schema.tables
+                                      where table_schema='public' and table_name='winback_settings')),
+  ('armed_at_col',             exists(select 1 from information_schema.columns
+                                      where table_schema='public' and table_name='customer_rewards' and column_name='armed_at')),
+  ('rewards_by_phone_guarded', (select pg_get_functiondef(oid) like '%check_rate%'
+                                from pg_proc where proname='rewards_by_phone')),
+  ('arm_by_phone_guarded',     (select pg_get_functiondef(oid) like '%check_rate%'
+                                from pg_proc where proname='set_reward_armed_by_phone')),
+  ('reception_gifts_fn',       exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+                                      where n.nspname='public' and p.proname='reception_armed_gifts')),
+  ('redeem_clears_armed',      (select pg_get_functiondef(oid) like '%armed_at = null%'
+                                from pg_proc where proname='staff_redeem_reward')),
+  ('no_loyalty_tables',        not exists(select 1 from information_schema.tables
+                                      where table_schema='public'
+                                        and table_name in ('checkins','checkin_settings','loyalty_programs'))),
+  ('retention_no_checkins',    (select pg_get_functiondef(oid) not like '%checkins%'
+                                from pg_proc where proname='retire_dormant_customers')),
   -- ── يوم الرياض في التجميع والعدّادات ──
   ('rollup_riyadh_day',        (select pg_get_functiondef(oid) like '%Asia/Riyadh%' from pg_proc where proname='rollup_daily_stats')),
   ('digest_riyadh_day',        (select pg_get_functiondef(oid) like '%Asia/Riyadh%' from pg_proc where proname='run_daily_digest')),

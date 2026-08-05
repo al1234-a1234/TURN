@@ -6,7 +6,6 @@ import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 
-// الشرائح: عادي/فضي/ذهبي فقط — و«VIP» علامة مستقلّة (is_vip) لا شريحة، لتفادي ازدواج الاستهداف
 
 export function CustomerControls({
   customerId,

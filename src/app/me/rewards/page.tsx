@@ -6,16 +6,17 @@ import { CustomerShell } from "@/components/customer-shell";
 import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/components/lang-provider";
 import { tr } from "@/lib/i18n";
-import { toAr, money } from "@/lib/format";
+import { toAr, money, normalizePhone } from "@/lib/format";
 
 /**
- * هدايا صاحب الحساب — المكان الوحيد الذي يرى فيه العميل هديّة.
+ * هدايا الزبون — المكان الوحيد الذي يرى فيه هديّة.
  *
- * لا تلاحقه الهدية في صفحة المطعم وهو جاء ليأخذ دوره: يجي هنا بإرادته،
- * يضغط «استعمال» على هدية، فتُسلَّح لذلك المطعم — ثم تظهر مع دوره
- * وللاستقبال، ويعتمدها الموظّف عند التسليم.
+ * الهوية هنا الرقم لا الحساب: كل عملاء المنتج ضيوف تُنشأ صفوفهم من
+ * الانضمام للطابور بلا حساب، والنسخة السابقة (my_rewards على auth.uid)
+ * ما كانت لتُظهر هدية لأحد. القراءة والتسليح عبر RPC محدودة المعدّل.
  *
- * «استعمال» لا تصرف الهدية. لو ما جاء أو غيّر رأيه يفكّها وترجع له.
+ * «استعمال» تسلّح الهدية فتظهر للاستقبال مع دوره — ولا تصرفها. الصرف
+ * بيد الموظّف وحده، و«تراجع» تفكّها.
  */
 
 type Reward = {
@@ -35,33 +36,52 @@ type Reward = {
 
 export default function MyRewardsPage() {
   const lang = useLang();
+  const [phone, setPhone] = useState("");
   const [rewards, setRewards] = useState<Reward[] | null>(null);
-  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [lookupErr, setLookupErr] = useState(false);
+  const [armErr, setArmErr] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
-  const load = useCallback(async () => {
-    const supabase = createClient();
-    const { data: auth } = await supabase.auth.getUser();
-    if (!auth?.user) { setSignedIn(false); setRewards([]); return; }
-    setSignedIn(true);
-    const { data } = await supabase.rpc("my_rewards");
-    setRewards((data ?? []) as Reward[]);
+  const runLookup = useCallback(async (p: string) => {
+    if (!/^05\d{8}$/.test(p)) { setLookupErr(!!p); return; }
+    setLookupErr(false);
+    setLoading(true);
+    try {
+      // لا نحفظ الرقم كهوية للجهاز إلا بعد نجاح صيغته
+      window.localStorage.setItem("turn:phone", p);
+      const supabase = createClient();
+      const { data } = await supabase.rpc("rewards_by_phone", { p_phone: p });
+      setRewards((data ?? []) as Reward[]);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem("turn:phone");
+    if (saved) { setPhone(saved); runLookup(saved); }
+  }, [runLookup]);
 
-  /** تسليح/فكّ — تفاؤلي في الواجهة، والقاعدة هي الحكم */
+  /** تسليح/فكّ — والقاعدة هي الحكم: فشلها يظهر رسالة ويعيد التحميل */
   const toggleArm = (r: Reward) => {
     const next = !r.armed_at;
     setBusyId(r.id);
+    setArmErr(null);
     startTransition(async () => {
       const supabase = createClient();
-      const { data: ok } = await supabase.rpc("set_reward_armed", { p_reward_id: r.id, p_arm: next });
-      if (ok) {
+      const { data: ok, error } = await supabase.rpc("set_reward_armed_by_phone", {
+        p_reward_id: r.id, p_phone: phone, p_arm: next,
+      });
+      if (ok && !error) {
         setRewards((prev) =>
           (prev ?? []).map((x) => (x.id === r.id ? { ...x, armed_at: next ? new Date().toISOString() : null } : x)),
         );
+      } else {
+        setArmErr(tr(lang, "تعذّر التحديث — جرّب بعد لحظات.", "Couldn't update — try again shortly."));
+        await runLookup(phone);
       }
       setBusyId(null);
     });
@@ -83,25 +103,27 @@ export default function MyRewardsPage() {
         <div className="rq-card p-5">
           <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "هداياك", "Your gifts")}</p>
           <p className="mt-0.5 text-sm text-[color:var(--muted)]">
-            {tr(lang, "اضغط «استعمال» على هدية، ثم خذ دورك في المطعم — تظهر للموظّف ويسلّمك إياها.",
-                      "Tap “Use” on a gift, then take your turn — staff will see it and hand it to you.")}
+            {tr(lang, "محفوظة على رقم جوّالك — أدخله لعرضها.", "Saved to your mobile number — enter it to view.")}
           </p>
+          {lookupErr && (
+            <p className="mt-2 text-xs font-bold text-[color:var(--danger)]">
+              {tr(lang, "رقم الجوّال غير مكتمل — يبدأ بـ 05 ويتكوّن من 10 خانات.", "Incomplete number — starts with 05, 10 digits.")}
+            </p>
+          )}
+          <form onSubmit={(e) => { e.preventDefault(); runLookup(phone.trim()); }} className="mt-3 flex gap-2">
+            <input dir="ltr" inputMode="tel" value={phone} onChange={(e) => setPhone(normalizePhone(e.target.value).slice(0, 10))} placeholder="05xxxxxxxx" className="field-input flex-1 text-left" />
+            <button type="submit" disabled={loading} className="rq-btn shrink-0 px-5">{loading ? "…" : tr(lang, "عرض", "Show")}</button>
+          </form>
         </div>
 
-        {signedIn === false && (
-          <div className="rq-card p-8 text-center">
-            <span className="text-4xl">🎁</span>
-            <p className="mt-3 text-sm text-[color:var(--muted)]">
-              {tr(lang, "هداياك محفوظة في حسابك — سجّل الدخول لعرضها.", "Your gifts live in your account — sign in to view them.")}
-            </p>
-            <Link href="/login" className="rq-btn mt-4 !w-auto px-8">{tr(lang, "تسجيل الدخول", "Sign in")}</Link>
-          </div>
+        {armErr && (
+          <p className="rounded-2xl bg-[color:var(--surface-2)] px-4 py-2.5 text-center text-xs font-bold text-[color:var(--danger)]">{armErr}</p>
         )}
 
-        {signedIn && rewards !== null && active.length === 0 && used.length === 0 && (
+        {rewards !== null && active.length === 0 && used.length === 0 && (
           <div className="rq-card p-10 text-center text-[color:var(--muted)]">
             <span className="text-4xl">🎁</span>
-            <p className="mt-3 text-sm">{tr(lang, "ما عندك هدايا حاليًا.", "No gifts yet.")}</p>
+            <p className="mt-3 text-sm">{tr(lang, "لا توجد هدايا على هذا الرقم حاليًا.", "No gifts on this number yet.")}</p>
           </div>
         )}
 

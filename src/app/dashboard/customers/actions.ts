@@ -28,7 +28,7 @@ export async function updateCustomerProfile(
   revalidatePath("/dashboard/customers");
 }
 
-/** منح العميل هديّة أو خصم (أداة تسويق/جذب) — يظهر للعميل عبر رقمه. */
+/** منح العميل هديّة أو خصم — يراها في «الهدايا» ويسلّحها بنفسه. */
 export async function grantReward(formData: FormData): Promise<boolean> {
   const caller = await requirePerm("customers");
   if (!caller) return false;
@@ -73,7 +73,7 @@ export async function grantReward(formData: FormData): Promise<boolean> {
   return !insErr;
 }
 
-/** منح مكافأة لشريحة كاملة (الكل/VIP/ذهبي/فضّي/عائدون) — حملة تسويقية. */
+/** منح مكافأة لشريحة كاملة: الكل / VIP / عائدون / جدد / غائبون. */
 export async function grantRewardToSegment(formData: FormData) {
   const caller = await requirePerm("customers");
   if (!caller) return;
@@ -159,18 +159,26 @@ export async function saveWinback(formData: FormData): Promise<boolean> {
   const days = Number.isFinite(rawDays) && rawDays > 0 ? Math.min(365, Math.max(7, rawDays)) : 30;
   const value = rawValue === "" ? null : Math.min(100, Math.max(1, Number(rawValue)));
 
-  const { error } = await caller.supabase.from("winback_settings").upsert(
-    {
-      restaurant_id: caller.restaurantId,
-      is_active: isActive,
-      title: title || "اشتقنا لك — هدية عودة 🎁",
-      value,
-      value_kind: "percent",
-      days_inactive: days,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "restaurant_id" },
-  );
+  // الحقول لا تُرسَل والمفتاح مطفأ (غير مركّبة في DOM) — فحفظ الإيقاف
+  // بكامل الحمولة كان يمسح ضبط المالك ويرجعه للافتراضي. عند الإيقاف
+  // نلمس is_active وحدها.
+  const { error } = isActive
+    ? await caller.supabase.from("winback_settings").upsert(
+        {
+          restaurant_id: caller.restaurantId,
+          is_active: true,
+          title: title || "اشتقنا لك — هدية عودة 🎁",
+          value,
+          value_kind: "percent",
+          days_inactive: days,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "restaurant_id" },
+      )
+    : await caller.supabase.from("winback_settings").upsert(
+        { restaurant_id: caller.restaurantId, is_active: false, updated_at: new Date().toISOString() },
+        { onConflict: "restaurant_id" },
+      );
 
   revalidatePath("/dashboard/customers");
   return !error;

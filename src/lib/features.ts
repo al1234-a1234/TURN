@@ -52,7 +52,7 @@ function isKnownModule(key: string): key is ModuleKey {
  *   2) وإلا: مُفعّل إذا كان أساسيًا (is_core) أو مُفعّلًا افتراضيًا (default_enabled).
  *   3) وإلا: مطفأ.
  *
- * استعلامان مفهرسان صغيران (الكتالوج ١١ صفًا فقط) — رخيص جدًا حتى مع آلاف المطاعم.
+ * استعلامان مفهرسان صغيران (الكتالوج ١٠ صفوف فقط) — رخيص جدًا حتى مع آلاف المطاعم.
  */
 export async function getEnabledModules(
   supabase: DB,

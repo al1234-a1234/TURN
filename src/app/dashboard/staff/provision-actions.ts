@@ -34,7 +34,7 @@ export async function createStaffAccount(
   // قوالب جاهزة بدل ترك المالك يخمّن الصلاحيات
   const permissions =
     preset === "manager"
-      ? { waitlist: true, reservations: true, customers: true, loyalty: true, reviews: true, analytics: true }
+      ? { waitlist: true, reservations: true, customers: true, reviews: true, analytics: true }
       : preset === "reception_plus"
         ? { waitlist: true, reservations: true, customers: true }
         : { waitlist: true };

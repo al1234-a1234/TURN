@@ -219,7 +219,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             </div>
           </div>
 
-          {/* ===== مؤشرات — الولاء على مستوى العلامة، والسجلّ على مستوى فرعك ===== */}
+          {/* ===== مؤشرات — الزيارات على مستوى العلامة، والسجلّ على مستوى فرعك ===== */}
           {load.ctx.branchId && (
             <p className="mt-5 rounded-2xl px-3 py-2 text-[11px] font-bold"
                style={{ background: "var(--surface-2)", color: "var(--muted)", border: "1px solid rgba(102,28,10,0.12)" }}>
@@ -228,7 +228,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                 "Visits are counted brand-wide (including other branches); the history below is this branch only.")}
             </p>
           )}
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
             <Kpi label={tr(lang, "الزيارات", "Visits")} value={toAr(profile?.visits ?? 0)} tone="var(--brand-d)" />
             <Kpi
               label={tr(lang, "تغيّبات", "No-shows")}

@@ -44,7 +44,7 @@ export default async function PrivacyPage() {
       en: "Who sees your data",
       arB: [
         "المطعم الذي أخذت دورًا فيه يرى اسمك ورقمك ومسافتك التقريبية — للفرع الذي زرته فقط.",
-        "نقاط ولائك ومكافآتك يراها المطعم المانح لها فقط.",
+        "هداياك يراها المطعم المانح لها فقط.",
       ],
       enB: [
         "The restaurant where you took a turn sees your name, number, and approximate distance — only for the branch you visited.",

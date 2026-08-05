@@ -17,7 +17,7 @@ type Profile = Database["public"]["Tables"]["customer_restaurant"]["Row"] & {
 
 
 // الشرائح المتاحة للفلترة — تجيب على أسئلة المالك الفعلية:
-// من المميّز؟ من عنده هدية لم تُستخدم؟ من اقترب من مكافأة الولاء؟ من يتغيّب؟ من انقطع؟
+// من المميّز؟ من عنده هدية لم تُستخدم؟ من يتغيّب؟ من انقطع؟
 const SEGMENTS = ["all", "vip", "gifts", "noshow", "inactive", "blocked"] as const;
 type Segment = (typeof SEGMENTS)[number];
 
@@ -102,10 +102,10 @@ export default async function CustomersPage({
   const dormantSince = new Date(cutoff30).toISOString();
   const [allCount, vipCount, returningCount, newCount, dormantCount] = await Promise.all([
     supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id),
-    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).eq("is_vip", true),
-    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).gte("visits", 2),
-    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).lte("visits", 1),
-    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).lt("last_visit", dormantSince),
+    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).eq("is_blocked", false).eq("is_vip", true),
+    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).eq("is_blocked", false).gte("visits", 2),
+    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).eq("is_blocked", false).lte("visits", 1),
+    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).eq("is_blocked", false).lt("last_visit", dormantSince),
   ]);
   const campaignCounts = {
     all: allCount.count ?? segCounts.all,
