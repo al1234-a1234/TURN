@@ -60,6 +60,27 @@ export default async function ReceptionPage({
     : [{ data: [] }, { count: 0 }, { data: null }];
 
   const list = queue ?? [];
+
+  // الهدايا المسلَّحة وحدها — التي ضغط عليها العميل «استعمال» بنفسه.
+  // هدية ممنوحة ولم يستعملها لا تُعرَض هنا: هو الذي يقرّر متى يستعملها،
+  // والموظّف لا يذكّره بها ولا يحرجه. والعميل لا يرى شيئًا في صفحة المطعم.
+  const queuedCustomerIds = [...new Set(list.map((q) => q.customer_id).filter(Boolean))] as string[];
+  const { data: armedGifts } = queuedCustomerIds.length
+    ? await supabase
+        .from("customer_rewards")
+        .select("customer_id, title")
+        .eq("restaurant_id", restaurant.id)
+        .eq("status", "active")
+        .not("armed_at", "is", null)
+        .in("customer_id", queuedCustomerIds)
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+    : { data: [] };
+  const giftsFor = new Map<string, string[]>();
+  for (const g of armedGifts ?? []) {
+    if (!g.customer_id) continue;
+    giftsFor.set(g.customer_id, [...(giftsFor.get(g.customer_id) ?? []), g.title]);
+  }
+
   const inside = list.filter((q) => q.zone === "inside");
   const outside = list.filter((q) => q.zone === "outside");
   const other = list.filter((q) => q.zone !== "inside" && q.zone !== "outside");
@@ -93,6 +114,12 @@ export default async function ReceptionPage({
           <p className="mt-0.5 text-xs text-[color:var(--muted)]">
             {toAr(q.party_size)} {tr(lang, "أشخاص", "guests")} · ⏱ {toAr(waited)} {tr(lang, "دقيقة", "min")}{q.status === "notified" ? tr(lang, " · أُشعِر ✓", " · Notified ✓") : ""}
           </p>
+          {(giftsFor.get(q.customer_id ?? "")?.length ?? 0) > 0 && (
+            <span className="mt-1 me-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
+              style={{ background: "var(--brand-solid)", color: "var(--brand-ink)" }}>
+              🎁 {giftsFor.get(q.customer_id ?? "")!.join(" · ")}
+            </span>
+          )}
           {q.distance_m != null && (
             <span className="mt-1 me-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
               style={{ background: "var(--surface-2)", border: "1px solid rgba(102,28,10,0.14)", color: q.distance_m > 5000 ? "var(--muted)" : "var(--brand-d)" }}>

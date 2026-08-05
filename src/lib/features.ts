@@ -17,12 +17,10 @@ export const MODULE_KEYS = [
   "menu",
   "reviews",
   "review_routing",
-  "loyalty",
   "walkaway",
   "smart_alerts",
   "daily_digest",
   "crm",
-  "checkin",
 ] as const;
 
 export type ModuleKey = (typeof MODULE_KEYS)[number];
@@ -105,7 +103,6 @@ export const STAFF_PERMISSIONS = [
   "waitlist",
   "reservations",
   "analytics",
-  "loyalty",
   "customers",
   "reviews",
   "settings",
@@ -118,7 +115,6 @@ export const STAFF_PERMISSION_LABELS: Record<StaffPermission, string> = {
   waitlist: "إدارة الطابور",
   reservations: "إدارة الحجوزات",
   analytics: "عرض التحليلات",
-  loyalty: "إدارة الولاء",
   customers: "ملفّات العملاء",
   reviews: "التقييمات",
   settings: "الإعدادات وأوقات العمل",

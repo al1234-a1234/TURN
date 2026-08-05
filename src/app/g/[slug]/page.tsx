@@ -1,53 +1,22 @@
-import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { ScanLanding } from "./scan-landing";
-import { getLang } from "@/lib/i18n-server";
-import { tr } from "@/lib/i18n";
-import Image from "next/image";
+import { redirect } from "next/navigation";
 
+/**
+ * مسار قديم: كان صفحة «امسح خذ هديتك» التي تلتقط الأرقام مقابل هدية.
+ * أُلغيت المنظومة كلها — الباركود صار يوصل لصفحة المطعم مباشرة ليأخذ الزبون دوره.
+ *
+ * أُبقي المسار محوِّلًا لا محذوفًا: ملصقات مطبوعة قديمة قد تكون معلّقة في مطعم،
+ * ومسحُها يجب أن يوصل للدور لا لصفحة خطأ. لا تحذف هذا الملف.
+ */
 export const dynamic = "force-dynamic";
 
-export default async function CheckinPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ b?: string }> }) {
+export default async function LegacyScanRedirect({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ b?: string }>;
+}) {
   const { slug } = await params;
-  const lang = await getLang();
-  const supabase = await createClient();
-
-  const { data: restaurant } = await supabase
-    .from("restaurants")
-    .select("name, name_en, logo_url, cover_url, cuisine, cuisine_en, is_active")
-    .eq("slug", slug)
-    .eq("is_active", true)
-    .maybeSingle();
-
-  if (!restaurant) notFound();
-
-  const name = tr(lang, restaurant.name, restaurant.name_en ?? restaurant.name);
-  const cuisine = tr(lang, restaurant.cuisine ?? "", restaurant.cuisine_en ?? "");
-  const initial = (restaurant.name ?? "").trim().charAt(0) || "م";
-
-  return (
-    <div className="min-h-full" style={{ background: "var(--background)" }}>
-      {/* هيدر المطعم */}
-      <header className="rq-header px-6 pb-16 pt-10 text-center">
-        <span className="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl font-serif text-4xl font-bold text-[color:var(--brand-maroon)] ring-1 ring-[rgba(120,30,12,0.14)]">
-          {restaurant.logo_url ? (
-            <Image src={restaurant.logo_url} alt="" width={64} height={64} sizes="64px" className="h-full w-full object-cover" />
-          ) : (
-            initial
-          )}
-        </span>
-        <h1 className="mt-4 font-display text-2xl font-bold text-[color:var(--brand-maroon)]">{name}</h1>
-        {cuisine && <p className="mt-1 text-sm font-medium text-[color:var(--brand-maroon)]/70">{cuisine}</p>}
-      </header>
-
-      <main className="mx-auto -mt-10 w-full max-w-md px-5 pb-16">
-        {/* التوجيه الذكي: معروف ← وضعه مع المطعم، جديد ← نموذج الخطوة الواحدة */}
-        <ScanLanding slug={slug} branchId={(await searchParams).b ?? ""} lang={lang} />
-
-        <p className="mt-8 text-center text-[11px] font-bold tracking-widest text-[color:var(--muted)]">
-          {tr(lang, "مقدّم من إيت", "Powered by EIGHT")}
-        </p>
-      </main>
-    </div>
-  );
+  const { b } = await searchParams;
+  redirect(b ? `/r/${slug}?branch=${b}` : `/r/${slug}`);
 }
