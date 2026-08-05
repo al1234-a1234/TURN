@@ -6,7 +6,7 @@ import { money } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 import { isFavorite, toggleFavorite } from "@/lib/local-store";
-import Image from "next/image";
+import { SmartImage } from "@/components/smart-image";
 
 type Item = {
   id: string;
@@ -150,11 +150,7 @@ export function RestaurantTabs({
   // هو الوجهة البصرية الآن، فلا نكرّره هنا لتفادي تعارض أسماء الانتقال.
   const LogoBox = ({ size }: { size: string }) => (
     <span className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-800 font-serif text-2xl font-bold text-cream-100`}>
-      {logo ? (
-        <Image src={logo} alt="" width={72} height={72} sizes="72px" className="h-full w-full object-cover" />
-      ) : (
-        initial
-      )}
+<SmartImage src={logo} fallbackText={initial} alt="" width={72} height={72} sizes="72px" className="h-full w-full object-cover" />
     </span>
   );
 
@@ -194,7 +190,7 @@ export function RestaurantTabs({
         {cover && (
           <div className="overflow-hidden rounded-[22px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <Image src={cover} alt="" width={828} height={416} sizes="(max-width: 640px) 100vw, 640px" className="h-52 w-full object-cover" />
+            <SmartImage src={cover} fallbackText={initial} alt="" width={828} height={416} sizes="(max-width: 640px) 100vw, 640px" className="h-52 w-full object-cover" />
           </div>
         )}
 
@@ -240,7 +236,7 @@ export function RestaurantTabs({
                           >
                             <span className="h-[76px] w-[76px] shrink-0 overflow-hidden rounded-2xl bg-[color:var(--surface-2)]">
                               {it.image_url && (
-                                <Image src={it.image_url} alt="" width={96} height={96} sizes="96px" className="h-full w-full object-cover" />
+                                <SmartImage src={it.image_url} fallbackText={it.name} alt="" width={96} height={96} sizes="96px" className="h-full w-full object-cover" />
                               )}
                             </span>
                             <div className="min-w-0 flex-1 text-right">
@@ -280,7 +276,7 @@ export function RestaurantTabs({
                 aria-label={tr(lang, "تكبير الصورة", "Zoom image")}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <Image src={openItem.image_url} alt={openItem.name} width={828} height={621} sizes="(max-width: 640px) 100vw, 640px" className="aspect-[4/3] w-full object-cover" />
+                <SmartImage src={openItem.image_url} fallbackText={openItem.name} alt={openItem.name} width={828} height={621} sizes="(max-width: 640px) 100vw, 640px" className="aspect-[4/3] w-full object-cover" />
                 <span className="absolute end-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/45 text-sm text-cream-100">⤢</span>
               </button>
             )}
@@ -320,7 +316,7 @@ export function RestaurantTabs({
           </button>
           <figure className="max-h-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <Image src={openItem.image_url} alt={openItem.name} width={1080} height={1080} sizes="100vw" className="max-h-[80vh] w-full rounded-2xl object-contain" />
+            <SmartImage src={openItem.image_url} fallbackText={openItem.name} alt={openItem.name} width={1080} height={1080} sizes="100vw" className="max-h-[80vh] w-full rounded-2xl object-contain" />
             <figcaption className="mt-3 text-center text-sm font-bold text-cream-100/90">{openItem.name}</figcaption>
           </figure>
         </div>

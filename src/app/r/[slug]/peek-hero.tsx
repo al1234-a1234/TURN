@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SmartImage } from "@/components/smart-image";
 import { readPeek, type Peek } from "@/lib/peek";
 import { useEffect, useState } from "react";
 import { toAr } from "@/lib/format";
@@ -31,7 +31,7 @@ export function PeekHero() {
     <div className="flex flex-col items-center">
       <span className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-brand-800 font-serif text-2xl font-bold text-cream-100 shadow-lg">
         {peek?.logo ? (
-          <Image src={peek.logo} alt="" width={80} height={80} sizes="80px" className="h-full w-full object-cover" />
+          <SmartImage src={peek.logo} fallbackText={peek.name} alt="" width={80} height={80} sizes="80px" className="h-full w-full object-cover" />
         ) : peek ? (
           initial
         ) : (
