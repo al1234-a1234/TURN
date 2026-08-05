@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requirePerm } from "../guard";
 
 export async function toggleReviewPublish(id: string, next: boolean) {
@@ -13,4 +13,5 @@ export async function toggleReviewPublish(id: string, next: boolean) {
   const brandWide = caller.role === "owner" || !caller.branchId;
   await (brandWide ? q.eq("restaurant_id", caller.restaurantId) : q.eq("branch_id", caller.branchId!));
   revalidatePath("/dashboard/reviews");
+  revalidateTag("discovery");
 }

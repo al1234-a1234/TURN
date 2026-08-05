@@ -20,6 +20,7 @@ export async function updateRestaurantInfo(formData: FormData) {
   if (name) patch.name = name;
   await supabase.from("restaurants").update(patch).eq("id", rid);
   revalidatePath("/dashboard/manage");
+  revalidateTag("discovery");
 }
 
 export async function updateBranchSettings(formData: FormData) {
@@ -50,9 +51,9 @@ export async function updateBranchSettings(formData: FormData) {
     .eq("branch_id", branchId);
 
   revalidatePath("/dashboard/manage");
+  revalidateTag("discovery");
   revalidatePath("/dashboard");
   // إغلاق الطابور/تغيير الدوام لازم يصل صفحات العميل المكاشة فورًا
-  revalidateTag("discovery");
   revalidatePath("/r/[slug]", "page");
 }
 
@@ -69,6 +70,7 @@ export async function addBranch(formData: FormData) {
   const address = String(formData.get("address") ?? "").trim() || null;
   await supabase.from("branches").insert({ restaurant_id: rid, name, city, address });
   revalidatePath("/dashboard/manage");
+  revalidateTag("discovery");
   revalidatePath("/dashboard");
 }
 
@@ -88,6 +90,7 @@ export async function deleteBranch(formData: FormData) {
   if ((count ?? 0) <= 1) return;
   await supabase.from("branches").delete().eq("id", id).eq("restaurant_id", rid);
   revalidatePath("/dashboard/manage");
+  revalidateTag("discovery");
   revalidatePath("/dashboard");
 }
 
@@ -101,6 +104,7 @@ export async function toggleMenuItem(formData: FormData) {
     .from("menu_items").update({ is_available: available })
     .eq("id", id).in("branch_id", await callerBranchIds(caller));
   revalidatePath("/dashboard/manage");
+  revalidateTag("discovery");
 }
 
 export async function addMenuCategory(formData: FormData) {
@@ -112,6 +116,7 @@ export async function addMenuCategory(formData: FormData) {
   if (!branchId) return;
   await caller.supabase.from("menu_categories").insert({ restaurant_id: caller.restaurantId, branch_id: branchId, name });
   revalidatePath("/dashboard/manage");
+  revalidateTag("discovery");
 }
 
 export async function deleteMenuCategory(id: string) {
@@ -121,6 +126,7 @@ export async function deleteMenuCategory(id: string) {
     .from("menu_categories").delete()
     .eq("id", id).in("branch_id", await callerBranchIds(caller));
   revalidatePath("/dashboard/manage");
+  revalidateTag("discovery");
 }
 
 export async function addMenuItem(formData: FormData) {
@@ -146,6 +152,7 @@ export async function addMenuItem(formData: FormData) {
     image_url,
   });
   revalidatePath("/dashboard/manage");
+  revalidateTag("discovery");
 }
 
 export async function deleteMenuItem(id: string) {
@@ -155,4 +162,5 @@ export async function deleteMenuItem(id: string) {
     .from("menu_items").delete()
     .eq("id", id).in("branch_id", await callerBranchIds(caller));
   revalidatePath("/dashboard/manage");
+  revalidateTag("discovery");
 }

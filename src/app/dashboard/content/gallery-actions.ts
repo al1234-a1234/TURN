@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requirePerm, resolveWriteBranch, callerBranchIds } from "../guard";
 
 export async function addRestaurantPhoto(url: string, caption?: string, branchId?: string) {
@@ -19,6 +19,7 @@ export async function addRestaurantPhoto(url: string, caption?: string, branchId
     sort_order: count ?? 0,
   });
   revalidatePath("/dashboard/content");
+  revalidateTag("discovery");
 }
 
 export async function deleteRestaurantPhoto(formData: FormData) {
@@ -32,4 +33,5 @@ export async function deleteRestaurantPhoto(formData: FormData) {
     .eq("id", id)
     .in("branch_id", await callerBranchIds(caller));
   revalidatePath("/dashboard/content");
+  revalidateTag("discovery");
 }
