@@ -16,9 +16,20 @@ export default async function TvPage({ params }: { params: Promise<{ id: string 
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data } = await supabase.rpc("tv_queue", { p_branch_id: id });
+  const { data, error } = await supabase.rpc("tv_queue", { p_branch_id: id });
   const rows = data ?? [];
   const meta = rows[0];
+
+  // فشل الاستدعاء كان يظهر «تأكد من الرابط» — فيذهب الموظّف يفتّش رابطًا سليمًا
+  // بينما العطل في الجلب. نفصل الحالتين: هنا خلل مؤقّت، وأسفله رابط لا فرع له.
+  if (error) {
+    console.error("[tv/[id]] tv_queue:", id, error.message);
+    return (
+      <div className="flex min-h-screen items-center justify-center" style={{ background: "var(--bg)" }}>
+        <p className="text-2xl font-bold text-[color:var(--muted)]">تعذّر التحميل — حدّث الصفحة.</p>
+      </div>
+    );
+  }
 
   if (!meta) {
     return (

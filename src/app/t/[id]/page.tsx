@@ -16,8 +16,23 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
   const { id } = await params;
 
   const supabase = await createClient();
-  const { data } = await supabase.rpc("waitlist_ticket_by_id", { p_entry_id: id });
+  const { data, error } = await supabase.rpc("waitlist_ticket_by_id", { p_entry_id: id });
   const row = Array.isArray(data) ? data[0] : data;
+
+  // «تعذّر الجلب» ليس «لا يوجد»: قول «لم نجد هذا الدور» لعميلٍ دورُه قائم
+  // يدفعه لمغادرة الطابور. عند فشل الاستدعاء نقول الحقيقة ونطلب التحديث.
+  if (error) {
+    console.error("[t/[id]] waitlist_ticket_by_id:", id, error.message);
+    return (
+      <CustomerShell active="other" search={false}>
+        <div className="rq-card p-10 text-center">
+          <span className="text-4xl">⚠️</span>
+          <p className="mt-3 text-lg font-bold text-[color:var(--ink)]">{tr(lang, "تعذّر التحميل", "Couldn’t load")}</p>
+          <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "دورك لم يضِع — حدّث الصفحة بعد لحظات.", "Your turn is safe — refresh the page in a moment.")}</p>
+        </div>
+      </CustomerShell>
+    );
+  }
 
   if (!row) {
     return (

@@ -42,12 +42,20 @@ export const getDiscovery = unstable_cache(
     ratings: Record<string, { sum: number; n: number }>;
   }> => {
     const sb = anon();
-    const { data: restaurants } = await sb
+    const { data: restaurants, error } = await sb
       .from("restaurants")
       .select("id, name, slug, logo_url, cover_url, cuisine, cuisine_en, branches(id, city, lat, lng, is_active, branch_settings(accepts_waitlist, manually_closed, busy_now, opening_hours))")
       .eq("is_active", true)
       .order("created_at", { ascending: false })
       .limit(60);
+
+    // نرمي ولا نرجّع فراغًا: unstable_cache لا يخزّن نتيجة دالةٍ رمت استثناءً،
+    // فتُعاد المحاولة في الطلب التالي — بينما «قائمة فارغة» كانت تتجمّد في الكاش
+    // فيرى كل الزوّار «لا مطاعم» طوال مدّة التقادم بسبب فشلٍ لحظي واحد.
+    if (error) {
+      console.error("[public-cache] getDiscovery restaurants:", error.message);
+      throw new Error(`getDiscovery: restaurants query failed — ${error.message}`);
+    }
 
     const list = ((restaurants ?? []) as DiscoveryRestaurant[])
       .map((r) => ({ ...r, branches: (r.branches ?? []).filter((b) => b.is_active) }))
@@ -56,8 +64,13 @@ export const getDiscovery = unstable_cache(
     const ratings: Record<string, { sum: number; n: number }> = {};
     if (list.length) {
       const ids = list.map((r) => r.id);
-      const { data: reviewRows } = await sb
+      const { data: reviewRows, error: reviewsError } = await sb
         .from("reviews").select("restaurant_id, rating").eq("is_published", true).in("restaurant_id", ids);
+      // فشل التقييمات ليس «صفر تقييمات»: تخزينه يمحو النجوم عن كل البطاقات
+      if (reviewsError) {
+        console.error("[public-cache] getDiscovery ratings:", reviewsError.message);
+        throw new Error(`getDiscovery: ratings query failed — ${reviewsError.message}`);
+      }
       for (const rr of reviewRows ?? []) {
         const a = ratings[rr.restaurant_id] ?? { sum: 0, n: 0 };
         a.sum += rr.rating; a.n += 1;
@@ -79,7 +92,12 @@ export const getDiscovery = unstable_cache(
 export const getHomeQueueCounts = unstable_cache(
   async (ids: string[]) => {
     if (!ids.length) return [] as { branch_id: string; total: number; inside: number; outside: number }[];
-    const { data } = await anon().rpc("waitlist_counts_for", { p_branch_ids: ids });
+    const { data, error } = await anon().rpc("waitlist_counts_for", { p_branch_ids: ids });
+    // «بلا عدّاد» أهون من «صفر واقفين» مكذوبٍ محفوظ في الكاش — نرمي فلا يُخزَّن
+    if (error) {
+      console.error("[public-cache] getHomeQueueCounts:", error.message);
+      throw new Error(`getHomeQueueCounts: rpc failed — ${error.message}`);
+    }
     return (data ?? []) as { branch_id: string; total: number; inside: number; outside: number }[];
   },
   ["home-queue-counts"],
@@ -96,11 +114,21 @@ export const getHomeQueueCounts = unstable_cache(
 export const getBranchContent = unstable_cache(
   async (branchId: string) => {
     const sb = anon();
-    const [{ data: categories }, { data: items }, { data: photos }] = await Promise.all([
+    const [categoriesRes, itemsRes, photosRes] = await Promise.all([
       sb.from("menu_categories").select("id, name").eq("branch_id", branchId).order("sort_order").order("created_at"),
       sb.from("menu_items").select("id, name, price, description, image_url, category_id").eq("branch_id", branchId).eq("is_available", true).order("created_at"),
       sb.from("restaurant_photos").select("id, url, caption").eq("branch_id", branchId).order("sort_order").order("created_at"),
     ]);
+    // فشلُ أيٍّ منها كان يظهر للزبون «مطعم بلا قائمة» — وهي كذبة تُخزَّن ٦٠ث
+    // وتُقدَّم لكل ماسحي الباركود. الرمي يمنع تخزينها فتُعاد المحاولة فورًا.
+    const { data: categories, error: categoriesError } = categoriesRes;
+    const { data: items, error: itemsError } = itemsRes;
+    const { data: photos, error: photosError } = photosRes;
+    const contentError = categoriesError ?? itemsError ?? photosError;
+    if (contentError) {
+      console.error("[public-cache] getBranchContent:", branchId, contentError.message);
+      throw new Error(`getBranchContent: branch content query failed — ${contentError.message}`);
+    }
     return {
       categories: (categories ?? []) as { id: string; name: string }[],
       items: (items ?? []) as { id: string; name: string; price: number | null; description: string | null; image_url: string | null; category_id: string }[],
@@ -117,9 +145,14 @@ export const getBranchContent = unstable_cache(
 export const getBranchStripPhotos = unstable_cache(
   async (branchIds: string[]) => {
     if (!branchIds.length) return {} as Record<string, string>;
-    const { data } = await anon()
+    const { data, error } = await anon()
       .from("restaurant_photos").select("url, branch_id")
       .in("branch_id", branchIds).order("sort_order").order("created_at");
+    // خريطة فارغة مخزَّنة = شريط فروعٍ بلا صور لكل الزوّار ٦٠ث بسبب فشلٍ عابر
+    if (error) {
+      console.error("[public-cache] getBranchStripPhotos:", error.message);
+      throw new Error(`getBranchStripPhotos: photos query failed — ${error.message}`);
+    }
     const map: Record<string, string> = {};
     for (const ph of data ?? []) if (!(ph.branch_id in map)) map[ph.branch_id] = ph.url;
     return map;
@@ -136,10 +169,15 @@ export const getBranchStripPhotos = unstable_cache(
  */
 export const getRestaurantReviews = unstable_cache(
   async (restaurantId: string) => {
-    const { data } = await anon()
+    const { data, error } = await anon()
       .from("reviews").select("rating, comment, created_at, customers(full_name)")
       .eq("restaurant_id", restaurantId).eq("is_published", true)
       .order("created_at", { ascending: false }).limit(200);
+    // «لا تقييمات» ظلمٌ لمطعمٍ له تقييمات — ولا يجوز تجميدها ٦٠ث في الكاش
+    if (error) {
+      console.error("[public-cache] getRestaurantReviews:", restaurantId, error.message);
+      throw new Error(`getRestaurantReviews: reviews query failed — ${error.message}`);
+    }
     const rows = (data ?? []) as { rating: number; comment: string | null; created_at: string; customers: { full_name: string } | { full_name: string }[] | null }[];
     const count = rows.length;
     const avg = count ? Math.round((rows.reduce((a, r) => a + r.rating, 0) / count) * 10) / 10 : 0;
@@ -163,12 +201,20 @@ export const getRestaurantReviews = unstable_cache(
  */
 export const getRestaurantMeta = unstable_cache(
   async (slug: string) => {
-    const { data } = await anon()
+    const { data, error } = await anon()
       .from("restaurants")
       .select("name, cuisine, logo_url, cover_url")
       .eq("slug", slug)
       .eq("is_active", true)
       .maybeSingle();
+    // هذه وحدها لا ترمي — بخلاف بقيّة دوال الملف. سبب الرمي هناك أن الفشل
+    // يُخزَّن فيُقدَّم للجميع؛ أمّا هنا فالمستدعي هو generateMetadata، والرمي
+    // فيه يُسقط صفحة المطعم كلّها من أجل عنوان معاينةٍ في واتساب. أن يفقد
+    // الرابط اسمه خمس دقائق أهون بكثير من أن يفقد الزبون صفحته.
+    if (error) {
+      console.error("[public-cache] getRestaurantMeta:", slug, error.message);
+      return null;
+    }
     return data;
   },
   ["restaurant-meta-v1"],

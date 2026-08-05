@@ -9,7 +9,7 @@ import { StatusToggle } from "./status-toggle";
 import { loadOwner, scopeBranchIds } from "../owner-context";
 import { staffHasPermission } from "@/lib/features";
 import { toAr } from "@/lib/format";
-import { tr } from "@/lib/i18n";
+import { tr, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 import { riyadhDayStart, isWithinOpeningHours } from "@/lib/dates";
 
@@ -29,8 +29,13 @@ export default async function ReceptionPage({
   if (!staffHasPermission(role, permissions, "waitlist")) redirect("/dashboard");
   const canViewCustomers = staffHasPermission(role, permissions, "customers");
 
-  const { data: branches } = await supabase
+  const { data: branches, error: branchesError } = await supabase
     .from("branches").select("id, name, city").eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at");
+  // «لا يوجد فرع نشِط» عند فشل الجلب تهمة للمالك بأنه لم يُنشئ فرعًا — نفصلها
+  if (branchesError) {
+    console.error("[reception] branches:", restaurant.id, branchesError.message);
+    return <LoadError lang={lang} />;
+  }
   // عزل الفرانشايز: حساب مربوط بفرع يرى فرعه فقط (بلا تبويبات)؛ غير المربوط يرى الكل
   const scopedIds = new Set(scopeBranchIds(load.ctx, (branches ?? []).map((b) => b.id)));
   const branchList = (branches ?? []).filter((b) => scopedIds.has(b.id));
@@ -43,7 +48,7 @@ export default async function ReceptionPage({
 
   const startToday = riyadhDayStart().toISOString();
 
-  const [{ data: queue }, todayRes, statusRes] = activeBranch
+  const [queueRes, todayRes, statusRes] = activeBranch
     ? await Promise.all([
         supabase
           .from("waitlist_entries")
@@ -57,7 +62,18 @@ export default async function ReceptionPage({
           .eq("branch_id", activeBranch.id).eq("status", "seated").gte("seated_at", startToday),
         supabase.from("branch_settings").select("manually_closed, busy_now, opening_hours").eq("branch_id", activeBranch.id).maybeSingle(),
       ])
-    : [{ data: [] }, { count: 0 }, { data: null }];
+    : [{ data: [], error: null }, { count: 0, error: null }, { data: null, error: null }];
+
+  // أخطر كذبة في الشاشة: طابور فارغ. الموظّف يقرأه «لا أحد ينتظر» فيتوقّف عن
+  // المناداة والناس واقفون. عند فشل الجلب نقول تعذّر التحميل ولا نرسم طابورًا.
+  const { data: queue, error: queueError } = queueRes;
+  if (queueError) {
+    console.error("[reception] waitlist_entries:", activeBranch?.id, queueError.message);
+    return <LoadError lang={lang} />;
+  }
+  // فشل عدّاد «خدمناهم اليوم» لا يعطّل الشاشة — لكن لا نعرض صفرًا مكذوبًا (٠ أسفل)
+  if (todayRes?.error) console.error("[reception] served-today count:", activeBranch?.id, todayRes.error.message);
+  if (statusRes?.error) console.error("[reception] branch_settings:", activeBranch?.id, statusRes.error.message);
 
   const list = queue ?? [];
 
@@ -67,9 +83,11 @@ export default async function ReceptionPage({
   // عبر RPC لا قراءة مباشرة: سياسة customer_rewards تشترط صلاحية customers،
   // وموظّف الاستقبال يملك waitlist فقط — فكانت الشارة ترجع صفرًا بصمت له.
   const queuedIds = new Set(list.map((q) => q.customer_id).filter(Boolean));
-  const { data: armedGifts } = activeBranch
+  const { data: armedGifts, error: giftsError } = activeBranch
     ? await supabase.rpc("reception_armed_gifts", { p_branch_id: activeBranch.id })
-    : { data: [] };
+    : { data: [], error: null };
+  // شارة الهدية زينة على البطاقة لا ادّعاء بذاتها — فشلها يُسجَّل ولا يحجب الطابور
+  if (giftsError) console.error("[reception] reception_armed_gifts:", activeBranch?.id, giftsError.message);
   const giftsFor = new Map<string, string[]>();
   for (const g of armedGifts ?? []) {
     if (!g.customer_id || !queuedIds.has(g.customer_id)) continue;
@@ -192,7 +210,8 @@ export default async function ReceptionPage({
             <Stat label={tr(lang, "في الطابور الآن", "In queue now")} value={toAr(list.length)} tone="var(--brand-d)" />
             <Stat label={tr(lang, "طابور داخلي", "Indoor queue")} value={toAr(inside.length)} tone="var(--brand-d)" />
             <Stat label={tr(lang, "طابور خارجي", "Outdoor queue")} value={toAr(outside.length)} tone="var(--brand)" />
-            <Stat label={tr(lang, "خدمناهم اليوم", "Served today")} value={toAr(servedToday)} tone="var(--brand)" />
+            {/* شرطة بدل صفرٍ كاذب: «خدمنا ٠ اليوم» رقمٌ يُبنى عليه قرار، لا فراغ */}
+            <Stat label={tr(lang, "خدمناهم اليوم", "Served today")} value={todayRes?.error ? "—" : toAr(servedToday)} tone="var(--brand)" />
           </div>
 
           <RewardBox />
@@ -213,6 +232,19 @@ export default async function ReceptionPage({
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * رسالة فشل الجلب — تُقال حين نجهل الحقيقة، لا حين نعرف أن لا شيء هناك.
+ * فصلها عن «لا أحد بالانتظار» يمنع الموظّف من التصرّف بناءً على فراغٍ كاذب.
+ */
+function LoadError({ lang }: { lang: Lang }) {
+  return (
+    <div className="soft-card py-12 text-center">
+      <p className="text-sm font-bold text-[color:var(--ink)]">{tr(lang, "تعذّر التحميل — حدّث الصفحة.", "Couldn’t load — refresh the page.")}</p>
+      <p className="mt-1 text-xs text-[color:var(--muted)]">{tr(lang, "لم نستطع قراءة البيانات؛ هذه ليست شاشة فارغة.", "We couldn’t read the data; this is not an empty screen.")}</p>
+    </div>
   );
 }
 

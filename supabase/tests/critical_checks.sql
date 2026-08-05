@@ -133,7 +133,68 @@ with checks(name, pass) as (
                                  join public.customers c on c.id = w.customer_id
                                  cross join lateral public.waitlist_ticket_status(w.id, c.phone) t
                                  where w.status in ('waiting','notified')
-                                   and t."position" is distinct from t.ahead + 1))
+                                   and t."position" is distinct from t.ahead + 1)),
+
+-- ══════════════════════════════════════════════════════════════════════════
+--  العشرون الثقيلة — كل فحص هنا يحرس نتيجةً اكتُشفت في تدقيق العشرين سؤالًا.
+--  الغرض ألّا يعود عطبٌ أُصلح، ولا ينكشف ما أُغلق، بلا أن ينتبه أحد.
+-- ══════════════════════════════════════════════════════════════════════════
+
+  -- (١) دالة تقاعد العملاء: كانت مكشوفة لـ anon بلا حارس — تمحو بيانات الجميع
+  ('q01_retire_locked_anon',   not has_function_privilege('anon','public.retire_dormant_customers(integer)','EXECUTE')),
+  ('q02_retire_locked_auth',   not has_function_privilege('authenticated','public.retire_dormant_customers(integer)','EXECUTE')),
+  -- (٣) نسخة الهدايا القديمة كانت تُرجع رمز الهديّة لأي رقم يُكتب
+  ('q03_old_rewards_locked',   not has_function_privilege('anon','public.get_customer_rewards(text)','EXECUTE')),
+  -- (٤) RLS على كل جدول بلا استثناء — جدول واحد بلا حماية = القاعدة مكشوفة
+  ('q04_rls_every_table',      not exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+                                          where n.nspname='public' and c.relkind='r' and not c.relrowsecurity)),
+  -- (٥) سطح الدوال المكشوفة للضيف لا يتوسّع خلسةً (٣٥ اليوم)
+  ('q05_secdef_anon_surface',  (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+                                where n.nspname='public' and p.prokind='f' and p.prosecdef
+                                  and has_function_privilege('anon',p.oid,'EXECUTE')) <= 35),
+  -- (٦) مهلة الاستعلام: بدونها استعلامٌ جامح من لوحةٍ واحدة يُبطئ كل المطاعم
+  ('q06_anon_stmt_timeout',    (select coalesce((select option_value from pg_options_to_table(rolconfig)
+                                                 where option_name='statement_timeout'),'') <> ''
+                                from pg_roles where rolname='anon')),
+  -- (٧) سقف عدد الأشخاص — كان بلا حدّ أعلى يفسد متوسّطات التقارير
+  ('q07_party_size_capped',    exists(select 1 from pg_constraint where conname='waitlist_entries_party_size_max')),
+  -- (٨،٩) حدود الطول: اسم العميل يكتبه ضيف مجهول وكان بلا سقف في أي طبقة
+  ('q08_customer_name_len',    exists(select 1 from pg_constraint where conname='customers_full_name_len')),
+  ('q09_menu_text_len',        exists(select 1 from pg_constraint where conname='menu_items_name_len')),
+  -- (١٠) التخزين: صور فقط — SVG/HTML مرفوعان يُنفَّذان كسكربت من نطاقنا
+  ('q10_storage_images_only',  not exists(select 1 from storage.buckets
+                                          where allowed_mime_types is null
+                                             or 'image/svg+xml' = any(allowed_mime_types)
+                                             or 'text/html'     = any(allowed_mime_types))),
+  -- (١١) سقف حجم الرفع — بدونه ملفٌ ضخم واحد يفجّر التكلفة
+  ('q11_storage_size_capped',  not exists(select 1 from storage.buckets where file_size_limit is null)),
+  -- (١٢،١٣،١٤) الموظّف المفصول يفقد وصوله فورًا: الفحص في كل طلب لا في الرمز
+  ('q12_staff_checks_active',  (select pg_get_functiondef(oid) ilike '%is_active%' from pg_proc where proname='is_staff_of')),
+  ('q13_perm_checks_active',   (select pg_get_functiondef(oid) ilike '%is_active%' from pg_proc where proname='staff_has_perm')),
+  ('q14_branches_check_active',(select pg_get_functiondef(oid) ilike '%is_active%' from pg_proc where proname='my_branch_ids')),
+  -- (١٥) سقف ازدحام الفرع ٦٠٠/دقيقة — عند ٦٠ كان يُرفض ٤٤٠ عميلًا في الافتتاح
+  ('q15_join_burst_600',       (select pg_get_functiondef(oid) like '%600, interval ''1 minute''%'
+                                from pg_proc where proname='join_waitlist_guest')),
+  -- (١٦،١٧) دالة الانضمام تقصّ المدخلات بهدوء فلا يُرفض عميل حقيقي
+  ('q16_join_clamps_party',    (select pg_get_functiondef(oid) like '%least(greatest%' from pg_proc where proname='join_waitlist_guest')),
+  ('q17_join_clamps_name',     (select pg_get_functiondef(oid) like '%left(trim(p_full_name), 120)%' from pg_proc where proname='join_waitlist_guest')),
+  -- (١٨) وظائف الليل كلها قائمة — سقوط واحدة يوقف التقارير أو الاسترجاع بصمت
+  ('q18_cron_jobs_present',    (select count(*) from cron.job) >= 7),
+  -- (١٩) سلامة إحالية: لا صفّ طابور بلا فرع (حذف الفرع صار ناعمًا لحفظ التاريخ)
+  ('q19_no_orphan_waitlist',   not exists(select 1 from public.waitlist_entries w
+                                          left join public.branches b on b.id = w.branch_id
+                                          where b.id is null)),
+  -- (٢٠) مرجع المخطط: أي انحراف عن البصمة المثبَّتة يظهر هنا قبل أن يفاجئنا
+  --      (٢٣ جدولًا · ٧٠ دالة · ٥٩ سياسة · ٣٨ مفتاحًا أجنبيًّا) — راجع
+  --      supabase/tests/schema_baseline.md وحدّثه عمدًا عند أي تغيير مقصود
+  ('q20_schema_no_drift',      (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
+                                where n.nspname='public' and c.relkind='r') = 23
+                               and (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+                                    where n.nspname='public' and p.prokind='f') = 70
+                               and (select count(*) from pg_policies where schemaname='public') = 59
+                               and (select count(*) from pg_constraint c join pg_class r on r.oid=c.conrelid
+                                    join pg_namespace n on n.oid=r.relnamespace
+                                    where n.nspname='public' and c.contype='f') = 38)
 )
 select name, pass,
   case when pass then '✓' else '✗ FAIL' end as mark
