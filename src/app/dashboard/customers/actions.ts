@@ -4,11 +4,10 @@ import { revalidatePath } from "next/cache";
 import { requirePerm } from "../guard";
 import type { TablesUpdate } from "@/lib/supabase/database.types";
 
-const TIERS = ["regular", "silver", "gold"];
 
 export async function updateCustomerProfile(
   customerId: string,
-  patch: { is_vip?: boolean; tier?: string; note?: string | null; is_blocked?: boolean },
+  patch: { is_vip?: boolean; note?: string | null; is_blocked?: boolean },
 ) {
   const caller = await requirePerm("customers");
   if (!caller || !customerId) return;
@@ -16,7 +15,6 @@ export async function updateCustomerProfile(
   const update: TablesUpdate<"customer_restaurant"> = {};
   if (patch.is_vip !== undefined) update.is_vip = patch.is_vip;
   if (patch.is_blocked !== undefined) update.is_blocked = patch.is_blocked;
-  if (patch.tier !== undefined && TIERS.includes(patch.tier)) update.tier = patch.tier;
   if (patch.note !== undefined) update.note = patch.note?.trim() || null;
   if (Object.keys(update).length === 0) return;
 
@@ -139,4 +137,41 @@ export async function redeemReward(formData: FormData) {
     .eq("restaurant_id", caller.restaurantId)
     .eq("status", "active");
   revalidatePath(`/dashboard/customers/${customerId}`);
+}
+
+/**
+ * ضبط هدية الاسترجاع التلقائية.
+ *
+ * كانت تُضبط في صفحة «الولاء» بين النقاط والعتبات وسقطت معها. الاسترجاع
+ * منحُ هدية لمن غاب — فمكانه حيث تُمنح الهدايا، والكرون الليلي يتكفّل
+ * بالباقي عبر run_auto_winback().
+ */
+export async function saveWinback(formData: FormData): Promise<boolean> {
+  const caller = await requirePerm("customers");
+  if (!caller) return false;
+
+  const isActive = formData.get("is_active") === "1";
+  const title = String(formData.get("title") ?? "").trim().slice(0, 80);
+  const rawDays = Number(String(formData.get("days_inactive") ?? "").replace(/\D/g, ""));
+  const rawValue = String(formData.get("value") ?? "").replace(/[^\d.]/g, "");
+
+  // القاعدة تفرض ٧–٣٦٥ بقيد check؛ نقصّه هنا أيضًا كي لا يرتدّ الحفظ بخطأ خام
+  const days = Number.isFinite(rawDays) && rawDays > 0 ? Math.min(365, Math.max(7, rawDays)) : 30;
+  const value = rawValue === "" ? null : Math.min(100, Math.max(1, Number(rawValue)));
+
+  const { error } = await caller.supabase.from("winback_settings").upsert(
+    {
+      restaurant_id: caller.restaurantId,
+      is_active: isActive,
+      title: title || "اشتقنا لك — هدية عودة 🎁",
+      value,
+      value_kind: "percent",
+      days_inactive: days,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "restaurant_id" },
+  );
+
+  revalidatePath("/dashboard/customers");
+  return !error;
 }

@@ -48,7 +48,7 @@ export default async function PrivacyPage() {
       ],
       enB: [
         "The restaurant where you took a turn sees your name, number, and approximate distance — only for the branch you visited.",
-        "Your loyalty points and rewards are visible only to the restaurant that granted them.",
+        "Your gifts are visible only to the restaurant that granted them.",
       ],
     },
     {

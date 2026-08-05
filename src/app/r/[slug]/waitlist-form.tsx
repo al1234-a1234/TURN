@@ -410,7 +410,7 @@ export function WaitlistForm({
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" /><path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
           </span>
           <p className="text-lg font-bold text-[color:var(--ink)]">{tr(lang, "هذا الفرع يستقبل مباشرة — بلا حجز دور", "This branch welcomes walk-ins — no queue needed")}</p>
-          <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "تفضّل مباشرة. وعند الطاولة امسح رمز «امسح خذ هديتك» لتسجيل زيارتك ونقاطك 🎁", "Just come in. At the table, scan the gift QR to log your visit and points 🎁")}</p>
+          <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "تفضّل مباشرة — طاولتك جاهزة.", "Just come in — your table is ready.")}</p>
         </div>
       </div>
     );

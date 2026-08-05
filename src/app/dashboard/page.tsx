@@ -35,7 +35,7 @@ export default async function OverviewPage() {
       .from("customer_restaurant")
       // !inner: RLS على customers يقصر النتيجة على من زار فروع المتصل،
       // فلا تختلط أرقام العلامة بأرقام الفرع ولا تظهر أسماء فارغة
-      .select("visits, is_vip, tier, points, customers!inner(full_name)")
+      .select("visits, is_vip, customers!inner(full_name)")
       .eq("restaurant_id", restaurant.id)
       .order("visits", { ascending: false }),
     branchIds.length
@@ -56,7 +56,7 @@ export default async function OverviewPage() {
   const avgRating = ratings.length ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10 : 0;
 
   // ===== العملاء =====
-  const profRows = (profiles.data ?? []) as { visits: number; is_vip: boolean; tier: string; points: number; customers: { full_name: string } | { full_name: string }[] | null }[];
+  const profRows = (profiles.data ?? []) as { visits: number; is_vip: boolean; customers: { full_name: string } | { full_name: string }[] | null }[];
   const totalCustomers = profRows.length;
   const returning = profRows.filter((p) => p.visits >= 2).length;
   const returningPct = totalCustomers ? Math.round((returning / totalCustomers) * 100) : 0;

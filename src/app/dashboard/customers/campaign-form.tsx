@@ -6,7 +6,7 @@ import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 
-type Counts = { all: number; vip: number; gold: number; silver: number; returning: number };
+type Counts = { all: number; vip: number; returning: number; new: number; dormant: number };
 
 export function CampaignForm({ counts }: { counts: Counts }) {
   const lang = useLang();
@@ -17,9 +17,9 @@ export function CampaignForm({ counts }: { counts: Counts }) {
   const SEG: { key: keyof Counts; ar: string; en: string }[] = [
     { key: "all", ar: "الكل", en: "All" },
     { key: "vip", ar: "VIP", en: "VIP" },
-    { key: "gold", ar: "ذهبي", en: "Gold" },
-    { key: "silver", ar: "فضّي", en: "Silver" },
     { key: "returning", ar: "عائدون", en: "Returning" },
+    { key: "new", ar: "جدد", en: "New" },
+    { key: "dormant", ar: "غائبون", en: "Dormant" },
   ];
 
   if (!open) {

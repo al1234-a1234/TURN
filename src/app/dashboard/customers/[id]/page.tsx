@@ -20,8 +20,6 @@ type CustomerRow = {
 
 type ProfileRow = {
   visits: number;
-  points: number;
-  tier: string;
   is_vip: boolean;
   is_blocked: boolean;
   no_shows: number;
@@ -65,12 +63,6 @@ type RewardRow = {
   created_at: string;
 };
 
-const TIER_META: Record<string, { label: string; labelEn: string; color: string; bg: string }> = {
-  vip: { label: "VIP", labelEn: "VIP", color: "var(--brand-solid)", bg: "rgba(120,30,12,0.10)" },
-  gold: { label: "ذهبي", labelEn: "Gold", color: "var(--star)", bg: "rgba(169,114,30,0.12)" },
-  silver: { label: "فضي", labelEn: "Silver", color: "var(--muted)", bg: "rgba(120,30,12,0.05)" },
-  regular: { label: "عادي", labelEn: "Regular", color: "var(--muted)", bg: "var(--surface-2)" },
-};
 
 function rewardValueLabel(r: RewardRow, lang: "ar" | "en"): string {
   if (r.kind !== "discount" || r.value == null) return "";
@@ -132,7 +124,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   // اسم الفرع لكل سطر — بعد فصل الفروع صار ضروريًّا معرفة أي فرع زاره
   const branchName = new Map((branchRows ?? []).map((b) => [b.id, b.name]));
 
-  const [customerRes, profileRes, visitsRes, reservationsRes, rewardsRes, reviewsRes, checkinsRes] = await Promise.all([
+  const [customerRes, profileRes, visitsRes, reservationsRes, rewardsRes, reviewsRes] = await Promise.all([
     supabase.from("customers").select("id, full_name, phone, email, created_at").eq("id", id).maybeSingle(),
     supabase
       .from("customer_restaurant")
@@ -168,13 +160,6 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
       .eq("customer_id", id)
       .order("created_at", { ascending: false })
       .limit(300),
-    supabase
-      .from("checkins")
-      .select("id, created_at, source, branch_id")
-      .in("branch_id", branchIds.length ? branchIds : [NO_BRANCH])
-      .eq("customer_id", id)
-      .order("created_at", { ascending: false })
-      .limit(300),
   ]);
 
   const customer = customerRes.data as CustomerRow | null;
@@ -185,9 +170,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   const reservations = (reservationsRes.data ?? []) as ReservationRow[];
   const rewards = (rewardsRes.data ?? []) as RewardRow[];
   const reviews = (reviewsRes.data ?? []) as { id: string; rating: number; comment: string | null; created_at: string; is_published: boolean }[];
-  const checkins = (checkinsRes.data ?? []) as { id: string; created_at: string; source: string; branch_id: string | null }[];
 
-  const tm = TIER_META[profile?.tier ?? "regular"] ?? TIER_META.regular;
   const name = customer.full_name?.trim() || tr(lang, "عميل", "Customer");
 
   return (
@@ -201,7 +184,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
           <div className="flex items-center gap-4">
             <span
               className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl font-display text-2xl font-bold"
-              style={{ background: tm.bg, color: tm.color }}
+              style={{ background: "var(--surface-2)", color: "var(--brand-solid)" }}
             >
               {name.charAt(0) || tr(lang, "؟", "?")}
             </span>
@@ -224,12 +207,6 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                     {tr(lang, "محظور", "Blocked")}
                   </span>
                 )}
-                <span
-                  className="rounded-full px-2 py-0.5 text-xs font-bold"
-                  style={{ background: tm.bg, color: tm.color }}
-                >
-                  {tr(lang, tm.label, tm.labelEn)}
-                </span>
               </div>
               <p className="mt-1 text-sm text-[color:var(--muted)]" dir="ltr">
                 {customer.phone || "—"}
@@ -247,13 +224,12 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
             <p className="mt-5 rounded-2xl px-3 py-2 text-[11px] font-bold"
                style={{ background: "var(--surface-2)", color: "var(--muted)", border: "1px solid rgba(102,28,10,0.12)" }}>
               {tr(lang,
-                "الزيارات والنقاط تُحسب على مستوى العلامة (تشمل بقيّة الفروع)، أمّا السجلّ أدناه فزياراته في فرعك وحده.",
-                "Visits and points are counted brand-wide (including other branches); the history below is this branch only.")}
+                "الزيارات تُحسب على مستوى العلامة (تشمل بقيّة الفروع)، أمّا السجلّ أدناه فزياراته في فرعك وحده.",
+                "Visits are counted brand-wide (including other branches); the history below is this branch only.")}
             </p>
           )}
           <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Kpi label={tr(lang, "الزيارات", "Visits")} value={toAr(profile?.visits ?? 0)} tone="var(--brand-d)" />
-            <Kpi label={tr(lang, "النقاط", "Points")} value={toAr(profile?.points ?? 0)} tone="var(--st-open)" />
             <Kpi
               label={tr(lang, "تغيّبات", "No-shows")}
               value={toAr(profile?.no_shows ?? 0)}
@@ -443,35 +419,6 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                       {tr(lang, "غير منشور", "Unpublished")}
                     </span>
                   )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        {/* ===== تسجيلات «امسح خذ هديتك» ===== */}
-        <section>
-          <h2 className="mb-3 font-display text-lg font-bold text-[color:var(--ink)]">
-            {tr(lang, "تسجيلات المسح", "Scan check-ins")} <span className="text-sm font-bold text-[color:var(--muted)]">({toAr(checkins.length)})</span>
-          </h2>
-          {checkins.length === 0 ? (
-            <div className="soft-card p-6 text-center text-sm text-[color:var(--muted)]">
-              {tr(lang, "لم يسجّل عبر المسح بعد.", "No scan check-ins yet.")}
-            </div>
-          ) : (
-            <ul className="space-y-2">
-              {checkins.map((ci) => (
-                <li key={ci.id} className="soft-card flex items-center justify-between gap-3 p-3.5">
-                  <div className="min-w-0">
-                    <p className="font-bold text-[color:var(--ink)]">{fmtDateTime(ci.created_at, lang)}</p>
-                    <p className="mt-0.5 text-xs text-[color:var(--muted)]">
-                      {ci.branch_id ? (branchName.get(ci.branch_id) ?? tr(lang, "فرع", "Branch")) : tr(lang, "غير محدّد", "Unspecified")}
-                    </p>
-                  </div>
-                  <span className="shrink-0 rounded-full px-2.5 py-1 text-xs font-bold"
-                        style={{ background: "var(--surface-2)", color: "var(--brand-d)" }}>
-                    📷 {tr(lang, "مسح", "Scan")}
-                  </span>
                 </li>
               ))}
             </ul>

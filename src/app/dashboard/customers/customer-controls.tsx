@@ -7,36 +7,28 @@ import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 
 // الشرائح: عادي/فضي/ذهبي فقط — و«VIP» علامة مستقلّة (is_vip) لا شريحة، لتفادي ازدواج الاستهداف
-const TIER_OPTIONS: { value: string; label: string; labelEn: string }[] = [
-  { value: "regular", label: "عادي", labelEn: "Regular" },
-  { value: "silver", label: "فضي", labelEn: "Silver" },
-  { value: "gold", label: "ذهبي", labelEn: "Gold" },
-];
 
 export function CustomerControls({
   customerId,
   isVip,
-  tier,
   note,
   visits,
 }: {
   customerId: string;
   isVip: boolean;
-  tier: string;
   note: string | null;
   visits: number;
 }) {
   const lang = useLang();
   const [open, setOpen] = useState(false);
   const [vip, setVip] = useState(isVip);
-  const [tierVal, setTierVal] = useState(tier);
   const [noteVal, setNoteVal] = useState(note ?? "");
   const [pending, start] = useTransition();
   const [saved, setSaved] = useState(false);
 
   const save = () =>
     start(async () => {
-      await updateCustomerProfile(customerId, { is_vip: vip, tier: tierVal, note: noteVal });
+      await updateCustomerProfile(customerId, { is_vip: vip, note: noteVal });
       setSaved(true);
       setTimeout(() => setSaved(false), 1600);
     });
@@ -65,15 +57,6 @@ export function CustomerControls({
             >
               <span className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-[color:var(--surface)] shadow transition-all" style={{ insetInlineStart: vip ? "1.55rem" : "0.2rem" }} />
             </button>
-          </div>
-
-          <div>
-            <label className="field-label">{tr(lang, "الشريحة", "Tier")}</label>
-            <select value={tierVal} onChange={(e) => setTierVal(e.target.value)} className="field-input">
-              {TIER_OPTIONS.map((t) => (
-                <option key={t.value} value={t.value}>{tr(lang, t.label, t.labelEn)}</option>
-              ))}
-            </select>
           </div>
 
           <div>

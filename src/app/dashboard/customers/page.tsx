@@ -4,6 +4,7 @@ import { loadOwner } from "../owner-context";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { CustomerControls } from "./customer-controls";
 import { CampaignForm } from "./campaign-form";
+import { WinbackForm } from "./winback-form";
 import { toAr, normalizePhone } from "@/lib/format";
 import { daysAgoLabel } from "@/lib/dates";
 import { tr } from "@/lib/i18n";
@@ -14,24 +15,16 @@ type Profile = Database["public"]["Tables"]["customer_restaurant"]["Row"] & {
   customers: { full_name: string; phone: string } | { full_name: string; phone: string }[] | null;
 };
 
-const TIER_META: Record<string, { label: string; color: string; bg: string }> = {
-  vip: { label: "VIP", color: "var(--brand-solid)", bg: "rgba(120,30,12,0.10)" },
-  gold: { label: "ذهبي", color: "var(--star)", bg: "rgba(169,114,30,0.12)" },
-  silver: { label: "فضي", color: "var(--muted)", bg: "rgba(120,30,12,0.05)" },
-  regular: { label: "عادي", color: "var(--muted)", bg: "var(--surface-2)" },
-};
-const TIER_LABEL_EN: Record<string, string> = { vip: "VIP", gold: "Gold", silver: "Silver", regular: "Regular" };
 
 // الشرائح المتاحة للفلترة — تجيب على أسئلة المالك الفعلية:
 // من المميّز؟ من عنده هدية لم تُستخدم؟ من اقترب من مكافأة الولاء؟ من يتغيّب؟ من انقطع؟
-const SEGMENTS = ["all", "vip", "gifts", "near", "noshow", "inactive", "blocked"] as const;
+const SEGMENTS = ["all", "vip", "gifts", "noshow", "inactive", "blocked"] as const;
 type Segment = (typeof SEGMENTS)[number];
 
 const SEG_LABEL: Record<Segment, { ar: string; en: string }> = {
   all: { ar: "الكل", en: "All" },
   vip: { ar: "VIP", en: "VIP" },
   gifts: { ar: "لهم هدايا", en: "Have gifts" },
-  near: { ar: "قريبون من مكافأة", en: "Near reward" },
   noshow: { ar: "متغيّبون", en: "No-shows" },
   inactive: { ar: "منقطعون +30 يوم", en: "Inactive 30d+" },
   blocked: { ar: "محظورون", en: "Blocked" },
@@ -72,20 +65,23 @@ export default async function CustomersPage({
     .limit(500);
   let list = (data ?? []) as Profile[];
 
-  // من لديهم هدايا فعّالة + عتبة الولاء (لشريحتي «لهم هدايا» و«قريبون من مكافأة»)
-  const [{ data: activeRewards }, { data: loyalty }] = await Promise.all([
-    supabase.from("customer_rewards").select("customer_id").eq("restaurant_id", restaurant.id).eq("status", "active"),
-    supabase.from("loyalty_programs").select("reward_threshold").eq("restaurant_id", restaurant.id).eq("is_active", true).maybeSingle(),
-  ]);
+  // من لديهم هدايا فعّالة (لشريحة «لهم هدايا»)
+  const { data: activeRewards } = await supabase
+    .from("customer_rewards").select("customer_id")
+    .eq("restaurant_id", restaurant.id).eq("status", "active");
   const giftedIds = new Set((activeRewards ?? []).map((r) => r.customer_id));
-  const threshold = loyalty?.reward_threshold ?? 0;
+
+  const { data: winback } = await supabase
+    .from("winback_settings")
+    .select("is_active, title, value, value_kind, days_inactive")
+    .eq("restaurant_id", restaurant.id)
+    .maybeSingle();
   const cutoff30 = Date.now() - 30 * 864e5;
 
   const matches = (p: Profile, s: Segment): boolean => {
     switch (s) {
       case "vip": return p.is_vip;
       case "gifts": return giftedIds.has(p.customer_id);
-      case "near": return threshold > 0 && !p.is_blocked && p.points >= Math.ceil(threshold * 0.7) && p.points < threshold;
       case "noshow": return p.no_shows >= 2;
       case "inactive": return !!p.last_visit && new Date(p.last_visit).getTime() < cutoff30;
       case "blocked": return p.is_blocked;
@@ -103,19 +99,20 @@ export default async function CustomersPage({
   // عدّادات الحملة الفعلية من القاعدة — الحملة تُرسَل للشريحة كاملة في
   // الخادم، وكان العدّ من شريحة الـ٥٠٠ المعروضة فقط: مالكٌ عنده ٣٠٠٠ عميل
   // يقرأ «ستصل ٥٠٠» ثم تصل ٣٠٠٠ هدية ممولة. count رأسي رخيص بلا صفوف.
-  const [allCount, vipCount, goldCount, silverCount, returningCount] = await Promise.all([
+  const dormantSince = new Date(cutoff30).toISOString();
+  const [allCount, vipCount, returningCount, newCount, dormantCount] = await Promise.all([
     supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id),
     supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).eq("is_vip", true),
-    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).eq("tier", "gold"),
-    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).eq("tier", "silver"),
     supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).gte("visits", 2),
+    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).lte("visits", 1),
+    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).lt("last_visit", dormantSince),
   ]);
   const campaignCounts = {
     all: allCount.count ?? segCounts.all,
     vip: vipCount.count ?? vips,
-    gold: goldCount.count ?? 0,
-    silver: silverCount.count ?? 0,
     returning: returningCount.count ?? 0,
+    new: newCount.count ?? 0,
+    dormant: dormantCount.count ?? 0,
   };
 
   const hrefFor = (s: Segment) => `/dashboard/customers?seg=${s}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
@@ -167,6 +164,8 @@ export default async function CustomersPage({
 
         <CampaignForm counts={campaignCounts} />
 
+        <WinbackForm initial={winback} />
+
         {list.length === 0 ? (
           <div className="soft-card py-10 text-center">
             <p className="text-2xl">👥</p>
@@ -183,14 +182,13 @@ export default async function CustomersPage({
           <ul className="space-y-3">
             {list.map((p) => {
               const c = Array.isArray(p.customers) ? p.customers[0] : p.customers;
-              const tm = TIER_META[p.tier] ?? TIER_META.regular;
               const name = c?.full_name ?? tr(lang, "عميل", "Customer");
               return (
                 <li key={p.customer_id} className="soft-card p-4">
                   <Link href={`/dashboard/customers/${p.customer_id}`} className="flex items-center gap-3">
                     <span
                       className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-lg font-bold"
-                      style={{ background: tm.bg, color: tm.color }}
+                      style={{ background: "var(--surface-2)", color: "var(--brand-solid)" }}
                     >
                       {name.trim().charAt(0) || tr(lang, "؟", "?")}
                     </span>
@@ -205,12 +203,8 @@ export default async function CustomersPage({
                       </div>
                       <p className="text-sm text-[color:var(--muted)]" dir="ltr">{c?.phone ?? "—"}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-[color:var(--muted)]">
-                        <span className="rounded-full px-2 py-0.5 font-bold" style={{ background: tm.bg, color: tm.color }}>{tr(lang, tm.label, TIER_LABEL_EN[p.tier] ?? tm.label)}</span>
                         <span>{tr(lang, `${toAr(p.visits)} زيارة`, `${toAr(p.visits)} visits`)}</span>
                         <span>· {tr(lang, `آخر زيارة ${daysAgoLabel(p.last_visit, "ar")}`, `Last visit ${daysAgoLabel(p.last_visit, "en")}`)}</span>
-                        {threshold > 0 && p.points > 0 && (
-                          <span style={{ color: "var(--brand-d)" }}>· {tr(lang, `${toAr(p.points)}/${toAr(threshold)} نقطة`, `${toAr(p.points)}/${toAr(threshold)} pts`)}</span>
-                        )}
                         {p.no_shows > 0 && <span className="text-[color:var(--st-closed)]">· {tr(lang, `${toAr(p.no_shows)} تغيّب`, `${toAr(p.no_shows)} no-shows`)}</span>}
                       </div>
                       {p.tags && p.tags.length > 0 && (
@@ -226,7 +220,6 @@ export default async function CustomersPage({
                   <CustomerControls
                     customerId={p.customer_id}
                     isVip={p.is_vip}
-                    tier={p.tier}
                     note={p.note}
                     visits={p.visits}
                   />
