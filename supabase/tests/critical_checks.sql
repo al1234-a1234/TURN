@@ -192,6 +192,15 @@ with checks(name, pass) as (
   ('q22_status_guard',         exists(select 1 from pg_trigger t join pg_class c on c.oid=t.tgrelid
                                       where c.relname='waitlist_entries'
                                         and t.tgname='trg_guard_waitlist_status')),
+  -- (٢٣،٢٤) أهداف الإشعار لا تُسلَّم لعميلٍ مجهول: كانت تُعيد بيانات اشتراك كل
+  --          من في الفرع (endpoint = بصمة جهازٍ ثابتة)، وticket_cancel لا تطلب
+  --          رقمًا أصلًا — يكفيها صفٌّ مُلغى، وهو شرطٌ يصنعه المهاجم بنفسه عبر
+  --          cancel_by_ticket. الخادم يستدعيهما الآن بمفتاح الخدمة وحده.
+  ('q23_push_targets_locked',  not has_function_privilege('anon','public.queue_push_targets_after_cancel(uuid,text)','EXECUTE')
+                               and not has_function_privilege('anon','public.queue_push_targets_after_ticket_cancel(uuid)','EXECUTE')),
+  -- وما يجب أن يبقى للضيف يبقى: إلغاء دوره بنفسه (كسره = عميلٌ حبيس طابور)
+  ('q24_guest_can_cancel',     has_function_privilege('anon','public.cancel_by_ticket(uuid)','EXECUTE')
+                               and has_function_privilege('anon','public.cancel_waitlist_guest(uuid,text)','EXECUTE')),
   -- (٢٠) مرجع المخطط: أي انحراف عن البصمة المثبَّتة يظهر هنا قبل أن يفاجئنا
   --      (٢٤ جدولًا · ٧٤ دالة · ٦١ سياسة · ٣٩ مفتاحًا أجنبيًّا) — راجع
   --      supabase/tests/schema_baseline.md وحدّثه عمدًا عند أي تغيير مقصود
