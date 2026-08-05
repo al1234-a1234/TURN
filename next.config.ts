@@ -22,6 +22,33 @@ const nextConfig: NextConfig = {
     deviceSizes: [360, 420, 640, 828, 1080, 1200],
     formats: ["image/avif", "image/webp"],
   },
+
+  /*
+   * ترويسات أمان — لم تكن موجودة إطلاقًا.
+   *
+   * أهمّها Referrer-Policy: رابط التذكرة /t/<uuid> هو مفتاح الدور نفسه (من يملكه
+   * يلغي الدور). وبالسلوك الافتراضي يُرسَل المتصفّح هذا المسار كاملًا في ترويسة
+   * Referer إلى كل مورد خارجي تفتحه الصفحة — أي أن المعرّف كان يتسرّب خارج
+   * نطاقنا بلا أي تدخّل من أحد. no-referrer يقطع هذا المصدر تمامًا.
+   *
+   * والبقيّة تحصينات قياسية: منع تخمين نوع المحتوى (يبطل تحويل ملفٍ مرفوع إلى
+   * سكربت)، ومنع تأطير الموقع في نطاق غريب (نقر مخادع على أزرار الاستقبال)،
+   * وإغلاق واجهات الأجهزة التي لا نستعملها.
+   */
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "Referrer-Policy", value: "no-referrer" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(self), payment=()" },
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

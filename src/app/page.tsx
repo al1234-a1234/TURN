@@ -9,15 +9,27 @@ import { isWithinOpeningHours } from "@/lib/dates";
 export const revalidate = 30;
 
 export default async function Home() {
-  // قائمة الاكتشاف + التقييمات — مكاشة (٣٠ث) لا تضرب القاعدة في كل زيارة
-  const { list, ratings } = await getDiscovery();
+  // قائمة الاكتشاف + التقييمات — مكاشة (٣٠ث) لا تضرب القاعدة في كل زيارة.
+  //
+  // دوال الكاش ترمي عند فشل الاستعلام عمدًا (كي لا تُخزَّن نتيجةٌ فارغة كاذبة
+  // فتُقدَّم للجميع)، لكن هذه الصفحة تُولَّد مسبقًا وقت البناء — ورميٌ غير
+  // ملتقَط هنا يعني أن **انقطاعًا لحظيًّا للقاعدة يُفشل النشر كلّه**. نلتقطه
+  // هنا فيبقى الكاش نظيفًا ويبقى النشر مستقلًّا عن توفّر القاعدة لحظةَ البناء.
+  let list: Awaited<ReturnType<typeof getDiscovery>>["list"] = [];
+  let ratings: Awaited<ReturnType<typeof getDiscovery>>["ratings"] = {};
+  let countsData: Awaited<ReturnType<typeof getHomeQueueCounts>> = [];
+  try {
+    ({ list, ratings } = await getDiscovery());
+    // عدّادات الطوابير: كاش قصير (١٠ث) — الرئيسية أعلى الصفحات زيارةً، وبدونه
+    // كل زيارة تضرب القاعدة باستدعاء حيّ. ١٠ثوانٍ تقادمٍ مقبولة لعدّادٍ استكشافي؛
+    // الأرقام الدقيقة لحظيًّا تبقى في صفحة المطعم والتذكرة.
+    countsData = await getHomeQueueCounts(list.flatMap((r) => r.branches.map((b) => b.id)));
+  } catch (err) {
+    // القائمة تبقى فارغة لهذا التوليد فقط؛ الطلب التالي يعيد المحاولة لأن
+    // الفشل لم يدخل الكاش. والسجلّ يظهر في Vercel بدل اختفاء العطل بصمت.
+    console.error("[home] discovery unavailable:", err instanceof Error ? err.message : err);
+  }
   const ratingAgg = new Map(Object.entries(ratings));
-
-  // عدّادات الطوابير: كاش قصير (١٠ث) — الرئيسية أعلى الصفحات زيارةً، وبدونه
-  // كل زيارة تضرب القاعدة باستدعاء حيّ. ١٠ثوانٍ تقادمٍ مقبولة لعدّادٍ استكشافي؛
-  // الأرقام الدقيقة لحظيًّا تبقى في صفحة المطعم والتذكرة.
-  const pageBranchIds = list.flatMap((r) => r.branches.map((b) => b.id));
-  const countsData = await getHomeQueueCounts(pageBranchIds);
   const counts = new Map(
     (countsData ?? []).map((c) => [c.branch_id, { total: c.total, inside: c.inside, outside: c.outside }]),
   );
