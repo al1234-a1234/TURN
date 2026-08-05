@@ -8,10 +8,15 @@ export async function dismissInsight(id: string) {
   if (!id) return;
   const caller = await requirePerm("analytics");
   if (!caller) return;
-  await caller.supabase
+  const { error } = await caller.supabase
     .from("owner_insights")
     .update({ is_read: true })
     .eq("id", id)
     .eq("restaurant_id", caller.restaurantId);
+  // بطاقة تختفي ثم تعود بعد أوّل تحديث تُربك أكثر من بقائها ظاهرة
+  if (error) {
+    console.error("[dismissInsight]", error.message);
+    return;
+  }
   revalidatePath("/dashboard");
 }

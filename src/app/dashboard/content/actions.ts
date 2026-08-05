@@ -22,6 +22,12 @@ export async function saveLinks(formData: FormData) {
 
   // RLS "owner updates own restaurant" يسمح للمالك بالتحديث
   const update: TablesUpdate<"restaurants"> = { links: links as Json };
-  await caller.supabase.from("restaurants").update(update).eq("id", caller.restaurantId);
+  const { error } = await caller.supabase
+    .from("restaurants").update(update).eq("id", caller.restaurantId);
+  // لا نُبطل الكاش على كتابةٍ لم تحدث — وإلا قرأ المالك القديم كأنه محفوظ
+  if (error) {
+    console.error("[saveLinks]", error.message);
+    return;
+  }
   revalidatePath("/dashboard/content");
 }

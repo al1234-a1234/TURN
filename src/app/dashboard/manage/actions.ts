@@ -18,7 +18,13 @@ export async function updateRestaurantInfo(formData: FormData) {
   const cuisine_en = String(formData.get("cuisine_en") ?? "").trim() || null;
   const patch: TablesUpdate<"restaurants"> = { logo_url, cover_url, description, cuisine, cuisine_en };
   if (name) patch.name = name;
-  await supabase.from("restaurants").update(patch).eq("id", rid);
+  const { error } = await supabase.from("restaurants").update(patch).eq("id", rid);
+  // إبطال الكاش بعد كتابةٍ فاشلة يبثّ حالةً لم تُحفظ: تعود الصفحة بالقيم القديمة
+  // فيقرأها المالك كأنّ التعديل سرى. لا نُعيد التحقّق إلا بعد كتابةٍ تمّت.
+  if (error) {
+    console.error("[updateRestaurantInfo]", error.message);
+    return;
+  }
   revalidatePath("/dashboard/manage");
   revalidateTag("discovery");
 }
@@ -40,7 +46,7 @@ export async function updateBranchSettings(formData: FormData) {
   const branchId = await resolveWriteBranch(caller, String(formData.get("branch_id") ?? ""));
   if (!branchId) return;
 
-  await supabase
+  const { error } = await supabase
     .from("branch_settings")
     .update({
       accepts_waitlist: acceptsWaitlist,
@@ -49,6 +55,12 @@ export async function updateBranchSettings(formData: FormData) {
       opening_hours: { open, close },
     })
     .eq("branch_id", branchId);
+
+  // فشلٌ صامت هنا يعني فرعًا ظنّه المالك مغلقًا وهو ما زال يستقبل أدوارًا
+  if (error) {
+    console.error("[updateBranchSettings]", error.message);
+    return;
+  }
 
   revalidatePath("/dashboard/manage");
   revalidateTag("discovery");
@@ -68,7 +80,11 @@ export async function addBranch(formData: FormData) {
   if (!name) return;
   const city = String(formData.get("city") ?? "").trim() || null;
   const address = String(formData.get("address") ?? "").trim() || null;
-  await supabase.from("branches").insert({ restaurant_id: rid, name, city, address });
+  const { error } = await supabase.from("branches").insert({ restaurant_id: rid, name, city, address });
+  if (error) {
+    console.error("[addBranch]", error.message);
+    return;
+  }
   revalidatePath("/dashboard/manage");
   revalidateTag("discovery");
   revalidatePath("/dashboard");
@@ -94,7 +110,13 @@ export async function deleteBranch(formData: FormData) {
   // للفرع الواحد) في لحظة، بلا رجعة ولا نسخة لحظية تستعيدها — وهذا التاريخ هو
   // نفسه القيمة التي نبيعها للمالك. التعطيل يُخفي الفرع عن العميل وعن اللوحة
   // (كل المسارات تفلتر is_active) ويُبقي التاريخ سليمًا وقابلًا للإرجاع.
-  await supabase.from("branches").update({ is_active: false }).eq("id", id).eq("restaurant_id", rid);
+  const { error } = await supabase
+    .from("branches").update({ is_active: false })
+    .eq("id", id).eq("restaurant_id", rid);
+  if (error) {
+    console.error("[deleteBranch]", error.message);
+    return;
+  }
   revalidatePath("/dashboard/manage");
   revalidateTag("discovery");
   revalidatePath("/dashboard");
@@ -106,9 +128,14 @@ export async function toggleMenuItem(formData: FormData) {
   const id = String(formData.get("item_id") ?? "");
   const available = formData.get("available") === "true";
   if (!id) return;
-  await caller.supabase
+  const { error } = await caller.supabase
     .from("menu_items").update({ is_available: available })
     .eq("id", id).in("branch_id", await callerBranchIds(caller));
+  // صنف يظهر متاحًا للعميل بينما ظنّه المطعم موقوفًا = طلبات لا يستطيع تلبيتها
+  if (error) {
+    console.error("[toggleMenuItem]", error.message);
+    return;
+  }
   revalidatePath("/dashboard/manage");
   revalidateTag("discovery");
 }
@@ -120,7 +147,13 @@ export async function addMenuCategory(formData: FormData) {
   if (!name) return;
   const branchId = await resolveWriteBranch(caller, formData.get("branch_id") as string);
   if (!branchId) return;
-  await caller.supabase.from("menu_categories").insert({ restaurant_id: caller.restaurantId, branch_id: branchId, name });
+  const { error } = await caller.supabase
+    .from("menu_categories")
+    .insert({ restaurant_id: caller.restaurantId, branch_id: branchId, name });
+  if (error) {
+    console.error("[addMenuCategory]", error.message);
+    return;
+  }
   revalidatePath("/dashboard/manage");
   revalidateTag("discovery");
 }
@@ -128,9 +161,13 @@ export async function addMenuCategory(formData: FormData) {
 export async function deleteMenuCategory(id: string) {
   const caller = await requirePerm("settings");
   if (!caller) return;
-  await caller.supabase
+  const { error } = await caller.supabase
     .from("menu_categories").delete()
     .eq("id", id).in("branch_id", await callerBranchIds(caller));
+  if (error) {
+    console.error("[deleteMenuCategory]", error.message);
+    return;
+  }
   revalidatePath("/dashboard/manage");
   revalidateTag("discovery");
 }
@@ -153,7 +190,7 @@ export async function addMenuItem(formData: FormData) {
   const { data: cat } = await supabase
     .from("menu_categories").select("id").eq("id", categoryId).eq("branch_id", branchId).maybeSingle();
   if (!cat) return;
-  await supabase.from("menu_items").insert({
+  const { error } = await supabase.from("menu_items").insert({
     restaurant_id: rid,
     branch_id: branchId,
     category_id: categoryId,
@@ -162,6 +199,10 @@ export async function addMenuItem(formData: FormData) {
     description,
     image_url,
   });
+  if (error) {
+    console.error("[addMenuItem]", error.message);
+    return;
+  }
   revalidatePath("/dashboard/manage");
   revalidateTag("discovery");
 }
@@ -169,9 +210,13 @@ export async function addMenuItem(formData: FormData) {
 export async function deleteMenuItem(id: string) {
   const caller = await requirePerm("settings");
   if (!caller) return;
-  await caller.supabase
+  const { error } = await caller.supabase
     .from("menu_items").delete()
     .eq("id", id).in("branch_id", await callerBranchIds(caller));
+  if (error) {
+    console.error("[deleteMenuItem]", error.message);
+    return;
+  }
   revalidatePath("/dashboard/manage");
   revalidateTag("discovery");
 }
