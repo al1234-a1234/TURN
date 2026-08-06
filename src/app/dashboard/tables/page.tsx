@@ -27,6 +27,16 @@ export default async function TablesPage({ searchParams }: { searchParams: Promi
   const list = (data ?? []) as Table[];
   const inside = list.filter((t) => t.zone === "inside");
   const outsideTables = list.filter((t) => t.zone === "outside");
+
+  // أقسام الفرع — لا نعرض قسمًا أطفأه المالك، إلا إن كانت فيه طاولات مسجّلة
+  // بالفعل: إخفاؤها كان سيبدو حذفًا لها، وهي باقية في القاعدة.
+  const { data: zoneSettings } = scope.active
+    ? await supabase.from("branch_settings").select("has_inside, has_outside").eq("branch_id", scope.active.id).maybeSingle()
+    : { data: null };
+  const hasInside = zoneSettings?.has_inside ?? true;
+  const hasOutside = zoneSettings?.has_outside ?? true;
+  const showInside = hasInside || inside.length > 0;
+  const showOutside = hasOutside || outsideTables.length > 0;
   const totalSeats = list.reduce((a, t) => a + (t.seats ?? 0), 0);
 
   const field = "field-input";
@@ -87,17 +97,21 @@ export default async function TablesPage({ searchParams }: { searchParams: Promi
           {scope.active && <input type="hidden" name="branch_id" value={scope.active.id} />}
           <input name="label" required placeholder={tr(lang, "الاسم/الرقم", "Label/No.")} className={field} />
           <input name="seats" inputMode="numeric" defaultValue="4" placeholder={tr(lang, "المقاعد", "Seats")} className={field} />
-          <select name="zone" className={field} defaultValue="inside">
-            <option value="inside">{tr(lang, "داخلي", "Indoor")}</option>
-            <option value="outside">{tr(lang, "خارجي", "Outdoor")}</option>
-          </select>
+          {hasInside && hasOutside ? (
+            <select name="zone" className={field} defaultValue="inside">
+              <option value="inside">{tr(lang, "داخلي", "Indoor")}</option>
+              <option value="outside">{tr(lang, "خارجي", "Outdoor")}</option>
+            </select>
+          ) : (
+            <input type="hidden" name="zone" value={hasOutside ? "outside" : "inside"} />
+          )}
           <button className="btn btn-primary">{tr(lang, "إضافة", "Add")}</button>
         </form>
       </section>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <Zone title={tr(lang, "طاولات داخلية", "Indoor tables")} rows={inside} tone="var(--st-full)" />
-        <Zone title={tr(lang, "طاولات خارجية", "Outdoor tables")} rows={outsideTables} tone="var(--brand)" />
+      <div className={showInside && showOutside ? "grid gap-6 sm:grid-cols-2" : "grid gap-6"}>
+        {showInside && <Zone title={tr(lang, "طاولات داخلية", "Indoor tables")} rows={inside} tone="var(--st-full)" />}
+        {showOutside && <Zone title={tr(lang, "طاولات خارجية", "Outdoor tables")} rows={outsideTables} tone="var(--brand)" />}
       </div>
     </>
   );

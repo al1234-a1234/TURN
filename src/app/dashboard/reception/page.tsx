@@ -77,26 +77,23 @@ export default async function ReceptionPage({
 
   const list = queue ?? [];
 
-  // الهدايا المسلَّحة وحدها — التي ضغط عليها العميل «استعمال» بنفسه.
-  // هدية ممنوحة ولم يستعملها لا تُعرَض هنا: هو الذي يقرّر متى يستعملها،
-  // والموظّف لا يذكّره بها ولا يحرجه. والعميل لا يرى شيئًا في صفحة المطعم.
-  // عبر RPC لا قراءة مباشرة: سياسة customer_rewards تشترط صلاحية customers،
-  // وموظّف الاستقبال يملك waitlist فقط — فكانت الشارة ترجع صفرًا بصمت له.
-  const queuedIds = new Set(list.map((q) => q.customer_id).filter(Boolean));
-  const { data: armedGifts, error: giftsError } = activeBranch
-    ? await supabase.rpc("reception_armed_gifts", { p_branch_id: activeBranch.id })
-    : { data: [], error: null };
-  // شارة الهدية زينة على البطاقة لا ادّعاء بذاتها — فشلها يُسجَّل ولا يحجب الطابور
-  if (giftsError) console.error("[reception] reception_armed_gifts:", activeBranch?.id, giftsError.message);
-  const giftsFor = new Map<string, string[]>();
-  for (const g of armedGifts ?? []) {
-    if (!g.customer_id || !queuedIds.has(g.customer_id)) continue;
-    giftsFor.set(g.customer_id, [...(giftsFor.get(g.customer_id) ?? []), g.title]);
-  }
+  // شارة الهدية على بطاقة الدور أُزيلت بقرار المالك (تنظيف الملصقات). واعتماد
+  // الهدية يبقى كاملًا في صندوق «اعتمد هدية» بالبحث بالرقم — وهو المسار الذي
+  // يُقفل الهدية في القاعدة. فالمحذوف عرضٌ لا وظيفة.
+  // (دالة reception_armed_gifts باقية في القاعدة لمن يعيدها لاحقًا.)
 
   const inside = list.filter((q) => q.zone === "inside");
   const outside = list.filter((q) => q.zone === "outside");
   const other = list.filter((q) => q.zone !== "inside" && q.zone !== "outside");
+
+  // أقسام هذا الفرع — الاستقبال لا يعرض عمودًا ولا عدّادًا لقسمٍ لا يملكه المطعم.
+  // لكن عمودًا فيه أدوارٌ قائمة يبقى معروضًا ولو أُطفئ القسم بعد انضمامها: من
+  // وقف في الطابور لا يختفي لأن المالك غيّر إعدادًا.
+  const { data: zoneSettings } = activeBranch
+    ? await supabase.from("branch_settings").select("has_inside, has_outside").eq("branch_id", activeBranch.id).maybeSingle()
+    : { data: null };
+  const showInside = (zoneSettings?.has_inside ?? true) || inside.length > 0;
+  const showOutside = (zoneSettings?.has_outside ?? true) || outside.length > 0;
   const servedToday = todayRes?.count ?? 0;
   const status = statusRes?.data as { manually_closed: boolean; busy_now: boolean; opening_hours: { open?: string; close?: string } | null } | null;
   const closedByHours = status ? !isWithinOpeningHours(status.opening_hours) : false;
@@ -127,12 +124,6 @@ export default async function ReceptionPage({
           <p className="mt-0.5 text-xs text-[color:var(--muted)]">
             {toAr(q.party_size)} {tr(lang, "أشخاص", "guests")} · ⏱ {toAr(waited)} {tr(lang, "دقيقة", "min")}{q.status === "notified" ? tr(lang, " · أُشعِر ✓", " · Notified ✓") : ""}
           </p>
-          {(giftsFor.get(q.customer_id ?? "")?.length ?? 0) > 0 && (
-            <span className="mt-1 me-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
-              style={{ background: "var(--brand-solid)", color: "var(--brand-ink)" }}>
-              🎁 {giftsFor.get(q.customer_id ?? "")!.join(" · ")}
-            </span>
-          )}
           {q.distance_m != null && (
             <span className="mt-1 me-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
               style={{ background: "var(--surface-2)", border: "1px solid rgba(102,28,10,0.14)", color: q.distance_m > 5000 ? "var(--muted)" : "var(--brand-d)" }}>
@@ -208,19 +199,24 @@ export default async function ReceptionPage({
 
           <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Stat label={tr(lang, "في الطابور الآن", "In queue now")} value={toAr(list.length)} tone="var(--brand-d)" />
-            <Stat label={tr(lang, "طابور داخلي", "Indoor queue")} value={toAr(inside.length)} tone="var(--brand-d)" />
-            <Stat label={tr(lang, "طابور خارجي", "Outdoor queue")} value={toAr(outside.length)} tone="var(--brand)" />
+            {showInside && <Stat label={tr(lang, "طابور داخلي", "Indoor queue")} value={toAr(inside.length)} tone="var(--brand-d)" />}
+            {showOutside && <Stat label={tr(lang, "طابور خارجي", "Outdoor queue")} value={toAr(outside.length)} tone="var(--brand)" />}
             {/* شرطة بدل صفرٍ كاذب: «خدمنا ٠ اليوم» رقمٌ يُبنى عليه قرار، لا فراغ */}
             <Stat label={tr(lang, "خدمناهم اليوم", "Served today")} value={todayRes?.error ? "—" : toAr(servedToday)} tone="var(--brand)" />
           </div>
 
           <RewardBox />
 
-          <WalkInForm branchId={activeBranch.id} branchName={multi ? activeBranch.name : undefined} />
+          <WalkInForm
+            branchId={activeBranch.id}
+            branchName={multi ? activeBranch.name : undefined}
+            hasInside={zoneSettings?.has_inside ?? true}
+            hasOutside={zoneSettings?.has_outside ?? true}
+          />
 
-          <div className="grid gap-6 sm:grid-cols-2">
-            <ZoneColumn title={tr(lang, "طاولات داخلية", "Indoor tables")} rows={inside} tone="var(--brand-d)" />
-            <ZoneColumn title={tr(lang, "طاولات خارجية", "Outdoor tables")} rows={outside} tone="var(--brand)" />
+          <div className={showInside && showOutside ? "grid gap-6 sm:grid-cols-2" : "grid gap-6"}>
+            {showInside && <ZoneColumn title={tr(lang, "طاولات داخلية", "Indoor tables")} rows={inside} tone="var(--brand-d)" />}
+            {showOutside && <ZoneColumn title={tr(lang, "طاولات خارجية", "Outdoor tables")} rows={outside} tone="var(--brand)" />}
           </div>
           {other.length > 0 && (
             <div className="mt-6"><ZoneColumn title={tr(lang, "غير محدّد", "Unspecified")} rows={other} tone="var(--muted)" /></div>

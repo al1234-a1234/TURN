@@ -63,7 +63,7 @@ export default async function RestaurantPublicPage({
 
   // الفروع أولًا: القائمة والصور صارت لكل فرع على حدة (فرانشايز)
   const { data: branches } = await supabase
-    .from("branches").select("id, name, city, address, branch_settings(accepts_waitlist, manually_closed, busy_now, opening_hours)")
+    .from("branches").select("id, name, city, address, branch_settings(accepts_waitlist, manually_closed, busy_now, opening_hours, has_inside, has_outside)")
     .eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at");
   const requestedBranch = (await searchParams).branch;
   const contentBranchId =
@@ -103,7 +103,7 @@ export default async function RestaurantPublicPage({
   const withCounts = branchList.map((b) => {
     const c = countOf.get(b.id);
     const bs = Array.isArray(b.branch_settings) ? b.branch_settings[0] : b.branch_settings;
-    const settings = bs as { accepts_waitlist?: boolean; manually_closed?: boolean; busy_now?: boolean; opening_hours?: { open?: string; close?: string } | null } | null;
+    const settings = bs as { accepts_waitlist?: boolean; manually_closed?: boolean; busy_now?: boolean; opening_hours?: { open?: string; close?: string } | null; has_inside?: boolean; has_outside?: boolean } | null;
     return {
       id: b.id,
       name: b.name,
@@ -111,6 +111,9 @@ export default async function RestaurantPublicPage({
       total: Number(c?.total ?? 0),
       inside: Number(c?.inside ?? 0),
       outside: Number(c?.outside ?? 0),
+      // أقسام يملكها الفرع فعلًا — لا نعرض للعميل ما لا وجود له
+      hasInside: settings?.has_inside ?? true,
+      hasOutside: settings?.has_outside ?? true,
       accepts: settings?.accepts_waitlist ?? true,
       closedNow: (settings?.manually_closed ?? false) || !isWithinOpeningHours(settings?.opening_hours ?? null),
       busyNow: settings?.busy_now ?? false,

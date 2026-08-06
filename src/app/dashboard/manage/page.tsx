@@ -71,7 +71,7 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
   const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
   const [{ data: settings }, { data: analytics }, { data: liveRows }] = await Promise.all([
     settingsBranch
-      ? supabase.from("branch_settings").select("accepts_waitlist, accepts_reservations, max_party_size, opening_hours").eq("branch_id", settingsBranch.id).maybeSingle()
+      ? supabase.from("branch_settings").select("accepts_waitlist, accepts_reservations, max_party_size, opening_hours, has_inside, has_outside").eq("branch_id", settingsBranch.id).maybeSingle()
       : Promise.resolve({ data: null }),
     branchIds.length
       ? supabase.from("waitlist_entries").select("joined_at, seated_at, zone, status").in("branch_id", branchIds).gte("joined_at", since30)
@@ -273,6 +273,31 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
               </span>
               <input type="checkbox" name="accepts_reservations" defaultChecked={settings?.accepts_reservations ?? false} className="h-6 w-6 accent-[var(--brand-solid)]" />
             </label>
+            {/* أقسام الفرع — ما لا يملكه المطعم لا يُعرض على عميله */}
+            <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
+              <span className="block font-bold text-[color:var(--ink)]">{tr(lang, "أقسام الجلوس", "Seating areas")}</span>
+              <span className="text-xs text-[color:var(--muted)]">
+                {tr(
+                  lang,
+                  "أطفئ ما لا يملكه فرعك — فلا يختاره العميل وينتظر طاولةً غير موجودة",
+                  "Turn off what your branch doesn't have — so customers can't pick a table that doesn't exist",
+                )}
+              </span>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <label className="flex items-center justify-between rounded-xl border p-3" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+                  <span className="font-bold text-[color:var(--ink)]">{tr(lang, "طاولات داخلية", "Indoor tables")}</span>
+                  <input type="checkbox" name="has_inside" defaultChecked={settings?.has_inside ?? true} className="h-6 w-6 accent-[var(--brand-solid)]" />
+                </label>
+                <label className="flex items-center justify-between rounded-xl border p-3" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
+                  <span className="font-bold text-[color:var(--ink)]">{tr(lang, "طاولات خارجية", "Outdoor tables")}</span>
+                  <input type="checkbox" name="has_outside" defaultChecked={settings?.has_outside ?? true} className="h-6 w-6 accent-[var(--brand-solid)]" />
+                </label>
+              </div>
+              <p className="mt-2 text-xs text-[color:var(--muted)]">
+                {tr(lang, "لا بدّ من قسم واحد على الأقل.", "At least one area must stay on.")}
+              </p>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
                 <label className="field-label">{tr(lang, "فتح", "Open")}</label>
