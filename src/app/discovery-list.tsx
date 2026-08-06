@@ -38,6 +38,23 @@ function Dot() {
   );
 }
 
+/**
+ * الرقم أكبر وأثقل من الكلمة حوله.
+ *
+ * كان سطر الحالة كلّه ١٣px/٦٠٠ — أي أن «7» في «داخلي 7» له وزنُ حرفٍ في
+ * سطرٍ رمادي، مع أنه الخبر الوحيد الذي فُتح التطبيق لأجله. الكلمة وصفٌ
+ * للرقم لا العكس، فتأخذ حجمها الطبيعي ويأخذ الرقم الرتبة.
+ */
+function strongDigits(s: string) {
+  return s.split(/(\d+)/).map((tok, i) =>
+    /^\d+$/.test(tok) ? (
+      <strong key={i} className="text-[15.5px] font-bold tabular-nums">{tok}</strong>
+    ) : (
+      <span key={i}>{tok}</span>
+    ),
+  );
+}
+
 function branchesLabel(n: number, lang: Lang): string {
   if (lang === "en") return n === 1 ? "1 branch" : `${n} branches`;
   if (n === 1) return "فرع واحد";
@@ -126,11 +143,11 @@ function Card({ r, lang, delay }: { r: DiscoveryItem; lang: Lang; delay: number 
             </>
           )}
         </p>
-        <p className="text-[13px] font-semibold leading-[1.6]" style={{ color: state.color }}>
+        <p className="mt-px flex items-baseline text-[13px] font-semibold leading-[1.55]" style={{ color: state.color }}>
           {state.parts.map((p, i) => (
             <span key={p}>
               {i > 0 && <Dot />}
-              {p}
+              {strongDigits(p)}
             </span>
           ))}
         </p>
