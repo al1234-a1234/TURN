@@ -148,8 +148,15 @@ export function RestaurantTabs({
 
   // اسم الانتقال المشترك انتقل للشعار الكبير أعلى الصفحة (r/[slug]/page.tsx) —
   // هو الوجهة البصرية الآن، فلا نكرّره هنا لتفادي تعارض أسماء الانتقال.
+  // بلاطة بيضاء بحدٍّ شعرة — نفس بلاطة بطاقة الرئيسية. كانت `bg-brand-800`
+  // فيخرج كل شعارٍ بشفافيّة مصبوغًا بعنابيّنا، والشعار يضعه صاحب المطعم.
+  // وهذا هو الموضع الذي كان يجعل الشعار نفسه يبدو مطعمين مختلفين بين
+  // الرئيسية وصفحة المطعم.
   const LogoBox = ({ size }: { size: string }) => (
-    <span className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-800 font-serif text-2xl font-bold text-cream-100`}>
+    <span
+      className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white font-serif text-2xl font-bold`}
+      style={{ border: "1px solid var(--border)", color: "var(--brand-solid)" }}
+    >
 <SmartImage src={logo} fallbackText={initial} alt="" width={72} height={72} sizes="72px" className="h-full w-full object-cover" />
     </span>
   );
@@ -282,8 +289,9 @@ export function RestaurantTabs({
             )}
             <div className="mt-4 flex items-start justify-between gap-3">
               <p className="min-w-0 flex-1 text-right font-display text-xl font-bold text-[color:var(--ink)]">{openItem.name}</p>
+              {/* السعر بيانٌ عاديّ لا حالةٌ استثنائية — نصٌّ ملوّن لا كبسولة */}
               {openItem.price != null && (
-                <span className="shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-extrabold text-cream-100" style={{ background: "var(--brand-solid)" }}>
+                <span className="shrink-0 whitespace-nowrap text-[17px] font-bold tabular-nums" style={{ color: "var(--brand-solid)" }}>
                   {money(openItem.price, lang)}
                 </span>
               )}
@@ -355,7 +363,12 @@ export function RestaurantTabs({
             {reviews.map((rv, i) => (
               <li key={i} className="rq-card p-5">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-display text-base font-bold text-cream-100" style={{ background: "var(--brand-solid)" }}>
+                  {/* قرصٌ عنابيٌّ مُشبَع يتكرّر مع كل مراجعة يصنع عمودًا من
+                      الضجيج. نفس لغة البلاطة: سطحٌ محايد وحرفٌ بلون الهوية. */}
+                  <span
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-display text-base font-bold"
+                    style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--brand-solid)" }}
+                  >
                     {rv.name.charAt(0)}
                   </span>
                   <div className="min-w-0 flex-1 text-right">
