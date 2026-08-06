@@ -20,6 +20,16 @@ export default async function TvPage({ params }: { params: Promise<{ id: string 
   const rows = data ?? [];
   const meta = rows[0];
 
+  // أقسام الفرع — عمودٌ لقسمٍ لا يملكه المطعم يظهر على شاشةٍ معلّقة في صالته
+  // فارغًا أبدًا، ويقرؤه الضيف «لا أحد بالانتظار» فيظنّ الشاشة معطّلة.
+  const { data: tvZones } = await supabase
+    .from("branch_settings")
+    .select("has_inside, has_outside")
+    .eq("branch_id", id)
+    .maybeSingle();
+  const tvHasInside = tvZones?.has_inside ?? true;
+  const tvHasOutside = tvZones?.has_outside ?? true;
+
   // فشل الاستدعاء كان يظهر «تأكد من الرابط» — فيذهب الموظّف يفتّش رابطًا سليمًا
   // بينما العطل في الجلب. نفصل الحالتين: هنا خلل مؤقّت، وأسفله رابط لا فرع له.
   if (error) {
@@ -68,7 +78,7 @@ export default async function TvPage({ params }: { params: Promise<{ id: string 
         </div>
       </header>
 
-      <TvBoard branchId={id} initial={rows} />
+      <TvBoard branchId={id} initial={rows} hasInside={tvHasInside} hasOutside={tvHasOutside} />
 
       <footer className="text-center text-sm font-bold" style={{ color: "rgba(102,28,10,0.4)" }} dir="ltr">
         EIGHT · إيت

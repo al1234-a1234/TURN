@@ -13,7 +13,18 @@ type Row = {
 };
 
 /** لوحة الطابور الحيّة لشاشة الصالة — استطلاع كل ١٠ ثوانٍ بنمط التذكرة نفسه. */
-export function TvBoard({ branchId, initial }: { branchId: string; initial: Row[] }) {
+export function TvBoard({
+  branchId,
+  initial,
+  hasInside = true,
+  hasOutside = true,
+}: {
+  branchId: string;
+  initial: Row[];
+  /** أقسام الفرع — شاشة الصالة لا تعرض عمودًا لقسمٍ لا وجود له */
+  hasInside?: boolean;
+  hasOutside?: boolean;
+}) {
   const [rows, setRows] = useState<Row[]>(initial);
   const [tick, setTick] = useState(0);
 
@@ -92,8 +103,8 @@ export function TvBoard({ branchId, initial }: { branchId: string; initial: Row[
       )}
 
       <div className="flex flex-1 gap-8">
-        <Column title="🏠 الطاولات الداخلية" list={inside} />
-        <Column title="🌤 الطاولات الخارجية" list={outside} />
+        {(hasInside || inside.length > 0) && <Column title="الطاولات الداخلية" list={inside} />}
+        {(hasOutside || outside.length > 0) && <Column title="الطاولات الخارجية" list={outside} />}
       </div>
 
       <p className="text-center text-lg font-bold" style={{ color: "var(--muted)" }}>

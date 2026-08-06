@@ -6,7 +6,18 @@ import { addWalkIn, type WalkInState } from "./walkin-actions";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 
-export function WalkInForm({ branchId, branchName }: { branchId: string; branchName?: string }) {
+export function WalkInForm({
+  branchId,
+  branchName,
+  hasInside = true,
+  hasOutside = true,
+}: {
+  branchId: string;
+  branchName?: string;
+  /** أقسام الفرع — الموظّف لا يُجلس أحدًا في قسمٍ لا يملكه المطعم */
+  hasInside?: boolean;
+  hasOutside?: boolean;
+}) {
   const lang = useLang();
   const [open, setOpen] = useState(false);
   // نجاح/فشل مرئيان — الفشل الصامت كان يوهم المضيف أن الضيف انضاف وهو لم يُسجَّل
@@ -48,10 +59,15 @@ export function WalkInForm({ branchId, branchName }: { branchId: string; branchN
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <input name="party_size" inputMode="numeric" defaultValue="2" placeholder={tr(lang, "عدد الأشخاص", "Party size")} className={field} />
-            <select name="zone" defaultValue="inside" className={field}>
-              <option value="inside">{tr(lang, "داخلي", "Indoor")}</option>
-              <option value="outside">{tr(lang, "خارجي", "Outdoor")}</option>
-            </select>
+            {hasInside && hasOutside ? (
+              <select name="zone" defaultValue="inside" className={field}>
+                <option value="inside">{tr(lang, "داخلي", "Indoor")}</option>
+                <option value="outside">{tr(lang, "خارجي", "Outdoor")}</option>
+              </select>
+            ) : (
+              // قسمٌ واحد: لا قائمة اختيارٍ بخيارٍ يتيم — يُرسَل صامتًا
+              <input type="hidden" name="zone" value={hasOutside ? "outside" : "inside"} />
+            )}
           </div>
           {state.error && (
             <p className="rounded-xl px-3 py-2 text-sm font-bold text-[color:var(--danger)]" style={{ background: "rgba(200,70,70,0.08)" }}>

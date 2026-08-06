@@ -18,6 +18,9 @@ type Branch = {
   total: number;
   inside: number;
   outside: number;
+  /** أقسام يملكها الفرع — ما يُطفأ منها لا يُعرض ولا يُحتسب */
+  hasInside: boolean;
+  hasOutside: boolean;
   accepts: boolean;
   closedNow: boolean;
   busyNow: boolean;
@@ -412,13 +415,21 @@ export function WaitlistForm({
   const inside = branch?.inside ?? 0;
   const outside = branch?.outside ?? 0;
 
+  // أقسام هذا الفرع. الافتراضي الاثنان — فرعٌ بلا صفّ إعدادات يبقى كما كان.
+  const hasInside = branch?.hasInside ?? true;
+  const hasOutside = branch?.hasOutside ?? true;
+  const zoneOptions = ([hasInside && "inside", hasOutside && "outside"].filter(Boolean) as ("inside" | "outside")[]);
+  // قسمٌ واحد = لا سؤال ولا اختيار: خطوةٌ أقلّ على باب مطعمٍ مزدحم
+  const singleZone = zoneOptions.length === 1;
+  const effectiveZone = singleZone ? zoneOptions[0] : zone;
+
   return (
     <form ref={formRef} action={formAction} className="space-y-4">
       <input type="hidden" name="slug" value={slug} />
       <input type="hidden" name="lat" value={coords?.lat ?? ""} />
       <input type="hidden" name="lng" value={coords?.lng ?? ""} />
       <input type="hidden" name="branch_id" value={branchId} />
-      <input type="hidden" name="zone" value={zone} />
+      <input type="hidden" name="zone" value={effectiveZone} />
 
       {/* رأس الفرع المختار + تغيير الفرع */}
       {multi && branch && (
@@ -438,30 +449,32 @@ export function WaitlistForm({
         </p>
       )}
 
-      {/* طابور القسم (لهذا الفرع) */}
-      <div className="grid grid-cols-2 gap-3">
-        <ZoneStat label={tr(lang, "طاولات داخلية", "Indoor tables")} count={inside} />
-        <ZoneStat label={tr(lang, "طاولات خارجية", "Outdoor tables")} count={outside} />
+      {/* طابور القسم (لهذا الفرع) — لا يُعرض عدّاد قسمٍ لا يملكه الفرع */}
+      <div className={singleZone ? "grid grid-cols-1 gap-3" : "grid grid-cols-2 gap-3"}>
+        {hasInside && <ZoneStat label={tr(lang, "طاولات داخلية", "Indoor tables")} count={inside} />}
+        {hasOutside && <ZoneStat label={tr(lang, "طاولات خارجية", "Outdoor tables")} count={outside} />}
       </div>
 
-      {/* اختيار القسم */}
-      <div className="rq-card p-4">
-        <p className="field-label mb-2">{tr(lang, "اختر مكانك", "Choose your spot")}</p>
-        <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[color:var(--surface-2)] p-1">
-          {(["inside", "outside"] as const).map((z) => (
-            <button
-              key={z}
-              type="button"
-              onClick={() => setZone(z)}
-              data-active={zone === z}
-              className="rq-seg-btn"
-              style={zone === z ? undefined : { background: "transparent" }}
-            >
-              {z === "inside" ? tr(lang, "طاولة داخلية", "Indoor table") : tr(lang, "طاولة خارجية", "Outdoor table")}
-            </button>
-          ))}
+      {/* اختيار القسم — يختفي كليًّا حين لا يملك الفرع إلا قسمًا واحدًا */}
+      {!singleZone && (
+        <div className="rq-card p-4">
+          <p className="field-label mb-2">{tr(lang, "اختر مكانك", "Choose your spot")}</p>
+          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[color:var(--surface-2)] p-1">
+            {zoneOptions.map((z) => (
+              <button
+                key={z}
+                type="button"
+                onClick={() => setZone(z)}
+                data-active={zone === z}
+                className="rq-seg-btn"
+                style={zone === z ? undefined : { background: "transparent" }}
+              >
+                {z === "inside" ? tr(lang, "طاولة داخلية", "Indoor table") : tr(lang, "طاولة خارجية", "Outdoor table")}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* اسم + رقم */}
       <div className="rq-card space-y-4 p-5">

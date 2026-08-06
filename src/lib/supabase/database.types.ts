@@ -25,6 +25,8 @@ export type Database = {
           custom: Json | null
           default_duration_min: number
           grace_period_min: number
+          has_inside: boolean
+          has_outside: boolean
           manually_closed: boolean
           max_party_size: number
           notification_channels:
@@ -43,6 +45,8 @@ export type Database = {
           custom?: Json | null
           default_duration_min?: number
           grace_period_min?: number
+          has_inside?: boolean
+          has_outside?: boolean
           manually_closed?: boolean
           max_party_size?: number
           notification_channels?:
@@ -61,6 +65,8 @@ export type Database = {
           custom?: Json | null
           default_duration_min?: number
           grace_period_min?: number
+          has_inside?: boolean
+          has_outside?: boolean
           manually_closed?: boolean
           max_party_size?: number
           notification_channels?:
