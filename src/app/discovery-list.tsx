@@ -95,7 +95,7 @@ function cardState(r: DiscoveryItem, lang: Lang): { parts: string[]; color: stri
   return { parts: [tr(lang, "بلا انتظار", "No wait")], color: "var(--st-open)" };
 }
 
-function Card({ r, lang, delay }: { r: DiscoveryItem; lang: Lang; delay: number }) {
+function Card({ r, lang }: { r: DiscoveryItem; lang: Lang }) {
   const initial = (r.name ?? "").trim().charAt(0) || "م";
   const state = cardState(r, lang);
 
@@ -103,8 +103,7 @@ function Card({ r, lang, delay }: { r: DiscoveryItem; lang: Lang; delay: number 
     <Link
       href={`/r/${r.slug}`}
       onClick={() => storePeek(r.slug, { name: r.name, logo: r.logo_url, waiting: r.waiting, closed: r.closedNow })}
-      className="reveal rq-card flex items-center gap-[13px] overflow-hidden p-[13px] transition active:scale-[0.985]"
-      style={{ animationDelay: `${delay}ms` }}
+      className="rq-card flex items-center gap-[13px] overflow-hidden p-[13px] transition active:scale-[0.985]"
     >
       {/* البلاطة بيضاء بحدٍّ شعرة: الشعار يضعه صاحب المطعم، فلا نصبغه بلوننا.
           و٦٤ لا ٧٢: عند ٧٢ يتجاوز ارتفاعُ البلاطة كتلةَ الأسطر الثلاثة فيبقى
@@ -219,8 +218,6 @@ export function DiscoveryList({ items }: { items: DiscoveryItem[] }) {
       ? { background: "var(--brand-solid)", color: "var(--brand-ink)", border: "1px solid transparent" }
       : { background: "var(--surface)", color: "var(--brand-d)", border: "1px solid var(--border)" };
 
-  let delay = 0;
-
   // حالة الفراغ انتقلت إلى هنا من الصفحة: نصُّها مترجَم، وبقاؤه على الخادم
   // كان يُلزم الصفحةَ بقراءة اللغة فتفقد قابليّة التخزين على الحافة.
   if (items.length === 0) {
@@ -307,7 +304,7 @@ export function DiscoveryList({ items }: { items: DiscoveryItem[] }) {
             <SectionHeading label={g.label} count={g.rows.length} />
             <div className="space-y-2.5">
               {g.rows.map((r) => (
-                <Card key={r.id} r={r} lang={lang} delay={(delay++ % 8) * 45} />
+                <Card key={r.id} r={r} lang={lang} />
               ))}
             </div>
           </section>

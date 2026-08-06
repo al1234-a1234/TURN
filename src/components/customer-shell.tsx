@@ -80,10 +80,20 @@ export function CustomerShell({
       </SharedHeader>
 
       {/* المحتوى */}
-      <main className="mx-auto w-full max-w-2xl flex-1 px-5 pb-28 pt-4">{children}</main>
+      <main
+        className="mx-auto w-full max-w-2xl flex-1 px-5 pb-28 pt-4"
+        style={{ paddingBottom: "calc(7rem + env(safe-area-inset-bottom))" }}
+      >
+        {children}
+      </main>
 
-      {/* الشريط السفلي — التبويب النشط يرتفع بدائرة بلون الهوية */}
-      <nav className="fixed inset-x-0 bottom-0 z-30 px-4 pb-4">
+      {/* الشريط السفلي — التبويب النشط يرتفع بدائرة بلون الهوية.
+          والحشو السفلي يقرأ المنطقة الآمنة: على آيفون كان الشريط يقع تحت
+          خطّ الصفحة الرئيسية فيُقصّ نصفه، وهذا وحده يقول «صفحة» لا «تطبيق». */}
+      <nav
+        className="fixed inset-x-0 bottom-0 z-30 px-4 pb-4"
+        style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
+      >
         <div className="rq-nav">
           {[
             { key: "other", href: "/me", icon: <IcList />, label: tr(lang, "حسابي", "My account") },

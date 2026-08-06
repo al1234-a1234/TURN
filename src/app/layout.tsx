@@ -53,6 +53,10 @@ export const viewport: Viewport = {
   themeColor: "#781e0c",
   width: "device-width",
   initialScale: 1,
+  // بدون `cover` لا تعمل `env(safe-area-inset-*)` أصلًا، فيقع الشريط السفلي
+  // تحت شريط الصفحة الرئيسية في آيفون ويُقصّ. ولا نُعطّل التكبير: من يحتاجه
+  // يحتاجه، و`touch-action: manipulation` يكفي لإلغاء تردّد اللمستين.
+  viewportFit: "cover",
 };
 
 // الغلاف ثابتٌ بالعربية عمدًا. قراءة كوكي اللغة هنا كانت تُجبر كل صفحة في
