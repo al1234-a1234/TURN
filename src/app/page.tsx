@@ -48,7 +48,6 @@ export default async function Home() {
         inside: c?.inside ?? 0,
         outside: c?.outside ?? 0,
         accepts: s?.accepts_waitlist ?? true,
-        busy: s?.busy_now ?? false,
         closed: (s?.manually_closed ?? false) || !isWithinOpeningHours(s?.opening_hours ?? null),
       };
     });
@@ -61,17 +60,20 @@ export default async function Home() {
     const best = free ?? shortest ?? decorated[0];
     const ra = ratingAgg.get(r.id);
     const rating = ra && ra.n > 0 ? (Math.round((ra.sum / ra.n) * 10) / 10).toFixed(1) : null;
+    // البطاقة لا تعرض المدينة ولا المسافة ولا «مزدحم الآن»، فلا نرسلها:
+    // كل حقلٍ هنا يُسلسَل في حمولة الصفحة لكل مطعمٍ في القائمة.
     return {
-      ...r,
-      city: best?.b.city ?? "",
-      lat: best?.b.lat ?? null,
-      lng: best?.b.lng ?? null,
+      id: r.id,
+      name: r.name,
+      slug: r.slug,
+      logo_url: r.logo_url,
+      cuisine: r.cuisine,
+      cuisine_en: r.cuisine_en,
       waiting: best?.total ?? 0,
       inside: best?.inside ?? 0,
       outside: best?.outside ?? 0,
       accepts: best?.accepts ?? true,
       closedNow: open.length === 0,
-      busyNow: best?.busy ?? false,
       rating,
       branchCount: (r.branches ?? []).length,
     };

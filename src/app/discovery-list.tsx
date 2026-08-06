@@ -5,7 +5,7 @@ import { SmartImage } from "@/components/smart-image";
 import { useLang } from "@/components/lang-provider";
 import { storePeek } from "@/lib/peek";
 import { IconPlate } from "@/components/icons";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toAr } from "@/lib/format";
 import { tr, type Lang } from "@/lib/i18n";
 
@@ -16,166 +16,113 @@ export type DiscoveryItem = {
   logo_url: string | null;
   cuisine: string | null;
   cuisine_en: string | null;
-  city: string;
-  lat: number | null;
-  lng: number | null;
   waiting: number;
   inside: number;
   outside: number;
   accepts: boolean;
   closedNow: boolean;
-  busyNow: boolean;
   rating: string | null;
   branchCount: number;
 };
 
-// مسافة هافرساين بالمتر
-function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
-  const R = 6371000;
-  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
-  const dLng = ((b.lng - a.lng) * Math.PI) / 180;
-  const la1 = (a.lat * Math.PI) / 180;
-  const la2 = (b.lat * Math.PI) / 180;
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
-}
-function distanceLabel(m: number, lang: Lang): string {
-  if (m < 1000) return tr(lang, `${toAr(Math.round(m / 10) * 10)} م`, `${Math.round(m / 10) * 10} m`);
-  const km = m / 1000;
-  const v = km < 10 ? Math.round(km * 10) / 10 : Math.round(km);
-  return tr(lang, `${toAr(v)} كم`, `${v} km`);
-}
-
-function ZonePill({ label, count, lang }: { label: string; count: number; lang: Lang }) {
-  const busy = count > 0;
+/**
+ * فاصلٌ عنصرٌ لا حرف. النقطة المكتوبة «·» تنقلب مع الأرقام في السياق
+ * ثنائي الاتجاه، فتُقرأ «فرعان · برجر» أحيانًا ملتصقةً بالرقم قبلها.
+ */
+function Dot() {
   return (
     <span
-      className="inline-flex w-[116px] items-center justify-between rounded-full px-3 py-1.5 text-[12px] font-bold"
-      style={
-        busy
-          ? { background: "var(--brand-solid)", color: "var(--brand-ink)" }
-          : { background: "var(--brand-solid)", color: "var(--brand-ink)" }
-      }
-    >
-      <span className="inline-flex items-center gap-1.5">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path d="M4 10h16M6 10V7a2 2 0 012-2h8a2 2 0 012 2v3M7 14v4M17 14v4M4 14h16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-        </svg>
-        {label}
-      </span>
-      <span className="font-extrabold">{busy ? toAr(count) : tr(lang, "متاح", "Available")}</span>
-    </span>
+      aria-hidden
+      className="mx-[7px] inline-block h-[3px] w-[3px] shrink-0 rounded-full bg-current align-middle opacity-45"
+    />
   );
 }
 
-function Card({ r, lang, delay, coords }: { r: DiscoveryItem; lang: Lang; delay: number; coords: { lat: number; lng: number } | null }) {
+function branchesLabel(n: number, lang: Lang): string {
+  if (lang === "en") return n === 1 ? "1 branch" : `${n} branches`;
+  if (n === 1) return "فرع واحد";
+  if (n === 2) return "فرعان";
+  return n <= 10 ? `${toAr(n)} فروع` : `${toAr(n)} فرعًا`;
+}
+
+/**
+ * حالة البطاقة: سطرُ نصٍّ واحد يحمل لونه — لا بنر ولا كبسولات.
+ *
+ * كانت الحالات الأربع كلّها تُطبع على نفس العنابي (`--brand-solid`)، فاللون
+ * لا يفرّق «مغلق» عن «متاح»، والعين لا تستطيع فرز القائمة إلا بقراءة كل صفّ.
+ * الهوية تملك ألوان الحالات أصلًا (`--st-open` / `--st-closed`) ولم تكن
+ * تُستعمل هنا. الآن اللون هو الجواب: عنابيّ فيه انتظار، أخضر بلا انتظار،
+ * رماديّ مغلق.
+ *
+ * والصفر لا يُطبع: «خارجي 0» يُقرأ زخرفةً لا خبرًا، فالقسم الفارغ يسقط.
+ */
+function cardState(r: DiscoveryItem, lang: Lang): { parts: string[]; color: string } {
+  if (r.closedNow) return { parts: [tr(lang, "مغلق الآن", "Closed now")], color: "var(--muted)" };
+  if (!r.accepts) return { parts: [tr(lang, "استقبال مباشر", "Walk in directly")], color: "var(--st-open)" };
+
+  const parts: string[] = [];
+  if (r.inside > 0) parts.push(tr(lang, `داخلي ${toAr(r.inside)}`, `Indoor ${r.inside}`));
+  if (r.outside > 0) parts.push(tr(lang, `خارجي ${toAr(r.outside)}`, `Outdoor ${r.outside}`));
+  if (parts.length) return { parts, color: "var(--brand-solid)" };
+
+  // فرعٌ بطابورٍ بلا توزيع أقسام (كل الطاولات قسمٌ واحد)
+  if (r.waiting > 0) {
+    return { parts: [tr(lang, `${toAr(r.waiting)} بالانتظار`, `${r.waiting} waiting`)], color: "var(--brand-solid)" };
+  }
+  return { parts: [tr(lang, "بلا انتظار", "No wait")], color: "var(--st-open)" };
+}
+
+function Card({ r, lang, delay }: { r: DiscoveryItem; lang: Lang; delay: number }) {
   const initial = (r.name ?? "").trim().charAt(0) || "م";
-  const dist =
-    coords && r.lat != null && r.lng != null
-      ? distanceLabel(distanceMeters(coords, { lat: r.lat, lng: r.lng }), lang)
-      : null;
-  const href = `/r/${r.slug}`;
+  const state = cardState(r, lang);
 
   return (
     <Link
-      href={href}
+      href={`/r/${r.slug}`}
       onClick={() => storePeek(r.slug, { name: r.name, logo: r.logo_url, waiting: r.waiting, closed: r.closedNow })}
-      className={`reveal rq-card block overflow-hidden p-3 transition active:scale-[0.985]${r.closedNow ? " opacity-70" : ""}`}
+      className={`reveal rq-card flex items-center gap-4 overflow-hidden p-[15px] transition active:scale-[0.985]${r.closedNow ? " opacity-70" : ""}`}
       style={{ animationDelay: `${delay}ms` }}
     >
-      <div className="flex items-center gap-3">
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-800 font-serif text-xl font-bold text-cream-100">
-          {r.logo_url ? (
-            <SmartImage src={r.logo_url} fallbackText={r.name} alt="" width={56} height={56} sizes="56px" className="h-full w-full object-cover" />
-          ) : (
-            initial
-          )}
-        </span>
-
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-display text-[15px] font-bold text-[color:var(--ink)]">{r.name}</p>
-          <p className="mt-0.5 flex items-center gap-1.5 truncate text-[12px] font-medium text-[color:var(--muted)]">
-            <span className="truncate">
-              {tr(lang, r.cuisine ?? "مطعم", r.cuisine_en ?? "Restaurant")}{r.city ? ` · ${r.city}` : ""}
-            </span>
-            {r.branchCount > 1 && (
-              <span
-                className="inline-flex shrink-0 items-center justify-center rounded-md px-1.5 py-0.5 text-[10px] font-extrabold text-cream-100"
-                style={{ background: "var(--brand-solid)" }}
-              >
-                {tr(lang, `${toAr(r.branchCount)} فرع`, `${r.branchCount} branches`)}
-              </span>
-            )}
-            {r.busyNow && !r.closedNow && (
-              <span
-                className="inline-flex shrink-0 items-center justify-center rounded-md px-1.5 py-0.5 text-[10px] font-extrabold text-cream-100"
-                style={{ background: "var(--brand-solid)" }}
-              >
-                {tr(lang, "مزدحم الآن", "Busy now")}
-              </span>
-            )}
-          </p>
-          {dist && (
-            <p className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold" style={{ color: "var(--brand-d)" }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden>
-                <path d="M12 21s7-6.3 7-11a7 7 0 10-14 0c0 4.7 7 11 7 11z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
-                <circle cx="12" cy="10" r="2.4" stroke="currentColor" strokeWidth="1.8" />
-              </svg>
-              {tr(lang, `يبعد ${dist}`, `${dist} away`)}
-            </p>
-          )}
-        </div>
-
-        {r.rating && (
-          <span className="flex shrink-0 items-center gap-1 self-start text-[14px] font-extrabold text-[color:var(--ink)]">
-            <span style={{ color: "var(--star)" }}>★</span>
-            {r.rating}
-          </span>
+      {/* البلاطة بيضاء بحدٍّ شعرة: الشعار يضعه صاحب المطعم، فلا نصبغه بلوننا */}
+      <span
+        className="grid h-[72px] w-[72px] shrink-0 place-items-center overflow-hidden rounded-[20px] bg-white text-2xl font-bold"
+        style={{ border: "1px solid var(--border)", color: "var(--brand-solid)" }}
+      >
+        {r.logo_url ? (
+          <SmartImage src={r.logo_url} fallbackText={r.name} alt="" width={72} height={72} sizes="72px" className="h-full w-full object-cover" />
+        ) : (
+          initial
         )}
+      </span>
+
+      {/* مواضع ثابتة من صفٍّ لآخر: الاسم، ثم الرمادي، ثم الحالة. الشاشة
+          مهمّة مقارنة («أيّهم يجلسني أسرع؟») والمقارنة تحتاج موضعًا متوقَّعًا. */}
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-display text-[17px] font-semibold leading-[1.45] text-[color:var(--ink)]">{r.name}</p>
+        <p className="truncate text-[13px] font-medium leading-[1.6] text-[color:var(--muted)]">
+          {branchesLabel(r.branchCount, lang)}
+          {r.cuisine && (
+            <>
+              <Dot />
+              {tr(lang, r.cuisine, r.cuisine_en ?? r.cuisine)}
+            </>
+          )}
+        </p>
+        <p className="truncate text-[13px] font-semibold leading-[1.6]" style={{ color: state.color }}>
+          {state.parts.map((p, i) => (
+            <span key={p}>
+              {i > 0 && <Dot />}
+              {p}
+            </span>
+          ))}
+        </p>
       </div>
 
-      {r.closedNow ? (
-        <div
-          className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-          style={{ background: "var(--brand-d)" }}
-        >
-          <span className="flex items-center gap-2 text-sm font-extrabold text-cream-100">
-            <span className="h-2.5 w-2.5 rounded-full bg-white/80" />
-            {tr(lang, "مغلق حاليًا", "Closed now")}
-          </span>
-          <span className="text-xs font-extrabold text-cream-100/85">{tr(lang, "التفاصيل ←", "Details ←")}</span>
-        </div>
-      ) : r.waiting > 0 && r.inside + r.outside > 0 ? (
-        <div className="mt-2.5 flex flex-col items-end gap-1.5">
-          <ZonePill label={tr(lang, "داخلي", "Indoor")} count={r.inside} lang={lang} />
-          <ZonePill label={tr(lang, "خارجي", "Outdoor")} count={r.outside} lang={lang} />
-        </div>
-      ) : r.waiting > 0 ? (
-        <div
-          className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-          style={{ background: "var(--brand-solid)", boxShadow: "0 12px 24px -16px rgba(102,28,10,0.72)" }}
-        >
-          <span className="flex items-center gap-2 text-sm font-extrabold text-cream-100">
-            <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
-            {tr(lang, `${toAr(r.waiting)} بالطابور الآن`, `${toAr(r.waiting)} in queue now`)}
-          </span>
-          <span className="text-xs font-extrabold text-cream-100/85">{tr(lang, "التفاصيل ←", "Details ←")}</span>
-        </div>
-      ) : (
-        <div
-          className="mt-2.5 flex items-center justify-between rounded-2xl px-3.5 py-2.5"
-          style={{ background: "var(--brand-solid)" }}
-        >
-          <span className="flex items-center gap-2 text-sm font-extrabold text-cream-100">
-            <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
-            {r.accepts
-              ? tr(lang, "متاح الآن · بدون انتظار", "Available now · No wait")
-              : tr(lang, "استقبال مباشر · بلا حجز دور", "Walk in directly · no queue")}
-          </span>
-          <span className="text-xs font-extrabold text-cream-100/85">
-            {r.accepts ? tr(lang, "خذ دورك ←", "Take your turn ←") : tr(lang, "التفاصيل ←", "Details ←")}
-          </span>
-        </div>
+      {r.rating && (
+        <span className="flex shrink-0 items-center gap-1 self-end text-[14px] font-semibold tabular-nums text-[color:var(--ink)]">
+          <span style={{ color: "var(--star)" }}>★</span>
+          {r.rating}
+        </span>
       )}
     </Link>
   );
@@ -196,22 +143,9 @@ export function DiscoveryList({ items }: { items: DiscoveryItem[] }) {
   const lang = useLang();
   const [cuisine, setCuisine] = useState<string>("");
   const [filterOpen, setFilterOpen] = useState(false);
-  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
-  // موقع العميل لعرض المسافة — لا نطلب الإذن هنا أبدًا: طلبه في الرئيسية
-  // كان «يحرق» نافذة السماح قبل أن يحتاجها العميل لأخذ دوره، ورفضة عابرة
-  // هنا كانت تقفل بوابة الدور كلها. نقرأه فقط إن كان ممنوحًا سلفًا.
-  useEffect(() => {
-    if (typeof navigator === "undefined" || !navigator.geolocation || !navigator.permissions?.query) return;
-    navigator.permissions.query({ name: "geolocation" }).then((s) => {
-      if (s.state !== "granted") return;
-      navigator.geolocation.getCurrentPosition(
-        (pos) => setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        () => {},
-        { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 },
-      );
-    }).catch(() => {});
-  }, []);
+  // المسافة حُذفت من البطاقة، ومعها قراءة الموقع التي كانت تغذّيها وحدها:
+  // لم تعد الرئيسية تستعلم عن إذن الموقع ولا تشغّل جهاز تحديد الموقع إطلاقًا.
 
   // شرائح المطابخ — مشتقّة من المطاعم المعروضة (بلا تكرار)
   const cuisines = useMemo(() => {
@@ -249,10 +183,12 @@ export function DiscoveryList({ items }: { items: DiscoveryItem[] }) {
   const selected = cuisines.find((c) => c.ar === cuisine);
   const selectedLabel = selected ? tr(lang, selected.ar, selected.en ?? selected.ar) : "";
 
+  // كان الفرعان يعيدان نفس التنسيق حرفيًّا، فالمطبخ المختار لا يتميّز عن
+  // بقيّة الخيارات داخل القائمة المنسدلة — لا يعرف العميل ماذا اختار.
   const chip = (active: boolean) =>
     active
       ? { background: "var(--brand-solid)", color: "var(--brand-ink)", border: "1px solid transparent" }
-      : { background: "var(--brand-solid)", color: "var(--brand-ink)", border: "1px solid transparent" };
+      : { background: "var(--surface)", color: "var(--brand-d)", border: "1px solid var(--border)" };
 
   let delay = 0;
 
@@ -340,7 +276,7 @@ export function DiscoveryList({ items }: { items: DiscoveryItem[] }) {
             <SectionHeading label={g.label} count={g.rows.length} />
             <div className="space-y-2.5">
               {g.rows.map((r) => (
-                <Card key={r.id} r={r} lang={lang} delay={(delay++ % 8) * 45} coords={coords} />
+                <Card key={r.id} r={r} lang={lang} delay={(delay++ % 8) * 45} />
               ))}
             </div>
           </section>
