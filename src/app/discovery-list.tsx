@@ -57,6 +57,12 @@ function branchesLabel(n: number, lang: Lang): string {
  * والصفر لا يُطبع: «خارجي 0» يُقرأ زخرفةً لا خبرًا، فالقسم الفارغ يسقط.
  */
 function cardState(r: DiscoveryItem, lang: Lang): { parts: string[]; color: string } {
+  // المغلق يبقى بطاقةً كاملةً كبقيّة البطاقات — لا تخافُتَ ولا تصميمًا
+  // مختلفًا. الخبر في سطر الحالة وحده، والمطعم يُعرض بكامل هيئته لأن العميل
+  // قد يفتحه ليرى موقعه أو موعد فتحه.
+  //
+  // ورماديٌّ لا `--st-closed`: الأحمر الدافئ يقع قريبًا من عنابيّ الطابور
+  // فتلتبس «مغلق» بـ«فيه انتظار». الرمادي يفصل «لا فعل ممكن» عن «انتظر».
   if (r.closedNow) return { parts: [tr(lang, "مغلق الآن", "Closed now")], color: "var(--muted)" };
   if (!r.accepts) return { parts: [tr(lang, "استقبال مباشر", "Walk in directly")], color: "var(--st-open)" };
 
@@ -80,16 +86,18 @@ function Card({ r, lang, delay }: { r: DiscoveryItem; lang: Lang; delay: number 
     <Link
       href={`/r/${r.slug}`}
       onClick={() => storePeek(r.slug, { name: r.name, logo: r.logo_url, waiting: r.waiting, closed: r.closedNow })}
-      className={`reveal rq-card flex items-center gap-4 overflow-hidden p-[15px] transition active:scale-[0.985]${r.closedNow ? " opacity-70" : ""}`}
+      className="reveal rq-card flex items-center gap-[13px] overflow-hidden p-[13px] transition active:scale-[0.985]"
       style={{ animationDelay: `${delay}ms` }}
     >
-      {/* البلاطة بيضاء بحدٍّ شعرة: الشعار يضعه صاحب المطعم، فلا نصبغه بلوننا */}
+      {/* البلاطة بيضاء بحدٍّ شعرة: الشعار يضعه صاحب المطعم، فلا نصبغه بلوننا.
+          و٦٤ لا ٧٢: عند ٧٢ يتجاوز ارتفاعُ البلاطة كتلةَ الأسطر الثلاثة فيبقى
+          فراغٌ ميّت أسفل النصّ، والصفّ يُقرأ غير مستوٍ. */}
       <span
-        className="grid h-[72px] w-[72px] shrink-0 place-items-center overflow-hidden rounded-[20px] bg-white text-2xl font-bold"
+        className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[18px] bg-white text-2xl font-bold"
         style={{ border: "1px solid var(--border)", color: "var(--brand-solid)" }}
       >
         {r.logo_url ? (
-          <SmartImage src={r.logo_url} fallbackText={r.name} alt="" width={72} height={72} sizes="72px" className="h-full w-full object-cover" />
+          <SmartImage src={r.logo_url} fallbackText={r.name} alt="" width={64} height={64} sizes="64px" className="h-full w-full object-cover" />
         ) : (
           initial
         )}
@@ -98,7 +106,17 @@ function Card({ r, lang, delay }: { r: DiscoveryItem; lang: Lang; delay: number 
       {/* مواضع ثابتة من صفٍّ لآخر: الاسم، ثم الرمادي، ثم الحالة. الشاشة
           مهمّة مقارنة («أيّهم يجلسني أسرع؟») والمقارنة تحتاج موضعًا متوقَّعًا. */}
       <div className="min-w-0 flex-1">
-        <p className="truncate font-display text-[17px] font-semibold leading-[1.45] text-[color:var(--ink)]">{r.name}</p>
+        {/* التقييم في صفّ الاسم لا معلّقًا وحده في الطرف: هما معًا «هويّة
+            المطعم»، والسطران تحتهما حالته. */}
+        <div className="flex items-baseline gap-2">
+          <p className="min-w-0 flex-1 truncate font-display text-[17px] font-semibold leading-[1.45] text-[color:var(--ink)]">{r.name}</p>
+          {r.rating && (
+            <span className="flex shrink-0 items-center gap-1 text-[13px] font-semibold tabular-nums text-[color:var(--ink)]">
+              <span style={{ color: "var(--star)" }}>★</span>
+              {r.rating}
+            </span>
+          )}
+        </div>
         <p className="truncate text-[13px] font-medium leading-[1.6] text-[color:var(--muted)]">
           {branchesLabel(r.branchCount, lang)}
           {r.cuisine && (
@@ -108,7 +126,7 @@ function Card({ r, lang, delay }: { r: DiscoveryItem; lang: Lang; delay: number 
             </>
           )}
         </p>
-        <p className="truncate text-[13px] font-semibold leading-[1.6]" style={{ color: state.color }}>
+        <p className="text-[13px] font-semibold leading-[1.6]" style={{ color: state.color }}>
           {state.parts.map((p, i) => (
             <span key={p}>
               {i > 0 && <Dot />}
@@ -117,23 +135,17 @@ function Card({ r, lang, delay }: { r: DiscoveryItem; lang: Lang; delay: number 
           ))}
         </p>
       </div>
-
-      {r.rating && (
-        <span className="flex shrink-0 items-center gap-1 self-end text-[14px] font-semibold tabular-nums text-[color:var(--ink)]">
-          <span style={{ color: "var(--star)" }}>★</span>
-          {r.rating}
-        </span>
-      )}
     </Link>
   );
 }
 
+// العنوان يقول اسم القسم فقط. كان «متاح الآن · بدون انتظار» ثم كل بطاقةٍ
+// تحته تعيد «بلا انتظار» — تكرارٌ يملأ الشاشة بلا خبرٍ جديد.
 function SectionHeading({ label, count }: { label: string; count: number }) {
   return (
-    <div className="mb-2 mt-1 flex items-center gap-2 px-1">
-      <span className="h-4 w-1 rounded-full" style={{ background: "var(--brand-d)" }} />
-      <h2 className="font-display text-[15px] font-bold text-[color:var(--brand-d)]">{label}</h2>
-      <span className="text-[12px] font-bold text-[color:var(--muted)]">{toAr(count)}</span>
+    <div className="mb-2 mt-1 flex items-baseline gap-2 px-1">
+      <h2 className="font-display text-[14px] font-bold text-[color:var(--brand-d)]">{label}</h2>
+      <span className="text-[12px] font-semibold tabular-nums text-[color:var(--muted)]">{toAr(count)}</span>
     </div>
   );
 }
@@ -174,7 +186,7 @@ export function DiscoveryList({ items }: { items: DiscoveryItem[] }) {
     // متاح: الأعلى تقييمًا أولًا
     available.sort((a, b) => Number(b.rating ?? 0) - Number(a.rating ?? 0));
     return [
-      { key: "available", label: tr(lang, "متاح الآن · بدون انتظار", "Available now · No wait"), rows: available },
+      { key: "available", label: tr(lang, "متاح الآن", "Available now"), rows: available },
       { key: "queued", label: tr(lang, "فيه طابور الآن", "Queue running now"), rows: queued },
       { key: "closed", label: tr(lang, "مغلق حاليًا", "Closed now"), rows: closed },
     ].filter((g) => g.rows.length > 0);
@@ -213,7 +225,9 @@ export function DiscoveryList({ items }: { items: DiscoveryItem[] }) {
           <button
             onClick={() => setFilterOpen((o) => !o)}
             className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-[13px] font-bold transition active:scale-95"
-            style={chip(true)}
+            // يمتلئ بالعنابي حين يكون هناك مطبخٌ مختار فقط. كان ممتلئًا دائمًا،
+            // فيصير أصخب شيءٍ في الشاشة وهو لا يحمل خبرًا عن أيّ مطعم.
+            style={chip(Boolean(cuisine))}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
               <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
