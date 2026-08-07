@@ -9,6 +9,7 @@ import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 import { useSelectBranch } from "./restaurant-tabs";
 import { createClient } from "@/lib/supabase/client";
+import { isWithinOpeningHours } from "@/lib/dates";
 import { recordTurn, lastTurnFor, clearTurnRecovery, getMe, saveMe } from "@/lib/local-store";
 import { SmartImage } from "@/components/smart-image";
 
@@ -246,25 +247,44 @@ export function WaitlistForm({
   const [savedName, setSavedName] = useState("");
   const nameRef = useRef<HTMLInputElement | null>(null);
 
-  /* الأرقام الحيّة.
-     صارت الصفحة تُولَّد مسبقًا وتُخدَم من الحافة فورًا — وثمن ذلك أن عدّاد
-     الطابور المخبوز فيها قد يتأخّر حتى ٦٠ث. فنُحدّثه من المتصفّح فور الرسم:
-     القشرة فورية، والرقم حيّ. هذا هو ما كنّا نظنّه مقايضة، وليس كذلك. */
-  const [live, setLive] = useState<Record<string, { total: number; inside: number; outside: number }>>({});
+  /* الحالة الحيّة — العدّاد **ومعه** فتح الفرع وإغلاقه.
+     صارت الصفحة تُولَّد مسبقًا وتُخدَم من الحافة فورًا، وثمن ذلك أن ما يُخبَز
+     فيها قد يتأخّر حتى ٦٠ث. والعدّاد أهون ما في الأمر: لو أغلق المضيف الفرع
+     من الاستقبال، كانت البطاقة تبقى تقول «متاح الآن · خذ دورك» دقيقةً كاملة،
+     فيملأ العميل النموذج ثم يُردّ بخطأ «الفرع مغلق حاليًا». نُحدّث الاثنين
+     معًا فور الرسم فتعود البطاقة صادقة. */
+  type Live = { total: number; inside: number; outside: number; accepts?: boolean; closedNow?: boolean; busyNow?: boolean };
+  const [live, setLive] = useState<Record<string, Live>>({});
   useEffect(() => {
     const ids = branches.map((b) => b.id);
     if (!ids.length) return;
     let alive = true;
-    createClient()
-      .rpc("waitlist_counts_for", { p_branch_ids: ids })
-      .then(({ data }) => {
-        if (!alive || !data) return;
-        const next: Record<string, { total: number; inside: number; outside: number }> = {};
-        for (const c of data) next[c.branch_id] = { total: c.total, inside: c.inside, outside: c.outside };
+    const sb = createClient();
+    Promise.all([
+      sb.rpc("waitlist_counts_for", { p_branch_ids: ids }),
+      sb.from("branch_settings")
+        .select("branch_id, accepts_waitlist, manually_closed, busy_now, opening_hours")
+        .in("branch_id", ids),
+    ])
+      .then(([counts, settings]) => {
+        if (!alive) return;
+        const next: Record<string, Live> = {};
+        for (const c of counts.data ?? []) {
+          next[c.branch_id] = { total: c.total, inside: c.inside, outside: c.outside };
+        }
+        for (const st of settings.data ?? []) {
+          const cur = next[st.branch_id] ?? { total: 0, inside: 0, outside: 0 };
+          next[st.branch_id] = {
+            ...cur,
+            accepts: st.accepts_waitlist ?? true,
+            busyNow: st.busy_now ?? false,
+            closedNow: (st.manually_closed ?? false) || !isWithinOpeningHours(st.opening_hours as { open?: string | null; close?: string | null } | null),
+          };
+        }
         setLive(next);
       })
-      // فشلٌ عابر يُبقي الرقم المخبوز — وهو صحيحٌ حتى دقيقة مضت، لا خطأ
-      .then(undefined, () => {});
+      // فشلٌ عابر يُبقي المخبوز — وهو صحيحٌ حتى دقيقة مضت، لا خطأ
+      .catch(() => {});
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
