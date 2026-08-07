@@ -20,7 +20,7 @@ export function LangToggle({ variant = "header" }: { variant?: "header" | "plain
 
   const base =
     variant === "header"
-      ? "inline-flex items-center gap-0.5 rounded-full border p-0.5 text-xs font-bold"
+      ? "inline-flex h-10 items-center gap-0.5 rounded-full border px-1 text-xs font-bold"
       : "inline-flex items-center gap-0.5 rounded-full border p-0.5 text-sm font-bold";
   const headerColors = variant === "header" ? { borderColor: "rgba(255,255,255,0.28)" } : { borderColor: "var(--border)" };
 

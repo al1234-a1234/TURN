@@ -352,9 +352,11 @@ h1, h2, h3, h4 {
     border-radius: var(--radius-card);
     box-shadow: 0 18px 40px -24px rgba(58, 18, 6, 0.34);
   }
+  /* ٢٫٥rem لا ٢٫٧٥: ثلاثة ارتفاعات في صفّ ترويسة واحد (مبدّل اللغة ١٫٧٥،
+     الأيقونات ٢٫٧٥، الخروج ٢٫٥) تُقرأ عشوائيةً لا تنوّعًا. الكلّ ٢٫٥ الآن. */
   .icon-btn {
     display: inline-flex; align-items: center; justify-content: center;
-    height: 2.75rem; width: 2.75rem; border-radius: 999px;
+    height: 2.5rem; width: 2.5rem; border-radius: 999px;
     background: rgba(255,255,255,0.16); color: var(--brand-ink);
     border: 1px solid rgba(255,255,255,0.22); transition: background .2s;
   }

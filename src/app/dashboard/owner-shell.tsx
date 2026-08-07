@@ -148,10 +148,10 @@ export async function OwnerShell({
         <div className="border-t p-3" style={{ borderColor: "var(--border)" }}>
           <div className="mb-2 flex justify-center"><LangToggle variant="plain" /></div>
           <Link href={`/r/${restaurant.slug}`} className="mb-2 flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-bold text-[color:var(--muted)] transition hover:text-brand-700">
-            <span>🌐</span> {tr(lang, "الصفحة العامة", "Public page")}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" /><path d="M3 12h18M12 3c2.6 2.6 2.6 15.4 0 18M12 3c-2.6 2.6-2.6 15.4 0 18" stroke="currentColor" strokeWidth="2" /></svg> {tr(lang, "الصفحة العامة", "Public page")}
           </Link>
           <Link href="/account" className="mb-2 flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-bold text-[color:var(--muted)] transition hover:text-brand-700">
-            <span>🔑</span> {tr(lang, "حسابي — تغيير كلمة المرور", "My account — change password")}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><circle cx="8" cy="12" r="4" stroke="currentColor" strokeWidth="2" /><path d="M12 12h9M18 12v3M21 12v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg> {tr(lang, "حسابي — تغيير كلمة المرور", "My account — change password")}
           </Link>
           <LogoutButton />
         </div>
@@ -171,7 +171,7 @@ export async function OwnerShell({
                 </svg>
               </Link>
               <Link href="/account" className="icon-btn" title={tr(lang, "حسابي", "My account")}>
-                <span aria-hidden>🔑</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><circle cx="8" cy="12" r="4" stroke="currentColor" strokeWidth="2" /><path d="M12 12h9M18 12v3M21 12v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
               </Link>
               <LogoutButton />
             </div>
