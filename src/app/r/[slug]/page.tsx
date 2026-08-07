@@ -5,7 +5,6 @@ import { SharedHeader } from "@/components/page-header";
 import { WaitlistForm } from "./waitlist-form";
 import { RestaurantTabs } from "./restaurant-tabs";
 import { QueueTicket } from "./queue-ticket";
-import { Gallery } from "./gallery";
 import { ShareButton } from "./share-button";
 import { ReviewForm } from "./review-form";
 import { toAr, safeExternalUrl } from "@/lib/format";
@@ -35,10 +34,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function RestaurantPublicPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ branch?: string }>;
 }) {
   const { slug } = await params;
   const supabase = await createClient();
@@ -61,9 +58,10 @@ export default async function RestaurantPublicPage({
   const { data: branches } = await supabase
     .from("branches").select("id, name, city, address, branch_settings(accepts_waitlist, manually_closed, busy_now, opening_hours, has_inside, has_outside)")
     .eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at");
-  const requestedBranch = (await searchParams).branch;
-  const contentBranchId =
-    (branches ?? []).find((b) => b.id === requestedBranch)?.id ?? branches?.[0]?.id ?? "";
+  // منيو الفرع الأول وحده يُولَّد مسبقًا. قراءة `?branch=` هنا كانت تُجبر
+  // Next على توليد الصفحة عند كل طلب — أي أن كل مسحة باركود تدفع ثمن ميزةٍ
+  // نادرة. الفرع المطلوب يُقرأ في المتصفّح، ومنيوه يُجلب عند التبديل وحده.
+  const contentBranchId = branches?.[0]?.id ?? "";
   const branchList = branches ?? [];
 
   // المسار الحرج: كل ما هو ثابت (قائمة/صور/تقييمات/شريط الفروع) يُقرأ من كاش ٦٠ث
@@ -153,7 +151,7 @@ export default async function RestaurantPublicPage({
   ) : activeEntry ? (
     <QueueTicket position={0} total={0} entryId={activeEntry.id} phone={activeEntry.phone} restaurantName={restaurant.name} restored />
   ) : (
-    <WaitlistForm slug={slug} branches={withCounts} logo={restaurant.logo_url} defaultName={defaultName} defaultPhone={defaultPhone} restaurantName={restaurant.name} restaurantLogo={restaurant.logo_url} initialBranchId={requestedBranch && (branches ?? []).some((b) => b.id === requestedBranch) ? requestedBranch : undefined} />
+    <WaitlistForm slug={slug} branches={withCounts} logo={restaurant.logo_url} defaultName={defaultName} defaultPhone={defaultPhone} restaurantName={restaurant.name} restaurantLogo={restaurant.logo_url} />
   );
 
   return (
@@ -201,11 +199,10 @@ export default async function RestaurantPublicPage({
           queueTotal={toAr(total)}
           categories={categories ?? []}
           items={items ?? []}
+          photos={photos ?? []}
         >
           {waitlistPanel}
         </RestaurantTabs>
-
-        <Gallery photos={photos ?? []} />
 
         <RestaurantLinks links={(restaurant.links ?? {}) as Record<string, string>} />
       </main>

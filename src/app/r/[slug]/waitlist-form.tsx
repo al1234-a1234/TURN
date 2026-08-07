@@ -2,12 +2,12 @@
 
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { useRouter } from "next/navigation";
 import { joinWaitlistGuest, type WaitlistState } from "./actions";
 import { QueueTicket } from "./queue-ticket";
 import { toAr, normalizePhone } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
+import { useSelectBranch } from "./restaurant-tabs";
 import { recordTurn, lastTurnFor, clearTurnRecovery } from "@/lib/local-store";
 import { SmartImage } from "@/components/smart-image";
 
@@ -206,23 +206,37 @@ export function WaitlistForm({
   initialBranchId?: string;
 }) {
   const lang = useLang();
-  const router = useRouter();
+  const selectBranch = useSelectBranch();
   const [state, formAction, pending] = useActionState<WaitlistState, FormData>(joinWaitlistGuest, { ok: false });
 
   const multi = branches.length > 1;
   // فرع واحد → مختار تلقائيًّا؛ عدّة فروع → يختار العميل من البطاقات أولًا
   // (إلا إذا جاء الفرع من الرابط — QR داخل الفرع)
   const [branchId, setBranchIdRaw] = useState<string>(initialBranchId ?? (multi ? "" : branches[0]?.id ?? ""));
+
+  // `?branch=` صار يُقرأ هنا لا على الخادم: قراءته هناك كانت تمنع توليد
+  // الصفحة مسبقًا، فتدفع كل مسحة باركود ثمن باركود الشاشة الداخلية.
+  useEffect(() => {
+    if (initialBranchId || typeof window === "undefined") return;
+    const wanted = new URLSearchParams(window.location.search).get("branch");
+    if (wanted && branches.some((b) => b.id === wanted)) {
+      setBranchIdRaw(wanted);
+      selectBranch?.(wanted);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // اختيار الفرع يحدَّث في الرابط أيضًا كي تتبعه القائمة والصور —
   // كان العميل يختار فرعًا ويقرأ منيو فرعٍ آخر
   function setBranchId(id: string) {
     setBranchIdRaw(id);
-    // router.replace يعيد جلب محتوى الفرع (منيو/صور) من الخادم بلا قفزة
-    if (typeof window !== "undefined") {
-      const u = new URL(window.location.href);
-      if (id) u.searchParams.set("branch", id); else u.searchParams.delete("branch");
-      router.replace(`${u.pathname}?${u.searchParams.toString()}`, { scroll: false });
-    }
+    if (typeof window === "undefined") return;
+    // منيو الفرع وصوره يُجلبان مباشرةً بدل إعادة توليد الصفحة كاملة
+    selectBranch?.(id);
+    // والرابط يُحدَّث بلا تنقّل: history لا router — كي يبقى قابلًا للمشاركة
+    const u = new URL(window.location.href);
+    if (id) u.searchParams.set("branch", id); else u.searchParams.delete("branch");
+    window.history.replaceState(null, "", `${u.pathname}${u.search}`);
   }
   const [zone, setZone] = useState<"inside" | "outside">("inside");
   const [phone, setPhone] = useState<string>(normalizePhone(defaultPhone).slice(0, 10));

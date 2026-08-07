@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { IconBell } from "@/components/icons";
 import { money } from "@/lib/format";
 import { tr } from "@/lib/i18n";
@@ -8,6 +8,22 @@ import { fmtDate } from "@/lib/dates";
 import { useLang } from "@/components/lang-provider";
 import { isFavorite, toggleFavorite } from "@/lib/local-store";
 import { SmartImage } from "@/components/smart-image";
+import { Gallery } from "./gallery";
+
+type Photo = { id: string; url: string; caption: string | null };
+type BranchContent = { categories: Category[]; items: Item[]; photos: Photo[] };
+
+/**
+ * تبديل الفرع بلا إعادة توليد الصفحة.
+ *
+ * كان `waitlist-form` يستدعي `router.replace(?branch=…)` فيُعيد الخادم بناء
+ * الصفحة كاملة لأجل منيو الفرع وصوره. وقراءة `searchParams` هي ما كانت تمنع
+ * توليد الصفحة مسبقًا — أي أن كل مسحة باركود تدفع ثمن ميزةٍ نادرة الاستعمال.
+ * الآن الصفحة تُولَّد مسبقًا بمنيو الفرع الأول، والتبديل يجلب منيو الفرع
+ * المطلوب وحده من ‎/api/branch-content/<id>.
+ */
+const SelectBranchCtx = createContext<((branchId: string) => void) | null>(null);
+export const useSelectBranch = () => useContext(SelectBranchCtx);
 
 type Item = {
   id: string;
@@ -84,8 +100,9 @@ export function RestaurantTabs({
   logo,
   initial,
   queueTotal,
-  categories,
-  items,
+  categories: seedCategories,
+  items: seedItems,
+  photos: seedPhotos,
   children,
 }: {
   slug: string;
@@ -106,9 +123,34 @@ export function RestaurantTabs({
   queueTotal: string;
   categories: Category[];
   items: Item[];
+  photos: Photo[];
   children: React.ReactNode;
 }) {
   const lang = useLang();
+
+  // محتوى الفرع المعروض: يبدأ بما وُلّد مسبقًا (الفرع الأول) ويُستبدل عند
+  // التبديل. وباشتقاق الأسماء القديمة من الحالة يبقى بقيّة المكوّن كما هو.
+  const [content, setContent] = useState<BranchContent>({
+    categories: seedCategories, items: seedItems, photos: seedPhotos,
+  });
+  const { categories, items, photos } = content;
+
+  // آخر طلبٍ هو الفائز: ضغطتان سريعتان على فرعين كانتا ستتسابقان، فيحطّ
+  // الردّ الأبطأ فوق الأحدث ويعرض منيو فرعٍ غير المختار.
+  const reqRef = useRef(0);
+  const selectBranch = useCallback((branchId: string) => {
+    const mine = ++reqRef.current;
+    if (!branchId) {
+      setContent({ categories: seedCategories, items: seedItems, photos: seedPhotos });
+      return;
+    }
+    fetch(`/api/branch-content/${branchId}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((c: BranchContent) => { if (mine === reqRef.current) setContent(c); })
+      // فشلٌ عابر يُبقي المعروض على حاله — لا نُفرِغ منيو المطعم أمام العميل
+      .catch(() => {});
+  }, [seedCategories, seedItems, seedPhotos]);
+
   const [tab, setTab] = useState<Tab>("waitlist");
   // فتح تبويب من الرابط (?tab=reviews مثلًا) — «قيّم تجربتك» بعد المسح كان
   // يهبط على نموذج الانضمام ويترك العميل يبحث بنفسه في أعلى لحظة حماس.
@@ -166,6 +208,7 @@ export function RestaurantTabs({
   );
 
   return (
+    <SelectBranchCtx.Provider value={selectBranch}>
     <div>
       {/* المربّعات الأربعة */}
       <div className="rq-card mb-5 grid grid-cols-4 gap-2.5 p-2.5">
@@ -420,6 +463,11 @@ export function RestaurantTabs({
           </p>
         </div>
       </div>
+
+      {/* المعرض انتقل إلى هنا: صوره تتبع الفرع المختار، ومالك الحالة
+          واحدٌ الآن بدل أن تتفرّق على شقيقين في الصفحة. */}
+      <Gallery photos={photos} />
     </div>
+    </SelectBranchCtx.Provider>
   );
 }
