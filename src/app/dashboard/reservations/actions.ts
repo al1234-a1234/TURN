@@ -39,6 +39,8 @@ function reasonOf(code: string | undefined, fallback: string): string {
       return "محاولات كثيرة على هذا الرقم — انتظر قليلًا ثم أعد المحاولة.";
     case "22023":
       return "الاسم والرقم مطلوبان.";
+    case "P0008":
+      return "هذا القسم غير متاح في هذا الفرع.";
     default:
       return fallback;
   }
@@ -63,7 +65,9 @@ export async function createReservation(
   const party = Math.max(1, Number(String(formData.get("party_size") ?? "2")) || 2);
   const notes = String(formData.get("notes") ?? "").trim() || undefined;
   const zoneRaw = String(formData.get("zone") ?? "");
-  const zone = zoneRaw === "inside" || zoneRaw === "outside" ? zoneRaw : undefined;
+  // القاعدة تتحقّق منه بـ valid_branch_zone وترفض صراحةً (P0008) إن لم يصحّ.
+  // قصّه هنا لاثنين كان يحوّل «عوائل» إلى «أيّ قسم» فيحجز في غير ما اختير.
+  const zone = zoneRaw.trim() || undefined;
 
   // ‏book_reservation_guest لا create_reservation_guest: القديمة كانت تُنشئ
   // الحجز بـ table_id فارغ، فلا يحجز شيئًا ولا يمنع تعارضًا. هذه تختار أنسب

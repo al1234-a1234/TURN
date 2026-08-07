@@ -27,7 +27,8 @@ export async function joinWaitlistGuest(
   const fullName = String(formData.get("full_name") ?? "").trim();
   // تطبيع + تحقّق: يمنع حفظ عميل برقم مشوّه (كان يتشظّى العميل الواحد لعملاء)
   const phone = saudiMobile(String(formData.get("phone") ?? ""));
-  const zoneRaw = String(formData.get("zone") ?? "inside");
+  // بلا افتراضٍ باسم قسم: resolveZone يختار أوّل قسمٍ رتّبه المالك
+  const zoneRaw = String(formData.get("zone") ?? "");
   const partyRaw = Number(formData.get("party_size") ?? 1);
 
   if (!branchId) return { ok: false, error: "اختر الفرع." };

@@ -14,6 +14,8 @@ import { getLang } from "@/lib/i18n-server";
 import { riyadhDayStart, riyadhDayKey, riyadhWeekday, riyadhHour } from "@/lib/dates";
 import { staffHasPermission } from "@/lib/features";
 
+const LIVE_ZONE_TONES = ["var(--st-full)", "var(--brand)", "var(--st-open)", "var(--brand-d)", "var(--muted)"];
+
 const AR_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 const EN_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -71,7 +73,7 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
   const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
   const [{ data: settings }, { data: analytics }, { data: liveRows }, tableCountRes] = await Promise.all([
     settingsBranch
-      ? supabase.from("branch_settings").select("accepts_waitlist, accepts_reservations, max_party_size, opening_hours, has_inside, has_outside, default_duration_min, booking_window_days").eq("branch_id", settingsBranch.id).maybeSingle()
+      ? supabase.from("branch_settings").select("accepts_waitlist, accepts_reservations, max_party_size, opening_hours, default_duration_min, booking_window_days").eq("branch_id", settingsBranch.id).maybeSingle()
       : Promise.resolve({ data: null }),
     branchIds.length
       ? supabase.from("waitlist_entries").select("joined_at, seated_at, zone, status").in("branch_id", branchIds).gte("joined_at", since30)
@@ -114,8 +116,23 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
   // (جُلب أعلاه ضمن الموجة المتوازية مع الإعدادات والتحليلات)
   const live = (liveRows ?? []) as { zone: string }[];
   const waiting = live;
-  const insideNow = live.filter((r) => r.zone === "inside").length;
-  const outsideNow = live.filter((r) => r.zone === "outside").length;
+  // أسماء الأقسام للفروع المعروضة — المفتاح يجمعها والاسم يُعرض
+  const { data: zoneRows } = branchIds.length
+    ? await supabase.from("branch_zones").select("key, name").in("branch_id", branchIds).order("sort_order")
+    : { data: [] as { key: string; name: string }[] };
+
+  // توزيع الطابور الحيّ لكل قسم بأسماء المالك — لا عمودين مثبّتين
+  const liveNames = new Map<string, string>();
+  for (const z of zoneRows ?? []) if (!liveNames.has(z.key)) liveNames.set(z.key, z.name);
+  const liveCounts = new Map<string, number>();
+  for (const r of live) liveCounts.set(r.zone ?? "", (liveCounts.get(r.zone ?? "") ?? 0) + 1);
+  const liveByZone = [...liveCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([key, value], i) => ({
+      label: liveNames.get(key) ?? tr(lang, "بلا قسم", "No area"),
+      value,
+      color: LIVE_ZONE_TONES[i % LIVE_ZONE_TONES.length],
+    }));
 
   // مؤشرات
   const served30 = seated.length;
@@ -155,8 +172,7 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
         <ChartCard title={tr(lang, "توزيع الطابور الآن", "Current queue split")} hint={tr(lang, "داخلي مقابل خارجي", "inside vs. outside")}>
           <SplitBars
             rows={[
-              { label: tr(lang, "طاولات داخلية", "Indoor tables"), value: insideNow, color: "var(--brand-d)" },
-              { label: tr(lang, "طاولات خارجية", "Outdoor tables"), value: outsideNow, color: "var(--brand)" },
+              ...liveByZone,
             ]}
           />
         </ChartCard>

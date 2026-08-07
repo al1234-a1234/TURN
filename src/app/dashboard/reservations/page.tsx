@@ -37,9 +37,16 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
   const activeBranch = scope.active;
 
   const { data: bs } = activeBranch
-    ? await supabase.from("branch_settings").select("accepts_reservations, has_inside, has_outside").eq("branch_id", activeBranch.id).maybeSingle()
+    ? await supabase.from("branch_settings").select("accepts_reservations").eq("branch_id", activeBranch.id).maybeSingle()
     : { data: null };
   const acceptsReservations = bs?.accepts_reservations ?? false;
+
+  // أقسام الفرع بأسماء المالك — الفعّالة وحدها تُحجَز فيها طاولة
+  const { data: zoneRows } = activeBranch
+    ? await supabase.from("branch_zones").select("key, name, name_en, sort_order")
+        .eq("branch_id", activeBranch.id).eq("is_active", true).order("sort_order")
+    : { data: [] };
+  const zones = (zoneRows ?? []).map((z) => ({ key: z.key, name: z.name, nameEn: z.name_en }));
 
   if (!acceptsReservations) {
     return (
@@ -107,8 +114,7 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
         <NewReservation
           branchId={activeBranch.id}
           branchName={scope.multi ? activeBranch.name : undefined}
-          hasInside={bs?.has_inside ?? true}
-          hasOutside={bs?.has_outside ?? true}
+          zones={zones}
         />
       )}
 

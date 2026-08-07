@@ -69,10 +69,14 @@ function rewardValueLabel(r: RewardRow, lang: "ar" | "en"): string {
   return r.value_kind === "amount" ? money(r.value, lang) : `${toAr(r.value)}${lang === "en" ? "%" : "٪"}`;
 }
 
-function zoneLabel(zone: string, lang: "ar" | "en"): string {
-  if (zone === "outside") return tr(lang, "خارجي", "Outdoor");
-  if (zone === "inside") return tr(lang, "داخلي", "Indoor");
-  return zone;
+/**
+ * اسم القسم كما سمّاه المالك.
+ *
+ * كانت تترجم مفتاحين مثبّتين وتُظهر ما عداهما خامًا («families») في ملفّ
+ * العميل. الأسماء تُجلب من branch_zones ويبقى المفتاح آخر ملاذ.
+ */
+function zoneLabel(zone: string, names: Map<string, string>, lang: "ar" | "en"): string {
+  return names.get(zone) ?? (zone || tr(lang, "بلا قسم", "No area"));
 }
 
 function visitStatus(status: VisitRow["status"], lang: "ar" | "en"): { label: string; color: string } {
@@ -123,6 +127,12 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   const branchIds = scopeBranchIds(load.ctx, (branchRows ?? []).map((b) => b.id));
   // اسم الفرع لكل سطر — بعد فصل الفروع صار ضروريًّا معرفة أي فرع زاره
   const branchName = new Map((branchRows ?? []).map((b) => [b.id, b.name]));
+  // أسماء الأقسام كما سمّاها المالك — المفتاح وحده كان يظهر خامًا في السجلّ
+  const { data: zoneRows } = branchIds.length
+    ? await supabase.from("branch_zones").select("key, name").in("branch_id", branchIds)
+    : { data: [] as { key: string; name: string }[] };
+  const zoneNames = new Map<string, string>();
+  for (const z of zoneRows ?? []) if (!zoneNames.has(z.key)) zoneNames.set(z.key, z.name);
 
   const [customerRes, profileRes, visitsRes, reservationsRes, rewardsRes, reviewsRes] = await Promise.all([
     supabase.from("customers").select("id, full_name, phone, email, created_at").eq("id", id).maybeSingle(),
@@ -324,7 +334,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                     <div className="min-w-0">
                       <p className="font-bold text-[color:var(--ink)]">{fmtDateTime(v.joined_at, lang)}</p>
                       <p className="mt-0.5 text-xs text-[color:var(--muted)]">
-                        {branchName.get(v.branch_id) ?? tr(lang, "فرع", "Branch")} · {zoneLabel(v.zone, lang)} ·{" "}
+                        {branchName.get(v.branch_id) ?? tr(lang, "فرع", "Branch")} · {zoneLabel(v.zone, zoneNames, lang)} ·{" "}
                         {tr(lang, `${toAr(v.party_size)} أشخاص`, `${toAr(v.party_size)} guests`)}
                         {v.seated_at ? tr(lang, ` · جلس ${fmtTime(v.seated_at, lang)}`, ` · Seated ${fmtTime(v.seated_at, lang)}`) : ""}
                         {v.confirmed_at ? tr(lang, " · أكّد الحضور ✓", " · Confirmed ✓") : ""}

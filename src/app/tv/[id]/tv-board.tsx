@@ -4,6 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { toAr } from "@/lib/format";
 
+/** الشاشة عربيّة دائمًا (معلّقة في الصالة) فيكفيها الاسم العربي. */
+type Zone = { key: string; name: string; active: boolean };
+
 type Row = {
   rank: number | null;
   display_name: string | null;
@@ -16,14 +19,13 @@ type Row = {
 export function TvBoard({
   branchId,
   initial,
-  hasInside = true,
-  hasOutside = true,
+  zones,
 }: {
   branchId: string;
   initial: Row[];
   /** أقسام الفرع — شاشة الصالة لا تعرض عمودًا لقسمٍ لا وجود له */
-  hasInside?: boolean;
-  hasOutside?: boolean;
+  /** أقسام الفرع بأسماء المالك — مرتّبةً كما رتّبها */
+  zones: Zone[];
 }) {
   const [rows, setRows] = useState<Row[]>(initial);
   const [tick, setTick] = useState(0);
@@ -51,8 +53,11 @@ export function TvBoard({
   }, [poll]);
 
   const live = rows.filter((r) => r.rank != null);
-  const inside = live.filter((r) => r.zone === "inside");
-  const outside = live.filter((r) => r.zone === "outside");
+  const rowsOf = (key: string) => live.filter((r) => r.zone === key);
+  // عمودٌ لقسمٍ لا يملكه المطعم يظهر فارغًا أبدًا على شاشةٍ في صالته،
+  // فيقرؤه الضيف «لا أحد بالانتظار» ويظنّ الشاشة معطّلة. وقسمٌ أُطفئ وفيه
+  // منتظرون يبقى — من وقف في الطابور لا يختفي من الشاشة.
+  const shownZones = zones.filter((z) => z.active || rowsOf(z.key).length > 0);
   const served = rows[0]?.served_today ?? 0;
   const nowServing = live.filter((r) => r.status === "notified");
 
@@ -103,8 +108,9 @@ export function TvBoard({
       )}
 
       <div className="flex flex-1 gap-8">
-        {(hasInside || inside.length > 0) && <Column title="الطاولات الداخلية" list={inside} />}
-        {(hasOutside || outside.length > 0) && <Column title="الطاولات الخارجية" list={outside} />}
+        {shownZones.map((z) => (
+          <Column key={z.key} title={z.name} list={rowsOf(z.key)} />
+        ))}
       </div>
 
       <p className="text-center text-lg font-bold" style={{ color: "var(--muted)" }}>
