@@ -7,6 +7,10 @@ import type { Database } from "./database.types";
  * عميل قراءة عام بلا كوكيز (anon) — للاستعلامات العامّة القابلة للكاش.
  * يحترم RLS (قراءة المطاعم الفعّالة والتقييمات المنشورة عامّة)، بلا أي سياق طلب.
  */
+export function publicRead() {
+  return anon();
+}
+
 function anon() {
   return createSbClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

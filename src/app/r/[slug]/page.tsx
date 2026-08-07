@@ -1,10 +1,8 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { getRestaurantMeta, getBranchContent, getBranchStripPhotos, getRestaurantReviews } from "@/lib/supabase/public-cache";
+import { getRestaurantMeta, getBranchContent, getBranchStripPhotos, getRestaurantReviews, publicRead } from "@/lib/supabase/public-cache";
 import { SharedHeader } from "@/components/page-header";
 import { WaitlistForm } from "./waitlist-form";
 import { RestaurantTabs } from "./restaurant-tabs";
-import { QueueTicket } from "./queue-ticket";
 import { ShareButton } from "./share-button";
 import { ReviewForm } from "./review-form";
 import { toAr, safeExternalUrl } from "@/lib/format";
@@ -38,19 +36,18 @@ export default async function RestaurantPublicPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const supabase = await createClient();
+  // عميل قراءة عامّ بلا كوكيز. `createClient()` يستدعي `await cookies()` —
+  // وقراءة كوكي واحدة في أيّ موضع تُسقط توليد المسار كلّه مسبقًا، فتسافر كل
+  // مسحة باركود إلى فرانكفورت قبل أن يرى العميل شيئًا. وكل ما تحتاجه هذه
+  // الصفحة عامٌّ خلف RLS: المطعم وفروعه وعدّاد طابوره.
+  const supabase = publicRead();
 
-  // المطعم وحالة الدخول لا يعتمد أحدهما على الآخر — يُجلبان معًا. كل موجة
-  // تسلسلية هنا رحلة شبكة إضافية كاملة بين الخادم وفرانكفورت تُحسّ بطئًا حقيقيًّا.
-  const [{ data: restaurant }, { data: { user } }] = await Promise.all([
-    supabase
-      .from("restaurants")
-      .select("id, name, name_en, description, is_active, logo_url, cover_url, links, cuisine, cuisine_en")
-      .eq("slug", slug)
-      .eq("is_active", true)
-      .maybeSingle(),
-    supabase.auth.getUser(),
-  ]);
+  const { data: restaurant } = await supabase
+    .from("restaurants")
+    .select("id, name, name_en, description, is_active, logo_url, cover_url, links, cuisine, cuisine_en")
+    .eq("slug", slug)
+    .eq("is_active", true)
+    .maybeSingle();
 
   if (!restaurant) notFound();
 
@@ -117,41 +114,31 @@ export default async function RestaurantPublicPage({
     };
   });
 
-  let defaultName = "";
-  let defaultPhone = "";
-  let activeEntry: { id: string; position: number | null; branch_id: string; phone: string } | null = null;
-  if (user) {
-    const { data: customer } = await supabase.from("customers").select("id, full_name, phone").eq("user_id", user.id).maybeSingle();
-    defaultName = customer?.full_name ?? "";
-    defaultPhone = customer?.phone ?? "";
-    if (customer && branchList.length) {
-      const { data: entry } = await supabase
-        .from("waitlist_entries")
-        .select("id, position, branch_id")
-        .eq("customer_id", customer.id)
-        .in("branch_id", branchList.map((b) => b.id))
-        .in("status", ["waiting", "notified"])
-        .order("joined_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      activeEntry = entry ? { ...entry, phone: customer.phone ?? "" } : null;
-    }
-  }
+  /* كتلة الجلسة حُذفت من الخادم — وهذا آخر ما كان يمنع توليد الصفحة مسبقًا.
+     كانت تفعل شيئين، وكلاهما مغطّى بلا خادم:
+
+     ١) تعبئة الاسم والجوّال: النموذج يقرؤهما من التخزين المحلّي، وهذا يعمل
+        للضيف أيضًا — والضيف هو الغالبية العظمى، فلم يكن يستفيد منها أصلًا.
+     ٢) عرض تذكرتك بدل النموذج: `waitlist-form` يسترجعها من `lastTurnFor(slug)`
+        عند التحميل منذ البداية.
+
+     ولا خطر تكرار دور: `uniq_waitlist_live_customer_branch` يمنع صفًّا حيًّا
+     ثانيًا لنفس العميل في نفس الفرع، و`join_waitlist_guest` متماثِلة — تبحث
+     عن دورٍ حيّ بالرقم قبل الإدخال وتُعيده، وتلتقط unique_violation وتُعيد
+     الصفّ القائم إن تسابق طلبان. أي أن جهازًا جديدًا يُعيد التذكرة نفسها. */
 
   const initial = (restaurant.name ?? "").trim().charAt(0) || "م";
   const hasBranches = branchList.length > 0;
   const city = branchList[0]?.city ?? "";
   // إجمالي الطابور من فرع العميل الفعلي (لا من الفرع الأول دائمًا)
-  const total = activeEntry
-    ? withCounts.find((c) => c.id === activeEntry!.branch_id)?.total ?? withCounts[0]?.total ?? 0
-    : withCounts[0]?.total ?? 0;
+  const total = withCounts[0]?.total ?? 0;
 
+  // النموذج دائمًا: هو من يقرّر عرض التذكرة بدلًا منه، بعد أن يقرأ الدور
+  // المحفوظ محلّيًّا. كان الخادم يقرّر ذلك، وثمنه كان الصفحة كلّها.
   const waitlistPanel = !hasBranches ? (
     <NoBranchesCard />
-  ) : activeEntry ? (
-    <QueueTicket position={0} total={0} entryId={activeEntry.id} phone={activeEntry.phone} restaurantName={restaurant.name} restored />
   ) : (
-    <WaitlistForm slug={slug} branches={withCounts} logo={restaurant.logo_url} defaultName={defaultName} defaultPhone={defaultPhone} restaurantName={restaurant.name} restaurantLogo={restaurant.logo_url} />
+    <WaitlistForm slug={slug} branches={withCounts} logo={restaurant.logo_url} restaurantName={restaurant.name} restaurantLogo={restaurant.logo_url} />
   );
 
   return (
@@ -208,4 +195,28 @@ export default async function RestaurantPublicPage({
       </main>
     </div>
   );
+}
+
+/**
+ * الصفحة تُولَّد مسبقًا وتُخدَم من أقرب نقطة للعميل، وتتجدّد كل ٦٠ث.
+ *
+ * لم يكن هذا ممكنًا حتى سقطت ثلاثة حواجز: قراءة كوكي اللغة، وقراءة
+ * `?branch=`، وعميل Supabase الذي يقرأ الكوكيز (`createClient`). أيّ واحدٍ
+ * منها يعيد المسار ديناميكيًّا ويعيد كل مسحة باركود إلى رحلة فرانكفورت.
+ *
+ * ولم أستعمل `dynamic = "force-static"`: هي تُخرِس قراءة الكوكيز بدل أن
+ * تُفشل البناء، فيمرّ الخطأ صامتًا يومًا ما. `generateStaticParams` تعطي
+ * التوليد المسبق نفسه، ويبقى أي `cookies()` مستقبليّ خطأً صاخبًا.
+ */
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  try {
+    const { data } = await publicRead()
+      .from("restaurants").select("slug").eq("is_active", true);
+    return (data ?? []).map((r) => ({ slug: r.slug }));
+  } catch {
+    // انقطاعٌ لحظي وقت البناء لا يُفشل النشر — المطاعم تُولَّد عند أول طلب
+    return [];
+  }
 }

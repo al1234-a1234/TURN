@@ -8,7 +8,8 @@ import { toAr, normalizePhone } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 import { useSelectBranch } from "./restaurant-tabs";
-import { recordTurn, lastTurnFor, clearTurnRecovery } from "@/lib/local-store";
+import { createClient } from "@/lib/supabase/client";
+import { recordTurn, lastTurnFor, clearTurnRecovery, getMe, saveMe } from "@/lib/local-store";
 import { SmartImage } from "@/components/smart-image";
 
 type Branch = {
@@ -188,8 +189,8 @@ function BranchCarousel({ branches, logo, onSelect }: { branches: Branch[]; logo
 export function WaitlistForm({
   slug,
   branches,
-  defaultName,
-  defaultPhone,
+  defaultName = "",
+  defaultPhone = "",
   restaurantName,
   restaurantLogo,
   logo,
@@ -197,8 +198,8 @@ export function WaitlistForm({
 }: {
   slug: string;
   branches: Branch[];
-  defaultName: string;
-  defaultPhone: string;
+  defaultName?: string;
+  defaultPhone?: string;
   restaurantName?: string;
   restaurantLogo?: string | null;
   logo?: string | null;
@@ -240,6 +241,43 @@ export function WaitlistForm({
   }
   const [zone, setZone] = useState<"inside" | "outside">("inside");
   const [phone, setPhone] = useState<string>(normalizePhone(defaultPhone).slice(0, 10));
+  // الاسم والجوّال من آخر مرّة على هذا الجهاز — تُقرأ بعد التركيب كي يبقى
+  // ما يُرسله الخادم متطابقًا مع أول رسم (وإلا اختلف الترطيب).
+  const [savedName, setSavedName] = useState("");
+  const nameRef = useRef<HTMLInputElement | null>(null);
+
+  /* الأرقام الحيّة.
+     صارت الصفحة تُولَّد مسبقًا وتُخدَم من الحافة فورًا — وثمن ذلك أن عدّاد
+     الطابور المخبوز فيها قد يتأخّر حتى ٦٠ث. فنُحدّثه من المتصفّح فور الرسم:
+     القشرة فورية، والرقم حيّ. هذا هو ما كنّا نظنّه مقايضة، وليس كذلك. */
+  const [live, setLive] = useState<Record<string, { total: number; inside: number; outside: number }>>({});
+  useEffect(() => {
+    const ids = branches.map((b) => b.id);
+    if (!ids.length) return;
+    let alive = true;
+    createClient()
+      .rpc("waitlist_counts_for", { p_branch_ids: ids })
+      .then(({ data }) => {
+        if (!alive || !data) return;
+        const next: Record<string, { total: number; inside: number; outside: number }> = {};
+        for (const c of data) next[c.branch_id] = { total: c.total, inside: c.inside, outside: c.outside };
+        setLive(next);
+      })
+      // فشلٌ عابر يُبقي الرقم المخبوز — وهو صحيحٌ حتى دقيقة مضت، لا خطأ
+      .then(undefined, () => {});
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug]);
+
+  const branchesLive = useMemo(
+    () => branches.map((b) => (live[b.id] ? { ...b, ...live[b.id] } : b)),
+    [branches, live],
+  );
+  useEffect(() => {
+    const me = getMe();
+    if (me.name) setSavedName(me.name);
+    if (me.phone) setPhone((cur) => (cur ? cur : normalizePhone(me.phone!).slice(0, 10)));
+  }, []);
   // بوابة الموقع: لا يُؤخذ الدور إلا بمشاركة الموقع (يمنع الحجز الوهمي من بعيد)
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   // failed = تعذّر مؤقت (GPS/مهلة) يختلف عن الرفض الصريح — لكلٍّ رسالته وعلاجه
@@ -342,7 +380,7 @@ export function WaitlistForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geoSheet]);
 
-  const branch = useMemo(() => branches.find((b) => b.id === branchId), [branchId, branches]);
+  const branch = useMemo(() => branchesLive.find((b) => b.id === branchId), [branchId, branchesLive]);
 
   useEffect(() => {
     if (state.ok) {
@@ -350,6 +388,8 @@ export function WaitlistForm({
         slug, name: restaurantName ?? slug, logo: restaurantLogo ?? null,
         at: new Date().toISOString(), entryId: state.entryId, phone: state.phone,
       });
+      // يُعبَّأ تلقائيًّا في المرّة القادمة — لأي مطعم، وللضيف كما للمسجَّل
+      saveMe({ name: nameRef.current?.value?.trim() || undefined, phone: state.phone });
       // انضمام جديد بعد «خذ دورًا جديدًا»: startedOver كان يبقى true للأبد
       // فتُحجب تذكرة النجاح الجديدة — العميل في الطابور فعلًا والواجهة
       // تعرض النموذج الفارغ فيعيد الضغط حتى يضرب حدّ المعدّل.
@@ -385,7 +425,7 @@ export function WaitlistForm({
   // خطوة اختيار الفرع (لمّا فيه أكثر من فرع ولم يُختَر بعد) — كل فرع بطاقة مستقلة
   if (multi && !branchId) {
     return (
-      <BranchCarousel branches={branches} logo={logo} onSelect={setBranchId} />
+      <BranchCarousel branches={branchesLive} logo={logo} onSelect={setBranchId} />
     );
   }
 
@@ -503,7 +543,7 @@ export function WaitlistForm({
         </div>
         <div>
           <label htmlFor="full_name" className="field-label">{tr(lang, "الاسم", "Name")}</label>
-          <input id="full_name" name="full_name" required defaultValue={defaultName} className="field-input" placeholder={tr(lang, "اكتب اسمك", "Enter your name")} />
+          <input id="full_name" name="full_name" ref={nameRef} required defaultValue={defaultName || savedName} className="field-input" placeholder={tr(lang, "اكتب اسمك", "Enter your name")} />
         </div>
         <div>
           <label htmlFor="phone" className="field-label">{tr(lang, "رقم الجوّال", "Mobile number")}</label>
