@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { IconBell } from "@/components/icons";
 import { money } from "@/lib/format";
 import { tr } from "@/lib/i18n";
+import { fmtDate } from "@/lib/dates";
 import { useLang } from "@/components/lang-provider";
 import { isFavorite, toggleFavorite } from "@/lib/local-store";
 import { SmartImage } from "@/components/smart-image";
@@ -17,7 +18,8 @@ type Item = {
   category_id: string;
 };
 type Category = { id: string; name: string };
-type Review = { name: string; stars: number; when: string; text: string };
+// خام لا منسّق: التنسيق يحتاج اللغة، وهي هنا في المتصفّح لا على الخادم
+type Review = { name: string | null; stars: number; created_at: string; text: string };
 
 const Stars = ({ n }: { n: number }) => (
   <span style={{ color: "var(--star)" }}>
@@ -70,6 +72,7 @@ export function RestaurantTabs({
   name,
   nameEn,
   cuisine,
+  cuisineEn,
   description,
   rating,
   reviewCount,
@@ -88,7 +91,8 @@ export function RestaurantTabs({
   slug: string;
   name: string;
   nameEn: string | null;
-  cuisine: string;
+  cuisine: string | null;
+  cuisineEn: string | null;
   description: string | null;
   rating: string;
   reviewCount: string;
@@ -186,7 +190,7 @@ export function RestaurantTabs({
           <LogoBox size="h-[92px] w-[92px]" />
           <div className="min-w-0 flex-1 text-right">
             <p className="truncate font-display text-xl font-bold text-[color:var(--ink)]">{name}</p>
-            <p className="mt-0.5 text-sm text-[color:var(--muted)]">{cuisine}</p>
+            <p className="mt-0.5 text-sm text-[color:var(--muted)]">{tr(lang, cuisine ?? "مطعم", cuisineEn ?? "Restaurant")}</p>
             <p className="mt-1 flex items-center justify-end gap-1 text-sm font-extrabold text-[color:var(--ink)]">
               {rating} <span style={{ color: "var(--star)" }}>★</span>
             </p>
@@ -369,11 +373,11 @@ export function RestaurantTabs({
                     className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-display text-base font-bold"
                     style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--brand-solid)" }}
                   >
-                    {rv.name.charAt(0)}
+                    {(rv.name ?? tr(lang, "عميل", "Customer")).charAt(0)}
                   </span>
                   <div className="min-w-0 flex-1 text-right">
-                    <p className="font-bold text-[color:var(--ink)]">{rv.name}</p>
-                    <p className="mt-0.5 text-xs text-[color:var(--muted)]">{rv.when}</p>
+                    <p className="font-bold text-[color:var(--ink)]">{rv.name ?? tr(lang, "عميل", "Customer")}</p>
+                    <p className="mt-0.5 text-xs text-[color:var(--muted)]">{fmtDate(rv.created_at, lang)}</p>
                   </div>
                   <span className="shrink-0 text-sm"><Stars n={rv.stars} /></span>
                 </div>
@@ -390,7 +394,7 @@ export function RestaurantTabs({
           <LogoBox size="h-[92px] w-[92px]" />
           <div className="min-w-0 flex-1 text-right">
             <p className="truncate font-display text-xl font-bold text-[color:var(--ink)]">{name}</p>
-            <p className="mt-0.5 text-sm text-[color:var(--muted)]">{cuisine}</p>
+            <p className="mt-0.5 text-sm text-[color:var(--muted)]">{tr(lang, cuisine ?? "مطعم", cuisineEn ?? "Restaurant")}</p>
             <p className="mt-1 text-sm font-bold text-brand-700">{reviewCount} {tr(lang, "تقييم", "reviews")}{Number(reviewCount) > 0 ? ` · ${rating}★` : ""}</p>
           </div>
         </div>
