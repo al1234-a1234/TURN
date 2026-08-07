@@ -16,8 +16,9 @@ export function BrandLink({
 }) {
   return (
     <Link href={href} className={`flex items-center gap-2.5 ${className}`}>
+      {/* لا كلمة بجانب الشعار: اللوح نفسه يحمل «8 / EIGHT»، فتكرارها حشو.
+          وكانت مكتوبةً بالعربية يدويًّا فتبقى عربيةً في الوضع الإنجليزي. */}
       <Logo size={size} withName={false} />
-      <span className="font-display text-lg font-bold text-cream-100/95">إيت</span>
     </Link>
   );
 }

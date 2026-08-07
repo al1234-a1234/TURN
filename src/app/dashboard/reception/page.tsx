@@ -6,6 +6,7 @@ import { RewardBox } from "./reward-box";
 import { AutoRefresh } from "./auto-refresh";
 import { BranchTabs } from "./branch-tabs";
 import { StatusToggle } from "./status-toggle";
+import { ReservationActions } from "../reservations/reservation-actions";
 import { loadOwner, scopeBranchIds } from "../owner-context";
 import { staffHasPermission } from "@/lib/features";
 import { toAr } from "@/lib/format";
@@ -48,7 +49,13 @@ export default async function ReceptionPage({
 
   const startToday = riyadhDayStart().toISOString();
 
-  const [queueRes, todayRes, statusRes] = activeBranch
+  // الحجوزات القريبة: نافذة ٤ ساعات قادمة وساعة مضت. الحجز ليس منافسًا للطابور
+  // بل هو الطابور مقلوبًا — دورٌ حُدّد وقته سلفًا. وفصلهما في شاشتين كان يجعل
+  // المضيف يُجلس واقفًا على طاولةٍ محجوزة بعد ربع ساعة.
+  const soonFrom = new Date(Date.now() - 60 * 60e3).toISOString();
+  const soonTo = new Date(Date.now() + 4 * 3600e3).toISOString();
+
+  const [queueRes, todayRes, statusRes, resvRes] = activeBranch
     ? await Promise.all([
         supabase
           .from("waitlist_entries")
@@ -60,9 +67,17 @@ export default async function ReceptionPage({
           .order("position", { nullsFirst: false }),
         supabase.from("waitlist_entries").select("id", { count: "exact", head: true })
           .eq("branch_id", activeBranch.id).eq("status", "seated").gte("seated_at", startToday),
-        supabase.from("branch_settings").select("manually_closed, busy_now, opening_hours").eq("branch_id", activeBranch.id).maybeSingle(),
+        supabase.from("branch_settings").select("manually_closed, busy_now, opening_hours, accepts_reservations").eq("branch_id", activeBranch.id).maybeSingle(),
+        supabase
+          .from("reservations")
+          .select("id, reserved_at, party_size, status, notes, customers(full_name, phone), tables(label, zone)")
+          .eq("branch_id", activeBranch.id)
+          .in("status", ["pending", "confirmed"])
+          .gte("reserved_at", soonFrom)
+          .lte("reserved_at", soonTo)
+          .order("reserved_at"),
       ])
-    : [{ data: [], error: null }, { count: 0, error: null }, { data: null, error: null }];
+    : [{ data: [], error: null }, { count: 0, error: null }, { data: null, error: null }, { data: [], error: null }];
 
   // أخطر كذبة في الشاشة: طابور فارغ. الموظّف يقرأه «لا أحد ينتظر» فيتوقّف عن
   // المناداة والناس واقفون. عند فشل الجلب نقول تعذّر التحميل ولا نرسم طابورًا.
@@ -95,8 +110,25 @@ export default async function ReceptionPage({
   const showInside = (zoneSettings?.has_inside ?? true) || inside.length > 0;
   const showOutside = (zoneSettings?.has_outside ?? true) || outside.length > 0;
   const servedToday = todayRes?.count ?? 0;
-  const status = statusRes?.data as { manually_closed: boolean; busy_now: boolean; opening_hours: { open?: string; close?: string } | null } | null;
+  const status = statusRes?.data as { manually_closed: boolean; busy_now: boolean; opening_hours: { open?: string; close?: string } | null; accepts_reservations?: boolean } | null;
   const closedByHours = status ? !isWithinOpeningHours(status.opening_hours) : false;
+
+  // فشل جلب الحجوزات لا يُفرغ الشاشة، لكنه لا يُقرأ «لا حجوزات» أيضًا
+  if (resvRes?.error) console.error("[reception] reservations:", activeBranch?.id, resvRes.error.message);
+  type ResvRow = {
+    id: string;
+    reserved_at: string;
+    party_size: number;
+    status: string;
+    notes: string | null;
+    customers: { full_name: string; phone: string } | { full_name: string; phone: string }[] | null;
+    tables: { label: string; zone: string | null } | { label: string; zone: string | null }[] | null;
+  };
+  const upcoming = ((resvRes?.data ?? []) as ResvRow[]);
+  // مضيفٌ بلا صلاحية الحجوزات: نُخفي القسم كلّه بدل أن نعرض أزرارًا يضغطها
+  // فلا تفعل شيئًا — الإجراء نفسه يتطلّب الصلاحية على الخادم.
+  const canManageReservations = staffHasPermission(role, permissions, "reservations");
+  const showReservations = canManageReservations && ((status?.accepts_reservations ?? false) || upcoming.length > 0);
 
   type Row = (typeof list)[number];
   // rank = الترتيب الحيّ داخل القسم (1،2،3…) لا الرقم المخزَّن — ينضغط عند الإجلاس
@@ -204,6 +236,63 @@ export default async function ReceptionPage({
             {/* شرطة بدل صفرٍ كاذب: «خدمنا ٠ اليوم» رقمٌ يُبنى عليه قرار، لا فراغ */}
             <Stat label={tr(lang, "خدمناهم اليوم", "Served today")} value={todayRes?.error ? "—" : toAr(servedToday)} tone="var(--brand)" />
           </div>
+
+          {/* ===== القادمون بحجز ===== */}
+          {showReservations && (
+            <section className="mb-6">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="flex items-center gap-2 font-display text-lg font-bold text-[color:var(--ink)]">
+                  <span className="h-4 w-1.5 rounded-full" style={{ background: "var(--st-full)" }} />
+                  {tr(lang, "قادمون بحجز", "Arriving by reservation")}
+                </h3>
+                <Link href={`/dashboard/reservations${activeBranch ? `?branch=${activeBranch.id}` : ""}`}
+                      className="text-xs font-bold text-brand-700 underline decoration-2 underline-offset-4">
+                  {tr(lang, "كل الحجوزات ←", "All reservations ←")}
+                </Link>
+              </div>
+              {upcoming.length === 0 ? (
+                <div className="soft-card py-6 text-center text-sm text-[color:var(--muted)]">
+                  {tr(lang, "لا حجوزات في الأربع ساعات القادمة", "No reservations in the next four hours")}
+                </div>
+              ) : (
+                <ul className="space-y-2.5">
+                  {upcoming.map((r) => {
+                    const cust = Array.isArray(r.customers) ? r.customers[0] : r.customers;
+                    const tbl = Array.isArray(r.tables) ? r.tables[0] : r.tables;
+                    const mins = Math.round((new Date(r.reserved_at).getTime() - Date.now()) / 60000);
+                    // «متأخّر» ليس ملاحظة: الطاولة محجوزة له وهي فارغة الآن،
+                    // والمضيف يقرّر إن كان يفرج عنها أم ينتظر.
+                    const late = mins < 0;
+                    return (
+                      <li key={r.id} className="soft-card flex items-center gap-3 p-3.5">
+                        <span className="flex h-12 w-14 shrink-0 flex-col items-center justify-center rounded-2xl tabular-nums"
+                              style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: late ? "var(--danger)" : "var(--brand-d)" }}>
+                          <span className="font-display text-base font-bold leading-none">
+                            {new Date(r.reserved_at).toLocaleTimeString(lang === "en" ? "en-US" : "ar-SA-u-nu-latn", { timeZone: "Asia/Riyadh", hour: "numeric", minute: "2-digit" })}
+                          </span>
+                          <span className="mt-0.5 text-[10px] font-bold">
+                            {late
+                              ? tr(lang, `تأخّر ${toAr(-mins)}د`, `${-mins}m late`)
+                              : tr(lang, `بعد ${toAr(mins)}د`, `in ${mins}m`)}
+                          </span>
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-bold text-[color:var(--ink)]">{cust?.full_name ?? tr(lang, "عميل", "Customer")}</p>
+                          <p className="text-sm text-[color:var(--muted)]" dir="ltr">{cust?.phone ?? "—"}</p>
+                          <p className="mt-0.5 text-xs text-[color:var(--muted)]">
+                            {toAr(r.party_size)} {tr(lang, "أشخاص", "guests")}
+                            {tbl ? ` · ${tr(lang, `طاولة ${tbl.label}`, `table ${tbl.label}`)}` : ` · ${tr(lang, "بلا طاولة", "no table")}`}
+                          </p>
+                          {r.notes && <p className="mt-1 truncate text-xs text-[color:var(--ink)]">📝 {r.notes}</p>}
+                        </div>
+                        <ReservationActions id={r.id} status={r.status} />
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+          )}
 
           <RewardBox />
 

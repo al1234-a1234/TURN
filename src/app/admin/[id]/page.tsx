@@ -58,7 +58,7 @@ export default async function RestaurantFeaturesPage({
           <div className="h-11 w-11" />
         </div>
         <div className="mx-auto mt-6 max-w-3xl">
-          <p className="text-xs font-bold tracking-[0.3em] text-cream-200/85">{tr(lang, "موديولات المطعم", "Restaurant modules")}</p>
+          <p className="text-xs font-bold text-cream-200/85">{tr(lang, "موديولات المطعم", "Restaurant modules")}</p>
           <h1 className="mt-1 font-display text-3xl font-bold">{restaurant.name}</h1>
         </div>
       </header>

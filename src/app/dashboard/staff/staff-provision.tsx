@@ -113,7 +113,7 @@ export function ResetCode({ staffId }: { staffId: string }) {
       <input type="hidden" name="staff_id" value={staffId} />
       {state.error && <p className="mb-2 text-xs font-bold text-[color:var(--danger)]">{state.error}</p>}
       <button type="submit" disabled={pending} className="text-xs font-bold text-[color:var(--muted)] underline-offset-2 hover:text-brand-700 hover:underline">
-        {pending ? tr(lang, "جارٍ…", "Working…") : tr(lang, "🔑 إعادة ضبط الرمز", "🔑 Reset code")}
+        {pending ? tr(lang, "جارٍ…", "Working…") : tr(lang, "إعادة ضبط الرمز", "Reset code")}
       </button>
     </form>
   );

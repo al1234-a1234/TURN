@@ -13,6 +13,32 @@ export type TurnRecord = {
   entryId?: string; phone?: string;
 };
 
+/**
+ * بيانات العميل لتعبئة النموذج — كانت تُقرأ من القاعدة على الخادم للمسجَّلين
+ * وحدهم، وثمنها كان توليد الصفحة عند كل طلب. هنا تعمل للضيف أيضًا، وهو
+ * الغالبية العظمى، وبلا أي رحلة شبكة.
+ */
+export type Me = { name?: string; phone?: string };
+const ME_KEY = "turn:me";
+
+export function getMe(): Me {
+  if (typeof window === "undefined") return {};
+  try {
+    return JSON.parse(window.localStorage.getItem(ME_KEY) ?? "{}") as Me;
+  } catch {
+    return {};
+  }
+}
+
+export function saveMe(me: Me) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(ME_KEY, JSON.stringify({ ...getMe(), ...me }));
+  } catch {
+    // التخزين ممتلئ أو محظور — التعبئة رفاهية، لا تُفشل الانضمام
+  }
+}
+
 const FAV_KEY = "turn:favorites";
 const TURNS_KEY = "turn:turns";
 

@@ -246,7 +246,7 @@ export default async function ReportsPage({
       {/* رأس التقرير */}
       <div className="soft-card mb-6 flex flex-col gap-4 p-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-xs font-bold tracking-[0.2em] text-[color:var(--muted)]">
+          <p className="text-xs font-bold text-[color:var(--muted)]">
             {tr(lang, `تقرير الأداء — ${pLabel}`, `Performance report — ${pLabel}`)}
           </p>
           <h1 className="mt-1.5 font-display text-3xl font-bold text-[color:var(--ink)]">{restaurant.name}</h1>

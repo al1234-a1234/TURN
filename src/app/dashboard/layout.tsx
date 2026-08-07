@@ -34,7 +34,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <p className="max-w-sm text-sm text-[color:var(--muted)]">{tr(lang, "حسابات الملّاك تُنشأ من قِبل إدارة إيت فقط. تواصل معنا لإضافة مطعمك.", "Owner accounts are created by the EIGHT team only. Contact us to add your restaurant.")}</p>
             <a href="mailto:albraalaan@gmail.com" className="btn btn-primary w-full max-w-xs">{tr(lang, "تواصل مع الإدارة", "Contact the team")}</a>
             {load.isAdmin && <Link href="/admin" className="btn btn-secondary mt-2 w-full max-w-xs">{tr(lang, "⚙️ لوحة الأدمِن", "⚙️ Admin panel")}</Link>}
-            <Link href="/account" className="mt-2 text-sm font-bold text-[color:var(--gold-1)]">{tr(lang, "🔑 حسابي — تغيير كلمة المرور", "🔑 My account — change password")}</Link>
+            <Link href="/account" className="mt-2 text-sm font-bold text-[color:var(--gold-1)]">{tr(lang, "حسابي — تغيير كلمة المرور", "My account — change password")}</Link>
           </div>
         </main>
       </div>

@@ -2,14 +2,20 @@
 
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { useRouter } from "next/navigation";
 import { joinWaitlistGuest, type WaitlistState } from "./actions";
 import { QueueTicket } from "./queue-ticket";
 import { toAr, normalizePhone } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
-import { recordTurn, lastTurnFor, clearTurnRecovery } from "@/lib/local-store";
+import { useSelectBranch } from "./restaurant-tabs";
+import { createClient } from "@/lib/supabase/client";
+import { isWithinOpeningHours } from "@/lib/dates";
+import { recordTurn, lastTurnFor, clearTurnRecovery, getMe, saveMe } from "@/lib/local-store";
 import { SmartImage } from "@/components/smart-image";
+// استيرادٌ عادي لا `dynamic`: كل ما يعتمد عليه نموذج الحجز (عميل Supabase،
+// التواريخ، التخزين المحلّي) موجودٌ في الحزمة أصلًا لأجل الطابور، فالتقسيم
+// قِيس ولم يوفّر شيئًا — وكان يضيف وميض تحميلٍ ثمنًا لا مقابل له.
+import { ReserveForm } from "./reserve-form";
 
 type Branch = {
   id: string;
@@ -22,8 +28,12 @@ type Branch = {
   hasInside: boolean;
   hasOutside: boolean;
   accepts: boolean;
+  /** الحجز المسبق مُفعّل لهذا الفرع (ولديه طاولات — الحارس في الإدارة) */
+  acceptsReservations: boolean;
   closedNow: boolean;
   busyNow: boolean;
+  /** أقصى عدد أشخاص يقبله الفرع — يضبطه المالك في الإدارة */
+  maxParty: number;
   photo: string | null;
 };
 
@@ -84,6 +94,10 @@ function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; o
               <span className="h-2.5 w-2.5 rounded-full bg-white/80" />
               {tr(lang, "مغلق حاليًا", "Closed now")}
             </span>
+            {/* بابٌ مفتوحٌ في وجهٍ مغلق: المغلق الذي يقبل الحجز ليس نهاية طريق */}
+            {b.acceptsReservations && (
+              <span className="text-xs font-extrabold text-cream-100/85">{tr(lang, "احجز موعدًا ←", "Book a slot ←")}</span>
+            )}
           </span>
         ) : !b.accepts ? (
           <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
@@ -92,6 +106,9 @@ function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; o
               <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
               {tr(lang, "استقبال مباشر — بلا حجز دور", "Walk-in — no queue")}
             </span>
+            {b.acceptsReservations && (
+              <span className="text-xs font-extrabold text-cream-100/85">{tr(lang, "احجز موعدًا ←", "Book a slot ←")}</span>
+            )}
           </span>
         ) : b.total > 0 ? (
           <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
@@ -188,8 +205,8 @@ function BranchCarousel({ branches, logo, onSelect }: { branches: Branch[]; logo
 export function WaitlistForm({
   slug,
   branches,
-  defaultName,
-  defaultPhone,
+  defaultName = "",
+  defaultPhone = "",
   restaurantName,
   restaurantLogo,
   logo,
@@ -197,8 +214,8 @@ export function WaitlistForm({
 }: {
   slug: string;
   branches: Branch[];
-  defaultName: string;
-  defaultPhone: string;
+  defaultName?: string;
+  defaultPhone?: string;
   restaurantName?: string;
   restaurantLogo?: string | null;
   logo?: string | null;
@@ -206,26 +223,100 @@ export function WaitlistForm({
   initialBranchId?: string;
 }) {
   const lang = useLang();
-  const router = useRouter();
+  const selectBranch = useSelectBranch();
   const [state, formAction, pending] = useActionState<WaitlistState, FormData>(joinWaitlistGuest, { ok: false });
 
   const multi = branches.length > 1;
   // فرع واحد → مختار تلقائيًّا؛ عدّة فروع → يختار العميل من البطاقات أولًا
   // (إلا إذا جاء الفرع من الرابط — QR داخل الفرع)
   const [branchId, setBranchIdRaw] = useState<string>(initialBranchId ?? (multi ? "" : branches[0]?.id ?? ""));
+
+  // `?branch=` صار يُقرأ هنا لا على الخادم: قراءته هناك كانت تمنع توليد
+  // الصفحة مسبقًا، فتدفع كل مسحة باركود ثمن باركود الشاشة الداخلية.
+  useEffect(() => {
+    if (initialBranchId || typeof window === "undefined") return;
+    const wanted = new URLSearchParams(window.location.search).get("branch");
+    if (wanted && branches.some((b) => b.id === wanted)) {
+      setBranchIdRaw(wanted);
+      selectBranch?.(wanted);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // اختيار الفرع يحدَّث في الرابط أيضًا كي تتبعه القائمة والصور —
   // كان العميل يختار فرعًا ويقرأ منيو فرعٍ آخر
   function setBranchId(id: string) {
     setBranchIdRaw(id);
-    // router.replace يعيد جلب محتوى الفرع (منيو/صور) من الخادم بلا قفزة
-    if (typeof window !== "undefined") {
-      const u = new URL(window.location.href);
-      if (id) u.searchParams.set("branch", id); else u.searchParams.delete("branch");
-      router.replace(`${u.pathname}?${u.searchParams.toString()}`, { scroll: false });
-    }
+    if (typeof window === "undefined") return;
+    // منيو الفرع وصوره يُجلبان مباشرةً بدل إعادة توليد الصفحة كاملة
+    selectBranch?.(id);
+    // والرابط يُحدَّث بلا تنقّل: history لا router — كي يبقى قابلًا للمشاركة
+    const u = new URL(window.location.href);
+    if (id) u.searchParams.set("branch", id); else u.searchParams.delete("branch");
+    window.history.replaceState(null, "", `${u.pathname}${u.search}`);
   }
   const [zone, setZone] = useState<"inside" | "outside">("inside");
+  // عدد الأشخاص — كان مثبَّتًا على ١ في الخادم، فتصل كل الطوابير بشخصٍ واحد
+  // وتُبنى تقارير الذروة على رقمٍ كاذب. الآن يختاره العميل ضمن سقف المالك.
+  const [party, setParty] = useState(1);
   const [phone, setPhone] = useState<string>(normalizePhone(defaultPhone).slice(0, 10));
+  // الاسم والجوّال من آخر مرّة على هذا الجهاز — تُقرأ بعد التركيب كي يبقى
+  // ما يُرسله الخادم متطابقًا مع أول رسم (وإلا اختلف الترطيب).
+  const [savedName, setSavedName] = useState("");
+  const nameRef = useRef<HTMLInputElement | null>(null);
+
+  /* الحالة الحيّة — العدّاد **ومعه** فتح الفرع وإغلاقه.
+     صارت الصفحة تُولَّد مسبقًا وتُخدَم من الحافة فورًا، وثمن ذلك أن ما يُخبَز
+     فيها قد يتأخّر حتى ٦٠ث. والعدّاد أهون ما في الأمر: لو أغلق المضيف الفرع
+     من الاستقبال، كانت البطاقة تبقى تقول «متاح الآن · خذ دورك» دقيقةً كاملة،
+     فيملأ العميل النموذج ثم يُردّ بخطأ «الفرع مغلق حاليًا». نُحدّث الاثنين
+     معًا فور الرسم فتعود البطاقة صادقة. */
+  type Live = { total: number; inside: number; outside: number; accepts?: boolean; acceptsReservations?: boolean; closedNow?: boolean; busyNow?: boolean };
+  const [live, setLive] = useState<Record<string, Live>>({});
+  useEffect(() => {
+    const ids = branches.map((b) => b.id);
+    if (!ids.length) return;
+    let alive = true;
+    const sb = createClient();
+    Promise.all([
+      sb.rpc("waitlist_counts_for", { p_branch_ids: ids }),
+      sb.from("branch_settings")
+        .select("branch_id, accepts_waitlist, accepts_reservations, manually_closed, busy_now, opening_hours")
+        .in("branch_id", ids),
+    ])
+      .then(([counts, settings]) => {
+        if (!alive) return;
+        const next: Record<string, Live> = {};
+        for (const c of counts.data ?? []) {
+          next[c.branch_id] = { total: c.total, inside: c.inside, outside: c.outside };
+        }
+        for (const st of settings.data ?? []) {
+          const cur = next[st.branch_id] ?? { total: 0, inside: 0, outside: 0 };
+          next[st.branch_id] = {
+            ...cur,
+            accepts: st.accepts_waitlist ?? true,
+            acceptsReservations: st.accepts_reservations ?? false,
+            busyNow: st.busy_now ?? false,
+            closedNow: (st.manually_closed ?? false) || !isWithinOpeningHours(st.opening_hours as { open?: string | null; close?: string | null } | null),
+          };
+        }
+        setLive(next);
+      })
+      // فشلٌ عابر يُبقي المخبوز — وهو صحيحٌ حتى دقيقة مضت، لا خطأ
+      .catch(() => {});
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug]);
+
+  const branchesLive = useMemo(
+    () => branches.map((b) => (live[b.id] ? { ...b, ...live[b.id] } : b)),
+    [branches, live],
+  );
+  useEffect(() => {
+    const me = getMe();
+    if (me.name) setSavedName(me.name);
+    if (me.phone) setPhone((cur) => (cur ? cur : normalizePhone(me.phone!).slice(0, 10)));
+  }, []);
   // بوابة الموقع: لا يُؤخذ الدور إلا بمشاركة الموقع (يمنع الحجز الوهمي من بعيد)
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   // failed = تعذّر مؤقت (GPS/مهلة) يختلف عن الرفض الصريح — لكلٍّ رسالته وعلاجه
@@ -328,7 +419,17 @@ export function WaitlistForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geoSheet]);
 
-  const branch = useMemo(() => branches.find((b) => b.id === branchId), [branchId, branches]);
+  const branch = useMemo(() => branchesLive.find((b) => b.id === branchId), [branchId, branchesLive]);
+
+  /* «الآن» أم «لاحقًا».
+     الطابور والحجز ليسا ميزتين متنافستين بل سؤالٌ واحد: متى ستأتي؟ فجعلهما
+     شاشتين منفصلتين كان يخفي نصف الجواب. ومَن يفتح صفحة فرعٍ مغلق أو فرعٍ
+     يستقبل مباشرةً فالحجز هو جوابه الوحيد — فنفتحه له بدل رسالة اعتذار. */
+  const [mode, setMode] = useState<"now" | "later">("now");
+  useEffect(() => {
+    if (!branch?.acceptsReservations) setMode("now");
+    else if (branch.closedNow || !branch.accepts) setMode("later");
+  }, [branch?.id, branch?.acceptsReservations, branch?.closedNow, branch?.accepts]);
 
   useEffect(() => {
     if (state.ok) {
@@ -336,6 +437,8 @@ export function WaitlistForm({
         slug, name: restaurantName ?? slug, logo: restaurantLogo ?? null,
         at: new Date().toISOString(), entryId: state.entryId, phone: state.phone,
       });
+      // يُعبَّأ تلقائيًّا في المرّة القادمة — لأي مطعم، وللضيف كما للمسجَّل
+      saveMe({ name: nameRef.current?.value?.trim() || undefined, phone: state.phone });
       // انضمام جديد بعد «خذ دورًا جديدًا»: startedOver كان يبقى true للأبد
       // فتُحجب تذكرة النجاح الجديدة — العميل في الطابور فعلًا والواجهة
       // تعرض النموذج الفارغ فيعيد الضغط حتى يضرب حدّ المعدّل.
@@ -371,7 +474,52 @@ export function WaitlistForm({
   // خطوة اختيار الفرع (لمّا فيه أكثر من فرع ولم يُختَر بعد) — كل فرع بطاقة مستقلة
   if (multi && !branchId) {
     return (
-      <BranchCarousel branches={branches} logo={logo} onSelect={setBranchId} />
+      <BranchCarousel branches={branchesLive} logo={logo} onSelect={setBranchId} />
+    );
+  }
+
+  /* شريط «الآن / لاحقًا» — لا يظهر إلا حين يقبل الفرع الحجز فعلًا (والإدارة
+     تمنع تفعيله على فرعٍ بلا طاولات، فالخيار المعروض خيارٌ قائم لا وعد). */
+  const modeSwitch = branch?.acceptsReservations ? (
+    <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[color:var(--surface-2)] p-1">
+      <button type="button" onClick={() => setMode("now")} data-active={mode === "now"} className="rq-seg-btn" style={mode === "now" ? undefined : { background: "transparent" }}>
+        {tr(lang, "أنا هنا الآن", "I'm here now")}
+      </button>
+      <button type="button" onClick={() => setMode("later")} data-active={mode === "later"} className="rq-seg-btn" style={mode === "later" ? undefined : { background: "transparent" }}>
+        {tr(lang, "احجز لوقتٍ لاحق", "Book for later")}
+      </button>
+    </div>
+  ) : null;
+
+  const branchHead = multi && branch ? (
+    <div className="flex items-center justify-between px-1">
+      <p className="font-display text-lg font-bold text-[color:var(--ink)]">
+        {branch.name}{branch.city ? <span className="text-sm font-medium text-[color:var(--muted)]"> · {branch.city}</span> : null}
+      </p>
+      <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
+    </div>
+  ) : null;
+
+  // ===== الحجز لوقتٍ لاحق =====
+  if (branch && mode === "later") {
+    return (
+      <div className="space-y-4">
+        {branchHead}
+        {modeSwitch}
+        {/* المغلق يبقى مغلقًا الآن — والحجز لا يناقض ذلك بل يجيب عنه */}
+        {branch.closedNow && (
+          <p className="rounded-2xl px-3.5 py-2.5 text-sm font-extrabold text-cream-100" style={{ background: "var(--brand-d)" }}>
+            {tr(lang, "الفرع مغلق الآن — لكن يمكنك حجز موعدٍ قادم", "Closed right now — but you can book an upcoming slot")}
+          </p>
+        )}
+        <ReserveForm
+          slug={slug}
+          branchId={branch.id}
+          maxParty={Math.max(1, branch.maxParty ?? 1)}
+          hasInside={branch.hasInside ?? true}
+          hasOutside={branch.hasOutside ?? true}
+        />
+      </div>
     );
   }
 
@@ -383,6 +531,7 @@ export function WaitlistForm({
         {multi && (
           <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
         )}
+        {modeSwitch}
         <div className="rq-card p-7 text-center">
           <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full text-cream-100" style={{ background: "var(--brand-d)" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" /><path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
@@ -401,6 +550,7 @@ export function WaitlistForm({
         {multi && (
           <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
         )}
+        {modeSwitch}
         <div className="rq-card p-7 text-center">
           <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full" style={{ background: "rgba(192,86,74,0.12)", color: "var(--st-closed)" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" /><path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
@@ -422,6 +572,9 @@ export function WaitlistForm({
   // قسمٌ واحد = لا سؤال ولا اختيار: خطوةٌ أقلّ على باب مطعمٍ مزدحم
   const singleZone = zoneOptions.length === 1;
   const effectiveZone = singleZone ? zoneOptions[0] : zone;
+  // السقف يتبع الفرع المختار — وتبديل الفرع قد يخفضه تحت ما اختاره العميل
+  const maxParty = Math.max(1, branch?.maxParty ?? 1);
+  const effectiveParty = Math.min(party, maxParty);
 
   return (
     <form ref={formRef} action={formAction} className="space-y-4">
@@ -430,16 +583,12 @@ export function WaitlistForm({
       <input type="hidden" name="lng" value={coords?.lng ?? ""} />
       <input type="hidden" name="branch_id" value={branchId} />
       <input type="hidden" name="zone" value={effectiveZone} />
+      <input type="hidden" name="party_size" value={effectiveParty} />
 
       {/* رأس الفرع المختار + تغيير الفرع */}
-      {multi && branch && (
-        <div className="flex items-center justify-between px-1">
-          <p className="font-display text-lg font-bold text-[color:var(--ink)]">
-            {branch.name}{branch.city ? <span className="text-sm font-medium text-[color:var(--muted)]"> · {branch.city}</span> : null}
-          </p>
-          <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
-        </div>
-      )}
+      {branchHead}
+
+      {modeSwitch}
 
       {branch?.busyNow && (
         <p className="flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold text-cream-100"
@@ -476,6 +625,36 @@ export function WaitlistForm({
         </div>
       )}
 
+      {/* عدد الأشخاص — محدودٌ بسقف الفرع، فلا يختار العميل رقمًا يُرفض بعده */}
+      {maxParty > 1 && (
+        <div className="rq-card p-4">
+          <p className="field-label mb-2">
+            {tr(lang, "كم شخص؟", "How many people?")}
+            <span className="ms-1.5 text-xs font-medium text-[color:var(--muted)]">
+              {tr(lang, `الحدّ الأعلى ${toAr(maxParty)}`, `Max ${maxParty}`)}
+            </span>
+          </p>
+          <div className="rq-rail -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+            {Array.from({ length: maxParty }, (_, i) => i + 1).map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setParty(n)}
+                aria-pressed={effectiveParty === n}
+                className="h-11 w-11 shrink-0 rounded-2xl text-[15px] font-bold tabular-nums transition active:scale-95"
+                style={
+                  effectiveParty === n
+                    ? { background: "var(--brand-solid)", color: "var(--brand-ink)", border: "1px solid transparent" }
+                    : { background: "var(--surface)", color: "var(--brand-d)", border: "1px solid var(--border)" }
+                }
+              >
+                {toAr(n)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* اسم + رقم */}
       <div className="rq-card space-y-4 p-5">
         <div className="text-right">
@@ -489,7 +668,7 @@ export function WaitlistForm({
         </div>
         <div>
           <label htmlFor="full_name" className="field-label">{tr(lang, "الاسم", "Name")}</label>
-          <input id="full_name" name="full_name" required defaultValue={defaultName} className="field-input" placeholder={tr(lang, "اكتب اسمك", "Enter your name")} />
+          <input id="full_name" name="full_name" ref={nameRef} required defaultValue={defaultName || savedName} className="field-input" placeholder={tr(lang, "اكتب اسمك", "Enter your name")} />
         </div>
         <div>
           <label htmlFor="phone" className="field-label">{tr(lang, "رقم الجوّال", "Mobile number")}</label>

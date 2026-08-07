@@ -35,7 +35,7 @@ export async function updateBranchSettings(formData: FormData) {
   const { supabase } = caller;
 
   const acceptsWaitlist = formData.get("accepts_waitlist") === "on";
-  const acceptsReservations = formData.get("accepts_reservations") === "on";
+  const wantsReservations = formData.get("accepts_reservations") === "on";
   const maxPartyRaw = String(formData.get("max_party_size") ?? "").trim();
   const maxParty = maxPartyRaw ? Math.max(1, Number(maxPartyRaw)) : 20;
   const open = String(formData.get("open_time") ?? "").trim() || null;
@@ -53,16 +53,44 @@ export async function updateBranchSettings(formData: FormData) {
   const branchId = await resolveWriteBranch(caller, String(formData.get("branch_id") ?? ""));
   if (!branchId) return;
 
+  // حارس الحجوزات: الحجز يخصّص طاولةً بعينها (pick_table_for)، ففرعٌ بلا
+  // طاولات يقبل حجوزاتٍ لا تحجز شيئًا، ولا يعرف متى امتلأ. الواجهة تُعطّل
+  // المفتاح، وهذا يمنع تجاوزها — طلبٌ مصنوع باليد كان سيمرّ.
+  let acceptsReservations = wantsReservations;
+  if (acceptsReservations) {
+    const { count } = await supabase
+      .from("tables").select("id", { count: "exact", head: true })
+      .eq("branch_id", branchId).eq("is_active", true);
+    if ((count ?? 0) === 0) acceptsReservations = false;
+  }
+
+  const patch: TablesUpdate<"branch_settings"> = {
+    accepts_waitlist: acceptsWaitlist,
+    accepts_reservations: acceptsReservations,
+    max_party_size: Number.isFinite(maxParty) ? maxParty : 20,
+    opening_hours: { open, close },
+    has_inside: hasInside,
+    has_outside: hasOutside,
+  };
+
+  // حقلا الحجز يغيبان عن النموذج حين لا طاولات للفرع. الكتابة بقيمةٍ افتراضية
+  // حينها تطمس ما ضبطه المالك سابقًا — فلا نكتب إلا ما أُرسل فعلًا.
+  const durationRaw = formData.get("default_duration_min");
+  if (durationRaw != null) {
+    const n = Math.round(Number(String(durationRaw).trim()));
+    // ١٥ دقيقة أرضية القيد في القاعدة، وستّ ساعات سقفٌ يمنع خطأً مطبعيًّا
+    // من إقفال الطاولة يومًا كاملًا
+    if (Number.isFinite(n)) patch.default_duration_min = Math.min(Math.max(n, 15), 360);
+  }
+  const windowRaw = formData.get("booking_window_days");
+  if (windowRaw != null) {
+    const n = Math.round(Number(String(windowRaw).trim()));
+    if (Number.isFinite(n)) patch.booking_window_days = Math.min(Math.max(n, 1), 365);
+  }
+
   const { error } = await supabase
     .from("branch_settings")
-    .update({
-      accepts_waitlist: acceptsWaitlist,
-      accepts_reservations: acceptsReservations,
-      max_party_size: Number.isFinite(maxParty) ? maxParty : 20,
-      opening_hours: { open, close },
-      has_inside: hasInside,
-      has_outside: hasOutside,
-    })
+    .update(patch)
     .eq("branch_id", branchId);
 
   // فشلٌ صامت هنا يعني فرعًا ظنّه المالك مغلقًا وهو ما زال يستقبل أدوارًا
@@ -74,6 +102,7 @@ export async function updateBranchSettings(formData: FormData) {
   revalidatePath("/dashboard/manage");
   revalidateTag("discovery");
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/reservations");
   // إغلاق الطابور/تغيير الدوام لازم يصل صفحات العميل المكاشة فورًا
   revalidatePath("/r/[slug]", "page");
 }

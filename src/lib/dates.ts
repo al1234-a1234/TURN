@@ -124,3 +124,15 @@ export function isWithinOpeningHours(
   const cur = nowRiyadh.getUTCHours() * 60 + nowRiyadh.getUTCMinutes();
   return open < close ? cur >= open && cur < close : cur >= open || cur < close;
 }
+
+/**
+ * تاريخ يومٍ بصيغة `YYYY-MM-DD` بتوقيت الرياض — الصيغة التي يقبلها عمود
+ * `date` في القاعدة. `toISOString().slice(0,10)` يعطي يوم UTC، فينزلق ليلًا
+ * إلى «أمس» بين منتصف الليل والثالثة فجرًا.
+ */
+export function riyadhISODate(d: Date = new Date()): string {
+  const r = new Date(d.getTime() + 3 * 3600_000);
+  const mm = String(r.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(r.getUTCDate()).padStart(2, "0");
+  return `${r.getUTCFullYear()}-${mm}-${dd}`;
+}

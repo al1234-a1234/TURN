@@ -5,7 +5,6 @@ import { toAr } from "@/lib/format";
 import { tr, pct, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 import { riyadhDayStart, riyadhDayKey, riyadhWeekday, riyadhHour } from "@/lib/dates";
-import { DismissInsight } from "./dismiss-insight";
 
 const AR_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 const EN_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -49,8 +48,6 @@ export default async function OverviewPage() {
   ]);
 
   const insights = (insightsRes.data ?? []) as { id: string; kind: string; title: string; body: string | null; data: { customer_id?: string } | null; created_at: string }[];
-  const INSIGHT_ICON: Record<string, string> = { daily_digest: "📋", walkaway: "🏃", smart_alert: "🔔", weekly_digest: "📊" };
-
   // ===== التقييم =====
   const ratings = (rev.data ?? []).map((r) => r.rating);
   const avgRating = ratings.length ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10 : 0;
@@ -127,30 +124,22 @@ export default async function OverviewPage() {
         </div>
       )}
 
-      {/* رؤى تلقائية (ملخّص يومي / منصرفون) */}
+      {/* الرؤى صارت وجهةً يقصدها المالك لا اعتراضًا في طريقه: كانت تحتلّ
+          أعلى اللوحة قبل أن يصل لما جاء لأجله، وتقتطع أربعًا ويضيع الباقي.
+          هنا سطرٌ واحد يقول «هناك جديد» ولا يفرض قراءته. */}
       {insights.length > 0 && (
-        <section className="soft-card mb-5 p-5">
-          <h2 className="mb-3 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "رؤى وتنبيهات", "Insights & alerts")}</h2>
-          <ul className="space-y-2.5">
-            {insights.map((it) => (
-              <li key={it.id} className="flex items-start gap-3">
-                <span className="text-lg">{INSIGHT_ICON[it.kind] ?? "💡"}</span>
-                <div className="min-w-0 flex-1">
-                  <p className="font-bold text-[color:var(--ink)]">{it.title}</p>
-                  {it.body && <p className="text-sm text-[color:var(--muted)]">{it.body}</p>}
-                  {/* بصيرة بلا فعل = نشرة — نعطي كل نوع فعله */}
-                  {it.kind === "walkaway" && it.data?.customer_id && (
-                    <Link href={`/dashboard/customers/${it.data.customer_id}`}
-                          className="mt-1 inline-block text-xs font-extrabold text-[color:var(--brand-d)] underline decoration-2 underline-offset-4">
-                      {tr(lang, "افتح ملفه وأهدِه هدية عودة ←", "Open profile & grant a come-back gift ←")}
-                    </Link>
-                  )}
-                </div>
-                <DismissInsight id={it.id} />
-              </li>
-            ))}
-          </ul>
-        </section>
+        <Link
+          href="/dashboard/insights"
+          className="soft-card mb-5 flex items-center justify-between gap-3 p-4 transition active:scale-[0.99]"
+        >
+          <span className="min-w-0 truncate text-sm font-bold text-[color:var(--ink)]">
+            {tr(lang, "رؤى وتنبيهات جديدة", "New insights & alerts")}
+            <span className="ms-2 text-[color:var(--muted)]">{toAr(insights.length)}</span>
+          </span>
+          <span className="shrink-0 text-xs font-bold text-[color:var(--brand-d)]">
+            {tr(lang, "عرضها ←", "View ←")}
+          </span>
+        </Link>
       )}
 
       {/* المؤشرات (8) */}

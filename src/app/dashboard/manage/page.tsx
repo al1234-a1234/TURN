@@ -69,9 +69,9 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
 
   // ثلاثة استعلامات مستقلة (لا يحتاج أحدها نتيجة الآخر) — موجة واحدة بدل ثلاث
   const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
-  const [{ data: settings }, { data: analytics }, { data: liveRows }] = await Promise.all([
+  const [{ data: settings }, { data: analytics }, { data: liveRows }, tableCountRes] = await Promise.all([
     settingsBranch
-      ? supabase.from("branch_settings").select("accepts_waitlist, accepts_reservations, max_party_size, opening_hours, has_inside, has_outside").eq("branch_id", settingsBranch.id).maybeSingle()
+      ? supabase.from("branch_settings").select("accepts_waitlist, accepts_reservations, max_party_size, opening_hours, has_inside, has_outside, default_duration_min, booking_window_days").eq("branch_id", settingsBranch.id).maybeSingle()
       : Promise.resolve({ data: null }),
     branchIds.length
       ? supabase.from("waitlist_entries").select("joined_at, seated_at, zone, status").in("branch_id", branchIds).gte("joined_at", since30)
@@ -79,7 +79,12 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
     branchIds.length
       ? supabase.from("waitlist_entries").select("zone").in("branch_id", branchIds).in("status", ["waiting", "notified"])
       : Promise.resolve({ data: [] as { zone: string }[] }),
+    // الحجز يعيّن طاولةً بعينها؛ فرعٌ بلا طاولات لا يستطيع أن يحجز شيئًا
+    settingsBranch
+      ? supabase.from("tables").select("id", { count: "exact", head: true }).eq("branch_id", settingsBranch.id).eq("is_active", true)
+      : Promise.resolve({ count: 0 }),
   ]);
+  const tableCount = tableCountRes?.count ?? 0;
   const hours = (settings?.opening_hours ?? {}) as { open?: string; close?: string };
   const rows = analytics ?? [];
 
@@ -266,13 +271,53 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
               </span>
               <input type="checkbox" name="accepts_waitlist" defaultChecked={settings?.accepts_waitlist ?? true} className="h-6 w-6 accent-[var(--brand-solid)]" />
             </label>
-            <label className="flex items-center justify-between rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
-              <span>
-                <span className="block font-bold text-[color:var(--ink)]">{tr(lang, "استقبال الحجوزات", "Accept reservations")}</span>
-                <span className="text-xs text-[color:var(--muted)]">{tr(lang, "فعّل الحجز المسبق للطاولات — منفصل عن طابور الحضور", "Enable advance table booking — separate from the walk-in queue")}</span>
-              </span>
-              <input type="checkbox" name="accepts_reservations" defaultChecked={settings?.accepts_reservations ?? false} className="h-6 w-6 accent-[var(--brand-solid)]" />
-            </label>
+            {/* الحجوزات: كتلةٌ واحدة — المفتاح ومدّة الجلسة ونافذة الحجز.
+                مدّة الجلسة هي ما يحرّر الطاولة للحجز التالي، ونافذة الحجز هي
+                أبعد يومٍ يُقبل. الاثنان يقرّران أيّ الأوقات تُعرض على العميل،
+                فمكانهما تحت المفتاح لا في زاويةٍ أخرى من الصفحة. */}
+            <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
+              <label className="flex items-center justify-between gap-3">
+                <span>
+                  <span className="block font-bold text-[color:var(--ink)]">{tr(lang, "استقبال الحجوزات", "Accept reservations")}</span>
+                  <span className="text-xs text-[color:var(--muted)]">{tr(lang, "فعّل الحجز المسبق للطاولات — منفصل عن طابور الحضور", "Enable advance table booking — separate from the walk-in queue")}</span>
+                </span>
+                <input
+                  type="checkbox"
+                  name="accepts_reservations"
+                  defaultChecked={(settings?.accepts_reservations ?? false) && tableCount > 0}
+                  disabled={tableCount === 0}
+                  className="h-6 w-6 accent-[var(--brand-solid)] disabled:opacity-40"
+                />
+              </label>
+
+              {/* حارس: الحجز يعيّن طاولةً بعينها. فرعٌ بلا طاولات كان يقبل
+                  حجوزاتٍ لا تحجز شيئًا — والمالك لا يعرف أنه امتلأ. */}
+              {tableCount === 0 ? (
+                <p className="mt-3 rounded-xl px-3.5 py-3 text-xs font-bold leading-6" style={{ background: "var(--surface)", border: "1px solid rgba(156,59,38,0.35)", color: "var(--danger)" }}>
+                  {tr(lang, "عرّف طاولات هذا الفرع أولًا — الحجز يخصّص طاولةً بعينها، وبلا طاولات لا يحجز شيئًا.", "Define this branch's tables first — a booking assigns a specific table, and with none it books nothing.")}
+                  <Link href={`/dashboard/tables${settingsBranch ? `?branch=${settingsBranch.id}` : ""}`} className="ms-1.5 underline decoration-2 underline-offset-4">
+                    {tr(lang, "أضف طاولات ←", "Add tables ←")}
+                  </Link>
+                </p>
+              ) : (
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="field-label">{tr(lang, "مدّة الجلسة (دقيقة)", "Seating duration (min)")}</label>
+                    <input name="default_duration_min" inputMode="numeric" defaultValue={settings?.default_duration_min ?? 90} className="field-input" />
+                    <p className="mt-1 text-[11px] font-medium text-[color:var(--muted)]">
+                      {tr(lang, "بعدها تُعرض الطاولة شاغرةً للحجز التالي.", "After it, the table is offered to the next booking.")}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="field-label">{tr(lang, "نافذة الحجز (يوم)", "Booking window (days)")}</label>
+                    <input name="booking_window_days" inputMode="numeric" defaultValue={settings?.booking_window_days ?? 30} className="field-input" />
+                    <p className="mt-1 text-[11px] font-medium text-[color:var(--muted)]">
+                      {tr(lang, "أبعد يومٍ يستطيع العميل الحجز فيه.", "The furthest day a customer may book.")}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
             {/* أقسام الفرع — ما لا يملكه المطعم لا يُعرض على عميله */}
             <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
               <span className="block font-bold text-[color:var(--ink)]">{tr(lang, "أقسام الجلوس", "Seating areas")}</span>

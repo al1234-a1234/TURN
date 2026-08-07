@@ -37,7 +37,7 @@ export default async function AdminPage() {
           <span className="text-lg font-extrabold">{tr(lang, "لوحة الأدمِن", "Admin panel")}</span>
           <div className="flex items-center gap-2">
             <Link href="/account" className="icon-btn" title={tr(lang, "حسابي", "My account")}>
-              <span aria-hidden>🔑</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><circle cx="8" cy="12" r="4" stroke="currentColor" strokeWidth="2" /><path d="M12 12h9M18 12v3M21 12v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
             </Link>
             <LangToggle />
           </div>

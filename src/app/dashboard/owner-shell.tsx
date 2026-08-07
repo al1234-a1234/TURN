@@ -6,7 +6,7 @@ import { LangToggle } from "@/components/lang-toggle";
 import { OwnerNavSidebar, OwnerNavTabs, type NavItem } from "./owner-nav";
 import { exitAdminView } from "../admin/actions";
 import { getLang } from "@/lib/i18n-server";
-import { tr } from "@/lib/i18n";
+import { tr, type Lang } from "@/lib/i18n";
 import {
   isModuleOn,
   staffHasPermission,
@@ -18,6 +18,7 @@ import type { Database } from "@/lib/supabase/database.types";
 
 export type OwnerNavKey =
   | "overview"
+  | "insights"
   | "reception"
   | "reservations"
   | "customers"
@@ -41,6 +42,7 @@ type NavDef = {
 
 const NAV: NavDef[] = [
   { key: "overview", ar: "لوحة التحكم", en: "Dashboard", href: "/dashboard", icon: "📊" },
+  { key: "insights", ar: "رؤى وتنبيهات", en: "Insights & alerts", href: "/dashboard/insights", icon: "💡" },
   { key: "reception", ar: "الاستقبال", en: "Reception", href: "/dashboard/reception", icon: "🪑", perm: "waitlist" },
   { key: "reservations", ar: "الحجوزات", en: "Reservations", href: "/dashboard/reservations", icon: "📅", perm: "reservations", needsReservations: true },
   { key: "customers", ar: "العملاء", en: "Customers", href: "/dashboard/customers", icon: "👥", module: "crm", perm: "customers" },
@@ -51,6 +53,16 @@ const NAV: NavDef[] = [
   { key: "reports", ar: "التقارير", en: "Reports", href: "/dashboard/reports", icon: "📈", module: "analytics", perm: "analytics" },
   { key: "manage", ar: "الإدارة والتحليلات", en: "Management & Analytics", href: "/dashboard/manage", icon: "⚙️", perm: "settings" },
 ];
+
+/**
+ * اسم الفرع في الترويسة.
+ *
+ * كان يُسبَق بـ«فرع» دائمًا، والمالك يسمّي فرعه «الفرع الرئيسي» — فيقرأ
+ * الموظّف «فرع الفرع الرئيسي». نُسبق فقط حين لا تحمل التسمية الكلمة أصلًا.
+ */
+function branchLabel(name: string, lang: Lang): string {
+  return /فرع|branch/i.test(name) ? name : tr(lang, `فرع ${name}`, `${name} branch`);
+}
 
 export async function OwnerShell({
   restaurant,
@@ -138,10 +150,10 @@ export async function OwnerShell({
         <div className="border-t p-3" style={{ borderColor: "var(--border)" }}>
           <div className="mb-2 flex justify-center"><LangToggle variant="plain" /></div>
           <Link href={`/r/${restaurant.slug}`} className="mb-2 flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-bold text-[color:var(--muted)] transition hover:text-brand-700">
-            <span>🌐</span> {tr(lang, "الصفحة العامة", "Public page")}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" /><path d="M3 12h18M12 3c2.6 2.6 2.6 15.4 0 18M12 3c-2.6 2.6-2.6 15.4 0 18" stroke="currentColor" strokeWidth="2" /></svg> {tr(lang, "الصفحة العامة", "Public page")}
           </Link>
           <Link href="/account" className="mb-2 flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-bold text-[color:var(--muted)] transition hover:text-brand-700">
-            <span>🔑</span> {tr(lang, "حسابي — تغيير كلمة المرور", "My account — change password")}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><circle cx="8" cy="12" r="4" stroke="currentColor" strokeWidth="2" /><path d="M12 12h9M18 12v3M21 12v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg> {tr(lang, "حسابي — تغيير كلمة المرور", "My account — change password")}
           </Link>
           <LogoutButton />
         </div>
@@ -161,13 +173,13 @@ export async function OwnerShell({
                 </svg>
               </Link>
               <Link href="/account" className="icon-btn" title={tr(lang, "حسابي", "My account")}>
-                <span aria-hidden>🔑</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><circle cx="8" cy="12" r="4" stroke="currentColor" strokeWidth="2" /><path d="M12 12h9M18 12v3M21 12v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
               </Link>
               <LogoutButton />
             </div>
           </div>
           <div className="mx-auto mt-6 max-w-3xl">
-            <p className="text-xs font-bold tracking-[0.3em] text-cream-200/85">{branchName ? tr(lang, `فرع ${branchName}`, `${branchName} branch`) : tr(lang, "لوحة المطعم", "Restaurant dashboard")}</p>
+            <p className="text-xs font-bold text-cream-200/85">{branchName ? branchLabel(branchName, lang) : tr(lang, "لوحة المطعم", "Restaurant dashboard")}</p>
             <h1 className="mt-1 font-display text-3xl font-bold">{restaurant.name}</h1>
           </div>
         </header>

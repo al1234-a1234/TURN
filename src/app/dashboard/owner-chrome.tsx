@@ -32,7 +32,7 @@ export async function OwnerHeader({
       </div>
       {title && (
         <div className="mx-auto mt-6 max-w-3xl">
-          <p className="text-xs font-bold tracking-[0.3em] text-cream-200/85">{tr(lang, "لوحة المطعم", "Restaurant Panel")}</p>
+          <p className="text-xs font-bold text-cream-200/85">{tr(lang, "لوحة المطعم", "Restaurant Panel")}</p>
           <h1 className="mt-1 font-display text-3xl font-bold">{title}</h1>
         </div>
       )}

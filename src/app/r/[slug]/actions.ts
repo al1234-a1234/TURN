@@ -28,6 +28,7 @@ export async function joinWaitlistGuest(
   // تطبيع + تحقّق: يمنع حفظ عميل برقم مشوّه (كان يتشظّى العميل الواحد لعملاء)
   const phone = saudiMobile(String(formData.get("phone") ?? ""));
   const zoneRaw = String(formData.get("zone") ?? "inside");
+  const partyRaw = Number(formData.get("party_size") ?? 1);
 
   if (!branchId) return { ok: false, error: "اختر الفرع." };
   if (!fullName) return { ok: false, error: "اكتب اسمك." };
@@ -42,12 +43,13 @@ export async function joinWaitlistGuest(
   const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0);
 
   const zone = await resolveZone(supabase, branchId, zoneRaw);
+  const partySize = await resolvePartySize(supabase, branchId, partyRaw);
 
   const { data, error } = await supabase.rpc("join_waitlist_guest", {
     p_branch_id: branchId,
     p_full_name: fullName,
     p_phone: phone,
-    p_party_size: 1,
+    p_party_size: partySize,
     p_zone: zone,
   });
 
@@ -136,6 +138,28 @@ const ZONES = ["any", "inside", "outside"];
  * لا نرفض ولا نُظهر خطأً: نضعه في القسم المتاح بهدوء. رفضُ عميلٍ واقفٍ على
  * الباب لأجل حقلٍ لم يخترْه هو أسوأ الحلّين.
  */
+/**
+ * عدد الأشخاص — يُقصّ على سقف الفرع بهدوء ولا يُرفض به عميل.
+ *
+ * كان مثبَّتًا على ١ في مسار الطابور: المالك يضبط «أقصى عدد» في الإدارة،
+ * والحجوزات تحترمه، والطابور يتجاهله — فيصل كل الطابور بشخصٍ واحد،
+ * وتُبنى تقارير الذروة على رقمٍ كاذب.
+ *
+ * والقصّ لا الرفض: رفض عميلٍ واقفٍ على الباب لأجل رقمٍ يمكن تصحيحه
+ * بصمتٍ أسوأ الحلَّين — نفس مبدأ `resolveZone`.
+ */
+async function resolvePartySize(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  branchId: string,
+  requested: number,
+): Promise<number> {
+  const { data } = await supabase
+    .from("branch_settings").select("max_party_size").eq("branch_id", branchId).maybeSingle();
+  const max = Math.max(1, Number(data?.max_party_size ?? 20));
+  const want = Number.isFinite(requested) ? Math.floor(requested) : 1;
+  return Math.min(Math.max(want, 1), max);
+}
+
 async function resolveZone(
   supabase: Awaited<ReturnType<typeof createClient>>,
   branchId: string,
@@ -270,4 +294,72 @@ export async function submitReview(
   }
   if (slug) revalidatePath(`/r/${slug}`);
   return { ok: true };
+}
+
+export type ReserveState = {
+  ok: boolean;
+  error?: string;
+  /** اسم الطاولة المخصّصة — يطمئن العميل أن الحجز حجزُ طاولةٍ بعينها */
+  table?: string;
+  /** الموعد كما ثبّتته القاعدة (ISO) — لا كما ظنّه المتصفّح */
+  at?: string;
+};
+
+/**
+ * حجز الضيف — بلا حساب ولا كلمة مرور، كالطابور تمامًا.
+ *
+ * الطاولة تُختار في القاعدة (أصغر مقاسٍ يكفي) لا هنا: التزامن يُحسم بقيد
+ * no_double_booking، فشرطٌ في التطبيق قد يسبقه طلبٌ آخر بجزءٍ من الثانية.
+ */
+export async function bookReservationGuest(
+  _prev: ReserveState,
+  formData: FormData,
+): Promise<ReserveState> {
+  const slug = String(formData.get("slug") ?? "");
+  const branchId = String(formData.get("branch_id") ?? "");
+  const fullName = String(formData.get("full_name") ?? "").trim();
+  const phone = saudiMobile(String(formData.get("phone") ?? ""));
+  const at = String(formData.get("reserved_at") ?? "").trim();
+  const partyRaw = Number(formData.get("party_size") ?? 2);
+  const zoneRaw = String(formData.get("zone") ?? "");
+  const zone = zoneRaw === "inside" || zoneRaw === "outside" ? zoneRaw : undefined;
+  const notes = String(formData.get("notes") ?? "").trim() || undefined;
+
+  if (!branchId) return { ok: false, error: "اختر الفرع." };
+  if (!fullName) return { ok: false, error: "اكتب اسمك." };
+  if (!phone) return { ok: false, error: "رقم الجوّال غير صحيح — يبدأ بـ 05 ويتكوّن من 10 خانات." };
+  // الموعد يصل ISO كاملًا من قائمة المواعيد المتاحة، فلا نعيد تفسير منطقةٍ زمنية
+  const when = new Date(at);
+  if (!at || Number.isNaN(when.getTime())) return { ok: false, error: "اختر موعدًا." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("book_reservation_guest", {
+    p_branch_id: branchId,
+    p_full_name: fullName,
+    p_phone: phone,
+    p_reserved_at: when.toISOString(),
+    p_party_size: Number.isFinite(partyRaw) ? Math.max(1, Math.floor(partyRaw)) : 2,
+    p_zone: zone,
+    p_notes: notes,
+  });
+
+  if (error) {
+    // «امتلأ للتوّ» ليس خطأً في العميل: بين عرض المواعيد وضغطه حجز غيرُه
+    if (error.code === "P0006" || error.code === "P0007") {
+      return { ok: false, error: "امتلأ هذا الوقت للتوّ — اختر موعدًا آخر." };
+    }
+    if (error.code === "P0001") return { ok: false, error: "هذا الفرع لا يستقبل حجوزات حاليًا." };
+    if (error.code === "P0002") return { ok: false, error: "الفرع غير متاح." };
+    if (error.code === "P0004") return { ok: false, error: "الموعد فات — اختر موعدًا قادمًا." };
+    if (error.code === "P0005") return { ok: false, error: "الموعد أبعد ممّا يقبله المطعم." };
+    if (error.code === "P0429") return { ok: false, error: "محاولات كثيرة — انتظر قليلًا ثم حاول." };
+    console.error("[bookReservationGuest]", error.code, error.message);
+    return { ok: false, error: "تعذّر الحجز. حاول مرة أخرى." };
+  }
+
+  const row = (Array.isArray(data) ? data[0] : data) as
+    | { table_label?: string; reserved_at?: string }
+    | null;
+  if (slug) revalidatePath(`/r/${slug}`);
+  return { ok: true, table: row?.table_label ?? undefined, at: row?.reserved_at ?? when.toISOString() };
 }
