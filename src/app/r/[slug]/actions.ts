@@ -28,6 +28,7 @@ export async function joinWaitlistGuest(
   // تطبيع + تحقّق: يمنع حفظ عميل برقم مشوّه (كان يتشظّى العميل الواحد لعملاء)
   const phone = saudiMobile(String(formData.get("phone") ?? ""));
   const zoneRaw = String(formData.get("zone") ?? "inside");
+  const partyRaw = Number(formData.get("party_size") ?? 1);
 
   if (!branchId) return { ok: false, error: "اختر الفرع." };
   if (!fullName) return { ok: false, error: "اكتب اسمك." };
@@ -42,12 +43,13 @@ export async function joinWaitlistGuest(
   const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0);
 
   const zone = await resolveZone(supabase, branchId, zoneRaw);
+  const partySize = await resolvePartySize(supabase, branchId, partyRaw);
 
   const { data, error } = await supabase.rpc("join_waitlist_guest", {
     p_branch_id: branchId,
     p_full_name: fullName,
     p_phone: phone,
-    p_party_size: 1,
+    p_party_size: partySize,
     p_zone: zone,
   });
 
@@ -136,6 +138,28 @@ const ZONES = ["any", "inside", "outside"];
  * لا نرفض ولا نُظهر خطأً: نضعه في القسم المتاح بهدوء. رفضُ عميلٍ واقفٍ على
  * الباب لأجل حقلٍ لم يخترْه هو أسوأ الحلّين.
  */
+/**
+ * عدد الأشخاص — يُقصّ على سقف الفرع بهدوء ولا يُرفض به عميل.
+ *
+ * كان مثبَّتًا على ١ في مسار الطابور: المالك يضبط «أقصى عدد» في الإدارة،
+ * والحجوزات تحترمه، والطابور يتجاهله — فيصل كل الطابور بشخصٍ واحد،
+ * وتُبنى تقارير الذروة على رقمٍ كاذب.
+ *
+ * والقصّ لا الرفض: رفض عميلٍ واقفٍ على الباب لأجل رقمٍ يمكن تصحيحه
+ * بصمتٍ أسوأ الحلَّين — نفس مبدأ `resolveZone`.
+ */
+async function resolvePartySize(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  branchId: string,
+  requested: number,
+): Promise<number> {
+  const { data } = await supabase
+    .from("branch_settings").select("max_party_size").eq("branch_id", branchId).maybeSingle();
+  const max = Math.max(1, Number(data?.max_party_size ?? 20));
+  const want = Number.isFinite(requested) ? Math.floor(requested) : 1;
+  return Math.min(Math.max(want, 1), max);
+}
+
 async function resolveZone(
   supabase: Awaited<ReturnType<typeof createClient>>,
   branchId: string,

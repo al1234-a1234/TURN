@@ -26,6 +26,8 @@ type Branch = {
   accepts: boolean;
   closedNow: boolean;
   busyNow: boolean;
+  /** أقصى عدد أشخاص يقبله الفرع — يضبطه المالك في الإدارة */
+  maxParty: number;
   photo: string | null;
 };
 
@@ -241,6 +243,9 @@ export function WaitlistForm({
     window.history.replaceState(null, "", `${u.pathname}${u.search}`);
   }
   const [zone, setZone] = useState<"inside" | "outside">("inside");
+  // عدد الأشخاص — كان مثبَّتًا على ١ في الخادم، فتصل كل الطوابير بشخصٍ واحد
+  // وتُبنى تقارير الذروة على رقمٍ كاذب. الآن يختاره العميل ضمن سقف المالك.
+  const [party, setParty] = useState(1);
   const [phone, setPhone] = useState<string>(normalizePhone(defaultPhone).slice(0, 10));
   // الاسم والجوّال من آخر مرّة على هذا الجهاز — تُقرأ بعد التركيب كي يبقى
   // ما يُرسله الخادم متطابقًا مع أول رسم (وإلا اختلف الترطيب).
@@ -496,6 +501,9 @@ export function WaitlistForm({
   // قسمٌ واحد = لا سؤال ولا اختيار: خطوةٌ أقلّ على باب مطعمٍ مزدحم
   const singleZone = zoneOptions.length === 1;
   const effectiveZone = singleZone ? zoneOptions[0] : zone;
+  // السقف يتبع الفرع المختار — وتبديل الفرع قد يخفضه تحت ما اختاره العميل
+  const maxParty = Math.max(1, branch?.maxParty ?? 1);
+  const effectiveParty = Math.min(party, maxParty);
 
   return (
     <form ref={formRef} action={formAction} className="space-y-4">
@@ -504,6 +512,7 @@ export function WaitlistForm({
       <input type="hidden" name="lng" value={coords?.lng ?? ""} />
       <input type="hidden" name="branch_id" value={branchId} />
       <input type="hidden" name="zone" value={effectiveZone} />
+      <input type="hidden" name="party_size" value={effectiveParty} />
 
       {/* رأس الفرع المختار + تغيير الفرع */}
       {multi && branch && (
@@ -544,6 +553,36 @@ export function WaitlistForm({
                 style={zone === z ? undefined : { background: "transparent" }}
               >
                 {z === "inside" ? tr(lang, "طاولة داخلية", "Indoor table") : tr(lang, "طاولة خارجية", "Outdoor table")}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* عدد الأشخاص — محدودٌ بسقف الفرع، فلا يختار العميل رقمًا يُرفض بعده */}
+      {maxParty > 1 && (
+        <div className="rq-card p-4">
+          <p className="field-label mb-2">
+            {tr(lang, "كم شخص؟", "How many people?")}
+            <span className="ms-1.5 text-xs font-medium text-[color:var(--muted)]">
+              {tr(lang, `الحدّ الأعلى ${toAr(maxParty)}`, `Max ${maxParty}`)}
+            </span>
+          </p>
+          <div className="rq-rail -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+            {Array.from({ length: maxParty }, (_, i) => i + 1).map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setParty(n)}
+                aria-pressed={effectiveParty === n}
+                className="h-11 w-11 shrink-0 rounded-2xl text-[15px] font-bold tabular-nums transition active:scale-95"
+                style={
+                  effectiveParty === n
+                    ? { background: "var(--brand-solid)", color: "var(--brand-ink)", border: "1px solid transparent" }
+                    : { background: "var(--surface)", color: "var(--brand-d)", border: "1px solid var(--border)" }
+                }
+              >
+                {toAr(n)}
               </button>
             ))}
           </div>

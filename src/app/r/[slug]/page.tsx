@@ -53,7 +53,7 @@ export default async function RestaurantPublicPage({
 
   // الفروع أولًا: القائمة والصور صارت لكل فرع على حدة (فرانشايز)
   const { data: branches } = await supabase
-    .from("branches").select("id, name, city, address, branch_settings(accepts_waitlist, manually_closed, busy_now, opening_hours, has_inside, has_outside)")
+    .from("branches").select("id, name, city, address, branch_settings(accepts_waitlist, manually_closed, busy_now, opening_hours, has_inside, has_outside, max_party_size)")
     .eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at");
   // منيو الفرع الأول وحده يُولَّد مسبقًا. قراءة `?branch=` هنا كانت تُجبر
   // Next على توليد الصفحة عند كل طلب — أي أن كل مسحة باركود تدفع ثمن ميزةٍ
@@ -96,7 +96,7 @@ export default async function RestaurantPublicPage({
   const withCounts = branchList.map((b) => {
     const c = countOf.get(b.id);
     const bs = Array.isArray(b.branch_settings) ? b.branch_settings[0] : b.branch_settings;
-    const settings = bs as { accepts_waitlist?: boolean; manually_closed?: boolean; busy_now?: boolean; opening_hours?: { open?: string; close?: string } | null; has_inside?: boolean; has_outside?: boolean } | null;
+    const settings = bs as { accepts_waitlist?: boolean; manually_closed?: boolean; busy_now?: boolean; opening_hours?: { open?: string; close?: string } | null; has_inside?: boolean; has_outside?: boolean; max_party_size?: number } | null;
     return {
       id: b.id,
       name: b.name,
@@ -110,6 +110,8 @@ export default async function RestaurantPublicPage({
       accepts: settings?.accepts_waitlist ?? true,
       closedNow: (settings?.manually_closed ?? false) || !isWithinOpeningHours(settings?.opening_hours ?? null),
       busyNow: settings?.busy_now ?? false,
+      // سقف المالك — يحدّ خيارات العميل بدل أن يُرفض بعد الإرسال
+      maxParty: Math.max(1, Number(settings?.max_party_size ?? 20)),
       photo: photoOf.get(b.id) ?? null,
     };
   });
