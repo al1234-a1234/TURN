@@ -53,7 +53,7 @@ export default async function RestaurantPublicPage({
 
   // الفروع أولًا: القائمة والصور صارت لكل فرع على حدة (فرانشايز)
   const { data: branches } = await supabase
-    .from("branches").select("id, name, city, address, branch_settings(accepts_waitlist, manually_closed, busy_now, opening_hours, has_inside, has_outside, max_party_size)")
+    .from("branches").select("id, name, city, address, branch_settings(accepts_waitlist, accepts_reservations, manually_closed, busy_now, opening_hours, has_inside, has_outside, max_party_size)")
     .eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at");
   // منيو الفرع الأول وحده يُولَّد مسبقًا. قراءة `?branch=` هنا كانت تُجبر
   // Next على توليد الصفحة عند كل طلب — أي أن كل مسحة باركود تدفع ثمن ميزةٍ
@@ -96,7 +96,7 @@ export default async function RestaurantPublicPage({
   const withCounts = branchList.map((b) => {
     const c = countOf.get(b.id);
     const bs = Array.isArray(b.branch_settings) ? b.branch_settings[0] : b.branch_settings;
-    const settings = bs as { accepts_waitlist?: boolean; manually_closed?: boolean; busy_now?: boolean; opening_hours?: { open?: string; close?: string } | null; has_inside?: boolean; has_outside?: boolean; max_party_size?: number } | null;
+    const settings = bs as { accepts_waitlist?: boolean; accepts_reservations?: boolean; manually_closed?: boolean; busy_now?: boolean; opening_hours?: { open?: string; close?: string } | null; has_inside?: boolean; has_outside?: boolean; max_party_size?: number } | null;
     return {
       id: b.id,
       name: b.name,
@@ -108,6 +108,8 @@ export default async function RestaurantPublicPage({
       hasInside: settings?.has_inside ?? true,
       hasOutside: settings?.has_outside ?? true,
       accepts: settings?.accepts_waitlist ?? true,
+      // الحجز المسبق — طريقٌ ثانٍ لنفس الباب، لا ميزةٌ في شاشةٍ أخرى
+      acceptsReservations: settings?.accepts_reservations ?? false,
       closedNow: (settings?.manually_closed ?? false) || !isWithinOpeningHours(settings?.opening_hours ?? null),
       busyNow: settings?.busy_now ?? false,
       // سقف المالك — يحدّ خيارات العميل بدل أن يُرفض بعد الإرسال

@@ -12,6 +12,10 @@ import { createClient } from "@/lib/supabase/client";
 import { isWithinOpeningHours } from "@/lib/dates";
 import { recordTurn, lastTurnFor, clearTurnRecovery, getMe, saveMe } from "@/lib/local-store";
 import { SmartImage } from "@/components/smart-image";
+// استيرادٌ عادي لا `dynamic`: كل ما يعتمد عليه نموذج الحجز (عميل Supabase،
+// التواريخ، التخزين المحلّي) موجودٌ في الحزمة أصلًا لأجل الطابور، فالتقسيم
+// قِيس ولم يوفّر شيئًا — وكان يضيف وميض تحميلٍ ثمنًا لا مقابل له.
+import { ReserveForm } from "./reserve-form";
 
 type Branch = {
   id: string;
@@ -24,6 +28,8 @@ type Branch = {
   hasInside: boolean;
   hasOutside: boolean;
   accepts: boolean;
+  /** الحجز المسبق مُفعّل لهذا الفرع (ولديه طاولات — الحارس في الإدارة) */
+  acceptsReservations: boolean;
   closedNow: boolean;
   busyNow: boolean;
   /** أقصى عدد أشخاص يقبله الفرع — يضبطه المالك في الإدارة */
@@ -88,6 +94,10 @@ function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; o
               <span className="h-2.5 w-2.5 rounded-full bg-white/80" />
               {tr(lang, "مغلق حاليًا", "Closed now")}
             </span>
+            {/* بابٌ مفتوحٌ في وجهٍ مغلق: المغلق الذي يقبل الحجز ليس نهاية طريق */}
+            {b.acceptsReservations && (
+              <span className="text-xs font-extrabold text-cream-100/85">{tr(lang, "احجز موعدًا ←", "Book a slot ←")}</span>
+            )}
           </span>
         ) : !b.accepts ? (
           <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
@@ -96,6 +106,9 @@ function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; o
               <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
               {tr(lang, "استقبال مباشر — بلا حجز دور", "Walk-in — no queue")}
             </span>
+            {b.acceptsReservations && (
+              <span className="text-xs font-extrabold text-cream-100/85">{tr(lang, "احجز موعدًا ←", "Book a slot ←")}</span>
+            )}
           </span>
         ) : b.total > 0 ? (
           <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
@@ -258,7 +271,7 @@ export function WaitlistForm({
      من الاستقبال، كانت البطاقة تبقى تقول «متاح الآن · خذ دورك» دقيقةً كاملة،
      فيملأ العميل النموذج ثم يُردّ بخطأ «الفرع مغلق حاليًا». نُحدّث الاثنين
      معًا فور الرسم فتعود البطاقة صادقة. */
-  type Live = { total: number; inside: number; outside: number; accepts?: boolean; closedNow?: boolean; busyNow?: boolean };
+  type Live = { total: number; inside: number; outside: number; accepts?: boolean; acceptsReservations?: boolean; closedNow?: boolean; busyNow?: boolean };
   const [live, setLive] = useState<Record<string, Live>>({});
   useEffect(() => {
     const ids = branches.map((b) => b.id);
@@ -268,7 +281,7 @@ export function WaitlistForm({
     Promise.all([
       sb.rpc("waitlist_counts_for", { p_branch_ids: ids }),
       sb.from("branch_settings")
-        .select("branch_id, accepts_waitlist, manually_closed, busy_now, opening_hours")
+        .select("branch_id, accepts_waitlist, accepts_reservations, manually_closed, busy_now, opening_hours")
         .in("branch_id", ids),
     ])
       .then(([counts, settings]) => {
@@ -282,6 +295,7 @@ export function WaitlistForm({
           next[st.branch_id] = {
             ...cur,
             accepts: st.accepts_waitlist ?? true,
+            acceptsReservations: st.accepts_reservations ?? false,
             busyNow: st.busy_now ?? false,
             closedNow: (st.manually_closed ?? false) || !isWithinOpeningHours(st.opening_hours as { open?: string | null; close?: string | null } | null),
           };
@@ -407,6 +421,16 @@ export function WaitlistForm({
 
   const branch = useMemo(() => branchesLive.find((b) => b.id === branchId), [branchId, branchesLive]);
 
+  /* «الآن» أم «لاحقًا».
+     الطابور والحجز ليسا ميزتين متنافستين بل سؤالٌ واحد: متى ستأتي؟ فجعلهما
+     شاشتين منفصلتين كان يخفي نصف الجواب. ومَن يفتح صفحة فرعٍ مغلق أو فرعٍ
+     يستقبل مباشرةً فالحجز هو جوابه الوحيد — فنفتحه له بدل رسالة اعتذار. */
+  const [mode, setMode] = useState<"now" | "later">("now");
+  useEffect(() => {
+    if (!branch?.acceptsReservations) setMode("now");
+    else if (branch.closedNow || !branch.accepts) setMode("later");
+  }, [branch?.id, branch?.acceptsReservations, branch?.closedNow, branch?.accepts]);
+
   useEffect(() => {
     if (state.ok) {
       recordTurn({
@@ -454,6 +478,51 @@ export function WaitlistForm({
     );
   }
 
+  /* شريط «الآن / لاحقًا» — لا يظهر إلا حين يقبل الفرع الحجز فعلًا (والإدارة
+     تمنع تفعيله على فرعٍ بلا طاولات، فالخيار المعروض خيارٌ قائم لا وعد). */
+  const modeSwitch = branch?.acceptsReservations ? (
+    <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[color:var(--surface-2)] p-1">
+      <button type="button" onClick={() => setMode("now")} data-active={mode === "now"} className="rq-seg-btn" style={mode === "now" ? undefined : { background: "transparent" }}>
+        {tr(lang, "أنا هنا الآن", "I'm here now")}
+      </button>
+      <button type="button" onClick={() => setMode("later")} data-active={mode === "later"} className="rq-seg-btn" style={mode === "later" ? undefined : { background: "transparent" }}>
+        {tr(lang, "احجز لوقتٍ لاحق", "Book for later")}
+      </button>
+    </div>
+  ) : null;
+
+  const branchHead = multi && branch ? (
+    <div className="flex items-center justify-between px-1">
+      <p className="font-display text-lg font-bold text-[color:var(--ink)]">
+        {branch.name}{branch.city ? <span className="text-sm font-medium text-[color:var(--muted)]"> · {branch.city}</span> : null}
+      </p>
+      <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
+    </div>
+  ) : null;
+
+  // ===== الحجز لوقتٍ لاحق =====
+  if (branch && mode === "later") {
+    return (
+      <div className="space-y-4">
+        {branchHead}
+        {modeSwitch}
+        {/* المغلق يبقى مغلقًا الآن — والحجز لا يناقض ذلك بل يجيب عنه */}
+        {branch.closedNow && (
+          <p className="rounded-2xl px-3.5 py-2.5 text-sm font-extrabold text-cream-100" style={{ background: "var(--brand-d)" }}>
+            {tr(lang, "الفرع مغلق الآن — لكن يمكنك حجز موعدٍ قادم", "Closed right now — but you can book an upcoming slot")}
+          </p>
+        )}
+        <ReserveForm
+          slug={slug}
+          branchId={branch.id}
+          maxParty={Math.max(1, branch.maxParty ?? 1)}
+          hasInside={branch.hasInside ?? true}
+          hasOutside={branch.hasOutside ?? true}
+        />
+      </div>
+    );
+  }
+
   // مغلق فعليًّا الآن (يدويًا من الاستقبال أو خارج أوقات الدوام) — يسبق حالة
   // «استقبال مباشر» لأنه يعني لا أحد يُستقبَل إطلاقًا، لا حتى بلا حجز دور.
   if (branch && branch.closedNow) {
@@ -462,6 +531,7 @@ export function WaitlistForm({
         {multi && (
           <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
         )}
+        {modeSwitch}
         <div className="rq-card p-7 text-center">
           <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full text-cream-100" style={{ background: "var(--brand-d)" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" /><path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
@@ -480,6 +550,7 @@ export function WaitlistForm({
         {multi && (
           <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
         )}
+        {modeSwitch}
         <div className="rq-card p-7 text-center">
           <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full" style={{ background: "rgba(192,86,74,0.12)", color: "var(--st-closed)" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" /><path d="M12 7v5l3 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
@@ -515,14 +586,9 @@ export function WaitlistForm({
       <input type="hidden" name="party_size" value={effectiveParty} />
 
       {/* رأس الفرع المختار + تغيير الفرع */}
-      {multi && branch && (
-        <div className="flex items-center justify-between px-1">
-          <p className="font-display text-lg font-bold text-[color:var(--ink)]">
-            {branch.name}{branch.city ? <span className="text-sm font-medium text-[color:var(--muted)]"> · {branch.city}</span> : null}
-          </p>
-          <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
-        </div>
-      )}
+      {branchHead}
+
+      {modeSwitch}
 
       {branch?.busyNow && (
         <p className="flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold text-cream-100"
