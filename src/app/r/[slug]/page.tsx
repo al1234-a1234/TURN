@@ -53,7 +53,7 @@ export default async function RestaurantPublicPage({
 
   // الفروع أولًا: القائمة والصور صارت لكل فرع على حدة (فرانشايز)
   const { data: branches } = await supabase
-    .from("branches").select("id, name, city, address, branch_settings(accepts_waitlist, accepts_reservations, manually_closed, busy_now, opening_hours, has_inside, has_outside, max_party_size)")
+    .from("branches").select("id, name, city, address, branch_settings(accepts_waitlist, accepts_reservations, manually_closed, busy_now, opening_hours, max_party_size), branch_zones(key, name, name_en, sort_order, is_active)")
     .eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at");
   // منيو الفرع الأول وحده يُولَّد مسبقًا. قراءة `?branch=` هنا كانت تُجبر
   // Next على توليد الصفحة عند كل طلب — أي أن كل مسحة باركود تدفع ثمن ميزةٍ
@@ -65,14 +65,25 @@ export default async function RestaurantPublicPage({
   // — كان يُجلب حيًّا في كل مسحٍ للباركود (المسحات ≫ الانضمامات). يبقى حيًّا فقط
   // ما يجب أن يكون لحظيًّا: عدّاد الطابور. فروع/إعداداتها جُلبت أعلاه (حيّة للحظية
   // busy_now/manually_closed). موجة واحدة تجمع الكاش مع عدّاد الطابور الحيّ.
-  const [branchContent, photoMap, reviews, { data: countRows }] = await Promise.all([
+  const [branchContent, photoMap, reviews, { data: countRows }, { data: zoneCountRows }] = await Promise.all([
     getBranchContent(contentBranchId),
     getBranchStripPhotos(branchList.map((b) => b.id)),
     getRestaurantReviews(restaurant.id),
     branchList.length
       ? supabase.rpc("waitlist_counts_for", { p_branch_ids: branchList.map((b) => b.id) })
       : Promise.resolve({ data: [] as { branch_id: string; total: number; inside: number; outside: number }[] }),
+    branchList.length
+      ? supabase.rpc("waitlist_counts_by_zone", { p_branch_ids: branchList.map((b) => b.id) })
+      : Promise.resolve({ data: [] as { branch_id: string; zone_key: string; waiting: number }[] }),
   ]);
+
+  // عدّاد المنتظرين لكل قسمٍ لكل فرع
+  const zoneCountOf = new Map<string, Record<string, number>>();
+  for (const z of zoneCountRows ?? []) {
+    const cur = zoneCountOf.get(z.branch_id) ?? {};
+    cur[z.zone_key] = Number(z.waiting);
+    zoneCountOf.set(z.branch_id, cur);
+  }
   const categories = branchContent.categories;
   const items = branchContent.items;
   const photos = branchContent.photos;
@@ -96,7 +107,11 @@ export default async function RestaurantPublicPage({
   const withCounts = branchList.map((b) => {
     const c = countOf.get(b.id);
     const bs = Array.isArray(b.branch_settings) ? b.branch_settings[0] : b.branch_settings;
-    const settings = bs as { accepts_waitlist?: boolean; accepts_reservations?: boolean; manually_closed?: boolean; busy_now?: boolean; opening_hours?: { open?: string; close?: string } | null; has_inside?: boolean; has_outside?: boolean; max_party_size?: number } | null;
+    const settings = bs as { accepts_waitlist?: boolean; accepts_reservations?: boolean; manually_closed?: boolean; busy_now?: boolean; opening_hours?: { open?: string; close?: string } | null; max_party_size?: number } | null;
+    // أقسام الفرع الفعّالة بأسماء المالك، بترتيبه
+    const zoneRows = ((b as { branch_zones?: { key: string; name: string; name_en: string | null; sort_order: number; is_active: boolean }[] }).branch_zones ?? [])
+      .filter((z) => z.is_active)
+      .sort((x, y) => (x.sort_order ?? 0) - (y.sort_order ?? 0));
     return {
       id: b.id,
       name: b.name,
@@ -105,8 +120,8 @@ export default async function RestaurantPublicPage({
       inside: Number(c?.inside ?? 0),
       outside: Number(c?.outside ?? 0),
       // أقسام يملكها الفرع فعلًا — لا نعرض للعميل ما لا وجود له
-      hasInside: settings?.has_inside ?? true,
-      hasOutside: settings?.has_outside ?? true,
+      zones: zoneRows.map((z) => ({ key: z.key, name: z.name, nameEn: z.name_en })),
+      zoneCounts: zoneCountOf.get(b.id) ?? {},
       accepts: settings?.accepts_waitlist ?? true,
       // الحجز المسبق — طريقٌ ثانٍ لنفس الباب، لا ميزةٌ في شاشةٍ أخرى
       acceptsReservations: settings?.accepts_reservations ?? false,

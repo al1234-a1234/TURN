@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { loadOwner, scopeBranchIds } from "../owner-context";
+
+/** الأقسام مفتوحة العدد، فاللون يدور بدل أن يُثبَّت لاثنين. */
+const REPORT_ZONE_TONES = ["var(--st-full)", "var(--brand)", "var(--st-open)", "var(--brand-d)", "var(--muted)"];
 import { ColumnChart, SplitBars, ChartCard } from "../manage/charts";
 import { PrintButton } from "./print-button";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
@@ -82,6 +85,10 @@ export default async function ReportsPage({
           : new Date(Date.now() - 365 * 864e5);
   const since = sinceDate.toISOString();
 
+  const { data: zoneRows } = branchIds.length
+    ? await supabase.from("branch_zones").select("key, name").in("branch_id", branchIds).order("sort_order")
+    : { data: [] as { key: string; name: string }[] };
+
   const [rev, profiles, analytics] = await Promise.all([
     supabase.from("reviews").select("rating").eq("restaurant_id", restaurant.id),
     supabase
@@ -131,9 +138,23 @@ export default async function ReportsPage({
     ? Math.round((partySizes.reduce((a, b) => a + b, 0) / partySizes.length) * 10) / 10
     : 0;
 
-  // توزيع حسب المنطقة (المخدومون ضمن الفترة)
-  const insideServed = seated.filter((r) => r.zone === "inside").length;
-  const outsideServed = seated.filter((r) => r.zone === "outside").length;
+  // توزيع حسب القسم (المخدومون ضمن الفترة) — بأسماء المالك لا باثنين
+  // مثبّتين. الأقسام تُجمَع من كل فروع النطاق، فقد تسمّي فروعٌ أقسامها
+  // بأسماءٍ مختلفة؛ المفتاح هو ما يجمعها، وأوّل اسمٍ وجدناه هو ما يُعرض.
+  const zoneName = new Map<string, string>();
+  for (const z of zoneRows ?? []) if (!zoneName.has(z.key)) zoneName.set(z.key, z.name);
+  const servedByZone = new Map<string, number>();
+  for (const r of seated) {
+    const k = r.zone ?? "";
+    servedByZone.set(k, (servedByZone.get(k) ?? 0) + 1);
+  }
+  const zoneBreakdown = [...servedByZone.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([key, value], i) => ({
+      label: zoneName.get(key) ?? tr(lang, "بلا قسم", "No area"),
+      value,
+      color: REPORT_ZONE_TONES[i % REPORT_ZONE_TONES.length],
+    }));
 
   // ساعات الذروة + أكثر الساعات ازدحامًا
   const byHour = new Map<number, number>();
@@ -279,12 +300,7 @@ export default async function ReportsPage({
           <ColumnChart data={breakdown} color="var(--brand)" />
         </ChartCard>
         <ChartCard title={tr(lang, "توزيع المخدومين حسب المنطقة", "Served by zone")} hint={pLabel}>
-          <SplitBars
-            rows={[
-              { label: tr(lang, "طاولات داخلية", "Indoor tables"), value: insideServed, color: "var(--st-full)" },
-              { label: tr(lang, "طاولات خارجية", "Outdoor tables"), value: outsideServed, color: "var(--brand)" },
-            ]}
-          />
+          <SplitBars rows={zoneBreakdown} />
         </ChartCard>
       </div>
 

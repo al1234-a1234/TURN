@@ -28,7 +28,10 @@ export async function addWalkIn(_prev: WalkInState, formData: FormData): Promise
   const phone = saudiMobile(String(formData.get("phone") ?? ""));
   if (!phone) return { ok: false, error: "رقم الجوّال غير صحيح — يبدأ بـ 05 ويتكوّن من 10 خانات." };
   const party = Math.max(1, Number(String(formData.get("party_size") ?? "2")) || 2);
-  const zone = String(formData.get("zone") ?? "inside") === "outside" ? "outside" : "inside";
+  // القسم كما اختاره المضيف — الحارس في القاعدة يتحقّق أنه يخصّ الفرع
+  // ويقصّه لأوّل قسمٍ فعّال إن لم يكن. قصّه هنا لاثنين كان يضع من اختار
+  // «عوائل» في «داخلي».
+  const zone = String(formData.get("zone") ?? "").trim() || undefined;
 
   // دالة الموظّف لا دالة الضيف: تتجاوز «مغلق يدويًا/خارج الدوام» عمدًا —
   // إقفال الانضمام الإلكتروني ما يمنع المضيف من إضافة الواقف على الباب.

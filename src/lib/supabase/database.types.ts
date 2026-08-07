@@ -85,6 +85,47 @@ export type Database = {
           },
         ]
       }
+      branch_zones: {
+        Row: {
+          branch_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          key: string
+          name: string
+          name_en: string | null
+          sort_order: number
+        }
+        Insert: {
+          branch_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key: string
+          name: string
+          name_en?: string | null
+          sort_order?: number
+        }
+        Update: {
+          branch_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          key?: string
+          name?: string
+          name_en?: string | null
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "branch_zones_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branches: {
         Row: {
           address: string | null
@@ -1597,12 +1638,24 @@ export type Database = {
           zone: string
         }[]
       }
+      valid_branch_zone: {
+        Args: { p_branch_id: string; p_zone: string }
+        Returns: string
+      }
       waitlist_counts: {
         Args: { b_id: string }
         Returns: {
           inside: number
           outside: number
           total: number
+        }[]
+      }
+      waitlist_counts_by_zone: {
+        Args: { p_branch_ids: string[] }
+        Returns: {
+          branch_id: string
+          waiting: number
+          zone_key: string
         }[]
       }
       waitlist_counts_for: {

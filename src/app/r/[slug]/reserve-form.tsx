@@ -8,6 +8,7 @@ import { useLang } from "@/components/lang-provider";
 import { createClient } from "@/lib/supabase/client";
 import { riyadhISODate, fmtTime } from "@/lib/dates";
 import { getMe, saveMe } from "@/lib/local-store";
+import { zoneLabel, type Zone } from "@/lib/zones";
 
 /**
  * حجز موعدٍ لاحق.
@@ -25,14 +26,13 @@ export function ReserveForm({
   slug,
   branchId,
   maxParty,
-  hasInside,
-  hasOutside,
+  zones,
 }: {
   slug: string;
   branchId: string;
   maxParty: number;
-  hasInside: boolean;
-  hasOutside: boolean;
+  /** أقسام الفرع الفعّالة بأسماء المالك — مرتّبةً كما رتّبها */
+  zones: Zone[];
 }) {
   const lang = useLang();
   const [state, formAction, pending] = useActionState<ReserveState, FormData>(
@@ -40,15 +40,12 @@ export function ReserveForm({
     { ok: false },
   );
 
-  const zoneOptions = ([hasInside && "inside", hasOutside && "outside"].filter(Boolean) as ("inside" | "outside")[]);
-  const singleZone = zoneOptions.length === 1;
+  const singleZone = zones.length <= 1;
 
   const [party, setParty] = useState(2);
-  // خيار «أيّهما» أُزيل: ثلاثة أزرارٍ لسؤالٍ جوابه اثنان، وأحدها لا يعني شيئًا
-  // للعميل — هو يعرف أين يريد أن يجلس. والافتراضي أوّل قسمٍ يملكه الفرع.
-  const [zone, setZone] = useState<"inside" | "outside">(
-    () => (hasInside ? "inside" : "outside"),
-  );
+  // خيار «أيّهما» أُزيل: العميل يعرف أين يريد أن يجلس. والافتراضي أوّل
+  // قسمٍ رتّبه المالك — هو الأشيع عنده.
+  const [zone, setZone] = useState<string>(() => zones[0]?.key ?? "");
   const [day, setDay] = useState(() => riyadhISODate());
   const [slots, setSlots] = useState<Slot[] | null>(null);
   const [picked, setPicked] = useState<string>("");
@@ -57,7 +54,7 @@ export function ReserveForm({
   const nameRef = useRef<HTMLInputElement | null>(null);
 
   const cappedParty = Math.min(Math.max(party, 1), Math.max(1, maxParty));
-  const effectiveZone = singleZone ? zoneOptions[0] : zone;
+  const effectiveZone = singleZone ? (zones[0]?.key ?? "") : zone;
 
   // الأيام: من اليوم فصاعدًا. الأبعد ممّا يقبله المطعم يعود بقائمةٍ فارغة —
   // نافذة الحجز تعيش في القاعدة، فلا نكرّرها هنا لتتناقض معها.
@@ -167,10 +164,11 @@ export function ReserveForm({
       {!singleZone && (
         <div className="rq-card p-4">
           <p className="field-label mb-2">{tr(lang, "اختر مكانك", "Choose your spot")}</p>
-          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[color:var(--surface-2)] p-1">
-            {zoneOptions.map((z) => (
-              <button key={z} type="button" onClick={() => setZone(z)} data-active={zone === z} className="rq-seg-btn" style={zone === z ? undefined : { background: "transparent" }}>
-                {z === "inside" ? tr(lang, "داخلي", "Indoor") : tr(lang, "خارجي", "Outdoor")}
+          {/* الأقسام مفتوحة العدد الآن: شبكةٌ تتبع عددها بدل عمودين ثابتين */}
+          <div className={`grid gap-2 rounded-2xl bg-[color:var(--surface-2)] p-1 ${zones.length >= 3 ? "grid-cols-3" : "grid-cols-2"}`}>
+            {zones.map((z) => (
+              <button key={z.key} type="button" onClick={() => setZone(z.key)} data-active={zone === z.key} className="rq-seg-btn" style={zone === z.key ? undefined : { background: "transparent" }}>
+                {zoneLabel(z, lang)}
               </button>
             ))}
           </div>

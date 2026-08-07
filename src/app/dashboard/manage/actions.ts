@@ -41,13 +41,9 @@ export async function updateBranchSettings(formData: FormData) {
   const open = String(formData.get("open_time") ?? "").trim() || null;
   const close = String(formData.get("close_time") ?? "").trim() || null;
 
-  // أقسام الجلوس — القاعدة تمنع إطفاءهما معًا بقيدٍ صريح، لكن رفضًا من القاعدة
-  // يصل المالك «فشلًا صامتًا» بلا تفسير. فنُصحّح هنا: إطفاء الاثنين يُقرأ عودةً
-  // إلى الداخلي — وهو الأقرب لواقع المطاعم — بدل أن يُفقد الحفظ كلّه.
-  let hasInside = formData.get("has_inside") === "on";
-  const hasOutside = formData.get("has_outside") === "on";
-  if (!hasInside && !hasOutside) hasInside = true;
-
+  // أقسام الجلوس لم تعد هنا: صارت جدولًا يعرّفه المالك بأسمائه (branch_zones)
+  // في صفحة الطاولات. وحذف المربّعين من النموذج يعني أن قراءتهما هنا كانت
+  // ستكتب «خارجي مُطفأ» في كل حفظٍ للإعدادات — إطفاءُ قسمٍ لم يطلبه أحد.
   // نحدّث الفرع المعروض في النموذج فقط (لا نطمس بقية الفروع).
   // resolveWriteBranch يجبر المربوط بفرع على فرعه ويتحقّق أن المُرسَل من مطعمه.
   const branchId = await resolveWriteBranch(caller, String(formData.get("branch_id") ?? ""));
@@ -69,8 +65,6 @@ export async function updateBranchSettings(formData: FormData) {
     accepts_reservations: acceptsReservations,
     max_party_size: Number.isFinite(maxParty) ? maxParty : 20,
     opening_hours: { open, close },
-    has_inside: hasInside,
-    has_outside: hasOutside,
   };
 
   // حقلا الحجز يغيبان عن النموذج حين لا طاولات للفرع. الكتابة بقيمةٍ افتراضية

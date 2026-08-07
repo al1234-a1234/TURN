@@ -5,6 +5,7 @@ import { createReservation, type NewReservationState } from "./actions";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 import { normalizePhone } from "@/lib/format";
+import { zoneLabel, type Zone } from "@/lib/zones";
 
 /**
  * حجز جديد من الاستقبال.
@@ -16,13 +17,12 @@ import { normalizePhone } from "@/lib/format";
 export function NewReservation({
   branchId,
   branchName,
-  hasInside,
-  hasOutside,
+  zones,
 }: {
   branchId: string;
   branchName?: string;
-  hasInside: boolean;
-  hasOutside: boolean;
+  /** أقسام الفرع الفعّالة بأسماء المالك */
+  zones: Zone[];
 }) {
   const lang = useLang();
   const [state, formAction, pending] = useActionState<NewReservationState, FormData>(
@@ -37,7 +37,7 @@ export function NewReservation({
     if (state.ok) formRef.current?.reset();
   }, [state.ok, state.table]);
 
-  const bothZones = hasInside && hasOutside;
+  const bothZones = zones.length > 1;
   const field = "field-input";
 
   return (
@@ -70,11 +70,12 @@ export function NewReservation({
         {bothZones ? (
           <select name="zone" className={field} defaultValue="">
             <option value="">{tr(lang, "أيّ قسم", "Any area")}</option>
-            <option value="inside">{tr(lang, "داخلي", "Indoor")}</option>
-            <option value="outside">{tr(lang, "خارجي", "Outdoor")}</option>
+            {zones.map((z) => (
+              <option key={z.key} value={z.key}>{zoneLabel(z, lang)}</option>
+            ))}
           </select>
         ) : (
-          <input type="hidden" name="zone" value={hasOutside ? "outside" : "inside"} />
+          <input type="hidden" name="zone" value={zones[0]?.key ?? ""} />
         )}
         <input name="notes" placeholder={tr(lang, "ملاحظات (اختياري)", "Notes (optional)")} className={field} />
 

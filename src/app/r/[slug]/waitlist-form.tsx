@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/client";
 import { isWithinOpeningHours } from "@/lib/dates";
 import { recordTurn, lastTurnFor, clearTurnRecovery, getMe, saveMe } from "@/lib/local-store";
 import { SmartImage } from "@/components/smart-image";
+import { zoneLabel, type Zone } from "@/lib/zones";
 // استيرادٌ عادي لا `dynamic`: كل ما يعتمد عليه نموذج الحجز (عميل Supabase،
 // التواريخ، التخزين المحلّي) موجودٌ في الحزمة أصلًا لأجل الطابور، فالتقسيم
 // قِيس ولم يوفّر شيئًا — وكان يضيف وميض تحميلٍ ثمنًا لا مقابل له.
@@ -24,9 +25,10 @@ type Branch = {
   total: number;
   inside: number;
   outside: number;
-  /** أقسام يملكها الفرع — ما يُطفأ منها لا يُعرض ولا يُحتسب */
-  hasInside: boolean;
-  hasOutside: boolean;
+  /** أقسام الفرع الفعّالة بأسماء المالك، مرتّبةً كما رتّبها */
+  zones: Zone[];
+  /** عدد المنتظرين في كل قسم — بمفتاح القسم */
+  zoneCounts: Record<string, number>;
   accepts: boolean;
   /** الحجز المسبق مُفعّل لهذا الفرع (ولديه طاولات — الحارس في الإدارة) */
   acceptsReservations: boolean;
@@ -255,7 +257,7 @@ export function WaitlistForm({
     if (id) u.searchParams.set("branch", id); else u.searchParams.delete("branch");
     window.history.replaceState(null, "", `${u.pathname}${u.search}`);
   }
-  const [zone, setZone] = useState<"inside" | "outside">("inside");
+  const [zone, setZone] = useState<string>("");
   // عدد الأشخاص — كان مثبَّتًا على ١ في الخادم، فتصل كل الطوابير بشخصٍ واحد
   // وتُبنى تقارير الذروة على رقمٍ كاذب. الآن يختاره العميل ضمن سقف المالك.
   const [party, setParty] = useState(1);
@@ -271,7 +273,7 @@ export function WaitlistForm({
      من الاستقبال، كانت البطاقة تبقى تقول «متاح الآن · خذ دورك» دقيقةً كاملة،
      فيملأ العميل النموذج ثم يُردّ بخطأ «الفرع مغلق حاليًا». نُحدّث الاثنين
      معًا فور الرسم فتعود البطاقة صادقة. */
-  type Live = { total: number; inside: number; outside: number; accepts?: boolean; acceptsReservations?: boolean; closedNow?: boolean; busyNow?: boolean };
+  type Live = { total: number; inside: number; outside: number; zoneCounts?: Record<string, number>; accepts?: boolean; acceptsReservations?: boolean; closedNow?: boolean; busyNow?: boolean };
   const [live, setLive] = useState<Record<string, Live>>({});
   useEffect(() => {
     const ids = branches.map((b) => b.id);
@@ -280,18 +282,25 @@ export function WaitlistForm({
     const sb = createClient();
     Promise.all([
       sb.rpc("waitlist_counts_for", { p_branch_ids: ids }),
+      // ولكل قسمٍ عدّاده: العدّاد القديم يعرف عمودَي inside/outside فقط
+      sb.rpc("waitlist_counts_by_zone", { p_branch_ids: ids }),
       sb.from("branch_settings")
         .select("branch_id, accepts_waitlist, accepts_reservations, manually_closed, busy_now, opening_hours")
         .in("branch_id", ids),
     ])
-      .then(([counts, settings]) => {
+      .then(([counts, byZone, settings]) => {
         if (!alive) return;
         const next: Record<string, Live> = {};
         for (const c of counts.data ?? []) {
-          next[c.branch_id] = { total: c.total, inside: c.inside, outside: c.outside };
+          next[c.branch_id] = { total: c.total, inside: c.inside, outside: c.outside, zoneCounts: {} };
+        }
+        for (const z of byZone.data ?? []) {
+          const cur = next[z.branch_id] ?? { total: 0, inside: 0, outside: 0, zoneCounts: {} };
+          cur.zoneCounts = { ...(cur.zoneCounts ?? {}), [z.zone_key]: Number(z.waiting) };
+          next[z.branch_id] = cur;
         }
         for (const st of settings.data ?? []) {
-          const cur = next[st.branch_id] ?? { total: 0, inside: 0, outside: 0 };
+          const cur = next[st.branch_id] ?? { total: 0, inside: 0, outside: 0, zoneCounts: {} };
           next[st.branch_id] = {
             ...cur,
             accepts: st.accepts_waitlist ?? true,
@@ -496,8 +505,7 @@ export function WaitlistForm({
         slug={slug}
         branchId={branch.id}
         maxParty={Math.max(1, branch.maxParty ?? 1)}
-        hasInside={branch.hasInside ?? true}
-        hasOutside={branch.hasOutside ?? true}
+        zones={branch.zones ?? []}
       />
     </section>
   ) : null;
@@ -545,16 +553,16 @@ export function WaitlistForm({
     );
   }
 
-  const inside = branch?.inside ?? 0;
-  const outside = branch?.outside ?? 0;
+  // عدّاد القسم: الحيّ إن وصل، وإلا المخبوز في الصفحة (صحيحٌ حتى دقيقة مضت)
+  const zoneCountOf = (key: string) => branch?.zoneCounts?.[key] ?? 0;
 
   // أقسام هذا الفرع. الافتراضي الاثنان — فرعٌ بلا صفّ إعدادات يبقى كما كان.
-  const hasInside = branch?.hasInside ?? true;
-  const hasOutside = branch?.hasOutside ?? true;
-  const zoneOptions = ([hasInside && "inside", hasOutside && "outside"].filter(Boolean) as ("inside" | "outside")[]);
+  const zoneOptions = branch?.zones ?? [];
   // قسمٌ واحد = لا سؤال ولا اختيار: خطوةٌ أقلّ على باب مطعمٍ مزدحم
   const singleZone = zoneOptions.length === 1;
-  const effectiveZone = singleZone ? zoneOptions[0] : zone;
+  // لم يختر بعد ⇒ أوّل قسمٍ رتّبه المالك. الفراغ كان يترك القرار للحارس في
+  // القاعدة، فيقف العميل في قسمٍ لم يره على الشاشة.
+  const effectiveZone = zone || zoneOptions[0]?.key || "";
   // السقف يتبع الفرع المختار — وتبديل الفرع قد يخفضه تحت ما اختاره العميل
   const maxParty = Math.max(1, branch?.maxParty ?? 1);
   const effectiveParty = Math.min(party, maxParty);
@@ -581,26 +589,31 @@ export function WaitlistForm({
       )}
 
       {/* طابور القسم (لهذا الفرع) — لا يُعرض عدّاد قسمٍ لا يملكه الفرع */}
-      <div className={singleZone ? "grid grid-cols-1 gap-3" : "grid grid-cols-2 gap-3"}>
-        {hasInside && <ZoneStat label={tr(lang, "طاولات داخلية", "Indoor tables")} count={inside} />}
-        {hasOutside && <ZoneStat label={tr(lang, "طاولات خارجية", "Outdoor tables")} count={outside} />}
+      {/* عدّاد لكل قسمٍ بالاسم الذي كتبه المالك. ثلاثة أقسامٍ فأكثر تنزلق
+          أفقيًّا بدل أن تنضغط في شبكةٍ لا تتّسع لأسمائها. */}
+      <div className={zoneOptions.length >= 3 ? "rq-rail -mx-1 flex gap-3 overflow-x-auto px-1 pb-1" : `grid gap-3 grid-cols-${Math.max(1, zoneOptions.length)}`}>
+        {zoneOptions.map((z) => (
+          <div key={z.key} className={zoneOptions.length >= 3 ? "w-[46%] shrink-0" : ""}>
+            <ZoneStat label={zoneLabel(z, lang)} count={zoneCountOf(z.key)} />
+          </div>
+        ))}
       </div>
 
       {/* اختيار القسم — يختفي كليًّا حين لا يملك الفرع إلا قسمًا واحدًا */}
       {!singleZone && (
         <div className="rq-card p-4">
           <p className="field-label mb-2">{tr(lang, "اختر مكانك", "Choose your spot")}</p>
-          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[color:var(--surface-2)] p-1">
+          <div className={`grid gap-2 rounded-2xl bg-[color:var(--surface-2)] p-1 ${zoneOptions.length >= 3 ? "grid-cols-3" : "grid-cols-2"}`}>
             {zoneOptions.map((z) => (
               <button
-                key={z}
+                key={z.key}
                 type="button"
-                onClick={() => setZone(z)}
-                data-active={zone === z}
+                onClick={() => setZone(z.key)}
+                data-active={zone === z.key}
                 className="rq-seg-btn"
-                style={zone === z ? undefined : { background: "transparent" }}
+                style={zone === z.key ? undefined : { background: "transparent" }}
               >
-                {z === "inside" ? tr(lang, "طاولة داخلية", "Indoor table") : tr(lang, "طاولة خارجية", "Outdoor table")}
+                {zoneLabel(z, lang)}
               </button>
             ))}
           </div>

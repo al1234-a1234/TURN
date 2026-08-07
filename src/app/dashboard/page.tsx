@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { loadOwner, scopeBranchIds } from "./owner-context";
+
+const LIVE_ZONE_TONES = ["var(--st-full)", "var(--brand)", "var(--st-open)", "var(--brand-d)", "var(--muted)"];
 import { ColumnChart, SplitBars, ChartCard } from "./manage/charts";
 import { toAr } from "@/lib/format";
 import { tr, pct, type Lang } from "@/lib/i18n";
@@ -80,8 +82,23 @@ export default async function OverviewPage() {
 
   // الطابور الآن — من استعلام حيّ بلا حدّ زمني (متطابق مع صفحة الاستقبال)
   const liveRows = (liveRes.data ?? []) as { zone: string }[];
-  const insideNow = liveRows.filter((r) => r.zone === "inside").length;
-  const outsideNow = liveRows.filter((r) => r.zone === "outside").length;
+  // أسماء الأقسام للفروع المعروضة — المفتاح يجمعها والاسم يُعرض
+  const { data: zoneRows } = branchIds.length
+    ? await supabase.from("branch_zones").select("key, name").in("branch_id", branchIds).order("sort_order")
+    : { data: [] as { key: string; name: string }[] };
+
+  // توزيع الطابور الحيّ لكل قسم بأسماء المالك — لا عمودين مثبّتين
+  const liveRowsNames = new Map<string, string>();
+  for (const z of zoneRows ?? []) if (!liveRowsNames.has(z.key)) liveRowsNames.set(z.key, z.name);
+  const liveRowsCounts = new Map<string, number>();
+  for (const r of liveRows) liveRowsCounts.set(r.zone ?? "", (liveRowsCounts.get(r.zone ?? "") ?? 0) + 1);
+  const liveRowsByZone = [...liveRowsCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([key, value], i) => ({
+      label: liveRowsNames.get(key) ?? tr(lang, "بلا قسم", "No area"),
+      value,
+      color: LIVE_ZONE_TONES[i % LIVE_ZONE_TONES.length],
+    }));
   const queueCount = liveRows.length;
 
   // مخدومون آخر 7 أيام
@@ -162,8 +179,7 @@ export default async function OverviewPage() {
         <ChartCard title={tr(lang, "الطابور الآن", "Queue Now")} hint={tr(lang, `متوسط المجموعة ${toAr(avgParty)}`, `Average party ${toAr(avgParty)}`)}>
           <SplitBars
             rows={[
-              { label: tr(lang, "طاولات داخلية", "Indoor tables"), value: insideNow, color: "var(--st-full)" },
-              { label: tr(lang, "طاولات خارجية", "Outdoor tables"), value: outsideNow, color: "var(--brand)" },
+              ...liveRowsByZone,
             ]}
           />
         </ChartCard>
