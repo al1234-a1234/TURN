@@ -3,7 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { BrandLink } from "@/components/brand";
 import { LogoutButton } from "@/components/logout-button";
 import { LangToggle } from "@/components/lang-toggle";
-import { OwnerNavSidebar, OwnerNavTabs, type NavItem } from "./owner-nav";
+import { OwnerNavSidebar, type NavItem } from "./owner-nav";
+import { OwnerHeader } from "./owner-header";
 import { exitAdminView } from "../admin/actions";
 import { getLang } from "@/lib/i18n-server";
 import { tr, type Lang } from "@/lib/i18n";
@@ -161,34 +162,15 @@ export async function OwnerShell({
 
       {/* ===== المحتوى ===== */}
       <div className="flex flex-1 flex-col">
-        {/* هيدر + تبويبات أفقية (جوال فقط) */}
-        <header className="app-header px-5 pb-12 pt-5 lg:hidden">
-          <div className="mx-auto flex max-w-3xl items-center justify-between">
-            <BrandLink href="/dashboard" size={38} />
-            <div className="flex items-center gap-2">
-              <LangToggle />
-              <Link href={`/r/${restaurant.slug}`} className="icon-btn" title={tr(lang, "الصفحة العامة", "Public page")}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <path d="M14 3h7v7M21 3l-9 9M10 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </Link>
-              <Link href="/account" className="icon-btn" title={tr(lang, "حسابي", "My account")}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><circle cx="8" cy="12" r="4" stroke="currentColor" strokeWidth="2" /><path d="M12 12h9M18 12v3M21 12v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-              </Link>
-              <LogoutButton />
-            </div>
-          </div>
-          <div className="mx-auto mt-6 max-w-3xl">
-            <p className="text-xs font-bold text-cream-200/85">{branchName ? branchLabel(branchName, lang) : tr(lang, "لوحة المطعم", "Restaurant dashboard")}</p>
-            <h1 className="mt-1 font-display text-3xl font-bold">{restaurant.name}</h1>
-          </div>
-        </header>
-
-        <div className="px-5 lg:hidden">
-          <div className="mx-auto -mt-8 max-w-3xl">
-            <OwnerNavTabs items={items} />
-          </div>
-        </div>
+        {/* ترويسة الجوال: كريميّة بهويّتنا، والتنقّل خلف الشعار (لا شريط
+            تبويباتٍ ينزلق أفقيًّا يُخفي نصف وجهاته). */}
+        <OwnerHeader
+          items={items}
+          counts={countsRec}
+          restaurantName={restaurant.name}
+          restaurantSlug={restaurant.slug}
+          branchLabel={branchName ? branchLabel(branchName, lang) : tr(lang, "لوحة المطعم", "Restaurant dashboard")}
+        />
 
         <main className="mx-auto w-full max-w-4xl flex-1 px-5 pb-16 pt-6 lg:pt-8">{children}</main>
       </div>

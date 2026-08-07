@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { OwnerShell } from "./owner-shell";
-import { OwnerHeader } from "./owner-chrome";
+// ترويسة بسيطة لحالتَي «لا مستخدم» و«لا مطعم» — الاسم مميَّز عن OwnerHeader
+// الرئيسية في owner-header.tsx كي لا يُستورَد أحدهما مكان الآخر سهوًا.
+import { SimpleOwnerHeader } from "./owner-chrome";
 import { loadOwner, scopeBranchIds } from "./owner-context";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
@@ -12,7 +14,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (load.state === "no_user") {
     return (
       <div className="flex flex-1 flex-col">
-        <OwnerHeader />
+        <SimpleOwnerHeader />
         <main className="mx-auto w-full max-w-3xl px-5 py-10">
           <p className="text-[color:var(--muted)]">
             {tr(lang, "يجب تسجيل الدخول.", "You must sign in.")}{" "}
@@ -26,7 +28,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (load.state === "no_restaurant") {
     return (
       <div className="flex flex-1 flex-col">
-        <OwnerHeader email={load.email ?? undefined} />
+        <SimpleOwnerHeader email={load.email ?? undefined} />
         <main className="mx-auto max-w-xl px-5 py-10">
           <div className="soft-card flex flex-col items-center gap-4 p-8 text-center">
             <span className="flex h-16 w-16 items-center justify-center rounded-2xl text-3xl" style={{ background: "var(--brand-solid)" }}>🍽️</span>
