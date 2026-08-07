@@ -318,30 +318,22 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
                 </div>
               )}
             </div>
-            {/* أقسام الفرع — ما لا يملكه المطعم لا يُعرض على عميله */}
-            <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
-              <span className="block font-bold text-[color:var(--ink)]">{tr(lang, "أقسام الجلوس", "Seating areas")}</span>
-              <span className="text-xs text-[color:var(--muted)]">
-                {tr(
-                  lang,
-                  "أطفئ ما لا يملكه فرعك — فلا يختاره العميل وينتظر طاولةً غير موجودة",
-                  "Turn off what your branch doesn't have — so customers can't pick a table that doesn't exist",
-                )}
+            {/* أقسام الجلوس صارت جدولًا يعرّفه المالك بأسمائه (branch_zones)،
+                فلا معنى لمربّعَي «داخلي/خارجي» هنا. الإدارة تشير إلى موضعها
+                الحقيقي بدل أن تحتفظ بنسخةٍ ثانيةٍ ناقصة منها. */}
+            <Link
+              href={`/dashboard/tables${settingsBranch ? `?branch=${settingsBranch.id}` : ""}`}
+              className="flex items-center justify-between rounded-2xl border p-4"
+              style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}
+            >
+              <span className="text-[color:var(--muted)]">←</span>
+              <span className="text-end">
+                <span className="block font-bold text-[color:var(--ink)]">{tr(lang, "أقسام الجلوس والطاولات", "Seating areas & tables")}</span>
+                <span className="text-xs text-[color:var(--muted)]">
+                  {tr(lang, "سمِّ أقسامك كما تسمّيها — عوائل، أفراد، تراس — وعرّف طاولات كلٍّ منها", "Name your areas as you do — families, singles, terrace — and define each one's tables")}
+                </span>
               </span>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                <label className="flex items-center justify-between rounded-xl border p-3" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
-                  <span className="font-bold text-[color:var(--ink)]">{tr(lang, "طاولات داخلية", "Indoor tables")}</span>
-                  <input type="checkbox" name="has_inside" defaultChecked={settings?.has_inside ?? true} className="h-6 w-6 accent-[var(--brand-solid)]" />
-                </label>
-                <label className="flex items-center justify-between rounded-xl border p-3" style={{ borderColor: "var(--border)", background: "var(--surface)" }}>
-                  <span className="font-bold text-[color:var(--ink)]">{tr(lang, "طاولات خارجية", "Outdoor tables")}</span>
-                  <input type="checkbox" name="has_outside" defaultChecked={settings?.has_outside ?? true} className="h-6 w-6 accent-[var(--brand-solid)]" />
-                </label>
-              </div>
-              <p className="mt-2 text-xs text-[color:var(--muted)]">
-                {tr(lang, "لا بدّ من قسم واحد على الأقل.", "At least one area must stay on.")}
-              </p>
-            </div>
+            </Link>
 
             <div className="grid gap-4 sm:grid-cols-3">
               <div>

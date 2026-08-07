@@ -126,17 +126,15 @@ export async function cancelWaitlistGuest(entryId: string, phone: string): Promi
   return ok;
 }
 
-const ZONES = ["any", "inside", "outside"];
-
 /**
  * يقصّ القسم المطلوب إلى ما يملكه الفرع فعلًا.
  *
- * الواجهة تعرض المتاح وحده، لكن الحقل يصل من نموذجٍ في متصفّح العميل — ونداءٌ
- * مباشر أو صفحة قديمة في ذاكرة الجهاز قد يرسل قسمًا أُطفئ. والنتيجة عندئذٍ
- * ليست خطأً ظاهرًا بل عميلٌ ينتظر طاولةً لا وجود لها ثم ينصرف.
+ * الأقسام صارت يعرّفها المالك (branch_zones)، فلم يعد ثمّة قائمةٌ بيضاء
+ * ثابتة. والواجهة تعرض المتاح وحده، لكن الحقل يصل من نموذجٍ في متصفّح
+ * العميل — ونداءٌ مباشر أو صفحة قديمة في ذاكرة الجهاز قد يرسل قسمًا أُطفئ.
  *
- * لا نرفض ولا نُظهر خطأً: نضعه في القسم المتاح بهدوء. رفضُ عميلٍ واقفٍ على
- * الباب لأجل حقلٍ لم يخترْه هو أسوأ الحلّين.
+ * لا نرفض ولا نُظهر خطأً: نضعه في أوّل قسمٍ رتّبه المالك بهدوء. رفضُ عميلٍ
+ * واقفٍ على الباب لأجل حقلٍ لم يخترْه هو أسوأ الحلّين.
  */
 /**
  * عدد الأشخاص — يُقصّ على سقف الفرع بهدوء ولا يُرفض به عميل.
@@ -164,21 +162,20 @@ async function resolveZone(
   supabase: Awaited<ReturnType<typeof createClient>>,
   branchId: string,
   requested: string,
-): Promise<"inside" | "outside"> {
-  const want = requested === "outside" ? "outside" : "inside";
+): Promise<string> {
+  const want = requested.trim();
   const { data } = await supabase
-    .from("branch_settings")
-    .select("has_inside, has_outside")
+    .from("branch_zones")
+    .select("key, sort_order")
     .eq("branch_id", branchId)
-    .maybeSingle();
+    .eq("is_active", true)
+    .order("sort_order");
 
-  // غياب الصفّ = فرعٌ بلا إعدادات بعد: نفترض القسمين كما هو الافتراضي في القاعدة
-  const hasInside = data?.has_inside ?? true;
-  const hasOutside = data?.has_outside ?? true;
-
-  if (want === "outside" && !hasOutside) return "inside";
-  if (want === "inside" && !hasInside) return "outside";
-  return want;
+  const zones = data ?? [];
+  if (zones.some((z) => z.key === want)) return want;
+  // قسمٌ لا يخصّ الفرع ⇒ أوّل قسمٍ رتّبه المالك. والحارس في القاعدة
+  // (trg_waitlist_zone_belongs) يفعل الشيء نفسه، فهذا حزامٌ ثانٍ لا بديل.
+  return zones[0]?.key ?? want;
 }
 
 export async function joinWaitlist(
@@ -208,7 +205,7 @@ export async function joinWaitlist(
   if (!Number.isInteger(partySize) || partySize < 1) {
     return { ok: false, error: "اختر عدد الكراسي." };
   }
-  if (!ZONES.includes(zone)) return { ok: false, error: "اختر المنطقة." };
+  if (!zone.trim()) return { ok: false, error: "اختر المنطقة." };
 
   const { data: settings } = await supabase
     .from("branch_settings")
@@ -322,7 +319,9 @@ export async function bookReservationGuest(
   const at = String(formData.get("reserved_at") ?? "").trim();
   const partyRaw = Number(formData.get("party_size") ?? 2);
   const zoneRaw = String(formData.get("zone") ?? "");
-  const zone = zoneRaw === "inside" || zoneRaw === "outside" ? zoneRaw : undefined;
+  // القاعدة تتحقّق منه بـ valid_branch_zone وترفض صراحةً إن لم يصحّ — فلا
+  // نبتلعه هنا إلى undefined («أيّ قسم») ونحجز للعميل في غير ما اختار.
+  const zone = zoneRaw.trim() || undefined;
   const notes = String(formData.get("notes") ?? "").trim() || undefined;
 
   if (!branchId) return { ok: false, error: "اختر الفرع." };

@@ -4,19 +4,19 @@ import { useEffect, useRef, useState } from "react";
 import { useActionState } from "react";
 import { addWalkIn, type WalkInState } from "./walkin-actions";
 import { tr } from "@/lib/i18n";
+import { zoneLabel, type Zone } from "@/lib/zones";
 import { useLang } from "@/components/lang-provider";
 
 export function WalkInForm({
   branchId,
   branchName,
-  hasInside = true,
-  hasOutside = true,
+  zones,
 }: {
   branchId: string;
   branchName?: string;
   /** أقسام الفرع — الموظّف لا يُجلس أحدًا في قسمٍ لا يملكه المطعم */
-  hasInside?: boolean;
-  hasOutside?: boolean;
+  /** أقسام الفرع الفعّالة بأسماء المالك */
+  zones: Zone[];
 }) {
   const lang = useLang();
   const [open, setOpen] = useState(false);
@@ -59,14 +59,15 @@ export function WalkInForm({
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             <input name="party_size" inputMode="numeric" defaultValue="2" placeholder={tr(lang, "عدد الأشخاص", "Party size")} className={field} />
-            {hasInside && hasOutside ? (
-              <select name="zone" defaultValue="inside" className={field}>
-                <option value="inside">{tr(lang, "داخلي", "Indoor")}</option>
-                <option value="outside">{tr(lang, "خارجي", "Outdoor")}</option>
+            {zones.length > 1 ? (
+              <select name="zone" defaultValue={zones[0].key} className={field}>
+                {zones.map((z) => (
+                  <option key={z.key} value={z.key}>{zoneLabel(z, lang)}</option>
+                ))}
               </select>
             ) : (
               // قسمٌ واحد: لا قائمة اختيارٍ بخيارٍ يتيم — يُرسَل صامتًا
-              <input type="hidden" name="zone" value={hasOutside ? "outside" : "inside"} />
+              <input type="hidden" name="zone" value={zones[0]?.key ?? ""} />
             )}
           </div>
           {state.error && (

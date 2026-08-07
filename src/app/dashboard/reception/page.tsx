@@ -13,6 +13,10 @@ import { toAr } from "@/lib/format";
 import { tr, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 import { riyadhDayStart, isWithinOpeningHours } from "@/lib/dates";
+import { zoneLabel } from "@/lib/zones";
+
+/** الأقسام مفتوحة العدد، فاللون يدور بدل أن يُثبَّت لاثنين. */
+const ZONE_TONES = ["var(--brand-d)", "var(--brand)", "var(--st-open)", "var(--st-full)"];
 
 function minutesSince(iso: string): number {
   return Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
@@ -97,18 +101,21 @@ export default async function ReceptionPage({
   // يُقفل الهدية في القاعدة. فالمحذوف عرضٌ لا وظيفة.
   // (دالة reception_armed_gifts باقية في القاعدة لمن يعيدها لاحقًا.)
 
-  const inside = list.filter((q) => q.zone === "inside");
-  const outside = list.filter((q) => q.zone === "outside");
-  const other = list.filter((q) => q.zone !== "inside" && q.zone !== "outside");
 
-  // أقسام هذا الفرع — الاستقبال لا يعرض عمودًا ولا عدّادًا لقسمٍ لا يملكه المطعم.
-  // لكن عمودًا فيه أدوارٌ قائمة يبقى معروضًا ولو أُطفئ القسم بعد انضمامها: من
-  // وقف في الطابور لا يختفي لأن المالك غيّر إعدادًا.
-  const { data: zoneSettings } = activeBranch
-    ? await supabase.from("branch_settings").select("has_inside, has_outside").eq("branch_id", activeBranch.id).maybeSingle()
-    : { data: null };
-  const showInside = (zoneSettings?.has_inside ?? true) || inside.length > 0;
-  const showOutside = (zoneSettings?.has_outside ?? true) || outside.length > 0;
+
+  // أقسام هذا الفرع بأسماء المالك. الاستقبال لا يعرض عمودًا لقسمٍ لا يملكه
+  // المطعم — لكن عمودًا فيه أدوارٌ قائمة يبقى معروضًا ولو أُطفئ القسم بعد
+  // انضمامها: من وقف في الطابور لا يختفي لأن المالك غيّر إعدادًا.
+  const { data: zoneRows } = activeBranch
+    ? await supabase.from("branch_zones").select("id, key, name, name_en, sort_order, is_active")
+        .eq("branch_id", activeBranch.id).order("sort_order")
+    : { data: [] };
+  const zones = (zoneRows ?? []) as { id: string; key: string; name: string; name_en: string | null; sort_order: number; is_active: boolean }[];
+  const rowsOf = (key: string) => list.filter((q) => q.zone === key);
+  const shownZones = zones.filter((z) => z.is_active || rowsOf(z.key).length > 0);
+  // أدوارٌ بمفتاحٍ لا قسمَ له (بياناتٌ قديمة) لا تختفي من شاشة المضيف
+  const other = list.filter((q) => !zones.some((z) => z.key === q.zone));
+  const activeZones = zones.filter((z) => z.is_active);
   const servedToday = todayRes?.count ?? 0;
   const status = statusRes?.data as { manually_closed: boolean; busy_now: boolean; opening_hours: { open?: string; close?: string } | null; accepts_reservations?: boolean } | null;
   const closedByHours = status ? !isWithinOpeningHours(status.opening_hours) : false;
@@ -231,8 +238,12 @@ export default async function ReceptionPage({
 
           <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Stat label={tr(lang, "في الطابور الآن", "In queue now")} value={toAr(list.length)} tone="var(--brand-d)" />
-            {showInside && <Stat label={tr(lang, "طابور داخلي", "Indoor queue")} value={toAr(inside.length)} tone="var(--brand-d)" />}
-            {showOutside && <Stat label={tr(lang, "طابور خارجي", "Outdoor queue")} value={toAr(outside.length)} tone="var(--brand)" />}
+            {/* عدّاد لكل قسم — بأسماء المالك. أكثر من قسمين يزدحمان في صفّ
+                المؤشّرات، فيكفيه إجمالي الطابور والأعمدة تحته تفصّله. */}
+            {shownZones.length <= 2 && shownZones.map((z, i) => (
+              <Stat key={z.id} label={zoneLabel({ key: z.key, name: z.name, nameEn: z.name_en }, lang)}
+                    value={toAr(rowsOf(z.key).length)} tone={ZONE_TONES[i % ZONE_TONES.length]} />
+            ))}
             {/* شرطة بدل صفرٍ كاذب: «خدمنا ٠ اليوم» رقمٌ يُبنى عليه قرار، لا فراغ */}
             <Stat label={tr(lang, "خدمناهم اليوم", "Served today")} value={todayRes?.error ? "—" : toAr(servedToday)} tone="var(--brand)" />
           </div>
@@ -299,13 +310,18 @@ export default async function ReceptionPage({
           <WalkInForm
             branchId={activeBranch.id}
             branchName={multi ? activeBranch.name : undefined}
-            hasInside={zoneSettings?.has_inside ?? true}
-            hasOutside={zoneSettings?.has_outside ?? true}
+            zones={activeZones.map((z) => ({ key: z.key, name: z.name, nameEn: z.name_en }))}
           />
 
-          <div className={showInside && showOutside ? "grid gap-6 sm:grid-cols-2" : "grid gap-6"}>
-            {showInside && <ZoneColumn title={tr(lang, "طاولات داخلية", "Indoor tables")} rows={inside} tone="var(--brand-d)" />}
-            {showOutside && <ZoneColumn title={tr(lang, "طاولات خارجية", "Outdoor tables")} rows={outside} tone="var(--brand)" />}
+          <div className={shownZones.length > 1 ? "grid gap-6 sm:grid-cols-2" : "grid gap-6"}>
+            {shownZones.map((z, i) => (
+              <ZoneColumn
+                key={z.id}
+                title={zoneLabel({ key: z.key, name: z.name, nameEn: z.name_en }, lang)}
+                rows={rowsOf(z.key)}
+                tone={ZONE_TONES[i % ZONE_TONES.length]}
+              />
+            ))}
           </div>
           {other.length > 0 && (
             <div className="mt-6"><ZoneColumn title={tr(lang, "غير محدّد", "Unspecified")} rows={other} tone="var(--muted)" /></div>
