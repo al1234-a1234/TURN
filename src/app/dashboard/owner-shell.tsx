@@ -6,7 +6,7 @@ import { LangToggle } from "@/components/lang-toggle";
 import { OwnerNavSidebar, OwnerNavTabs, type NavItem } from "./owner-nav";
 import { exitAdminView } from "../admin/actions";
 import { getLang } from "@/lib/i18n-server";
-import { tr } from "@/lib/i18n";
+import { tr, type Lang } from "@/lib/i18n";
 import {
   isModuleOn,
   staffHasPermission,
@@ -51,6 +51,16 @@ const NAV: NavDef[] = [
   { key: "reports", ar: "التقارير", en: "Reports", href: "/dashboard/reports", icon: "📈", module: "analytics", perm: "analytics" },
   { key: "manage", ar: "الإدارة والتحليلات", en: "Management & Analytics", href: "/dashboard/manage", icon: "⚙️", perm: "settings" },
 ];
+
+/**
+ * اسم الفرع في الترويسة.
+ *
+ * كان يُسبَق بـ«فرع» دائمًا، والمالك يسمّي فرعه «الفرع الرئيسي» — فيقرأ
+ * الموظّف «فرع الفرع الرئيسي». نُسبق فقط حين لا تحمل التسمية الكلمة أصلًا.
+ */
+function branchLabel(name: string, lang: Lang): string {
+  return /فرع|branch/i.test(name) ? name : tr(lang, `فرع ${name}`, `${name} branch`);
+}
 
 export async function OwnerShell({
   restaurant,
@@ -167,7 +177,7 @@ export async function OwnerShell({
             </div>
           </div>
           <div className="mx-auto mt-6 max-w-3xl">
-            <p className="text-xs font-bold tracking-[0.3em] text-cream-200/85">{branchName ? tr(lang, `فرع ${branchName}`, `${branchName} branch`) : tr(lang, "لوحة المطعم", "Restaurant dashboard")}</p>
+            <p className="text-xs font-bold text-cream-200/85">{branchName ? branchLabel(branchName, lang) : tr(lang, "لوحة المطعم", "Restaurant dashboard")}</p>
             <h1 className="mt-1 font-display text-3xl font-bold">{restaurant.name}</h1>
           </div>
         </header>
