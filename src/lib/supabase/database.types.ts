@@ -1274,17 +1274,6 @@ export type Database = {
       }
       claim_restaurant: { Args: { p_code: string }; Returns: string }
       confirm_attendance: { Args: { p_entry_id: string }; Returns: boolean }
-      create_reservation_guest: {
-        Args: {
-          p_branch_id: string
-          p_full_name: string
-          p_notes?: string
-          p_party_size: number
-          p_phone: string
-          p_reserved_at: string
-        }
-        Returns: string
-      }
       create_restaurant_with_branch: {
         Args: {
           p_address?: string
