@@ -50,8 +50,10 @@
   --surface-2: #efe7da;
   --sand: #e4dacb;
   --sage: rgba(120, 30, 12, 0.05);
-  --muted: #8b7a6b;
-  --muted-2: #a89685;
+  /* #8b7a6b كان يعطي ٣٫٩٥:١ فوق سطح البطاقة — دون حدّ WCAG AA للنصّ الصغير
+     (٤٫٥:١)، وأكثر نصوصنا الثانوية ١٢–١٣px. الآن ٤٫٦٩:١. */
+  --muted: #7f6e5f;
+  --muted-2: #9c8a78;
   --border: #e4dacb;
   --hairline: #efe7da;
   /* ════ رقم الهوية الواحد ════
@@ -80,7 +82,9 @@
   --st-closed: #9c3b26;
   --danger: #9c3b26;
   --like: #9c3b26;
-  --star: #c08a2e;
+  /* النجمة رمزٌ يحمل معنى لا زخرفة، فيلزمها ٣:١ (WCAG غير النصّي).
+     #c08a2e كان ٢٫٩١:١ فوق البطاقة — راسبًا بفارقٍ شعرة. الآن ٣٫٨٢:١. */
+  --star: #a8761f;
   /* توافق مع صفحات قديمة */
   --gold-1: #781e0c;
   --gold-2: #781e0c;
@@ -98,6 +102,45 @@ body {
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+
+  /* السحب لأسفل عند رأس القائمة كان يُشغّل «تحديث الصفحة» في المتصفّح،
+     والتمرير بعد آخر بطاقة كان يهزّ الصفحة كلّها ويُظهر شريط العنوان.
+     كلاهما يقول للمستخدم «أنت في متصفّح» في اللحظة التي نريده فيها أن
+     ينسى ذلك. `contain` يحبس التمرير داخل التطبيق ويُبقي ارتداد النظام. */
+  overscroll-behavior-y: contain;
+}
+
+html {
+  /* سفاري يُضخّم الخطوط تلقائيًّا عند تدوير الجهاز، فتقفز أحجام النصّ
+     التي ضبطناها بدقّة. التطبيقات لا تفعل هذا. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* ═══ سلوك اللمس ═══
+   ثلاثة أشياء كانت تفضح أن هذا متصفّح:
+   ١) مستطيلٌ رماديّ يومض فوق كل بطاقة عند اللمس (تمييز اللمس الافتراضي).
+   ٢) الضغط المطوّل يُظلّل اسم المطعم كنصٍّ قابل للنسخ بدل أن يُحسّ كزرّ.
+   ٣) تردّدُ ٣٠٠ms قبل تنفيذ اللمسة، لأن المتصفّح ينتظر لمسةً ثانية للتكبير.
+   `manipulation` يُلغي التكبير بلمستين ويُبقي التكبير بالإصبعين — فلا
+   نكسر إتاحة الوصول لمن يحتاج التكبير. */
+a,
+button,
+[role="button"],
+label,
+summary {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* النصوص التي يحتاج العميل نسخها فعلًا تبقى قابلة للتحديد: رمز التذكرة،
+   رقم الجوّال، العنوان. */
+[data-selectable],
+[data-selectable] * {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* ═══════════ شعار 8 / EIGHT ═══════════
@@ -213,13 +256,25 @@ h1, h2, h3, h4 {
 /* بطاقة بيضاء نيومورفية */
 .rq-card {
   background: var(--surface);
-  border: 1px solid var(--border);
+  /* البطاقة والأرضية يفصلهما ١٫١٨:١ فقط — أي أن حافّتها كانت محمولةً على
+     الظلّ وحده، وهو يختفي على الشاشات الساطعة وفي وضع تقليل الشفافية.
+     حدٌّ أوضح قليلًا يعطيها حافّةً حقيقية بلا رفع أيّ سطح. */
+  border: 1px solid #ded2be;
   border-radius: var(--radius-card);
   box-shadow: 0 18px 40px -24px rgba(58, 18, 6, 0.34);
 }
 
-@keyframes reveal { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-.reveal { opacity: 0; animation: reveal 0.5s cubic-bezier(0.2,0.7,0.2,1) forwards; }
+/* ═══ لماذا لم تعد القائمة تتدرّج في الظهور ═══
+   كانت كل بطاقة تصعد ١٤px وتذوب داخلةً على مدى نصف ثانية، بتأخيرٍ متدرّج
+   يبلغ ٣١٥ms لآخر بطاقة. هذا أشهر توقيع لصفحات الهبوط التسويقية — ولا
+   يوجد في أيّ قائمة داخل تطبيقٍ أصيل: القوائم تظهر فورًا لأن المحتوى
+   موجودٌ سلفًا، والتدرّج يوحي بأن الصفحة «تُبنى الآن» أمام المستخدم.
+   وهو أيضًا ثمنٌ حقيقي: العميل الواقف على باب المطعم ينتظر ٣١٥ms زائدة
+   قبل أن يرى المطعم الأخير.
+   الحركة باقيةٌ للمعرّف نفسه حيث تُستعمل خارج القوائم، لكن بلا إزاحة
+   ولا تأخير: ذوبانٌ سريع فقط. */
+@keyframes reveal { from { opacity: 0; } to { opacity: 1; } }
+.reveal { animation: reveal 0.18s ease-out both; }
 @keyframes turn-pulse { 0% { transform: scale(0.9); opacity: 0.5; } 70% { transform: scale(1.25); opacity: 0; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce){ *{ animation: none !important; } }
 

@@ -480,7 +480,9 @@ export function WaitlistForm({
       <div className="rq-card space-y-4 p-5">
         <div className="text-right">
           <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "سجّل بياناتك وخذ دورك", "Enter your details and take your turn")}</p>
-          <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold text-cream-100" style={{ background: "var(--brand-solid)" }}>
+          {/* طمأنةٌ لا حالة — والكبسولة المُشبَعة تجعلها تنافس عنوان البطاقة
+              فوقها. نصٌّ أخضر: الأخضر عندنا يعني «لا عائق». */}
+          <span className="mt-1 inline-flex items-center gap-1.5 text-[12.5px] font-semibold" style={{ color: "var(--st-open)" }}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
             {tr(lang, "بلا حساب ولا كلمة مرور", "No account, no password")}
           </span>
@@ -515,9 +517,16 @@ export function WaitlistForm({
 
       {/* رسالة الرفض/التعذّر — اعتذار قصير، والحل: نفس زر «خذ دورك الآن»
           يعيد إظهار نافذة السماح الأصلية (كروم/سفاري) مع كل ضغطة */}
+      {/* كان هذا الخطأ يُرسم على نفس عنابيّ الأزرار المُشبَع، فيُقرأ زرًّا
+          لا تحذيرًا — يضغطه العميل فلا يحدث شيء. الهوية تملك لون خطرٍ
+          مستقلًّا (`--danger`) ولم يكن مستعمَلًا هنا. */}
       {(geo === "denied" || geo === "failed" || geo === "unavailable") && (
-        <div ref={geoBoxRef} className="rounded-2xl p-4 text-center" style={{ background: "var(--brand-solid)" }}>
-          <p className="text-sm font-extrabold text-cream-100">
+        <div
+          ref={geoBoxRef}
+          className="rounded-2xl p-4 text-center"
+          style={{ background: "var(--surface)", border: "1px solid rgba(156,59,38,0.35)" }}
+        >
+          <p className="text-sm font-bold" style={{ color: "var(--danger)" }}>
             {geo === "denied"
               ? tr(lang, "المعذرة — يرجى السماح بالموقع لأخذ دورك", "Sorry — please allow location to take your turn")
               : geo === "failed"
@@ -525,11 +534,11 @@ export function WaitlistForm({
                 : tr(lang, "جهازك لا يدعم تحديد الموقع، فلا يمكن أخذ الدور حاليًا", "Your device doesn't support location, so a turn can't be taken right now")}
           </p>
           {geo !== "unavailable" && (
-            <p className="mt-1.5 text-xs font-bold text-cream-100/90">
+            <p className="mt-1.5 text-xs font-semibold text-[color:var(--ink)]">
               {tr(lang, "اضغط «خذ دورك الآن» وسيظهر لك طلب السماح من جديد", "Tap “Take your turn now” and the permission prompt will appear again")}
             </p>
           )}
-          <p className="mt-1.5 text-xs font-medium text-cream-100/75">
+          <p className="mt-1.5 text-xs font-medium text-[color:var(--muted)]">
             {tr(lang,
               "موقعك التقريبي فقط — يؤكّد للمطعم أنك قريب، ولا نحفظه.",
               "Approximate location only — it confirms you're nearby, and we never store it.")}
