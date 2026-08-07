@@ -18,6 +18,7 @@ import type { Database } from "@/lib/supabase/database.types";
 
 export type OwnerNavKey =
   | "overview"
+  | "insights"
   | "reception"
   | "reservations"
   | "customers"
@@ -41,6 +42,7 @@ type NavDef = {
 
 const NAV: NavDef[] = [
   { key: "overview", ar: "لوحة التحكم", en: "Dashboard", href: "/dashboard", icon: "📊" },
+  { key: "insights", ar: "رؤى وتنبيهات", en: "Insights & alerts", href: "/dashboard/insights", icon: "💡" },
   { key: "reception", ar: "الاستقبال", en: "Reception", href: "/dashboard/reception", icon: "🪑", perm: "waitlist" },
   { key: "reservations", ar: "الحجوزات", en: "Reservations", href: "/dashboard/reservations", icon: "📅", perm: "reservations", needsReservations: true },
   { key: "customers", ar: "العملاء", en: "Customers", href: "/dashboard/customers", icon: "👥", module: "crm", perm: "customers" },
