@@ -44,7 +44,11 @@ export function ReserveForm({
   const singleZone = zoneOptions.length === 1;
 
   const [party, setParty] = useState(2);
-  const [zone, setZone] = useState<"inside" | "outside" | "">("");
+  // خيار «أيّهما» أُزيل: ثلاثة أزرارٍ لسؤالٍ جوابه اثنان، وأحدها لا يعني شيئًا
+  // للعميل — هو يعرف أين يريد أن يجلس. والافتراضي أوّل قسمٍ يملكه الفرع.
+  const [zone, setZone] = useState<"inside" | "outside">(
+    () => (hasInside ? "inside" : "outside"),
+  );
   const [day, setDay] = useState(() => riyadhISODate());
   const [slots, setSlots] = useState<Slot[] | null>(null);
   const [picked, setPicked] = useState<string>("");
@@ -163,10 +167,7 @@ export function ReserveForm({
       {!singleZone && (
         <div className="rq-card p-4">
           <p className="field-label mb-2">{tr(lang, "اختر مكانك", "Choose your spot")}</p>
-          <div className="grid grid-cols-3 gap-2 rounded-2xl bg-[color:var(--surface-2)] p-1">
-            <button type="button" onClick={() => setZone("")} data-active={zone === ""} className="rq-seg-btn" style={zone === "" ? undefined : { background: "transparent" }}>
-              {tr(lang, "أيّهما", "Either")}
-            </button>
+          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[color:var(--surface-2)] p-1">
             {zoneOptions.map((z) => (
               <button key={z} type="button" onClick={() => setZone(z)} data-active={zone === z} className="rq-seg-btn" style={zone === z ? undefined : { background: "transparent" }}>
                 {z === "inside" ? tr(lang, "داخلي", "Indoor") : tr(lang, "خارجي", "Outdoor")}
