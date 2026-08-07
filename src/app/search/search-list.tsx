@@ -91,12 +91,19 @@ export function SearchList({
           <p className="mt-3 text-sm">{emptyLabel}</p>
         </div>
       ) : (
-        <div className="space-y-2.5">
+        // نفس شريط الرئيسية: المطعم كائنٌ واحد، فلا يُعرض صفًّا ملتصقًا هنا
+        // وبطاقةً عائمة هناك. (١٦ حشو + ٥٦ بلاطة + ١٢ فجوة = ٨٤)
+        <div className="rq-group" style={{ ["--rq-row-inset" as string]: "84px" }}>
           {results.map((r) => {
             const initial = (r.name || "م").trim().charAt(0);
             return (
-              <Link key={r.slug} href={`/r/${r.slug}`} onClick={() => storePeek(r.slug, { name: r.name, logo: r.logo ?? null })} className="rq-card flex items-center gap-3 p-3 transition active:scale-[0.985]">
-                <span className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-brand-800 font-serif text-xl font-bold text-cream-100">
+              <Link key={r.slug} href={`/r/${r.slug}`} onClick={() => storePeek(r.slug, { name: r.name, logo: r.logo ?? null })} className="rq-row flex items-center gap-3 px-4 py-3">
+                {/* كانت `bg-brand-800`: كل شعارٍ بشفافيّة يخرج مصبوغًا بعنابيّنا،
+                    والشعار يضعه صاحب المطعم. نفس بلاطة الرئيسية: بيضاء بحدٍّ شعرة. */}
+                <span
+                  className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-white font-serif text-xl font-bold"
+                  style={{ border: "1px solid var(--border)", color: "var(--brand-solid)" }}
+                >
                   {r.logo ? (
                     <SmartImage src={r.logo} fallbackText={r.name} alt="" width={56} height={56} sizes="56px" className="h-full w-full object-cover" />
                   ) : (

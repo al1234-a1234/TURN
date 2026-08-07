@@ -103,13 +103,15 @@ function Card({ r, lang }: { r: DiscoveryItem; lang: Lang }) {
     <Link
       href={`/r/${r.slug}`}
       onClick={() => storePeek(r.slug, { name: r.name, logo: r.logo_url, waiting: r.waiting, closed: r.closedNow })}
-      className="rq-card flex items-center gap-[13px] overflow-hidden p-[13px] transition active:scale-[0.985]"
+      className="rq-row flex items-center gap-[13px] px-4 py-[13px]"
     >
       {/* البلاطة بيضاء بحدٍّ شعرة: الشعار يضعه صاحب المطعم، فلا نصبغه بلوننا.
           و٦٤ لا ٧٢: عند ٧٢ يتجاوز ارتفاعُ البلاطة كتلةَ الأسطر الثلاثة فيبقى
-          فراغٌ ميّت أسفل النصّ، والصفّ يُقرأ غير مستوٍ. */}
+          فراغٌ ميّت أسفل النصّ، والصفّ يُقرأ غير مستوٍ.
+          والانحناء ١٢ لا ١٨: البلاطة داخل كتلةٍ انحناؤها ١٤، فلا تكون
+          أكثر استدارةً من الإطار الذي يحويها. */}
       <span
-        className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[18px] bg-white text-2xl font-bold"
+        className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[12px] bg-white text-2xl font-bold"
         style={{ border: "1px solid var(--border)", color: "var(--brand-solid)" }}
       >
         {r.logo_url ? (
@@ -159,7 +161,10 @@ function Card({ r, lang }: { r: DiscoveryItem; lang: Lang }) {
 // تحته تعيد «بلا انتظار» — تكرارٌ يملأ الشاشة بلا خبرٍ جديد.
 function SectionHeading({ label, count }: { label: string; count: number }) {
   return (
-    <div className="mb-2 mt-1 flex items-baseline gap-2 px-1">
+    // ‎-mx-1 يلغي ٤px من حشو `main` (٢٠) فيبدأ العنوان عند ١٦ — نفس الخطّ
+    // الذي تبدأ عنده بلاطة الصفّ تحته. العنوان الطائر فوق قائمةٍ ملتصقة
+    // بالحافّة يحتاج أن يشاركها خطّ بدايتها وإلا بدا معلّقًا.
+    <div className="mb-2 mt-1 -mx-1 flex items-baseline gap-2">
       <h2 className="font-display text-[14px] font-bold text-[color:var(--brand-d)]">{label}</h2>
       <span className="text-[12px] font-semibold tabular-nums text-[color:var(--muted)]">{toAr(count)}</span>
     </div>
@@ -302,7 +307,10 @@ export function DiscoveryList({ items }: { items: DiscoveryItem[] }) {
         groups.map((g) => (
           <section key={g.key}>
             <SectionHeading label={g.label} count={g.rows.length} />
-            <div className="space-y-2.5">
+            {/* كتلةٌ واحدة لكل قسم: إطارٌ واحد وظلٌّ واحد، والصفوف موصولة
+                بخطّ شعرة. الفجوة الوحيدة بين قسمٍ وقسم — وهي فجوةٌ تحمل
+                معنًى (متاح ← فيه طابور ← مغلق) لا فجوةً بين كل مطعمين. */}
+            <div className="rq-group">
               {g.rows.map((r) => (
                 <Card key={r.id} r={r} lang={lang} />
               ))}
