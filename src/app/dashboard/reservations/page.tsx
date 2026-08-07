@@ -7,12 +7,13 @@ import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
 import { toAr } from "@/lib/format";
 import { riyadhDayStart } from "@/lib/dates";
-import { createReservation } from "./actions";
+import { NewReservation } from "./new-reservation";
 import { ReservationActions } from "./reservation-actions";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Reservation = Database["public"]["Tables"]["reservations"]["Row"] & {
   customers: { full_name: string; phone: string } | { full_name: string; phone: string }[] | null;
+  tables: { label: string; seats: number } | { label: string; seats: number }[] | null;
 };
 
 const STATUS_META: Record<string, { ar: string; en: string; color: string }> = {
@@ -36,7 +37,7 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
   const activeBranch = scope.active;
 
   const { data: bs } = activeBranch
-    ? await supabase.from("branch_settings").select("accepts_reservations").eq("branch_id", activeBranch.id).maybeSingle()
+    ? await supabase.from("branch_settings").select("accepts_reservations, has_inside, has_outside").eq("branch_id", activeBranch.id).maybeSingle()
     : { data: null };
   const acceptsReservations = bs?.accepts_reservations ?? false;
 
@@ -64,7 +65,7 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
   const { data } = activeBranch
     ? await supabase
         .from("reservations")
-        .select("id, reserved_at, party_size, status, notes, customers(full_name, phone)")
+        .select("id, reserved_at, party_size, status, notes, table_id, customers(full_name, phone), tables(label, seats)")
         .eq("branch_id", activeBranch.id)
         .gte("reserved_at", new Date(Date.now() - 6 * 3600e3).toISOString()).order("reserved_at")
         .limit(200)
@@ -87,8 +88,6 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
       day: "numeric", month: "short", hour: "numeric", minute: "2-digit",
     });
 
-  const field = "field-input";
-
   return (
     <>
       <div className="mb-5 hidden lg:block">
@@ -104,27 +103,14 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
         <Kpi label={tr(lang, "إجمالي الضيوف", "Total guests")} value={toAr(guests)} tone="var(--st-full)" />
       </div>
 
-      <section className="soft-card mb-6 p-5">
-        <h2 className="mb-1 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "حجز جديد", "New reservation")}</h2>
-        <p className="mb-4 text-xs font-bold text-[color:var(--muted)]">
-          {activeBranch
-            ? tr(lang, `يُسجَّل في فرع: ${activeBranch.name}`, `Filed under branch: ${activeBranch.name}`)
-            : tr(lang, "لا يوجد فرع نشِط", "No active branch")}
-        </p>
-        <form action={createReservation} className="space-y-3">
-          {activeBranch && <input type="hidden" name="branch_id" value={activeBranch.id} />}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input name="full_name" placeholder={tr(lang, "اسم العميل", "Customer name")} className={field} />
-            <input name="phone" required dir="ltr" placeholder="05xxxxxxxx" className={field} />
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input type="datetime-local" name="reserved_at" required className={field} />
-            <input name="party_size" inputMode="numeric" defaultValue="2" placeholder={tr(lang, "عدد الأشخاص", "Party size")} className={field} />
-          </div>
-          <input name="notes" placeholder={tr(lang, "ملاحظات (اختياري)", "Notes (optional)")} className={field} />
-          <button className="btn btn-primary w-full">{tr(lang, "تأكيد الحجز", "Confirm reservation")}</button>
-        </form>
-      </section>
+      {activeBranch && (
+        <NewReservation
+          branchId={activeBranch.id}
+          branchName={scope.multi ? activeBranch.name : undefined}
+          hasInside={bs?.has_inside ?? true}
+          hasOutside={bs?.has_outside ?? true}
+        />
+      )}
 
       <section>
         <h2 className="mb-3 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "قائمة الحجوزات", "All reservations")}</h2>
@@ -138,7 +124,9 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
           <ul className="space-y-3">
             {list.map((r) => {
               const c = Array.isArray(r.customers) ? r.customers[0] : r.customers;
+              const t = Array.isArray(r.tables) ? r.tables[0] : r.tables;
               const sm = STATUS_META[r.status] ?? STATUS_META.confirmed;
+              const openEnded = !r.table_id && (r.status === "pending" || r.status === "confirmed");
               return (
                 <li key={r.id} className="soft-card flex items-center gap-3 p-4">
                   <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-2xl text-cream-100" style={{ background: "var(--brand-solid)" }}>
@@ -152,6 +140,21 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
                       🕐 {dtFmt(r.reserved_at)}
                       <span className="ms-2 font-bold" style={{ color: sm.color }}>· {tr(lang, sm.ar, sm.en)}</span>
                     </p>
+                    {/* الطاولة هي الحجز: بلا اسمها لا يعرف المضيف أين يُجلسه،
+                        ولا تعرف القاعدة أن الوقت شُغل. وحجزٌ قديمٌ بلا طاولة
+                        يُقال صراحةً بدل أن يُقرأ كأنّه محجوز. */}
+                    {t ? (
+                      <p className="mt-1 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-extrabold"
+                         style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--brand-d)" }}>
+                        {tr(lang, `طاولة ${t.label}`, `Table ${t.label}`)}
+                        <span className="font-bold opacity-70">· {toAr(t.seats)} {tr(lang, "مقاعد", "seats")}</span>
+                      </p>
+                    ) : openEnded ? (
+                      <p className="mt-1 inline-block rounded-full px-2.5 py-0.5 text-[11px] font-extrabold"
+                         style={{ background: "var(--surface-2)", border: "1px solid rgba(156,59,38,0.35)", color: "var(--danger)" }}>
+                        {tr(lang, "بلا طاولة — عيّنها يدويًّا عند الحضور", "No table — assign one on arrival")}
+                      </p>
+                    ) : null}
                     {r.notes && <p className="mt-1 text-xs text-[color:var(--ink)]">📝 {r.notes}</p>}
                   </div>
                   <ReservationActions id={r.id} status={r.status} />

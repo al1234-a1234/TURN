@@ -1234,6 +1234,22 @@ export type Database = {
           slug: string
         }[]
       }
+      book_reservation_guest: {
+        Args: {
+          p_branch_id: string
+          p_full_name: string
+          p_notes?: string
+          p_party_size?: number
+          p_phone: string
+          p_reserved_at: string
+          p_zone?: string
+        }
+        Returns: {
+          reservation_id: string
+          reserved_at: string
+          table_label: string
+        }[]
+      }
       branch_busy_hours: {
         Args: { p_branch_id: string }
         Returns: {
@@ -1392,6 +1408,16 @@ export type Database = {
         }[]
       }
       norm_phone_input: { Args: { p: string }; Returns: string }
+      pick_table_for: {
+        Args: {
+          p_at: string
+          p_branch_id: string
+          p_duration: number
+          p_party: number
+          p_zone: string
+        }
+        Returns: string
+      }
       push_subs_for_entry: {
         Args: { p_entry_id: string }
         Returns: {
@@ -1443,6 +1469,18 @@ export type Database = {
       redeem_customer_reward: {
         Args: { p_phone: string; p_reward_id: string }
         Returns: boolean
+      }
+      reservation_slots: {
+        Args: {
+          p_branch_id: string
+          p_day: string
+          p_party: number
+          p_zone?: string
+        }
+        Returns: {
+          slot_at: string
+          table_id: string
+        }[]
       }
       restaurant_of_branch: { Args: { b_id: string }; Returns: string }
       retire_dormant_customers: { Args: { p_months?: number }; Returns: number }
