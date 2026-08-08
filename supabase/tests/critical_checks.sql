@@ -201,6 +201,19 @@ with checks(name, pass) as (
   -- وما يجب أن يبقى للضيف يبقى: إلغاء دوره بنفسه (كسره = عميلٌ حبيس طابور)
   ('q24_guest_can_cancel',     has_function_privilege('anon','public.cancel_by_ticket(uuid)','EXECUTE')
                                and has_function_privilege('anon','public.cancel_waitlist_guest(uuid,text)','EXECUTE')),
+  -- (٢٥) فرعٌ جديد يولد بأقسامه: بدونها كان كل مطعمٍ جديد يُفتح له فرع
+  --      لا يستطيع عميلُه أخذ دورٍ أبدًا — الحارس يكتب NULL في عمودٍ
+  --      NOT NULL فيموت الإدخال بلا رسالة مفهومة (0082).
+  ('q25_new_branch_gets_zones', exists(select 1 from pg_trigger t join pg_class c on c.oid=t.tgrelid
+                                where c.relname='branches' and t.tgname='t_branch_default_zones')),
+  ('q25_no_branch_without_zone',not exists(
+                                 select 1 from public.branches b
+                                 where b.is_active
+                                   and not exists(select 1 from public.branch_zones z
+                                                  where z.branch_id=b.id and z.is_active))),
+  -- والحارس لا يمحو قيمةً لا بديل لها
+  ('q25_guard_keeps_value',    (select pg_get_functiondef(oid) like '%if v_fallback is null then return new; end if;%'
+                                from pg_proc where proname='enforce_zone_belongs_to_branch')),
   -- (٢٠) مرجع المخطط: أي انحراف عن البصمة المثبَّتة يظهر هنا قبل أن يفاجئنا
   --      (٢٤ جدولًا · ٧٤ دالة · ٦١ سياسة · ٣٩ مفتاحًا أجنبيًّا) — راجع
   --      supabase/tests/schema_baseline.md وحدّثه عمدًا عند أي تغيير مقصود
