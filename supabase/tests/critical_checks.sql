@@ -214,6 +214,15 @@ with checks(name, pass) as (
   -- والحارس لا يمحو قيمةً لا بديل لها
   ('q25_guard_keeps_value',    (select pg_get_functiondef(oid) like '%if v_fallback is null then return new; end if;%'
                                 from pg_proc where proname='enforce_zone_belongs_to_branch')),
+  -- (٢٦) استرجاع الضيف بالرقم: التخزين المحلّي يضيع بتثبيت التطبيق أو
+  --      بتبديل الجهاز، والحجز لم يكن يُسترجَع ولا يُلغى أصلًا (0084).
+  ('q26_guest_recovery',       has_function_privilege('anon','public.guest_status_by_phone(text)','EXECUTE')),
+  ('q26_guest_can_cancel_res', has_function_privilege('anon','public.cancel_reservation_guest(uuid,text)','EXECUTE')),
+  -- وكلتاهما محروسة بحدّ معدّل: بلا ذلك يُعدّ المهاجم الأرقام ويقرأ أسماءها
+  ('q26_recovery_rate_limited',(select pg_get_functiondef(oid) like '%check_rate%'
+                                from pg_proc where proname='guest_status_by_phone')),
+  ('q26_cancel_needs_phone',   (select pg_get_functiondef(oid) like '%norm_phone_input%'
+                                from pg_proc where proname='cancel_reservation_guest')),
   -- (٢٠) مرجع المخطط: أي انحراف عن البصمة المثبَّتة يظهر هنا قبل أن يفاجئنا
   --      (٢٤ جدولًا · ٧٤ دالة · ٦١ سياسة · ٣٩ مفتاحًا أجنبيًّا) — راجع
   --      supabase/tests/schema_baseline.md وحدّثه عمدًا عند أي تغيير مقصود

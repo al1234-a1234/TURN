@@ -1305,6 +1305,10 @@ export type Database = {
       caller_branch_id: { Args: { rest_id: string }; Returns: string }
       can_access_branch: { Args: { b_id: string }; Returns: boolean }
       cancel_by_ticket: { Args: { p_entry_id: string }; Returns: boolean }
+      cancel_reservation_guest: {
+        Args: { p_id: string; p_phone: string }
+        Returns: boolean
+      }
       cancel_waitlist_guest: {
         Args: { p_entry_id: string; p_phone: string }
         Returns: boolean
@@ -1395,6 +1399,24 @@ export type Database = {
           p_value_kind: string
         }
         Returns: number
+      }
+      guest_status_by_phone: {
+        Args: { p_phone: string }
+        Returns: {
+          at: string
+          branch: string
+          branch_id: string
+          full_name: string
+          id: string
+          kind: string
+          party_size: number
+          position: number
+          restaurant: string
+          restaurant_slug: string
+          status: string
+          table_label: string
+          zone_name: string
+        }[]
       }
       has_feature: {
         Args: { p_module: string; rest_id: string }
