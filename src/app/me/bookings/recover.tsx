@@ -52,15 +52,21 @@ export function RecoverBookings() {
     if (!error) saveMe({ phone: p });
   }, []);
 
-  // الرقم محفوظ من آخر مرّة ⇒ نبحث فورًا بلا أن يكتب شيئًا
+  // الرقم محفوظ من آخر مرّة ⇒ يظهر جاهزًا بلا كتابة
   useEffect(() => {
     const me = getMe();
-    if (me.phone) {
-      const p = normalizePhone(me.phone).slice(0, 10);
-      setPhone(p);
-      if (/^05\d{8}$/.test(p)) lookup(p);
-    }
-  }, [lookup]);
+    if (me.phone) setPhone(normalizePhone(me.phone).slice(0, 10));
+  }, []);
+
+  // ويبحث بمجرّد اكتمال الرقم — سواءٌ جاء من الذاكرة أو كتبه الآن.
+  //
+  // كان يشترط ضغط «ابحث»، فيكتب العميل رقمه ويبقى ينظر إلى «اكتب رقمك»
+  // وهو كاتبه. زرٌّ لشيءٍ بديهيّ ليس خيارًا، بل عقبة.
+  useEffect(() => {
+    if (!/^05\d{8}$/.test(phone)) { setRows(null); return; }
+    const t = setTimeout(() => lookup(phone), 350);
+    return () => clearTimeout(t);
+  }, [phone, lookup]);
 
   async function cancelReservation(id: string) {
     setCancelling(id);
@@ -96,8 +102,9 @@ export function RecoverBookings() {
             onClick={() => lookup(phone)}
             disabled={!ok || busy}
             className="btn btn-primary shrink-0 disabled:opacity-50"
+            aria-label={tr(lang, "تحديث", "Refresh")}
           >
-            {busy ? tr(lang, "…") : tr(lang, "ابحث", "Find")}
+            {busy ? tr(lang, "…") : tr(lang, "تحديث", "Refresh")}
           </button>
         </div>
       </div>
@@ -105,7 +112,9 @@ export function RecoverBookings() {
       {rows === null && !busy && (
         <p className="px-1 text-sm font-bold text-[color:var(--muted)]">
           {/* لا نقول «ما عندك شيء» ونحن لم نعرف — عميلٌ له حجز يقرؤها إلغاءً */}
-          {tr(lang, "اكتب رقمك لاسترجاع دورك أو حجزك.", "Enter your number to find your turn or booking.")}
+          {phone.length > 0
+            ? tr(lang, "أكمل رقمك (١٠ خانات) ليظهر دورك وحجزك.", "Complete your number (10 digits) to see your turn and booking.")
+            : tr(lang, "اكتب رقمك لاسترجاع دورك أو حجزك.", "Enter your number to find your turn or booking.")}
         </p>
       )}
 
