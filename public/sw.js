@@ -17,8 +17,8 @@ self.addEventListener("push", (event) => {
     body: payload.body || "",
     // ‏?v=6 كما في المانيفست: بدونها يُبقي الجهاز أيقونةً قديمة مخزّنة
     // من عهدٍ سابق للعلامة، فيصل الإشعار بشعارٍ لم يعد لنا.
-    icon: payload.icon || "/icon-192.png?v=6",
-    badge: "/icon-192.png?v=6",
+    icon: payload.icon || "/brand/v7/icon-192.png",
+    badge: "/brand/v7/icon-192.png",
     tag: payload.tag || "turn-queue",
     // نفس الـtag ⇒ يُستبدل الإشعار في مكانه بدل التكدّس.
     // الصامت: يحدّث الرقم بلا تنبيه/اهتزاز (لمن دوره بعيد).
