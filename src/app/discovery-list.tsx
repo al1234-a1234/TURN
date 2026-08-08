@@ -17,8 +17,6 @@ export type DiscoveryItem = {
   cuisine: string | null;
   cuisine_en: string | null;
   waiting: number;
-  inside: number;
-  outside: number;
   accepts: boolean;
   closedNow: boolean;
   rating: string | null;
@@ -83,12 +81,15 @@ function cardState(r: DiscoveryItem, lang: Lang): { parts: string[]; color: stri
   if (r.closedNow) return { parts: [tr(lang, "مغلق الآن", "Closed now")], color: "var(--muted)" };
   if (!r.accepts) return { parts: [tr(lang, "استقبال مباشر", "Walk in directly")], color: "var(--st-open)" };
 
-  const parts: string[] = [];
-  if (r.inside > 0) parts.push(tr(lang, `داخلي ${toAr(r.inside)}`, `Indoor ${r.inside}`));
-  if (r.outside > 0) parts.push(tr(lang, `خارجي ${toAr(r.outside)}`, `Outdoor ${r.outside}`));
-  if (parts.length) return { parts, color: "var(--brand-solid)" };
-
-  // فرعٌ بطابورٍ بلا توزيع أقسام (كل الطاولات قسمٌ واحد)
+  // إجمالي الطابور لا تفصيله بالأقسام.
+  //
+  // كان يعرض «داخلي ٣ · خارجي ٢» — سطرٌ لا يصحّ إلا لمطعمٍ قسماه اثنان
+  // بالضبط وبهذين الاسمين. والأقسام صار يسمّيها المالك ويبلغ بها ما شاء،
+  // فأربعةٌ منها تفيض عن البطاقة، ومطعمٌ أقسامه «عوائل/أفراد» كان يفقد
+  // السطر كلّه (كلا العدّادين صفر).
+  //
+  // وسؤال البطاقة «أأذهب؟» يجيب عنه الإجمالي. والتفصيل بأسماء المالك
+  // ينتظر صفحة المطعم — حيث يختار العميل قسمه فعلًا، على بعد لمسة.
   if (r.waiting > 0) {
     return { parts: [tr(lang, `${toAr(r.waiting)} بالانتظار`, `${r.waiting} waiting`)], color: "var(--brand-solid)" };
   }

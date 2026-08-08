@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import type { Database } from "@/lib/supabase/database.types";
 import { requirePerm, callerBranchIds, resolveWriteBranch } from "../guard";
 import { saudiMobile } from "@/lib/format";
+import { tr, type Lang } from "@/lib/i18n";
+import { getLang } from "@/lib/i18n-server";
 
 type ResStatus = Database["public"]["Enums"]["reservation_status"];
 const STATUSES: ResStatus[] = ["pending", "confirmed", "seated", "completed", "cancelled", "no_show"];
@@ -22,25 +24,25 @@ export type NewReservationState = {
  * «لم يُحفظ لسببٍ ما» — أو أسوأ: يظنّه حُفظ. رموز الحالة تأتي من
  * ‏book_reservation_guest، وكلٌّ منها له علاجٌ مختلف عند الموظّف.
  */
-function reasonOf(code: string | undefined, fallback: string): string {
+function reasonOf(lang: Lang, code: string | undefined, fallback: string): string {
   switch (code) {
     case "P0006":
     case "P0007":
-      return "لا توجد طاولة شاغرة في هذا الوقت — جرّب وقتًا آخر أو عددًا أقل.";
+      return tr(lang, "لا توجد طاولة شاغرة في هذا الوقت — جرّب وقتًا آخر أو عددًا أقل.", "No free table at that time — try another time or a smaller party.");
     case "P0001":
-      return "هذا الفرع لا يستقبل حجوزات — فعّلها من الإعدادات.";
+      return tr(lang, "هذا الفرع لا يستقبل حجوزات — فعّلها من الإعدادات.", "This branch isn't taking reservations — enable them in settings.");
     case "P0002":
-      return "الفرع غير متاح.";
+      return tr(lang, "الفرع غير متاح.", "This branch is unavailable.");
     case "P0004":
-      return "الموعد في الماضي.";
+      return tr(lang, "الموعد في الماضي.", "That time is in the past.");
     case "P0005":
-      return "الموعد أبعد من نافذة الحجز المسموحة — وسّعها من الإعدادات.";
+      return tr(lang, "الموعد أبعد من نافذة الحجز المسموحة — وسّعها من الإعدادات.", "That's beyond the booking window — widen it in settings.");
     case "P0429":
-      return "محاولات كثيرة على هذا الرقم — انتظر قليلًا ثم أعد المحاولة.";
+      return tr(lang, "محاولات كثيرة على هذا الرقم — انتظر قليلًا ثم أعد المحاولة.", "Too many attempts for this number — wait a moment and retry.");
     case "22023":
-      return "الاسم والرقم مطلوبان.";
+      return tr(lang, "الاسم والرقم مطلوبان.", "Name and phone are required.");
     case "P0008":
-      return "هذا القسم غير متاح في هذا الفرع.";
+      return tr(lang, "هذا القسم غير متاح في هذا الفرع.", "That area isn't available at this branch.");
     default:
       return fallback;
   }
@@ -50,18 +52,19 @@ export async function createReservation(
   _prev: NewReservationState,
   formData: FormData,
 ): Promise<NewReservationState> {
+  const lang = await getLang();
   const caller = await requirePerm("reservations");
-  if (!caller) return { ok: false, error: "لا تملك صلاحية الحجوزات." };
+  if (!caller) return { ok: false, error: tr(lang, "لا تملك صلاحية الحجوزات.", "You don't have reservations permission.") };
   // الفرع المختار من المبدّل — حجز الفرع الثاني كان يُقيَّد على الفرع الأوّل
   const branchId = await resolveWriteBranch(caller, String(formData.get("branch_id") ?? ""));
-  if (!branchId) return { ok: false, error: "لا يوجد فرع نشِط." };
+  if (!branchId) return { ok: false, error: tr(lang, "لا يوجد فرع نشِط.", "No active branch.") };
 
   const name = String(formData.get("full_name") ?? "").trim();
   // تطبيع وتحقّق الرقم — نفس قاعدة العميل، وإلا تشظّى العميل الواحد من مسار الموظّف
   const phone = saudiMobile(String(formData.get("phone") ?? ""));
   const when = String(formData.get("reserved_at") ?? "").trim();
-  if (!phone) return { ok: false, error: "الرقم يبدأ بـ 05 ويتكوّن من 10 خانات." };
-  if (!when) return { ok: false, error: "اختر موعد الحجز." };
+  if (!phone) return { ok: false, error: tr(lang, "الرقم يبدأ بـ 05 ويتكوّن من 10 خانات.", "The number starts with 05 and is 10 digits.") };
+  if (!when) return { ok: false, error: tr(lang, "اختر موعد الحجز.", "Choose a reservation time.") };
   const party = Math.max(1, Number(String(formData.get("party_size") ?? "2")) || 2);
   const notes = String(formData.get("notes") ?? "").trim() || undefined;
   const zoneRaw = String(formData.get("zone") ?? "");
@@ -87,7 +90,7 @@ export async function createReservation(
   // والطاولة تبقى محجوزة في ذهن الموظّف وحده
   if (error) {
     console.error("[createReservation]", error.code, error.message);
-    return { ok: false, error: reasonOf(error.code, "تعذّر حفظ الحجز — حاول مرة أخرى.") };
+    return { ok: false, error: reasonOf(lang, error.code, tr(lang, "تعذّر حفظ الحجز — حاول مرة أخرى.", "Couldn't save the reservation — please try again.")) };
   }
   const row = Array.isArray(data) ? data[0] : data;
   revalidatePath("/dashboard/reservations");
