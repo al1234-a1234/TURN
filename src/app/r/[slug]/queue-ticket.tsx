@@ -64,7 +64,7 @@ export function QueueTicket({
     alertedRef.current = key;
     try {
       if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-        new Notification(title, { body, icon: "/icon-192.png", tag: "turn-queue" });
+        new Notification(title, { body, icon: "/brand/v7/icon-192.png", tag: "turn-queue" });
       }
     } catch {
       /* بعض المتصفّحات (iOS Safari) لا تدعم المُنشئ مباشرة — نتجاهل بهدوء */

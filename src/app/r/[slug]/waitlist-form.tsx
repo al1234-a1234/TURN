@@ -342,8 +342,30 @@ export function WaitlistForm({
   // بعد «خذ دورًا جديدًا» نتجاوز تذكرة الجلسة السابقة ونعود للنموذج
   const [startedOver, setStartedOver] = useState(false);
   useEffect(() => {
+    // ١) المسار السريع: سجلّ اليوم في هذا الجهاز
     const rec = lastTurnFor(slug);
-    if (rec?.entryId && rec.phone) setRestored({ entryId: rec.entryId, phone: rec.phone });
+    if (rec?.entryId && rec.phone) {
+      setRestored({ entryId: rec.entryId, phone: rec.phone });
+      return;
+    }
+    // ٢) وإلا: نسأل الخادم برقمه.
+    //
+    // السجلّ المحلّي يضيع بأشياء كثيرة — إغلاق المتصفّح، تصفّحٌ خفيّ، تثبيت
+    // التطبيق (سياق تخزينٍ جديد)، أو مجرّد عبور منتصف الليل (سجلّ اليوم).
+    // وكان العميل حينها يفتح الصفحة فيجد نموذجًا فارغًا وكأنه لم يأخذ دورًا،
+    // ودورُه قائمٌ في المطعم. الرقم هويّته، فنسأل به.
+    const me = getMe();
+    const phone = me.phone ? normalizePhone(me.phone).slice(0, 10) : "";
+    if (!/^05\d{8}$/.test(phone)) return;
+    let alive = true;
+    createClient()
+      .rpc("guest_status_by_phone", { p_phone: phone })
+      .then(({ data }) => {
+        if (!alive) return;
+        const mine = (data ?? []).find((r) => r.kind === "turn" && r.restaurant_slug === slug);
+        if (mine) setRestored({ entryId: mine.id, phone });
+      });
+    return () => { alive = false; };
   }, [slug]);
 
   function askLocation(thenSubmit: boolean, attempt = 1) {
