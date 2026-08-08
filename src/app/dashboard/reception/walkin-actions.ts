@@ -3,14 +3,18 @@
 import { revalidatePath } from "next/cache";
 import { requirePerm } from "../guard";
 import { saudiMobile } from "@/lib/format";
+import { tr } from "@/lib/i18n";
+import { getLang } from "@/lib/i18n-server";
 
 export type WalkInState = { ok: boolean; error?: string };
 
 /** إضافة عميل حاضر (walk-in) للطابور من الاستقبال. */
 export async function addWalkIn(_prev: WalkInState, formData: FormData): Promise<WalkInState> {
+  // الموظّف يقرأ سبب الرفض بلغته — اللوحة تعرض مبدّل لغة، وكان يردّ عربيًّا دائمًا
+  const lang = await getLang();
   // إضافة للطابور = صلاحية «الطابور»
   const caller = await requirePerm("waitlist");
-  if (!caller) return { ok: false, error: "لا تملك صلاحية الطابور." };
+  if (!caller) return { ok: false, error: tr(lang, "لا تملك صلاحية الطابور.", "You don't have queue permission.") };
   const supabase = caller.supabase;
 
   // الفرع المختار في الاستقبال — لا بد أن يكون تابعًا لمطعم صاحب الصلاحية (منع الخلط بين الفروع/المطاعم).
@@ -21,12 +25,12 @@ export async function addWalkIn(_prev: WalkInState, formData: FormData): Promise
   const { data: branch } = submittedBranch
     ? await branchQuery.eq("id", submittedBranch).maybeSingle()
     : await branchQuery.order("created_at").limit(1).maybeSingle();
-  if (!branch) return { ok: false, error: "الفرع غير متاح." };
+  if (!branch) return { ok: false, error: tr(lang, "الفرع غير متاح.", "This branch is unavailable.") };
 
   const name = String(formData.get("full_name") ?? "").trim() || "ضيف";
   // تطبيع وتحقّق الرقم — نفس قاعدة العميل، وإلا تشظّى العميل الواحد من مسار الموظّف
   const phone = saudiMobile(String(formData.get("phone") ?? ""));
-  if (!phone) return { ok: false, error: "رقم الجوّال غير صحيح — يبدأ بـ 05 ويتكوّن من 10 خانات." };
+  if (!phone) return { ok: false, error: tr(lang, "رقم الجوّال غير صحيح — يبدأ بـ 05 ويتكوّن من 10 خانات.", "Invalid mobile number — it starts with 05 and is 10 digits.") };
   const party = Math.max(1, Number(String(formData.get("party_size") ?? "2")) || 2);
   // القسم كما اختاره المضيف — الحارس في القاعدة يتحقّق أنه يخصّ الفرع
   // ويقصّه لأوّل قسمٍ فعّال إن لم يكن. قصّه هنا لاثنين كان يضع من اختار
@@ -42,7 +46,7 @@ export async function addWalkIn(_prev: WalkInState, formData: FormData): Promise
     p_party_size: party,
     p_zone: zone,
   });
-  if (error) return { ok: false, error: "تعذّرت الإضافة — حاول مرة أخرى." };
+  if (error) return { ok: false, error: tr(lang, "تعذّرت الإضافة — حاول مرة أخرى.", "Couldn't add — please try again.") };
 
   revalidatePath("/dashboard/reception");
   return { ok: true };

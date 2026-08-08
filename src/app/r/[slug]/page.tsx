@@ -71,7 +71,7 @@ export default async function RestaurantPublicPage({
     getRestaurantReviews(restaurant.id),
     branchList.length
       ? supabase.rpc("waitlist_counts_for", { p_branch_ids: branchList.map((b) => b.id) })
-      : Promise.resolve({ data: [] as { branch_id: string; total: number; inside: number; outside: number }[] }),
+      : Promise.resolve({ data: [] as { branch_id: string; total: number }[] }),
     branchList.length
       ? supabase.rpc("waitlist_counts_by_zone", { p_branch_ids: branchList.map((b) => b.id) })
       : Promise.resolve({ data: [] as { branch_id: string; zone_key: string; waiting: number }[] }),
@@ -117,8 +117,6 @@ export default async function RestaurantPublicPage({
       name: b.name,
       city: (b as { city?: string | null }).city ?? "",
       total: Number(c?.total ?? 0),
-      inside: Number(c?.inside ?? 0),
-      outside: Number(c?.outside ?? 0),
       // أقسام يملكها الفرع فعلًا — لا نعرض للعميل ما لا وجود له
       zones: zoneRows.map((z) => ({ key: z.key, name: z.name, nameEn: z.name_en })),
       zoneCounts: zoneCountOf.get(b.id) ?? {},

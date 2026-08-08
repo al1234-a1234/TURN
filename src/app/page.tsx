@@ -31,7 +31,7 @@ export default async function Home() {
   }
   const ratingAgg = new Map(Object.entries(ratings));
   const counts = new Map(
-    (countsData ?? []).map((c) => [c.branch_id, { total: c.total, inside: c.inside, outside: c.outside }]),
+    (countsData ?? []).map((c) => [c.branch_id, { total: c.total }]),
   );
 
   const withStatus = list.map((r) => {
@@ -45,8 +45,6 @@ export default async function Home() {
       return {
         b,
         total: c?.total ?? 0,
-        inside: c?.inside ?? 0,
-        outside: c?.outside ?? 0,
         accepts: s?.accepts_waitlist ?? true,
         closed: (s?.manually_closed ?? false) || !isWithinOpeningHours(s?.opening_hours ?? null),
       };
@@ -70,8 +68,6 @@ export default async function Home() {
       cuisine: r.cuisine,
       cuisine_en: r.cuisine_en,
       waiting: best?.total ?? 0,
-      inside: best?.inside ?? 0,
-      outside: best?.outside ?? 0,
       accepts: best?.accepts ?? true,
       closedNow: open.length === 0,
       rating,

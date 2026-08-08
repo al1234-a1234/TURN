@@ -23,8 +23,6 @@ type Branch = {
   name: string;
   city: string;
   total: number;
-  inside: number;
-  outside: number;
   /** أقسام الفرع الفعّالة بأسماء المالك، مرتّبةً كما رتّبها */
   zones: Zone[];
   /** عدد المنتظرين في كل قسم — بمفتاح القسم */
@@ -273,7 +271,7 @@ export function WaitlistForm({
      من الاستقبال، كانت البطاقة تبقى تقول «متاح الآن · خذ دورك» دقيقةً كاملة،
      فيملأ العميل النموذج ثم يُردّ بخطأ «الفرع مغلق حاليًا». نُحدّث الاثنين
      معًا فور الرسم فتعود البطاقة صادقة. */
-  type Live = { total: number; inside: number; outside: number; zoneCounts?: Record<string, number>; accepts?: boolean; acceptsReservations?: boolean; closedNow?: boolean; busyNow?: boolean };
+  type Live = { total: number; zoneCounts?: Record<string, number>; accepts?: boolean; acceptsReservations?: boolean; closedNow?: boolean; busyNow?: boolean };
   const [live, setLive] = useState<Record<string, Live>>({});
   useEffect(() => {
     const ids = branches.map((b) => b.id);
@@ -292,15 +290,15 @@ export function WaitlistForm({
         if (!alive) return;
         const next: Record<string, Live> = {};
         for (const c of counts.data ?? []) {
-          next[c.branch_id] = { total: c.total, inside: c.inside, outside: c.outside, zoneCounts: {} };
+          next[c.branch_id] = { total: c.total, zoneCounts: {} };
         }
         for (const z of byZone.data ?? []) {
-          const cur = next[z.branch_id] ?? { total: 0, inside: 0, outside: 0, zoneCounts: {} };
+          const cur = next[z.branch_id] ?? { total: 0, zoneCounts: {} };
           cur.zoneCounts = { ...(cur.zoneCounts ?? {}), [z.zone_key]: Number(z.waiting) };
           next[z.branch_id] = cur;
         }
         for (const st of settings.data ?? []) {
-          const cur = next[st.branch_id] ?? { total: 0, inside: 0, outside: 0, zoneCounts: {} };
+          const cur = next[st.branch_id] ?? { total: 0, zoneCounts: {} };
           next[st.branch_id] = {
             ...cur,
             accepts: st.accepts_waitlist ?? true,

@@ -95,14 +95,17 @@ export const getDiscovery = unstable_cache(
  */
 export const getHomeQueueCounts = unstable_cache(
   async (ids: string[]) => {
-    if (!ids.length) return [] as { branch_id: string; total: number; inside: number; outside: number }[];
+    if (!ids.length) return [] as { branch_id: string; total: number }[];
     const { data, error } = await anon().rpc("waitlist_counts_for", { p_branch_ids: ids });
     // «بلا عدّاد» أهون من «صفر واقفين» مكذوبٍ محفوظ في الكاش — نرمي فلا يُخزَّن
     if (error) {
       console.error("[public-cache] getHomeQueueCounts:", error.message);
       throw new Error(`getHomeQueueCounts: rpc failed — ${error.message}`);
     }
-    return (data ?? []) as { branch_id: string; total: number; inside: number; outside: number }[];
+    // ‏inside/outside تعودان من الدالّة ولا تُقرآن: الأقسام صار يعرّفها المالك،
+    // وتفصيلها يأتي من waitlist_counts_by_zone في صفحة المطعم. البطاقة تكتفي
+    // بالإجمالي، فلا نُسلسل لكل مطعمٍ في القائمة حقلين ميّتين.
+    return (data ?? []) as { branch_id: string; total: number }[];
   },
   ["home-queue-counts"],
   { revalidate: 10, tags: ["discovery"] },
