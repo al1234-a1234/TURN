@@ -150,15 +150,17 @@ function Card({ r, lang }: { r: DiscoveryItem; lang: Lang }) {
             </span>
           )}
         </div>
-        <p className="truncate text-[13px] font-medium leading-[1.6] text-[color:var(--muted)]">
+        {/* سطران لا سطر: الفروع والمطبخ خبران مختلفان — «أين؟» و«ماذا؟» —
+            وجمعهما بنقطةٍ كان يجعل العين تقرؤهما جملةً واحدة.
+            وبلون الهوية لا الرمادي: هذا وصف المطعم لا حاشيةٌ باهتة. */}
+        <p className="truncate text-[13px] font-semibold leading-[1.5]" style={{ color: "var(--brand-d)" }}>
           {branchesLabel(r.branchCount, lang)}
-          {r.cuisine && (
-            <>
-              <Dot />
-              {tr(lang, r.cuisine, r.cuisine_en ?? r.cuisine)}
-            </>
-          )}
         </p>
+        {r.cuisine && (
+          <p className="truncate text-[13px] font-medium leading-[1.5]" style={{ color: "var(--brand-d)", opacity: 0.72 }}>
+            {tr(lang, r.cuisine, r.cuisine_en ?? r.cuisine)}
+          </p>
+        )}
         {state.parts.length > 0 && (
         <p className="mt-px flex items-baseline text-[13px] font-semibold leading-[1.55]" style={{ color: state.color }}>
           {state.parts.map((p, i) => (
