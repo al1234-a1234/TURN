@@ -117,6 +117,11 @@ export function ReserveForm({
             `${toAr(cappedParty)} أشخاص. تعال في موعدك مباشرة — الطاولة محجوزة باسمك.`,
             `${cappedParty} guests. Come at your time — the table is held in your name.`)}
         </p>
+        {/* أين يجده لاحقًا. بلا هذا كان يُغلق المتصفّح ولا يعرف أن حجزه
+            مسترجَعٌ برقمه — ولا كيف يلغيه إن تغيّرت ظروفه. */}
+        <a href="/me/bookings" className="rq-btn-soft mt-4 inline-flex">
+          {tr(lang, "حجزي — للعرض أو الإلغاء ←", "My booking — view or cancel ←")}
+        </a>
       </div>
     );
   }

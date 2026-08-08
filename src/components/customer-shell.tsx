@@ -34,6 +34,9 @@ function IcList() {
   );
 }
 const DRAWER = [
+  // «دوري وحجزي» أوّلًا: هو ما يبحث عنه العميل بإلحاحٍ حين يفتح الدرج —
+  // دورٌ ضاع بإغلاق المتصفّح، أو حجزٌ يريد إلغاءه. وبقيّة البنود تصفّح.
+  { label: "دوري وحجزي", en: "My turn & booking", href: "/me/bookings" },
   { label: "الهدايا", en: "Gifts", href: "/me/rewards" },
   { label: "المفضلة", en: "Favorites", href: "/me/favorites" },
   { label: "الزيارات", en: "Visits", href: "/me/visits" },
