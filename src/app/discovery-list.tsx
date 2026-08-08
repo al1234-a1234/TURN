@@ -88,18 +88,12 @@ function cardState(r: DiscoveryItem, lang: Lang): { parts: string[]; color: stri
   // كانت البطاقة تعرض رقم «أقصر طابور» بين فروعه، فيقرؤه العميل رقمَ
   // المطعم كلّه — ثم يدخل فيجد رقمًا آخر عند الفرع. فرعان بطابورين
   // مختلفين لا يختصرهما رقمٌ واحد بلا كذب، والصواب أن يدخل ويختار فرعه.
-  if (r.branchCount > 1) {
-    // العربية تثنّي: «فرعان» لا «٢ فروع». والذهبيّ يفصله عن عنابيّ الطابور:
-    // هذا خبرٌ عن المطعم لا حالةُ ازدحام، فلا يُقرأ تنبيهًا.
-    const ar =
-      r.branchCount === 2 ? "فرعان"
-      : r.branchCount <= 10 ? `${toAr(r.branchCount)} فروع`
-      : `${toAr(r.branchCount)} فرعًا`;
-    return {
-      parts: [tr(lang, ar, `${r.branchCount} branches`)],
-      color: "var(--st-full)",
-    };
-  }
+  // متعدّد الفروع: لا سطر حالة أصلًا.
+  //
+  // كتبتُه أوّلًا «فرعان» بالذهبيّ — وكان تكرارًا: `branchesLabel` تقولها
+  // فوقه تحت الاسم منذ البداية. وعنوان القسم («متاح الآن» / «فيه طابور»)
+  // يحمل الحالة. فسطرٌ ثالث يعيد ما قيل مرّتين حشوٌ لا خبر.
+  if (r.branchCount > 1) return { parts: [], color: "var(--muted)" };
 
   // فرعٌ واحد: التوزيع بأسماء المالك — «٣ عوائل · ٢ أفراد».
   // العميل يسأل «أين أجلس؟» لا «كم العدد؟»، والاسم يجيبه والرقم لا.
@@ -165,6 +159,7 @@ function Card({ r, lang }: { r: DiscoveryItem; lang: Lang }) {
             </>
           )}
         </p>
+        {state.parts.length > 0 && (
         <p className="mt-px flex items-baseline text-[13px] font-semibold leading-[1.55]" style={{ color: state.color }}>
           {state.parts.map((p, i) => (
             <span key={p}>
@@ -173,6 +168,7 @@ function Card({ r, lang }: { r: DiscoveryItem; lang: Lang }) {
             </span>
           ))}
         </p>
+        )}
       </div>
     </Link>
   );
