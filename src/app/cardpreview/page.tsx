@@ -16,23 +16,23 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 const DEMO: DiscoveryItem[] = [
   { id: "1", name: "Eficto", slug: "eficto", logo_url: null, cuisine: "إيطالي", cuisine_en: "Italian",
-    waiting: 0, accepts: true, closedNow: false, rating: "4.4", branchCount: 2 },
+    waiting: 0, accepts: true, closedNow: false, rating: "4.4", branchCount: 2, zones: [] },
   { id: "2", name: "طواحين الرياض", slug: "x2", logo_url: null, cuisine: "شعبي", cuisine_en: "Traditional",
-    waiting: 0, accepts: true, closedNow: false, rating: "4.7", branchCount: 4 },
+    waiting: 0, accepts: true, closedNow: false, rating: "4.7", branchCount: 4, zones: [] },
   { id: "3", name: "برجرايزر", slug: "x3", logo_url: null, cuisine: "برجر", cuisine_en: "Burgers",
-    waiting: 0, accepts: false, closedNow: false, rating: "4.2", branchCount: 1 },
+    waiting: 0, accepts: false, closedNow: false, rating: "4.2", branchCount: 1, zones: [] },
   { id: "4", name: "مقهى الرصيف", slug: "x4", logo_url: null, cuisine: "قهوة", cuisine_en: "Coffee",
-    waiting: 0, accepts: true, closedNow: false, rating: null, branchCount: 1 },
+    waiting: 0, accepts: true, closedNow: false, rating: null, branchCount: 1, zones: [] },
   { id: "5", name: "نجد الأصيل", slug: "x5", logo_url: null, cuisine: "سعودي", cuisine_en: "Saudi",
-    waiting: 10, accepts: true, closedNow: false, rating: "4.9", branchCount: 3 },
+    waiting: 10, accepts: true, closedNow: false, rating: "4.9", branchCount: 3, zones: [] },
   { id: "6", name: "سوشي بار", slug: "x6", logo_url: null, cuisine: "ياباني", cuisine_en: "Japanese",
-    waiting: 12, accepts: true, closedNow: false, rating: "4.5", branchCount: 2 },
+    waiting: 12, accepts: true, closedNow: false, rating: "4.5", branchCount: 2, zones: [] },
   { id: "7", name: "مشاوي الخليج", slug: "x7", logo_url: null, cuisine: "مشاوي", cuisine_en: "Grills",
-    waiting: 4, accepts: true, closedNow: false, rating: "4.1", branchCount: 2 },
+    waiting: 4, accepts: true, closedNow: false, rating: "4.1", branchCount: 2, zones: [] },
   { id: "8", name: "فطائر أم سعد", slug: "x8", logo_url: null, cuisine: "فطائر", cuisine_en: "Pastries",
-    waiting: 0, accepts: true, closedNow: true, rating: "4.6", branchCount: 1 },
+    waiting: 0, accepts: true, closedNow: true, rating: "4.6", branchCount: 1, zones: [] },
   { id: "9", name: "حلويات النخيل", slug: "x9", logo_url: null, cuisine: "حلويات", cuisine_en: "Desserts",
-    waiting: 0, accepts: true, closedNow: true, rating: "4.3", branchCount: 5 },
+    waiting: 0, accepts: true, closedNow: true, rating: "4.3", branchCount: 5, zones: [] },
 ];
 
 export default function CardPreviewPage() {

@@ -227,3 +227,43 @@ export const getRestaurantMeta = unstable_cache(
   ["restaurant-meta-v1"],
   { revalidate: 300, tags: ["discovery"] },
 );
+
+/**
+ * توزيع الطابور على الأقسام — للرئيسية. كاش ١٠ث كعدّاد الإجمالي.
+ *
+ * يُعرض لمطعم الفرع الواحد وحده: «٣ عوائل · ٢ أفراد» أدقّ من «٥ بالانتظار»،
+ * لأن العميل يسأل «أين أجلس؟» لا «كم العدد؟». ومتعدّد الفروع لا رقم له من
+ * الخارج أصلًا (انظر page.tsx).
+ */
+export const getHomeZoneCounts = unstable_cache(
+  async (ids: string[]) => {
+    if (!ids.length) return [] as { branch_id: string; zone_key: string; waiting: number }[];
+    const { data, error } = await anon().rpc("waitlist_counts_by_zone", { p_branch_ids: ids });
+    if (error) {
+      console.error("[public-cache] getHomeZoneCounts:", error.message);
+      throw new Error(`getHomeZoneCounts: rpc failed — ${error.message}`);
+    }
+    return (data ?? []) as { branch_id: string; zone_key: string; waiting: number }[];
+  },
+  ["home-zone-counts"],
+  { revalidate: 10, tags: ["discovery"] },
+);
+
+/** أسماء الأقسام كما سمّاها المالك — كاش ٦٠ث (تتغيّر نادرًا). */
+export const getHomeZoneNames = unstable_cache(
+  async (ids: string[]) => {
+    if (!ids.length) return [] as { branch_id: string; key: string; name: string; sort_order: number }[];
+    const { data, error } = await anon()
+      .from("branch_zones")
+      .select("branch_id, key, name, sort_order")
+      .in("branch_id", ids)
+      .eq("is_active", true);
+    if (error) {
+      console.error("[public-cache] getHomeZoneNames:", error.message);
+      throw new Error(`getHomeZoneNames: query failed — ${error.message}`);
+    }
+    return (data ?? []) as { branch_id: string; key: string; name: string; sort_order: number }[];
+  },
+  ["home-zone-names"],
+  { revalidate: 60, tags: ["discovery"] },
+);

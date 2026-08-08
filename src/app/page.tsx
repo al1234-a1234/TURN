@@ -1,4 +1,4 @@
-import { getDiscovery, getHomeQueueCounts } from "@/lib/supabase/public-cache";
+import { getDiscovery, getHomeQueueCounts, getHomeZoneCounts, getHomeZoneNames } from "@/lib/supabase/public-cache";
 import { CustomerShell } from "@/components/customer-shell";
 import { DiscoveryList } from "./discovery-list";
 import { isWithinOpeningHours } from "@/lib/dates";
@@ -29,6 +29,28 @@ export default async function Home() {
     // الفشل لم يدخل الكاش. والسجلّ يظهر في Vercel بدل اختفاء العطل بصمت.
     console.error("[home] discovery unavailable:", err instanceof Error ? err.message : err);
   }
+  // توزيع الأقسام — يُعرض لمطعم الفرع الواحد وحده (انظر أسفل). نجلبه لكل
+  // الفروع في نداءٍ واحد بدل نداءٍ لكل مطعم.
+  const allBranchIds = list.flatMap((r) => r.branches.map((b) => b.id));
+  let zoneRows: { branch_id: string; zone_key: string; waiting: number }[] = [];
+  let zoneNameRows: { branch_id: string; key: string; name: string; sort_order: number }[] = [];
+  try {
+    if (allBranchIds.length) {
+      const [zc, zn] = await Promise.all([
+        getHomeZoneCounts(allBranchIds),
+        getHomeZoneNames(allBranchIds),
+      ]);
+      zoneRows = zc;
+      zoneNameRows = zn;
+    }
+  } catch (err) {
+    // توزيعٌ غائب لا يُفرغ القائمة — البطاقة تسقط إلى الإجمالي
+    console.error("[home] zone counts unavailable:", err instanceof Error ? err.message : err);
+  }
+  const zoneNameOf = new Map(zoneNameRows.map((z) => [`${z.branch_id}:${z.key}`, z]));
+  const zoneCountOf = new Map<string, number>();
+  for (const z of zoneRows) zoneCountOf.set(`${z.branch_id}:${z.zone_key}`, Number(z.waiting));
+
   const ratingAgg = new Map(Object.entries(ratings));
   const counts = new Map(
     (countsData ?? []).map((c) => [c.branch_id, { total: c.total }]),
@@ -72,6 +94,22 @@ export default async function Home() {
       closedNow: open.length === 0,
       rating,
       branchCount: (r.branches ?? []).length,
+      // توزيع الأقسام لمطعم الفرع الواحد فقط.
+      //
+      // متعدّد الفروع لا رقم له من الخارج: البطاقة كانت تعرض رقم «أقصر
+      // طابور» فيقرؤه العميل رقمَ المطعم كلّه — ويجد داخلًا رقمًا آخر.
+      // فرعان بطابورين مختلفين لا يختصرهما رقمٌ واحد بلا كذب.
+      zones:
+        (r.branches ?? []).length === 1 && best
+          ? (zoneNameRows
+              .filter((z) => z.branch_id === best.b.id)
+              .sort((a, b2) => (a.sort_order ?? 0) - (b2.sort_order ?? 0))
+              .map((z) => ({
+                name: z.name,
+                waiting: zoneCountOf.get(`${z.branch_id}:${z.key}`) ?? 0,
+              }))
+              .filter((z) => z.waiting > 0))
+          : [],
     };
   });
 

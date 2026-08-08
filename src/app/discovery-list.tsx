@@ -21,6 +21,8 @@ export type DiscoveryItem = {
   closedNow: boolean;
   rating: string | null;
   branchCount: number;
+  /** توزيع الطابور بأسماء أقسام المالك — لمطعم الفرع الواحد فقط */
+  zones: { name: string; waiting: number }[];
 };
 
 /**
@@ -81,15 +83,25 @@ function cardState(r: DiscoveryItem, lang: Lang): { parts: string[]; color: stri
   if (r.closedNow) return { parts: [tr(lang, "مغلق الآن", "Closed now")], color: "var(--muted)" };
   if (!r.accepts) return { parts: [tr(lang, "استقبال مباشر", "Walk in directly")], color: "var(--st-open)" };
 
-  // إجمالي الطابور لا تفصيله بالأقسام.
+  // متعدّد الفروع: لا رقم من الخارج.
   //
-  // كان يعرض «داخلي ٣ · خارجي ٢» — سطرٌ لا يصحّ إلا لمطعمٍ قسماه اثنان
-  // بالضبط وبهذين الاسمين. والأقسام صار يسمّيها المالك ويبلغ بها ما شاء،
-  // فأربعةٌ منها تفيض عن البطاقة، ومطعمٌ أقسامه «عوائل/أفراد» كان يفقد
-  // السطر كلّه (كلا العدّادين صفر).
-  //
-  // وسؤال البطاقة «أأذهب؟» يجيب عنه الإجمالي. والتفصيل بأسماء المالك
-  // ينتظر صفحة المطعم — حيث يختار العميل قسمه فعلًا، على بعد لمسة.
+  // كانت البطاقة تعرض رقم «أقصر طابور» بين فروعه، فيقرؤه العميل رقمَ
+  // المطعم كلّه — ثم يدخل فيجد رقمًا آخر عند الفرع. فرعان بطابورين
+  // مختلفين لا يختصرهما رقمٌ واحد بلا كذب، والصواب أن يدخل ويختار فرعه.
+  if (r.branchCount > 1) {
+    return { parts: [tr(lang, `${toAr(r.branchCount)} فروع · اختر فرعك`, `${r.branchCount} branches · pick yours`)],
+             color: "var(--brand-d)" };
+  }
+
+  // فرعٌ واحد: التوزيع بأسماء المالك — «٣ عوائل · ٢ أفراد».
+  // العميل يسأل «أين أجلس؟» لا «كم العدد؟»، والاسم يجيبه والرقم لا.
+  if (r.zones.length) {
+    return {
+      parts: r.zones.slice(0, 3).map((z) => tr(lang, `${toAr(z.waiting)} ${z.name}`, `${z.waiting} ${z.name}`)),
+      color: "var(--brand-solid)",
+    };
+  }
+
   if (r.waiting > 0) {
     return { parts: [tr(lang, `${toAr(r.waiting)} بالانتظار`, `${r.waiting} waiting`)], color: "var(--brand-solid)" };
   }
