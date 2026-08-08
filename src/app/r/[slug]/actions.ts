@@ -5,6 +5,83 @@ import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { saudiMobile } from "@/lib/format";
 import { pushRankUpdatesAfterSelfCancel } from "@/lib/push";
+import { getLang } from "@/lib/i18n-server";
+import type { Lang } from "@/lib/i18n";
+
+/**
+ * رسائل المسار العميلي بلغتين.
+ *
+ * كانت كلّها عربيّةً مثبَّتة: العميل يبدّل اللغة إلى الإنجليزية، ويملأ
+ * النموذج، فيأتيه سببُ الرفض بالعربية — في اللحظة الوحيدة التي يحتاج فيها
+ * أن يفهم. والإجراء يقرأ كوكي اللغة كما تقرؤه الصفحة (`getLang`)، فلا
+ * حاجة لتمرير اللغة من المتصفّح ولا للوثوق بها.
+ */
+const MSG = {
+  pickBranch: ["اختر الفرع.", "Choose a branch."],
+  yourName: ["اكتب اسمك.", "Enter your name."],
+  enterName: ["أدخل الاسم.", "Enter the name."],
+  enterPhone: ["أدخل رقم الجوّال.", "Enter the mobile number."],
+  badPhone: [
+    "رقم الجوّال غير صحيح — يبدأ بـ 05 ويتكوّن من 10 خانات.",
+    "Invalid mobile number — it starts with 05 and is 10 digits.",
+  ],
+  pickParty: ["اختر عدد الكراسي.", "Choose the party size."],
+  pickZone: ["اختر المنطقة.", "Choose an area."],
+  pickStars: ["اختر عدد النجوم.", "Choose a star rating."],
+  pickSlot: ["اختر موعدًا.", "Choose a time."],
+  noWaitlist: [
+    "هذا الفرع لا يستقبل قائمة انتظار حاليًا.",
+    "This branch isn't taking the queue right now.",
+  ],
+  noReservations: [
+    "هذا الفرع لا يستقبل حجوزات حاليًا.",
+    "This branch isn't taking reservations right now.",
+  ],
+  branchGone: ["الفرع غير متاح.", "This branch is unavailable."],
+  branchClosed: ["الفرع مغلق حاليًا.", "This branch is closed right now."],
+  slotTaken: [
+    "امتلأ هذا الوقت للتوّ — اختر موعدًا آخر.",
+    "That time just filled up — pick another.",
+  ],
+  slotPast: ["الموعد فات — اختر موعدًا قادمًا.", "That time has passed — pick a later one."],
+  slotFar: [
+    "الموعد أبعد ممّا يقبله المطعم.",
+    "That's further ahead than this restaurant books.",
+  ],
+  tooMany: [
+    "محاولات كثيرة — انتظر دقائق ثم حاول مجددًا.",
+    "Too many attempts — wait a few minutes and try again.",
+  ],
+  tooManySoon: [
+    "محاولات كثيرة — انتظر قليلًا ثم حاول.",
+    "Too many attempts — wait a moment and try again.",
+  ],
+  signInFirst: [
+    "سجّل الدخول أولاً للانضمام إلى قائمة الانتظار.",
+    "Sign in first to join the queue.",
+  ],
+  noProfile: ["تعذّر إنشاء ملف العميل.", "Couldn't create your profile."],
+  joinFailed: ["تعذّر الانضمام. حاول مرة أخرى.", "Couldn't join. Please try again."],
+  queueFailed: [
+    "تعذّر الانضمام للطابور. حاول مرة أخرى.",
+    "Couldn't join the queue. Please try again.",
+  ],
+  bookFailed: ["تعذّر الحجز. حاول مرة أخرى.", "Couldn't book. Please try again."],
+  reviewFailed: ["تعذّر إرسال التقييم. حاول مرة أخرى.", "Couldn't send your review. Please try again."],
+  reviewFailedShort: ["تعذّر إرسال التقييم.", "Couldn't send your review."],
+  // كانت جملةً معطوبة: شرطٌ مكرّر مرّتين في نصٍّ واحد يقرؤه العميل
+  // («…خذ دورك أولًا — التقييم متاح ٧ أيام بعد الزيارة، والتقييم متاح ٧ أيام بعد الزيارة»)
+  reviewNoVisit: [
+    "التقييم لمن زار فعلًا — خذ دورك أولًا. وهو متاح ٧ أيام بعد الزيارة.",
+    "Reviews are for guests who visited — take your turn first. Available for 7 days after your visit.",
+  ],
+  reviewLimit: ["وصلت حدّ التقييمات اليوم — عد غدًا.", "You've hit today's review limit — come back tomorrow."],
+} as const;
+
+function msg(lang: Lang, key: keyof typeof MSG): string {
+  return MSG[key][lang === "en" ? 1 : 0];
+}
+
 
 export type WaitlistState = {
   ok: boolean;
@@ -20,6 +97,7 @@ export async function joinWaitlistGuest(
   _prev: WaitlistState,
   formData: FormData,
 ): Promise<WaitlistState> {
+  const lang = await getLang();
   const supabase = await createClient();
 
   const slug = String(formData.get("slug") ?? "");
@@ -31,9 +109,9 @@ export async function joinWaitlistGuest(
   const zoneRaw = String(formData.get("zone") ?? "");
   const partyRaw = Number(formData.get("party_size") ?? 1);
 
-  if (!branchId) return { ok: false, error: "اختر الفرع." };
-  if (!fullName) return { ok: false, error: "اكتب اسمك." };
-  if (!phone) return { ok: false, error: "رقم الجوّال غير صحيح — يبدأ بـ 05 ويتكوّن من 10 خانات." };
+  if (!branchId) return { ok: false, error: msg(lang, "pickBranch") };
+  if (!fullName) return { ok: false, error: msg(lang, "yourName") };
+  if (!phone) return { ok: false, error: msg(lang, "badPhone") };
 
   // الموقع مطلوب في الواجهة (نافذة السماح إلزامية)، لكن الخادم لا يرفض
   // غيابه: جهازٌ سمح بالإذن وعجز عن التحديد (شبكة/GPS) يدخل بلا مسافة —
@@ -56,12 +134,12 @@ export async function joinWaitlistGuest(
 
   if (error) {
     if (error.code === "P0001") {
-      return { ok: false, error: "هذا الفرع لا يستقبل قائمة انتظار حاليًا." };
+      return { ok: false, error: msg(lang, "noWaitlist") };
     }
-    if (error.code === "P0002") return { ok: false, error: "الفرع غير متاح." };
-    if (error.code === "P0003") return { ok: false, error: "الفرع مغلق حاليًا." };
-    if (error.code === "P0429") return { ok: false, error: "محاولات كثيرة — انتظر دقائق ثم حاول مجددًا." };
-    return { ok: false, error: "تعذّر الانضمام. حاول مرة أخرى." };
+    if (error.code === "P0002") return { ok: false, error: msg(lang, "branchGone") };
+    if (error.code === "P0003") return { ok: false, error: msg(lang, "branchClosed") };
+    if (error.code === "P0429") return { ok: false, error: msg(lang, "tooMany") };
+    return { ok: false, error: msg(lang, "joinFailed") };
   }
 
   const row = Array.isArray(data) ? data[0] : data;
@@ -183,13 +261,14 @@ export async function joinWaitlist(
   _prev: WaitlistState,
   formData: FormData,
 ): Promise<WaitlistState> {
+  const lang = await getLang();
   const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return { ok: false, error: "سجّل الدخول أولاً للانضمام إلى قائمة الانتظار." };
+    return { ok: false, error: msg(lang, "signInFirst") };
   }
 
   const slug = String(formData.get("slug") ?? "");
@@ -200,13 +279,13 @@ export async function joinWaitlist(
   const zone = String(formData.get("zone") ?? "any");
   const notes = String(formData.get("notes") ?? "").trim() || null;
 
-  if (!branchId) return { ok: false, error: "اختر الفرع." };
-  if (!fullName) return { ok: false, error: "أدخل الاسم." };
-  if (!phone) return { ok: false, error: "أدخل رقم الجوّال." };
+  if (!branchId) return { ok: false, error: msg(lang, "pickBranch") };
+  if (!fullName) return { ok: false, error: msg(lang, "enterName") };
+  if (!phone) return { ok: false, error: msg(lang, "enterPhone") };
   if (!Number.isInteger(partySize) || partySize < 1) {
-    return { ok: false, error: "اختر عدد الكراسي." };
+    return { ok: false, error: msg(lang, "pickParty") };
   }
-  if (!zone.trim()) return { ok: false, error: "اختر المنطقة." };
+  if (!zone.trim()) return { ok: false, error: msg(lang, "pickZone") };
 
   const { data: settings } = await supabase
     .from("branch_settings")
@@ -215,7 +294,7 @@ export async function joinWaitlist(
     .maybeSingle();
 
   if (settings && settings.accepts_waitlist === false) {
-    return { ok: false, error: "هذا الفرع لا يستقبل قائمة انتظار حاليًا." };
+    return { ok: false, error: msg(lang, "noWaitlist") };
   }
   const maxParty = settings?.max_party_size ?? 20;
   if (partySize > maxParty) {
@@ -236,7 +315,7 @@ export async function joinWaitlist(
       .insert({ user_id: user.id, full_name: fullName, phone })
       .select("id")
       .single();
-    if (cErr || !created) return { ok: false, error: "تعذّر إنشاء ملف العميل." };
+    if (cErr || !created) return { ok: false, error: msg(lang, "noProfile") };
     customerId = created.id;
   } else {
     await supabase
@@ -253,7 +332,7 @@ export async function joinWaitlist(
     .single();
 
   if (wErr || !entry) {
-    return { ok: false, error: "تعذّر الانضمام للطابور. حاول مرة أخرى." };
+    return { ok: false, error: msg(lang, "queueFailed") };
   }
 
   if (slug) revalidatePath(`/r/${slug}`);
@@ -267,13 +346,14 @@ export async function submitReview(
   _prev: ReviewState,
   formData: FormData,
 ): Promise<ReviewState> {
+  const lang = await getLang();
   const slug = String(formData.get("slug") ?? "");
   const phone = saudiMobile(String(formData.get("phone") ?? ""));
   const rating = Number(formData.get("rating"));
   const comment = String(formData.get("comment") ?? "").trim();
 
-  if (!phone) return { ok: false, error: "رقم الجوّال غير صحيح — يبدأ بـ 05 ويتكوّن من 10 خانات." };
-  if (!Number.isInteger(rating) || rating < 1 || rating > 5) return { ok: false, error: "اختر عدد النجوم." };
+  if (!phone) return { ok: false, error: msg(lang, "badPhone") };
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) return { ok: false, error: msg(lang, "pickStars") };
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("submit_review", {
@@ -282,13 +362,13 @@ export async function submitReview(
     p_rating: rating,
     p_comment: comment || undefined,
   });
-  if (error) return { ok: false, error: "تعذّر إرسال التقييم. حاول مرة أخرى." };
+  if (error) return { ok: false, error: msg(lang, "reviewFailed") };
 
   const r = (data ?? {}) as { ok?: boolean; error?: string };
   if (!r.ok) {
-    if (r.error === "no_visit") return { ok: false, error: "التقييم لمن زار فعلًا — خذ دورك أولًا — التقييم متاح ٧ أيام بعد الزيارة، والتقييم متاح ٧ أيام بعد الزيارة." };
-    if (r.error === "rate_limited") return { ok: false, error: "وصلت حدّ التقييمات اليوم — عد غدًا." };
-    return { ok: false, error: "تعذّر إرسال التقييم." };
+    if (r.error === "no_visit") return { ok: false, error: msg(lang, "reviewNoVisit") };
+    if (r.error === "rate_limited") return { ok: false, error: msg(lang, "reviewLimit") };
+    return { ok: false, error: msg(lang, "reviewFailedShort") };
   }
   if (slug) revalidatePath(`/r/${slug}`);
   return { ok: true };
@@ -313,6 +393,7 @@ export async function bookReservationGuest(
   _prev: ReserveState,
   formData: FormData,
 ): Promise<ReserveState> {
+  const lang = await getLang();
   const slug = String(formData.get("slug") ?? "");
   const branchId = String(formData.get("branch_id") ?? "");
   const fullName = String(formData.get("full_name") ?? "").trim();
@@ -325,12 +406,12 @@ export async function bookReservationGuest(
   const zone = zoneRaw.trim() || undefined;
   const notes = String(formData.get("notes") ?? "").trim() || undefined;
 
-  if (!branchId) return { ok: false, error: "اختر الفرع." };
-  if (!fullName) return { ok: false, error: "اكتب اسمك." };
-  if (!phone) return { ok: false, error: "رقم الجوّال غير صحيح — يبدأ بـ 05 ويتكوّن من 10 خانات." };
+  if (!branchId) return { ok: false, error: msg(lang, "pickBranch") };
+  if (!fullName) return { ok: false, error: msg(lang, "yourName") };
+  if (!phone) return { ok: false, error: msg(lang, "badPhone") };
   // الموعد يصل ISO كاملًا من قائمة المواعيد المتاحة، فلا نعيد تفسير منطقةٍ زمنية
   const when = new Date(at);
-  if (!at || Number.isNaN(when.getTime())) return { ok: false, error: "اختر موعدًا." };
+  if (!at || Number.isNaN(when.getTime())) return { ok: false, error: msg(lang, "pickSlot") };
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("book_reservation_guest", {
@@ -346,15 +427,15 @@ export async function bookReservationGuest(
   if (error) {
     // «امتلأ للتوّ» ليس خطأً في العميل: بين عرض المواعيد وضغطه حجز غيرُه
     if (error.code === "P0006" || error.code === "P0007") {
-      return { ok: false, error: "امتلأ هذا الوقت للتوّ — اختر موعدًا آخر." };
+      return { ok: false, error: msg(lang, "slotTaken") };
     }
-    if (error.code === "P0001") return { ok: false, error: "هذا الفرع لا يستقبل حجوزات حاليًا." };
-    if (error.code === "P0002") return { ok: false, error: "الفرع غير متاح." };
-    if (error.code === "P0004") return { ok: false, error: "الموعد فات — اختر موعدًا قادمًا." };
-    if (error.code === "P0005") return { ok: false, error: "الموعد أبعد ممّا يقبله المطعم." };
-    if (error.code === "P0429") return { ok: false, error: "محاولات كثيرة — انتظر قليلًا ثم حاول." };
+    if (error.code === "P0001") return { ok: false, error: msg(lang, "noReservations") };
+    if (error.code === "P0002") return { ok: false, error: msg(lang, "branchGone") };
+    if (error.code === "P0004") return { ok: false, error: msg(lang, "slotPast") };
+    if (error.code === "P0005") return { ok: false, error: msg(lang, "slotFar") };
+    if (error.code === "P0429") return { ok: false, error: msg(lang, "tooManySoon") };
     console.error("[bookReservationGuest]", error.code, error.message);
-    return { ok: false, error: "تعذّر الحجز. حاول مرة أخرى." };
+    return { ok: false, error: msg(lang, "bookFailed") };
   }
 
   const row = (Array.isArray(data) ? data[0] : data) as
