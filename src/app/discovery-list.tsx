@@ -89,8 +89,16 @@ function cardState(r: DiscoveryItem, lang: Lang): { parts: string[]; color: stri
   // المطعم كلّه — ثم يدخل فيجد رقمًا آخر عند الفرع. فرعان بطابورين
   // مختلفين لا يختصرهما رقمٌ واحد بلا كذب، والصواب أن يدخل ويختار فرعه.
   if (r.branchCount > 1) {
-    return { parts: [tr(lang, `${toAr(r.branchCount)} فروع · اختر فرعك`, `${r.branchCount} branches · pick yours`)],
-             color: "var(--brand-d)" };
+    // العربية تثنّي: «فرعان» لا «٢ فروع». والذهبيّ يفصله عن عنابيّ الطابور:
+    // هذا خبرٌ عن المطعم لا حالةُ ازدحام، فلا يُقرأ تنبيهًا.
+    const ar =
+      r.branchCount === 2 ? "فرعان"
+      : r.branchCount <= 10 ? `${toAr(r.branchCount)} فروع`
+      : `${toAr(r.branchCount)} فرعًا`;
+    return {
+      parts: [tr(lang, ar, `${r.branchCount} branches`)],
+      color: "var(--st-full)",
+    };
   }
 
   // فرعٌ واحد: التوزيع بأسماء المالك — «٣ عوائل · ٢ أفراد».

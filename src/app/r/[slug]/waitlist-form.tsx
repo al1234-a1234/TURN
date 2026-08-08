@@ -60,6 +60,20 @@ function ZoneStat({ label, count }: { label: string; count: number }) {
   );
 }
 
+/**
+ * سطر توزيع الأقسام على بطاقة الفرع — «٣ داخلي · ٢ خارجي» بأسماء المالك.
+ *
+ * يُعرض ما فيه منتظرون فقط، وثلاثةٌ كحدٍّ أعلى كي لا يفيض السطر عن البطاقة.
+ */
+function zoneLine(b: Branch, lang: "ar" | "en"): string {
+  const parts = (b.zones ?? [])
+    .map((z) => ({ name: zoneLabel(z, lang), n: b.zoneCounts?.[z.key] ?? 0 }))
+    .filter((z) => z.n > 0)
+    .slice(0, 3)
+    .map((z) => `${toAr(z.n)} ${z.name}`);
+  return parts.join(" · ");
+}
+
 /** بطاقة فرع كصورة كبيرة داخل شريط أفقي منزلق (نمط ريكيو) — بهويتنا. */
 function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; onSelect: () => void }) {
   const lang = useLang();
@@ -113,9 +127,19 @@ function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; o
         ) : b.total > 0 ? (
           <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
                 style={{ background: "var(--brand-solid)", boxShadow: "0 12px 24px -16px rgba(102,28,10,0.72)" }}>
-            <span className="flex items-center gap-2 text-sm font-extrabold text-cream-100">
-              <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
-              {tr(lang, `${toAr(b.total)} بالطابور الآن`, `${toAr(b.total)} in queue now`)}
+            <span className="flex flex-col gap-0.5">
+              <span className="flex items-center gap-2 text-sm font-extrabold text-cream-100">
+                <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
+                {tr(lang, `${toAr(b.total)} بالطابور الآن`, `${toAr(b.total)} in queue now`)}
+              </span>
+              {/* التوزيع بأسماء المالك تحت الإجمالي: العميل يختار فرعه على
+                  أساس «أين أجلس؟» لا العدد وحده — فقد يكون الخارجيّ فاضيًا
+                  والداخليّ ممتلئًا، وهو فرقٌ يقرّر به. */}
+              {zoneLine(b, lang) && (
+                <span className="ps-4.5 text-[11px] font-bold text-cream-100/85">
+                  {zoneLine(b, lang)}
+                </span>
+              )}
             </span>
             <span className="text-xs font-extrabold text-cream-100/85">{tr(lang, "خذ دورك ←", "Take turn ←")}</span>
           </span>
