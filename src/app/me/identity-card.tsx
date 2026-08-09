@@ -78,7 +78,19 @@ export function IdentityCard() {
     else setCancelErr(true);
   }
 
-  if (!me) return null;
+  // الصفحة مُولَّدة مسبقًا، والاسم والرقم يُقرآن من الجهاز بعد الترطيب. فلو
+  // رجعنا null لرأى صاحب الحساب صفحةً خاوية ثم تمتلئ — ووميضُ «ما عندي شيء»
+  // في التبويب الذي فتحه ليطمئنّ على دوره أسوأ من انتظارٍ ساكن.
+  if (!me) {
+    return (
+      <div className="mb-5">
+        <div className="rq-card p-5" aria-hidden>
+          <div className="h-6 w-40 rounded-lg" style={{ background: "var(--surface-2)" }} />
+          <div className="mt-2 h-4 w-28 rounded-lg" style={{ background: "var(--surface-2)" }} />
+        </div>
+      </div>
+    );
+  }
 
   const known = Boolean(me.name || me.phone);
 
