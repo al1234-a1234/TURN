@@ -12,7 +12,9 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
-    ignores: [".next/**", "out/**", "build/**", "next-env.d.ts"],
+    // سكربتات k6 تعمل خارج المشروع بمفسّرها الخاص، وتصديرُها الافتراضي
+    // المجهول هو عقدها لا خطأً فيها — فتُستثنى بدل أن تُكتم بتعليقٍ في كلٍّ.
+    ignores: [".next/**", "out/**", "build/**", "next-env.d.ts", "scripts/*.k6.js"],
   },
 ];
 

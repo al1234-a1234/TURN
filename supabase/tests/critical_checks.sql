@@ -10,6 +10,19 @@ with checks(name, pass) as (
   -- المولّد الوهمي أُسقط كليًّا (0091) — والغياب أقوى من المنع: دالّةٌ
   -- محذوفة لا تُمنح سهوًا في ترحيلٍ لاحق ولا تُنادى من لوحة المزوّد.
   ('demo_generator_dropped',   to_regprocedure('public.demo_live_activity()') is null),
+  -- ── رمز التملّك: العمود الذي يهب المطعم لمن يقرؤه (0092) ──
+  -- ‏RLS يحكم الصفوف لا الأعمدة، فالحارس صلاحيّةُ عمودٍ لا سياسة. وهذه
+  -- الفحوص الأربعة هي سلك الإنذار: أيّ `grant select on restaurants`
+  -- مستقبليّ — بلا قائمة أعمدة — يُعيد فتح الباب صامتًا، وهنا يُكشف.
+  ('claim_code_hidden_anon',   not has_column_privilege('anon','public.restaurants','claim_code','SELECT')),
+  ('claim_code_hidden_authed', not has_column_privilege('authenticated','public.restaurants','claim_code','SELECT')),
+  ('owner_phone_hidden_anon',  not has_column_privilege('anon','public.restaurants','owner_phone','SELECT')),
+  ('owner_user_hidden_anon',   not has_column_privilege('anon','public.restaurants','owner_username','SELECT')),
+  -- وفي المقابل: الموقع العام يجب أن يبقى قادرًا على القراءة، وإلّا
+  -- انقلب التحصين تعطيلًا.
+  ('public_cols_readable',     has_column_privilege('anon','public.restaurants','slug','SELECT')
+                               and has_column_privilege('anon','public.restaurants','name','SELECT')),
+  ('admin_list_locked',        not has_function_privilege('anon','public.admin_restaurants_list()','EXECUTE')),
   ('anon_blocked_rollup',      not has_function_privilege('anon','public.rollup_all_daily_stats(date)','EXECUTE')),
   ('anon_blocked_digest',      not has_function_privilege('anon','public.run_daily_digest()','EXECUTE')),
   ('anon_blocked_del_push',    not has_function_privilege('anon','public.delete_push_subscription(text)','EXECUTE')),

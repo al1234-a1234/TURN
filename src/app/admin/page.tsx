@@ -18,10 +18,9 @@ export default async function AdminPage() {
   const { data: isAdmin } = await supabase.rpc("is_platform_admin");
   if (!isAdmin) redirect("/dashboard");
 
-  const { data: restaurants } = await supabase
-    .from("restaurants")
-    .select("id, name, slug, owner_username, owner_phone, is_active, created_at")
-    .order("created_at", { ascending: false });
+  // اسم دخول المالك وهاتفه لم يعودا مقروءَين من الجدول مباشرةً: كانا
+  // مفتوحَين لكلّ مسجَّل، وسُحبا في 0092. والدالّة تفتحهما لمدير المنصّة وحده.
+  const { data: restaurants } = await supabase.rpc("admin_restaurants_list");
 
   const list = restaurants ?? [];
 
