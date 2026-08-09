@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { publicRead } from "@/lib/supabase/public-cache";
+import { guestWriter } from "@/lib/supabase/guest-writes";
 import { saudiMobile } from "@/lib/format";
 
 /**
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
   const phone = saudiMobile(typeof body.phone === "string" ? body.phone : "");
   if (!id || !phone) return NextResponse.json({ error: "bad_request" }, { status: 400 });
 
-  const { data, error } = await publicRead().rpc("cancel_reservation_guest", { p_id: id, p_phone: phone });
+  const { data, error } = await (await guestWriter()).rpc("cancel_reservation_guest", { p_id: id, p_phone: phone });
   if (error) {
     console.error("[api/cancel-booking]", error.message);
     return NextResponse.json({ error: "cancel_failed" }, { status: 502 });

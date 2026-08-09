@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { guestWriter } from "@/lib/supabase/guest-writes";
 import { saudiMobile } from "@/lib/format";
 import { pushRankUpdatesAfterSelfCancel } from "@/lib/push";
 import { getLang } from "@/lib/i18n-server";
@@ -132,7 +133,10 @@ export async function joinWaitlistGuest(
   const zone = await resolveZone(supabase, branchId, zoneRaw);
   const partySize = await resolvePartySize(supabase, branchId, partyRaw);
 
-  const { data, error } = await supabase.rpc("join_waitlist_guest", {
+  // الكتابة بقلم الخادم لا بمفتاح المتصفّح: كلّ ما فوق — حدّ العنوان،
+  // تطبيع الرقم، قصّ القسم، سقف الحجم — كان يُتخطّى بنداءٍ مباشر يتجاوزنا.
+  const writer = await guestWriter();
+  const { data, error } = await writer.rpc("join_waitlist_guest", {
     p_branch_id: branchId,
     p_full_name: fullName,
     p_phone: phone,
@@ -154,7 +158,7 @@ export async function joinWaitlistGuest(
 
   // المسافة عن الفرع: تُحسب على الخادم من الإحداثيات، ولا تُخزَّن الإحداثيات
   if (row?.entry_id && hasCoords) {
-    await supabase.rpc("set_entry_distance", { p_entry_id: row.entry_id, p_lat: lat, p_lng: lng });
+    await writer.rpc("set_entry_distance", { p_entry_id: row.entry_id, p_lat: lat, p_lng: lng });
   }
 
   // الترتيب الحيّ نفسه الذي سيراه الاستطلاع والاستقبال — لا الرقم المخزَّن،
@@ -188,7 +192,7 @@ export async function savePushSubscription(
   sub: { endpoint: string; p256dh: string; auth: string },
 ): Promise<boolean> {
   if (!entryId || !phone || !sub?.endpoint) return false;
-  const supabase = await createClient();
+  const supabase = await guestWriter();
   const { data, error } = await supabase.rpc("save_push_subscription", {
     p_entry_id: entryId,
     p_phone: phone,
@@ -200,7 +204,7 @@ export async function savePushSubscription(
 }
 
 export async function cancelWaitlistGuest(entryId: string, phone: string): Promise<boolean> {
-  const supabase = await createClient();
+  const supabase = await guestWriter();
   const { data, error } = await supabase.rpc("cancel_waitlist_guest", {
     p_entry_id: entryId,
     p_phone: phone,
@@ -363,7 +367,7 @@ export async function submitReview(
   if (!phone) return { ok: false, error: msg(lang, "badPhone") };
   if (!Number.isInteger(rating) || rating < 1 || rating > 5) return { ok: false, error: msg(lang, "pickStars") };
 
-  const supabase = await createClient();
+  const supabase = await guestWriter();
   const { data, error } = await supabase.rpc("submit_review", {
     p_slug: slug,
     p_phone: phone,
@@ -426,7 +430,7 @@ export async function bookReservationGuest(
     return { ok: false, error: msg(lang, "tooManySoon") };
   }
 
-  const supabase = await createClient();
+  const supabase = await guestWriter();
   const { data, error } = await supabase.rpc("book_reservation_guest", {
     p_branch_id: branchId,
     p_full_name: fullName,

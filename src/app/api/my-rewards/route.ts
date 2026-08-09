@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { publicRead } from "@/lib/supabase/public-cache";
+import { guestWriter } from "@/lib/supabase/guest-writes";
 import { saudiMobile } from "@/lib/format";
 
 /**
@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   const phone = saudiMobile(new URL(req.url).searchParams.get("phone") ?? "");
   if (!phone) return NextResponse.json({ rows: [] }, { status: 400 });
 
-  const { data, error } = await publicRead().rpc("rewards_by_phone", { p_phone: phone });
+  const { data, error } = await (await guestWriter()).rpc("rewards_by_phone", { p_phone: phone });
   if (error) {
     console.error("[api/my-rewards]", error.message);
     return NextResponse.json({ error: "lookup_failed" }, { status: 502 });
