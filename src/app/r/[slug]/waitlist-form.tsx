@@ -493,11 +493,19 @@ export function WaitlistForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.ok, state.entryId]);
 
+  // الفرع مغلقٌ الآن؟ — للفرع المختار، وإلّا فحين تُغلق كل الفروع (تذكرةٌ
+  // مسترجَعة قد تصل بلا فرعٍ مختار). التذكرة تحتاجها كي لا تَعِد بتنبيهٍ
+  // لن يأتي: القاعدة تُنهي الطابور بعد الإغلاق، لكنها تمرّ كل ربع ساعة.
+  const ticketBranchClosed = branch
+    ? branch.closedNow
+    : branchesLive.length > 0 && branchesLive.every((b) => b.closedNow);
+
   if (state.ok && !startedOver) {
     return (
       <QueueTicket
         position={state.position ?? 0} total={state.total ?? 0}
         entryId={state.entryId} phone={state.phone} restaurantName={restaurantName}
+        branchClosed={ticketBranchClosed}
         onGone={() => { clearTurnRecovery(slug); setStartedOver(true); setRestored(null); }}
       />
     );
@@ -509,7 +517,7 @@ export function WaitlistForm({
     return (
       <QueueTicket
         position={0} total={0} entryId={restored.entryId} phone={restored.phone}
-        restaurantName={restaurantName} restored
+        restaurantName={restaurantName} restored branchClosed={ticketBranchClosed}
         onGone={() => { clearTurnRecovery(slug); setRestored(null); }}
       />
     );
