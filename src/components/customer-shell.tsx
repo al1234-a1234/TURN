@@ -25,14 +25,6 @@ function IcRestaurants() {
     </svg>
   );
 }
-function IcList() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M8 7h11M8 12h11M8 17h11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="4" cy="7" r="1.2" fill="currentColor" /><circle cx="4" cy="12" r="1.2" fill="currentColor" /><circle cx="4" cy="17" r="1.2" fill="currentColor" />
-    </svg>
-  );
-}
 const DRAWER = [
   // «دوري وحجزي» أوّلًا: هو ما يبحث عنه العميل بإلحاحٍ حين يفتح الدرج —
   // دورٌ ضاع بإغلاق المتصفّح، أو حجزٌ يريد إلغاءه. وبقيّة البنود تصفّح.
@@ -63,15 +55,20 @@ export function CustomerShell({
     <div className="flex min-h-full flex-1 flex-col">
       {/* الهيدر — يمين: الشعار (يفتح القائمة) · وسط: EIGHT · يسار: بحث */}
       <SharedHeader>
+        {/* الشعار والبحث في قالبٍ واحد: كان الشعار بطاقةً لامعة والبحث
+            دائرةً هادئة، فيبدوان عنصرين من نظامين. والترويسة تُقرأ دفعةً
+            واحدة، فتفاوتُ حوافّها يُرى قبل أن يُفهم أيّهما زرّ. */}
         <button
           onClick={() => setOpen(true)}
           aria-label={tr(lang, "القائمة", "Menu")}
-          className="flex items-center justify-center transition active:scale-95"
+          className="rq-circle overflow-hidden p-0 transition active:scale-95"
         >
           <Logo size={44} />
         </button>
 
-        <Wordmark className="select-none" />
+        {/* أصغر على الجوّال: بحجمها الكامل كانت تزاحم الزرّين على جانبيها
+            في شاشةٍ ضيّقة، فتبدو الترويسة مكتظّةً بلا داعٍ. */}
+        <Wordmark className="select-none scale-[0.82] sm:scale-100" />
 
         {search ? (
           <Link href="/search" className="rq-circle" aria-label={tr(lang, "بحث", "Search")}>
@@ -98,8 +95,10 @@ export function CustomerShell({
         style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
       >
         <div className="rq-nav">
+          {/* «حسابي» خرج من هنا: هو خلف الشعار في الأعلى، وتكراره في
+              الأسفل يجعل الشاشة تعرض بابًا واحدًا مرّتين. وبقي «المطاعم»
+              وحده — زرّ عودةٍ إلى البيت، وهو كل ما يحتاجه شريطٌ سفليّ. */}
           {[
-            { key: "other", href: "/me", icon: <IcList />, label: tr(lang, "حسابي", "My account") },
             { key: "restaurants", href: "/", icon: <IcRestaurants />, label: tr(lang, "المطاعم", "Restaurants") },
           ].map((item) => {
             const isActive = active === item.key;

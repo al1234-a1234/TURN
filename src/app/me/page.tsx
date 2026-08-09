@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CustomerShell } from "@/components/customer-shell";
 import { LangToggle } from "@/components/lang-toggle";
 import { RewardsBadge } from "./rewards-badge";
+import { IdentityCard } from "./identity-card";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 
@@ -35,6 +36,8 @@ function IcHeart() {
 
 // ثلاثة بنود فقط بقرار المالك: الهدايا والمفضلة والزيارات — الباقي في الدرج الجانبي
 const ITEMS = [
+  // أوّلًا: هو ما يفتح العميل الحساب لأجله — دورٌ قائم أو حجزٌ يريد إلغاءه
+  { href: "/me/bookings", ar: "دوري وحجزي", en: "My turn & booking", Icon: IcClock },
   { href: "/me/rewards", ar: "الهدايا", en: "Gifts", Icon: IcGift },
   { href: "/me/favorites", ar: "المفضّلة", en: "Favorites", Icon: IcHeart },
   { href: "/me/visits", ar: "الزيارات", en: "Visits", Icon: IcClock },
@@ -48,13 +51,10 @@ export default function MePage() {
   return (
     <CustomerShell active="other" search={false}>
       <div className="space-y-5">
-        <div className="rq-card flex items-center gap-4 p-5">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-800 font-display text-2xl text-cream-100">✦</span>
-          <div>
-            <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "مرحبًا بك في إيت", "Welcome to EIGHT")}</p>
-            <p className="text-sm text-[color:var(--muted)]">{tr(lang, "تستخدم إيت كضيف — بلا حساب ولا كلمة مرور.", "You're using EIGHT as a guest — no account, no password.")}</p>
-          </div>
-        </div>
+        {/* «مرحبًا بك في إيت» كانت ترحيبًا بلا صاحب: يفتحها العميل فلا يرى
+            نفسه، ولا يعرف أن دوره محفوظ. وبطاقة الهويّة تقول له اسمه ورقمه
+            وما هو حيٌّ له الآن — وهي الفرق بين «موقعٍ زرته» و«حسابٍ لي». */}
+        <IdentityCard />
 
         <div className="rq-card divide-y divide-[color:var(--border)] overflow-hidden p-0">
           {ITEMS.map((it) => (
