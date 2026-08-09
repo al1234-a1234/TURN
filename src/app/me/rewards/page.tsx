@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/components/lang-provider";
 import { tr } from "@/lib/i18n";
 import { toAr, money, normalizePhone } from "@/lib/format";
+import { getMe, saveMe } from "@/lib/local-store";
 
 /**
  * هدايا الزبون — المكان الوحيد الذي يرى فيه هديّة.
@@ -42,6 +43,7 @@ export default function MyRewardsPage() {
   const [lookupErr, setLookupErr] = useState(false);
   const [armErr, setArmErr] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
   const [, startTransition] = useTransition();
 
   const runLookup = useCallback(async (p: string) => {
@@ -49,8 +51,8 @@ export default function MyRewardsPage() {
     setLookupErr(false);
     setLoading(true);
     try {
-      // لا نحفظ الرقم كهوية للجهاز إلا بعد نجاح صيغته
-      window.localStorage.setItem("turn:phone", p);
+      // في مخزن الهويّة المشترك لا في مفتاحٍ خاصّ بهذه الصفحة
+      saveMe({ phone: p });
       const supabase = createClient();
       const { data } = await supabase.rpc("rewards_by_phone", { p_phone: p });
       setRewards((data ?? []) as Reward[]);
@@ -59,10 +61,13 @@ export default function MyRewardsPage() {
     }
   }, []);
 
+  // ‏«turn:phone» كان مفتاحًا خاصًّا بهذه الصفحة وحدها — ورقمُ العميل يُحفظ
+  // عند أخذ الدور في مخزن الهويّة (`getMe`). فكانت الصفحة لا ترى رقمًا
+  // موجودًا وتسأل عنه من جديد، وكأنّه لم يستعمل التطبيق قطّ.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const saved = window.localStorage.getItem("turn:phone");
-    if (saved) { setPhone(saved); runLookup(saved); }
+    const saved = getMe().phone ? normalizePhone(getMe().phone!).slice(0, 10) : "";
+    if (/^05\d{8}$/.test(saved)) { setPhone(saved); runLookup(saved); }
+    else setEditing(true);
   }, [runLookup]);
 
   /** تسليح/فكّ — والقاعدة هي الحكم: فشلها يظهر رسالة ويعيد التحميل */
@@ -100,6 +105,15 @@ export default function MyRewardsPage() {
   return (
     <CustomerShell active="other" search={false}>
       <div className="space-y-5">
+        {!editing && /^05\d{8}$/.test(phone) ? (
+          <p className="px-1 text-[13px] font-bold text-[color:var(--muted)]">
+            <span dir="ltr" className="tabular-nums">{phone}</span>
+            {" · "}
+            <button onClick={() => setEditing(true)} className="underline" style={{ color: "var(--brand-d)" }}>
+              {tr(lang, "مو رقمك؟", "Not your number?")}
+            </button>
+          </p>
+        ) : (
         <div className="rq-card p-5">
           <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "هداياك", "Your gifts")}</p>
           <p className="mt-0.5 text-sm text-[color:var(--muted)]">
@@ -115,6 +129,7 @@ export default function MyRewardsPage() {
             <button type="submit" disabled={loading} className="rq-btn shrink-0 px-5">{loading ? "…" : tr(lang, "عرض", "Show")}</button>
           </form>
         </div>
+        )}
 
         {armErr && (
           <p className="rounded-2xl bg-[color:var(--surface-2)] px-4 py-2.5 text-center text-xs font-bold text-[color:var(--danger)]">{armErr}</p>

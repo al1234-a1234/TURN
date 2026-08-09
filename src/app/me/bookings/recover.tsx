@@ -41,6 +41,8 @@ export function RecoverBookings() {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [cancelling, setCancelling] = useState<string | null>(null);
+  // الحقل مخفيٌّ لمن رقمه معروف: سؤاله عمّا نعرفه يُشعره أن شيئًا ضاع
+  const [editing, setEditing] = useState(false);
 
   const lookup = useCallback(async (p: string) => {
     if (!/^05\d{8}$/.test(p)) return;
@@ -55,7 +57,10 @@ export function RecoverBookings() {
   // الرقم محفوظ من آخر مرّة ⇒ يظهر جاهزًا بلا كتابة
   useEffect(() => {
     const me = getMe();
-    if (me.phone) setPhone(normalizePhone(me.phone).slice(0, 10));
+    const p = me.phone ? normalizePhone(me.phone).slice(0, 10) : "";
+    setPhone(p);
+    // بلا رقمٍ محفوظ وحده يُفتح الحقل — وإلا فالصفحة تعرض النتيجة مباشرةً
+    if (!/^05\d{8}$/.test(p)) setEditing(true);
   }, []);
 
   // ويبحث بمجرّد اكتمال الرقم — سواءٌ جاء من الذاكرة أو كتبه الآن.
@@ -79,6 +84,16 @@ export function RecoverBookings() {
 
   return (
     <div className="space-y-4">
+      {!editing && ok ? (
+        // رقمه معروف: سطرٌ صغير يقوله ويتيح تغييره — لا نموذجَ يطالبه به
+        <p className="px-1 text-[13px] font-bold text-[color:var(--muted)]">
+          <span dir="ltr" className="tabular-nums">{phone}</span>
+          {" · "}
+          <button onClick={() => setEditing(true)} className="underline" style={{ color: "var(--brand-d)" }}>
+            {tr(lang, "مو رقمك؟", "Not your number?")}
+          </button>
+        </p>
+      ) : (
       <div className="rq-card p-5">
         <p className="field-label mb-2">{tr(lang, "رقم جوّالك", "Your mobile number")}</p>
         <p className="mb-3 text-[13px] leading-6 text-[color:var(--muted)]">
@@ -108,8 +123,9 @@ export function RecoverBookings() {
           </button>
         </div>
       </div>
+      )}
 
-      {rows === null && !busy && (
+      {rows === null && !busy && editing && (
         <p className="px-1 text-sm font-bold text-[color:var(--muted)]">
           {/* لا نقول «ما عندك شيء» ونحن لم نعرف — عميلٌ له حجز يقرؤها إلغاءً */}
           {phone.length > 0
