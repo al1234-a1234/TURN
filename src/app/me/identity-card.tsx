@@ -84,8 +84,9 @@ export function IdentityCard() {
   if (!me) {
     return (
       <div className="mb-5">
-        <div className="rq-card p-5" aria-hidden>
-          <div className="h-6 w-40 rounded-lg" style={{ background: "var(--surface-2)" }} />
+        <div className="rq-card grid place-items-center p-6" aria-hidden>
+          <div className="h-16 w-16 rounded-full" style={{ background: "var(--surface-2)" }} />
+          <div className="mt-3 h-6 w-40 rounded-lg" style={{ background: "var(--surface-2)" }} />
           <div className="mt-2 h-4 w-28 rounded-lg" style={{ background: "var(--surface-2)" }} />
         </div>
       </div>
@@ -93,21 +94,39 @@ export function IdentityCard() {
   }
 
   const known = Boolean(me.name || me.phone);
+  const initial = me.name?.trim()?.[0] ?? "";
 
   return (
     <div className="mb-5">
-      <div className="rq-card p-5">
+      <div className={`rq-card p-6${known ? " text-center" : ""}`}>
         {known ? (
           <>
-            <p className="font-display text-xl font-bold text-[color:var(--ink)]">
+            {/* الاسم والرقم في وسط البطاقة تحت حرفه الأوّل — هذه هي «أنا»
+                في الصفحة، ومركزُها يقولها. وكانا مصفوفين إلى الحافّة فيقرآن
+                سطرَ بيانٍ في نموذج، لا رأسَ حسابٍ لصاحبه. */}
+            <span
+              className="mx-auto grid h-16 w-16 place-items-center rounded-full"
+              style={{ background: "var(--brand-solid)" }}
+              aria-hidden
+            >
+              {initial ? (
+                <span className="font-display text-2xl font-bold text-cream-100">{initial}</span>
+              ) : (
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-cream-100">
+                  <circle cx="12" cy="8" r="3.6" stroke="currentColor" strokeWidth="1.9" />
+                  <path d="M4.8 20c.6-3.6 3.6-5.6 7.2-5.6s6.6 2 7.2 5.6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+                </svg>
+              )}
+            </span>
+            <p className="mt-3 font-display text-xl font-bold text-[color:var(--ink)]">
               {me.name || tr(lang, "أهلًا بك", "Welcome")}
             </p>
             {me.phone && (
-              <p dir="ltr" className="mt-0.5 text-end text-[13px] font-bold tabular-nums text-[color:var(--muted)]">
+              <p dir="ltr" className="mt-1 text-[15px] font-bold tabular-nums text-[color:var(--muted)]">
                 {me.phone}
               </p>
             )}
-            <p className="mt-2 text-[12px] font-bold leading-5" style={{ color: "var(--st-open)" }}>
+            <p className="mx-auto mt-3 max-w-xs text-[12px] font-bold leading-5" style={{ color: "var(--st-open)" }}>
               {tr(
                 lang,
                 "✓ محفوظ برقمك — دورك وحجزك يرجعان لك من أيّ جهاز",
@@ -197,6 +216,21 @@ export function IdentityCard() {
           </div>
         );
       })}
+
+      {/* لا شيء حيًّا الآن — ونقولها بدل أن نترك فراغًا. الفراغ لا يُفرَّق
+          عن عطل: صاحب الدور يقرؤه «ضاع دوري». و«live === null» غير هذا:
+          يعني لم نسأل بعدُ أو تعذّر السؤال، فلا ندّعي فيه شيئًا. */}
+      {known && live?.length === 0 && (
+        <div className="rq-card mt-3 p-6 text-center">
+          <p className="text-2xl">🍽️</p>
+          <p className="mt-1 font-bold text-[color:var(--ink)]">
+            {tr(lang, "ما عندك دور ولا حجز حاليًّا", "No active turn or booking")}
+          </p>
+          <Link href="/" className="rq-btn-soft mt-3 inline-flex">
+            {tr(lang, "تصفّح المطاعم ←", "Browse restaurants ←")}
+          </Link>
+        </div>
+      )}
 
       {cancelErr && (
         <p className="mt-2 px-1 text-[13px] font-bold" style={{ color: "var(--danger)" }}>
