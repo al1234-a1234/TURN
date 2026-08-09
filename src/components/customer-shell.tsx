@@ -25,14 +25,19 @@ function IcRestaurants() {
     </svg>
   );
 }
+function IcAccount() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="8" r="3.6" stroke="currentColor" strokeWidth="1.9" />
+      <path d="M4.8 20c.6-3.6 3.6-5.6 7.2-5.6s6.6 2 7.2 5.6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// الدرج صار للتعريف والأنظمة وحدها: دوري وحجزي والهدايا والزيارات
+// والمفضّلة كانت هنا روابطَ إلى صفحاتٍ منفصلة، وقد صارت كلّها داخل
+// «حسابي» في الشريط السفلي. وبابان إلى الشيء نفسه ليس خيارًا، بل حَيرة.
 const DRAWER = [
-  // «دوري وحجزي» أوّلًا: هو ما يبحث عنه العميل بإلحاحٍ حين يفتح الدرج —
-  // دورٌ ضاع بإغلاق المتصفّح، أو حجزٌ يريد إلغاءه. وبقيّة البنود تصفّح.
-  { label: "دوري وحجزي", en: "My turn & booking", href: "/me/bookings" },
-  { label: "الهدايا", en: "Gifts", href: "/me/rewards" },
-  { label: "المفضلة", en: "Favorites", href: "/me/favorites" },
-  { label: "الزيارات", en: "Visits", href: "/me/visits" },
-  { label: "الإعدادات", en: "Settings", href: "/me" },
   { label: "من نحن", en: "About Us", href: "/about" },
   { label: "تواصل معنا", en: "Contact Us", href: "/contact" },
   { label: "سياسة الخصوصية", en: "Privacy Policy", href: "/privacy" },
@@ -44,7 +49,8 @@ export function CustomerShell({
   search = true,
   children,
 }: {
-  active?: "restaurants" | "other";
+  /** ‏"none" لصفحات الدرج (من نحن، الخصوصية…): لا تنتمي إلى تبويبٍ فتُضيئه كذبًا */
+  active?: "restaurants" | "other" | "none";
   search?: boolean;
   children: React.ReactNode;
 }) {
@@ -95,11 +101,13 @@ export function CustomerShell({
         style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
       >
         <div className="rq-nav">
-          {/* «حسابي» خرج من هنا: هو خلف الشعار في الأعلى، وتكراره في
-              الأسفل يجعل الشاشة تعرض بابًا واحدًا مرّتين. وبقي «المطاعم»
-              وحده — زرّ عودةٍ إلى البيت، وهو كل ما يحتاجه شريطٌ سفليّ. */}
+          {/* تبويبان لا أكثر: المطاعم — وهو التصفّح، و«حسابي» — وفيه اسمه
+              ورقمه وتذكرة دوره وحجزه وهداياه وزياراته. وكان «حسابي» خلف
+              الشعار في الأعلى وحده، فلا يخطر لأحدٍ أن الشعار بابُ حساب.
+              وما يُفتح كل يوم لا يُخبَّأ خلف رمز. */}
           {[
             { key: "restaurants", href: "/", icon: <IcRestaurants />, label: tr(lang, "المطاعم", "Restaurants") },
+            { key: "other", href: "/me", icon: <IcAccount />, label: tr(lang, "حسابي", "My account") },
           ].map((item) => {
             const isActive = active === item.key;
             return (

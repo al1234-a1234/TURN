@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { CustomerShell } from "@/components/customer-shell";
-import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/components/lang-provider";
 import { tr } from "@/lib/i18n";
 import { toAr, money, normalizePhone } from "@/lib/format";
@@ -76,11 +75,15 @@ export default function MyRewardsPage() {
     setBusyId(r.id);
     setArmErr(null);
     startTransition(async () => {
-      const supabase = createClient();
-      const { data: ok, error } = await supabase.rpc("set_reward_armed_by_phone", {
-        p_reward_id: r.id, p_phone: phone, p_arm: next,
+      // عبر خادمنا لا مباشرةً: نداء RPC من متصفّح كان يرجع 405 (انظر
+      // api/my-status). والعميل يضغط «استعمال» عند الكاشير فلا يحدث شيء.
+      const res = await fetch("/api/arm-reward", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ reward_id: r.id, phone, arm: next }),
       });
-      if (ok && !error) {
+      const ok = res.ok ? (await res.json()).ok === true : false;
+      if (ok) {
         setRewards((prev) =>
           (prev ?? []).map((x) => (x.id === r.id ? { ...x, armed_at: next ? new Date().toISOString() : null } : x)),
         );

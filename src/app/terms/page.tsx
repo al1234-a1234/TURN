@@ -61,7 +61,7 @@ export default async function TermsPage() {
   ];
 
   return (
-    <CustomerShell active="other" search={false}>
+    <CustomerShell active="none" search={false}>
       <div className="space-y-4">
         <div className="rq-card p-6">
           <h1 className="font-display text-2xl font-bold text-[color:var(--ink)]">{tr(lang, "شروط الاستخدام", "Terms of Use")}</h1>

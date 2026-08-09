@@ -13,7 +13,7 @@ export default async function AboutPage() {
     { icon: "🎁", ar: "هدايا المطاعم", en: "Restaurant gifts", arD: "هدايا يمنحها لك المطعم — تجدها في حسابك وتستعملها متى شئت.", enD: "Gifts the restaurant grants you — in your account, used whenever you like." },
   ];
   return (
-    <CustomerShell active="other" search={false}>
+    <CustomerShell active="none" search={false}>
       <div className="space-y-5">
         <div className="rq-card flex flex-col items-center gap-3 p-8 text-center">
           <Logo size={96} />

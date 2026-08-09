@@ -11,7 +11,7 @@ export default async function ContactPage() {
     { icon: "🤝", ar: "انضمّ كشريك", en: "Join as a partner", value: tr(lang, "أضِف مطعمك إلى إيت", "Add your restaurant to EIGHT"), href: "/partners" },
   ];
   return (
-    <CustomerShell active="other" search={false}>
+    <CustomerShell active="none" search={false}>
       <div className="space-y-5">
         <div className="rq-card p-7 text-center">
           <span className="text-4xl">💬</span>

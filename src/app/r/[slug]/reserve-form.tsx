@@ -119,7 +119,7 @@ export function ReserveForm({
         </p>
         {/* أين يجده لاحقًا. بلا هذا كان يُغلق المتصفّح ولا يعرف أن حجزه
             مسترجَعٌ برقمه — ولا كيف يلغيه إن تغيّرت ظروفه. */}
-        <a href="/me/bookings" className="rq-btn-soft mt-4 inline-flex">
+        <a href="/me" className="rq-btn-soft mt-4 inline-flex">
           {tr(lang, "حجزي — للعرض أو الإلغاء ←", "My booking — view or cancel ←")}
         </a>
       </div>

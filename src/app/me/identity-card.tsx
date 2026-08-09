@@ -13,8 +13,10 @@ type Live = {
   id: string;
   restaurant: string;
   restaurant_slug: string;
+  branch: string;
   status: string;
   at: string;
+  party_size: number;
   zone_name: string | null;
   position: number | null;
   table_label: string | null;
@@ -35,6 +37,8 @@ export function IdentityCard() {
   const lang = useLang();
   const [me, setMe] = useState<{ name?: string; phone?: string } | null>(null);
   const [live, setLive] = useState<Live[] | null>(null);
+  const [cancelling, setCancelling] = useState<string | null>(null);
+  const [cancelErr, setCancelErr] = useState(false);
 
   useEffect(() => {
     const m = getMe();
@@ -57,6 +61,22 @@ export function IdentityCard() {
       });
     return () => { alive = false; };
   }, []);
+
+  async function cancelReservation(id: string) {
+    setCancelling(id);
+    setCancelErr(false);
+    const res = await fetch("/api/cancel-booking", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id, phone: me?.phone ?? "" }),
+    });
+    setCancelling(null);
+    const j = res.ok ? await res.json() : { ok: false };
+    // لا نُخفي الحجز إلّا إذا أكّدت القاعدة إلغاءه: إخفاؤه بلا تأكيد يجعل
+    // العميل يظنّ أنه ألغى، فلا يأتي — والطاولة تبقى محجوزةً عند المطعم.
+    if (j.ok) setLive((cur) => (cur ?? []).filter((r) => r.id !== id));
+    else setCancelErr(true);
+  }
 
   if (!me) return null;
 
@@ -96,39 +116,81 @@ export function IdentityCard() {
                 "Take a turn at any restaurant and your name and number are saved here automatically. No signup, no password.",
               )}
             </p>
-            <Link href="/" className="rq-btn-soft mt-3 inline-flex">
-              {tr(lang, "تصفّح المطاعم ←", "Browse restaurants ←")}
-            </Link>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link href="/" className="rq-btn-soft inline-flex">
+                {tr(lang, "تصفّح المطاعم ←", "Browse restaurants ←")}
+              </Link>
+              {/* جهازٌ جديد أو تخزينٌ ممسوح: له دورٌ وحجز على رقمه، ولا شيء
+                  هنا يدلّه عليهما. ورقمُه يُحفظ عند أوّل بحث، فلا يُسأل بعدها. */}
+              <Link href="/me/bookings" className="rq-btn-soft inline-flex">
+                {tr(lang, "عندي دور أو حجز برقمي", "I have a turn or booking")}
+              </Link>
+            </div>
           </>
         )}
       </div>
 
-      {/* ما هو حيٌّ الآن — أعلى الصفحة لأنه أعجل ما يبحث عنه */}
+      {/* التذكرة كاملةً هنا — لا شريطًا يقود إلى صفحةٍ أخرى.
+          العميل يفتح «حسابي» ليرى دوره أو حجزه ويتصرّف فيه: يفتح تذكرة
+          دوره، أو يلغي حجزًا لن يحضره. وصفحةٌ ثانية بينهما تُبقي طاولةً
+          محجوزةً لمن لن يأتي لمجرّد أن الإلغاء كان بعيدًا خطوة. */}
       {live?.map((r) => {
         const isTurn = r.kind === "turn";
         return (
-          <Link
-            key={r.id}
-            href={isTurn ? `/r/${r.restaurant_slug}` : "/me/bookings"}
-            className="mt-3 flex items-center gap-3 rounded-3xl p-4 transition active:scale-[0.99]"
-            style={{ background: "var(--brand-solid)" }}
-          >
-            <span className="shrink-0 rounded-full bg-white/20 px-2.5 py-1 text-[11px] font-extrabold text-cream-100">
-              {isTurn ? tr(lang, "دورك", "Your turn") : tr(lang, "حجزك", "Your booking")}
-            </span>
-            <span className="min-w-0 flex-1 text-end">
-              <span className="block truncate text-sm font-extrabold text-cream-100">{r.restaurant}</span>
-              <span className="block truncate text-[12px] font-bold text-cream-100/85">
+          <div key={r.id} className="rq-card mt-3 p-5">
+            <div className="flex items-start justify-between gap-3">
+              <span
+                className="shrink-0 rounded-full px-3 py-1 text-[11px] font-extrabold text-cream-100"
+                style={{ background: isTurn ? "var(--brand-solid)" : "var(--st-open)" }}
+              >
+                {isTurn ? tr(lang, "دورك", "Your turn") : tr(lang, "حجزك", "Your booking")}
+              </span>
+              <div className="min-w-0 flex-1 text-end">
+                <Link href={`/r/${r.restaurant_slug}`} className="block truncate font-display text-lg font-bold text-[color:var(--ink)]">
+                  {r.restaurant}
+                </Link>
+                <p className="truncate text-[13px] text-[color:var(--muted)]">
+                  {r.branch}
+                  {r.zone_name ? ` · ${r.zone_name}` : ""}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-3 flex items-center justify-between rounded-2xl px-4 py-3" style={{ background: "var(--surface-2)" }}>
+              <span className="text-sm font-bold" style={{ color: "var(--brand-d)" }}>
                 {isTurn
                   ? tr(lang, `ترتيبك ${toAr(r.position ?? 0)}`, `You're #${r.position ?? 0}`)
                   : fmtTime(r.at, lang)}
-                {r.zone_name ? ` · ${r.zone_name}` : ""}
+              </span>
+              <span className="text-[13px] font-bold text-[color:var(--muted)]">
+                {tr(lang, `${toAr(r.party_size)} أشخاص`, `${r.party_size} guests`)}
                 {r.table_label ? ` · ${tr(lang, `طاولة ${r.table_label}`, `Table ${r.table_label}`)}` : ""}
               </span>
-            </span>
-          </Link>
+            </div>
+
+            {isTurn ? (
+              <Link href={`/r/${r.restaurant_slug}`} className="btn btn-primary mt-3 w-full">
+                {tr(lang, "افتح تذكرتي", "Open my ticket")}
+              </Link>
+            ) : (
+              <button
+                onClick={() => cancelReservation(r.id)}
+                disabled={cancelling === r.id}
+                className="mt-3 w-full rounded-2xl px-4 py-3 text-sm font-bold disabled:opacity-50"
+                style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--danger)" }}
+              >
+                {cancelling === r.id ? tr(lang, "…") : tr(lang, "إلغاء الحجز", "Cancel booking")}
+              </button>
+            )}
+          </div>
         );
       })}
+
+      {cancelErr && (
+        <p className="mt-2 px-1 text-[13px] font-bold" style={{ color: "var(--danger)" }}>
+          {tr(lang, "تعذّر الإلغاء — جرّب بعد لحظات، أو اتّصل بالمطعم.", "Couldn't cancel — try again shortly, or call the restaurant.")}
+        </p>
+      )}
     </div>
   );
 }

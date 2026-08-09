@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { getMe, saveMe } from "@/lib/local-store";
 import { normalizePhone, toAr } from "@/lib/format";
 import { fmtTime } from "@/lib/dates";
@@ -41,6 +40,7 @@ export function RecoverBookings() {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [cancelErr, setCancelErr] = useState(false);
   // الحقل مخفيٌّ لمن رقمه معروف: سؤاله عمّا نعرفه يُشعره أن شيئًا ضاع
   const [editing, setEditing] = useState(false);
 
@@ -77,9 +77,17 @@ export function RecoverBookings() {
 
   async function cancelReservation(id: string) {
     setCancelling(id);
-    const { data } = await createClient().rpc("cancel_reservation_guest", { p_id: id, p_phone: phone });
+    // عبر خادمنا لا مباشرةً: نداء RPC من متصفّح كان يرجع 405 صامتًا، فيضغط
+    // العميل «إلغاء» ولا يحدث شيء — ويبقى الحجز قائمًا وهو يحسبه ملغى.
+    const res = await fetch("/api/cancel-booking", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id, phone }),
+    });
     setCancelling(null);
-    if (data) setRows((cur) => (cur ?? []).filter((r) => r.id !== id));
+    const j = res.ok ? await res.json() : { ok: false };
+    if (j.ok) setRows((cur) => (cur ?? []).filter((r) => r.id !== id));
+    else setCancelErr(true);
   }
 
   const ok = /^05\d{8}$/.test(phone);
@@ -127,6 +135,12 @@ export function RecoverBookings() {
           {phone.length > 0
             ? tr(lang, "أكمل رقمك (١٠ خانات) ليظهر دورك وحجزك.", "Complete your number (10 digits) to see your turn and booking.")
             : tr(lang, "اكتب رقمك لاسترجاع دورك أو حجزك.", "Enter your number to find your turn or booking.")}
+        </p>
+      )}
+
+      {cancelErr && (
+        <p className="px-1 text-[13px] font-bold" style={{ color: "var(--danger)" }}>
+          {tr(lang, "تعذّر الإلغاء — جرّب بعد لحظات، أو اتّصل بالمطعم.", "Couldn't cancel — try again shortly, or call the restaurant.")}
         </p>
       )}
 

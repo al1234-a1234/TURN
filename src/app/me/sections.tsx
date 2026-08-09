@@ -18,9 +18,23 @@ import { useLang } from "@/components/lang-provider";
  * الحساب يبدو خاويًا، وهو ليس كذلك.
  */
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
+/**
+ * عنوان قسم — ومعه «الكل» إن كان المعروض بعضًا.
+ *
+ * القسم يعرض أحدث خمسة أو ستّة، ومن له عشرون زيارة يظنّ أن السبع عشرة
+ * الباقية ضاعت. والرابط لا يظهر إلّا حين يكون ثمّة ما يُرى فعلًا.
+ */
+function SectionTitle({ children, more }: { children: React.ReactNode; more?: string }) {
+  const lang = useLang();
   return (
-    <p className="mb-2 px-1 font-display text-base font-bold text-[color:var(--ink)]">{children}</p>
+    <div className="mb-2 flex items-center justify-between px-1">
+      <p className="font-display text-base font-bold text-[color:var(--ink)]">{children}</p>
+      {more && (
+        <Link href={more} className="text-[13px] font-bold text-[color:var(--muted)]">
+          {tr(lang, "الكل ←", "See all ←")}
+        </Link>
+      )}
+    </div>
   );
 }
 
@@ -55,10 +69,12 @@ export function RewardsSection() {
 
   return (
     <section>
-      <SectionTitle>{tr(lang, "هداياك", "Your gifts")}</SectionTitle>
+      <SectionTitle more="/me/rewards">{tr(lang, "هداياك", "Your gifts")}</SectionTitle>
       <div className="space-y-2">
+        {/* البطاقة تُفتح: «استعمال» — وهو ما يجعل الاستقبال يرى الهديّة مع
+            دوره — يسكن في صفحة الهدايا. وهديّةٌ تُعرض ولا تُستعمل زينة. */}
         {active.map((r) => (
-          <div key={r.id} className="rq-card flex items-center gap-3 p-4">
+          <Link key={r.id} href="/me/rewards" className="rq-card flex items-center gap-3 p-4 transition active:scale-[0.99]">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-lg" style={{ background: "var(--brand-solid)" }}>
               🎁
             </span>
@@ -71,7 +87,7 @@ export function RewardsSection() {
                   : ""}
               </p>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </section>
@@ -82,7 +98,12 @@ export function RewardsSection() {
 export function VisitsSection() {
   const lang = useLang();
   const [turns, setTurns] = useState<TurnRecord[]>([]);
-  useEffect(() => setTurns(getTurns().slice(0, 5)), []);
+  const [total, setTotal] = useState(0);
+  useEffect(() => {
+    const all = getTurns();
+    setTotal(all.length);
+    setTurns(all.slice(0, 5));
+  }, []);
   if (!turns.length) return null;
 
   const fmt = (iso: string) =>
@@ -93,7 +114,9 @@ export function VisitsSection() {
 
   return (
     <section>
-      <SectionTitle>{tr(lang, "زياراتك", "Your visits")}</SectionTitle>
+      <SectionTitle more={total > turns.length ? "/me/visits" : undefined}>
+        {tr(lang, "زياراتك", "Your visits")}
+      </SectionTitle>
       <div className="rq-card divide-y divide-[color:var(--border)] overflow-hidden p-0">
         {turns.map((t, i) => (
           <Link key={`${t.slug}-${i}`} href={`/r/${t.slug}`} className="flex items-center justify-between px-5 py-3.5 transition active:bg-[color:var(--surface-2)]">
@@ -110,12 +133,19 @@ export function VisitsSection() {
 export function FavoritesSection() {
   const lang = useLang();
   const [favs, setFavs] = useState<FavRestaurant[]>([]);
-  useEffect(() => setFavs(getFavorites().slice(0, 6)), []);
+  const [total, setTotal] = useState(0);
+  useEffect(() => {
+    const all = getFavorites();
+    setTotal(all.length);
+    setFavs(all.slice(0, 6));
+  }, []);
   if (!favs.length) return null;
 
   return (
     <section>
-      <SectionTitle>{tr(lang, "مفضّلتك", "Your favorites")}</SectionTitle>
+      <SectionTitle more={total > favs.length ? "/me/favorites" : undefined}>
+        {tr(lang, "مفضّلتك", "Your favorites")}
+      </SectionTitle>
       <div className="rq-card divide-y divide-[color:var(--border)] overflow-hidden p-0">
         {favs.map((f) => (
           <Link key={f.slug} href={`/r/${f.slug}`} className="flex items-center justify-between px-5 py-3.5 transition active:bg-[color:var(--surface-2)]">
