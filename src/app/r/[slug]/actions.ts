@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { saudiMobile } from "@/lib/format";
 import { pushRankUpdatesAfterSelfCancel } from "@/lib/push";
 import { getLang } from "@/lib/i18n-server";
+import { allowByIp } from "@/lib/ip-guard";
 import type { Lang } from "@/lib/i18n";
 
 /**
@@ -112,6 +113,13 @@ export async function joinWaitlistGuest(
   if (!branchId) return { ok: false, error: msg(lang, "pickBranch") };
   if (!fullName) return { ok: false, error: msg(lang, "yourName") };
   if (!phone) return { ok: false, error: msg(lang, "badPhone") };
+
+  // حدّ العنوان قبل ملامسة القاعدة: حدودها تُقاس بالرقم أو بالفرع، والمهاجم
+  // يملك أرقامًا بلا حدّ ولا يملك عناوين بلا حدّ. عشرة في الدقيقة تكفي
+  // عائلةً كاملة على شبكة مطعمٍ واحدة، ولا تكفي سكربتًا.
+  if (!(await allowByIp("join", 10, 60_000))) {
+    return { ok: false, error: msg(lang, "tooMany") };
+  }
 
   // الموقع مطلوب في الواجهة (نافذة السماح إلزامية)، لكن الخادم لا يرفض
   // غيابه: جهازٌ سمح بالإذن وعجز عن التحديد (شبكة/GPS) يدخل بلا مسافة —
@@ -412,6 +420,11 @@ export async function bookReservationGuest(
   // الموعد يصل ISO كاملًا من قائمة المواعيد المتاحة، فلا نعيد تفسير منطقةٍ زمنية
   const when = new Date(at);
   if (!at || Number.isNaN(when.getTime())) return { ok: false, error: msg(lang, "pickSlot") };
+
+  // الحجز أثمن من الدور: كلٌّ منه يحتجز طاولةً حقيقية ويحرمها من عميلٍ آخر
+  if (!(await allowByIp("book", 6, 60_000))) {
+    return { ok: false, error: msg(lang, "tooManySoon") };
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("book_reservation_guest", {
