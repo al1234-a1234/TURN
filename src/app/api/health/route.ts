@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -34,14 +35,23 @@ export async function GET() {
     }
   } catch { /* db تبقى fail */ }
 
-  // قلم الكتابة حاضر؟ بعد سحب دوالّ الكتابة من anon (0093) صار مفتاح
-  // الخدمة شرطًا لكلّ انضمامٍ وحجز — لا رفاهيةَ إشعارات. ونشرةٌ تفقده
-  // تُقابل العميل برسالة فشلٍ لا يُفهم سببها، فيُعلَن هنا: قيمةٌ منطقيّة
-  // لا سرّ فيها (لا تكشف المفتاح ولا طوله)، وراصدٌ خارجيّ يلتقط
-  // writer":false قبل أن يلتقطها زبون.
-  const writer = Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY,
-  );
+  // قلم الكتابة يعمل؟ — لا «هل المتغيّر موجود؟»
+  //
+  // كان هنا `Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY)`، فقال
+  // `writer: true` بينما القيمة ليست مفتاح خدمة أصلًا؛ ثم سُحبت دوالّ
+  // الكتابة من الضيف اعتمادًا على هذه الشهادة، فانكسر المسار في الإنتاج.
+  // بوّابةٌ تفحص حضور شيءٍ بدل أن تختبر عملَه ليست بوّابة.
+  //
+  // فالآن ينادي مسبارًا لا يملك تنفيذه إلا `service_role`. نجاحُه يعني
+  // أنّ المفتاح مفتاح خدمةٍ يقينًا — لا ظنًّا.
+  let writer = false;
+  try {
+    const admin = createAdminClient();
+    if (admin) {
+      const { error } = await admin.rpc("service_role_probe");
+      writer = !error;
+    }
+  } catch { /* writer تبقى false */ }
 
   const body = { ok: db === "ok" && writer, db, writer, cron_fresh, db_ms: Date.now() - started };
   // 503 عند سقوط القاعدة أو غياب قلم الكتابة — كلاهما يمنع العميل من أخذ

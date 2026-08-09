@@ -1320,6 +1320,7 @@ export type Database = {
           total: number
         }[]
       }
+      service_role_probe: { Args: never; Returns: boolean }
       set_platform_pause: {
         Args: { p_paused: boolean; p_reason?: string }
         Returns: boolean
