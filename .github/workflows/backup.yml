@@ -191,9 +191,22 @@ jobs:
           # لا وجود لها في صورةٍ نظيفة، وأسطرها ستفشل ولا تعني فساد النسخة.
           # الحكم على النتيجة لا على عدد الأسطر التي اشتكت.
           echo "▸ تحميل البنية…"
-          psql -q -v ON_ERROR_STOP=0 -f "$DIR/01-schema.sql"      2> /tmp/schema.err || true
+          psql -q -v ON_ERROR_STOP=0 -f "$DIR/01-schema.sql" 2> /tmp/schema.err || true
+
+          # الأخطاء تُطبع لا تُخبّأ: أوّل تشغيلٍ لهذا الاختبار فشل بلا جداول،
+          # وكانت رسائله محبوسة في ملفٍ لم يُقرأ — فضاع التشخيص مع الفشل.
+          CREATED="$(psql -Atc "select count(*) from pg_tables where schemaname='public'")"
+          echo "▸ جداول أُنشئت: $CREATED"
+          if [ "$CREATED" -lt 10 ]; then
+            echo "::group::أوّل ٤٠ خطأً من تحميل البنية"; head -40 /tmp/schema.err; echo "::endgroup::"
+            echo "::group::أوّل ٢٠ سطرًا من ملف البنية"; head -20 "$DIR/01-schema.sql"; echo "::endgroup::"
+            echo "::error::البنية لم تُستعد ($CREATED جدولًا) — الاسترجاع غير ممكن"
+            exit 1
+          fi
+
           echo "▸ تحميل البيانات…"
-          psql -q -v ON_ERROR_STOP=0 -f "$DIR/02-data-public.sql" 2> /tmp/data.err   || true
+          psql -q -v ON_ERROR_STOP=0 -f "$DIR/02-data-public.sql" 2> /tmp/data.err || true
+          echo "::group::أبرز أخطاء تحميل البيانات (إن وُجدت)"; grep -m 15 'ERROR' /tmp/data.err || echo "بلا أخطاء"; echo "::endgroup::"
 
           echo "▸ المقارنة بالجرد المحفوظ…"
           FAIL=0
