@@ -22,13 +22,13 @@ const plexArabic = IBM_Plex_Sans_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: "إيت | EIGHT — خذ دورك بأناقة",
+  title: "EIGHT — خذ دورك بأناقة",
   description:
-    "إيت (EIGHT): اختر مطعمك، سجّل اسمك ورقمك، وتابع طابورك لحظة بلحظة.",
+    "EIGHT: اختر مطعمك، سجّل اسمك ورقمك، وتابع طابورك لحظة بلحظة.",
   manifest: "/manifest.webmanifest",
   openGraph: {
-    title: "إيت | EIGHT — خذ دورك بأناقة",
-    description: "إيت (EIGHT): اختر مطعمك، سجّل اسمك ورقمك، وتابع طابورك لحظة بلحظة.",
+    title: "EIGHT — خذ دورك بأناقة",
+    description: "EIGHT: اختر مطعمك، سجّل اسمك ورقمك، وتابع طابورك لحظة بلحظة.",
     siteName: "EIGHT",
     images: [{ url: "/brand/v7/og-image.png", width: 1200, height: 630 }],
     type: "website",

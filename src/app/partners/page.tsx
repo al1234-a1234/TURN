@@ -42,7 +42,7 @@ function PartnersLogin() {
     }
     if (!user.includes("@")) {
       // حسابات بلا إيميل حقيقي (اسم مستخدم داخلي) لا يصلها بريد أصلًا
-      setResetMsg(tr(lang, "حسابك باسم مستخدم داخلي بلا إيميل — يعيد تعيينه مالك المطعم من صفحة «الموظفون»، أو إدارة إيت.", "Your account uses an internal username without an email — the restaurant owner can reset it from the Staff page, or the EIGHT team."));
+      setResetMsg(tr(lang, "حسابك باسم مستخدم داخلي بلا إيميل — يعيد تعيينه مالك المطعم من صفحة «الموظفون»، أو إدارة EIGHT.", "Your account uses an internal username without an email — the restaurant owner can reset it from the Staff page, or the EIGHT team."));
       return;
     }
     const supabase = createClient();
@@ -165,7 +165,7 @@ function PartnersLogin() {
 
         <p className="mt-6 text-center text-sm text-[color:var(--muted)]">
           {tr(lang, "تبي تضيف مطعمك؟", "Want to add your restaurant?")}{" "}
-          <a href="mailto:albraalaan@gmail.com" className="font-bold text-[color:var(--gold-1)]">{tr(lang, "تواصل مع إدارة إيت", "Contact the EIGHT team")}</a>
+          <a href="mailto:albraalaan@gmail.com" className="font-bold text-[color:var(--gold-1)]">{tr(lang, "تواصل مع إدارة EIGHT", "Contact the EIGHT team")}</a>
         </p>
       </main>
     </div>

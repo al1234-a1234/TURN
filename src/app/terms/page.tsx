@@ -2,7 +2,7 @@ import { CustomerShell } from "@/components/customer-shell";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
 
-export const metadata = { title: "شروط الاستخدام · إيت" };
+export const metadata = { title: "شروط الاستخدام · EIGHT" };
 
 /* شروط مختصرة صادقة تطابق سلوك المنتج الفعلي — تحمي المنصّة (الدور تنظيم
    انتظار لا التزام قانوني بطاولة، والمطعم مسؤول عن خدمته) وتحمي العميل
@@ -11,10 +11,10 @@ export default async function TermsPage() {
   const lang = await getLang();
   const sections = [
     {
-      ar: "وش هي إيت؟",
+      ar: "وش هي EIGHT؟",
       en: "What is EIGHT?",
       arB: [
-        "منصّة تنظّم طوابير الانتظار والحجوزات بين العميل والمطعم. المطعم هو من يقدّم الخدمة والطعام — إيت وسيط تنظيمي فقط.",
+        "منصّة تنظّم طوابير الانتظار والحجوزات بين العميل والمطعم. المطعم هو من يقدّم الخدمة والطعام — EIGHT وسيط تنظيمي فقط.",
         "استخدام المنصّة للعملاء مجاني بالكامل، وبلا أي مدفوعات داخل المنصّة.",
       ],
       enB: [
@@ -66,7 +66,7 @@ export default async function TermsPage() {
         <div className="rq-card p-6">
           <h1 className="font-display text-2xl font-bold text-[color:var(--ink)]">{tr(lang, "شروط الاستخدام", "Terms of Use")}</h1>
           <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">
-            {tr(lang, "باستخدامك إيت فأنت توافق على هذي الشروط المختصرة.", "By using EIGHT you agree to these brief terms.")}
+            {tr(lang, "باستخدامك EIGHT فأنت توافق على هذي الشروط المختصرة.", "By using EIGHT you agree to these brief terms.")}
           </p>
         </div>
         {sections.map((s) => (

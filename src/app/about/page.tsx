@@ -3,7 +3,7 @@ import { Logo } from "@/components/logo";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
 
-export const metadata = { title: "من نحن · إيت" };
+export const metadata = { title: "من نحن · EIGHT" };
 
 export default async function AboutPage() {
   const lang = await getLang();
@@ -17,7 +17,7 @@ export default async function AboutPage() {
       <div className="space-y-5">
         <div className="rq-card flex flex-col items-center gap-3 p-8 text-center">
           <Logo size={96} />
-          <h1 className="font-display text-2xl font-bold text-[color:var(--ink)]">{tr(lang, "إيت — EIGHT", "EIGHT — إيت")}</h1>
+          <h1 className="font-display text-2xl font-bold text-[color:var(--ink)]">EIGHT</h1>
           <p className="max-w-md text-sm leading-relaxed text-[color:var(--muted)]">
             {tr(
               lang,

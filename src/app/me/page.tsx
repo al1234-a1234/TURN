@@ -18,7 +18,7 @@ export default function MePage() {
   return (
     <CustomerShell active="other" search={false}>
       <div className="space-y-5">
-        {/* «مرحبًا بك في إيت» كانت ترحيبًا بلا صاحب: يفتحها العميل فلا يرى
+        {/* «مرحبًا بك في EIGHT» كانت ترحيبًا بلا صاحب: يفتحها العميل فلا يرى
             نفسه، ولا يعرف أن دوره محفوظ. وبطاقة الهويّة تقول له اسمه ورقمه
             وما هو حيٌّ له الآن — وهي الفرق بين «موقعٍ زرته» و«حسابٍ لي». */}
         <IdentityCard />
@@ -37,7 +37,7 @@ export default function MePage() {
 
         <div className="rq-card p-5">
           <p className="font-display text-sm font-bold text-[color:var(--ink)]">{tr(lang, "عندك مطعم؟", "Own a restaurant?")}</p>
-          <p className="mt-0.5 text-sm text-[color:var(--muted)]">{tr(lang, "انضمّ إلى إيت وابدأ بإدارة طابورك وحجوزاتك.", "Join EIGHT and start managing your queue and reservations.")}</p>
+          <p className="mt-0.5 text-sm text-[color:var(--muted)]">{tr(lang, "انضمّ إلى EIGHT وابدأ بإدارة طابورك وحجوزاتك.", "Join EIGHT and start managing your queue and reservations.")}</p>
           <Link href="/partners" className="rq-btn-soft mt-3 inline-flex">{tr(lang, "بوابة الشركاء ←", "Partners portal ←")}</Link>
         </div>
       </div>

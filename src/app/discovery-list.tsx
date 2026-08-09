@@ -78,9 +78,11 @@ function cardState(r: DiscoveryItem, lang: Lang): { parts: string[]; color: stri
   // مختلفًا. الخبر في سطر الحالة وحده، والمطعم يُعرض بكامل هيئته لأن العميل
   // قد يفتحه ليرى موقعه أو موعد فتحه.
   //
-  // ورماديٌّ لا `--st-closed`: الأحمر الدافئ يقع قريبًا من عنابيّ الطابور
-  // فتلتبس «مغلق» بـ«فيه انتظار». الرمادي يفصل «لا فعل ممكن» عن «انتظر».
-  if (r.closedNow) return { parts: [tr(lang, "مغلق الآن", "Closed now")], color: "var(--muted)" };
+  // وبعنابيّ الهويّة لا رماديّ: جرّبتُ الرمادي خوفًا من التباسه بعنابيّ
+  // الطابور، فصار الصفّ ثلاثة ألوان — اسمٌ داكن، وسطران عنابيّان، وسطرٌ
+  // رماديّ — يُرى تفاوتًا قبل أن يُقرأ خبرًا. والالتباس مدفوعٌ أصلًا:
+  // «مغلق حاليًّا» عنوانُ قسمٍ فوقه يجمع المغلقين وحدهم.
+  if (r.closedNow) return { parts: [tr(lang, "مغلق الآن", "Closed now")], color: "var(--brand-d)" };
   if (!r.accepts) return { parts: [tr(lang, "استقبال مباشر", "Walk in directly")], color: "var(--st-open)" };
 
   // متعدّد الفروع: لا رقم من الخارج.
@@ -152,12 +154,15 @@ function Card({ r, lang }: { r: DiscoveryItem; lang: Lang }) {
         </div>
         {/* سطران لا سطر: الفروع والمطبخ خبران مختلفان — «أين؟» و«ماذا؟» —
             وجمعهما بنقطةٍ كان يجعل العين تقرؤهما جملةً واحدة.
-            وبلون الهوية لا الرمادي: هذا وصف المطعم لا حاشيةٌ باهتة. */}
+            وبلون الهوية لا الرمادي: هذا وصف المطعم لا حاشيةٌ باهتة.
+            وبعنابيٍّ واحدٍ غير مخفّف: كنتُ أُخفّت المطبخ إلى ٠٫٧٢ لأرتّبه
+            تحت الفروع، فبدا لونًا ثالثًا شاحبًا لا درجةً أخفت. والترتيب
+            يحمله وزنُ الخطّ (semibold ثم medium) بلا أن يُمَسّ اللون. */}
         <p className="truncate text-[13px] font-semibold leading-[1.5]" style={{ color: "var(--brand-d)" }}>
           {branchesLabel(r.branchCount, lang)}
         </p>
         {r.cuisine && (
-          <p className="truncate text-[13px] font-medium leading-[1.5]" style={{ color: "var(--brand-d)", opacity: 0.72 }}>
+          <p className="truncate text-[13px] font-medium leading-[1.5]" style={{ color: "var(--brand-d)" }}>
             {tr(lang, r.cuisine, r.cuisine_en ?? r.cuisine)}
           </p>
         )}

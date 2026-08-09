@@ -2,7 +2,7 @@ import { CustomerShell } from "@/components/customer-shell";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
 
-export const metadata = { title: "سياسة الخصوصية · إيت" };
+export const metadata = { title: "سياسة الخصوصية · EIGHT" };
 
 /* إفصاح واضح بما نجمعه ولماذا — المنصّة تجمع أسماء وأرقام جوالات وتحسب
    مسافة تقريبية، ونظام حماية البيانات الشخصية السعودي (PDPL) يستوجب
