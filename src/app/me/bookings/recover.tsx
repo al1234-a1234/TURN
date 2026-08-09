@@ -47,11 +47,13 @@ export function RecoverBookings() {
   const lookup = useCallback(async (p: string) => {
     if (!/^05\d{8}$/.test(p)) return;
     setBusy(true);
-    const { data, error } = await createClient().rpc("guest_status_by_phone", { p_phone: p });
+    const res = await fetch(`/api/my-status?phone=${p}`);
     setBusy(false);
     // فشلٌ عابر ≠ «ما عندك شيء»: null يعني لم نعرف، والواجهة تفرّق
-    setRows(error ? null : ((data ?? []) as Row[]));
-    if (!error) saveMe({ phone: p });
+    if (!res.ok) { setRows(null); return; }
+    const j = await res.json();
+    setRows((j.rows ?? []) as Row[]);
+    saveMe({ phone: p });
   }, []);
 
   // الرقم محفوظ من آخر مرّة ⇒ يظهر جاهزًا بلا كتابة

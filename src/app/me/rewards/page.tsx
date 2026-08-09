@@ -53,9 +53,9 @@ export default function MyRewardsPage() {
     try {
       // في مخزن الهويّة المشترك لا في مفتاحٍ خاصّ بهذه الصفحة
       saveMe({ phone: p });
-      const supabase = createClient();
-      const { data } = await supabase.rpc("rewards_by_phone", { p_phone: p });
-      setRewards((data ?? []) as Reward[]);
+      const res = await fetch(`/api/my-rewards?phone=${p}`);
+      const j = res.ok ? await res.json() : { rows: [] };
+      setRewards((j.rows ?? []) as Reward[]);
     } finally {
       setLoading(false);
     }

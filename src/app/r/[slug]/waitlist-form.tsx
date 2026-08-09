@@ -377,11 +377,14 @@ export function WaitlistForm({
     const phone = me.phone ? normalizePhone(me.phone).slice(0, 10) : "";
     if (!/^05\d{8}$/.test(phone)) return;
     let alive = true;
-    createClient()
-      .rpc("guest_status_by_phone", { p_phone: phone })
-      .then(({ data }) => {
+    fetch(`/api/my-status?phone=${phone}`)
+      .then((r) => (r.ok ? r.json() : { rows: [] }))
+      .then((j) => {
         if (!alive) return;
-        const mine = (data ?? []).find((r) => r.kind === "turn" && r.restaurant_slug === slug);
+        const mine = (j.rows ?? []).find(
+          (r: { kind: string; restaurant_slug: string; id: string }) =>
+            r.kind === "turn" && r.restaurant_slug === slug,
+        );
         if (mine) setRestored({ entryId: mine.id, phone });
       });
     return () => { alive = false; };

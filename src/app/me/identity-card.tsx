@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { getMe, saveMe } from "@/lib/local-store";
 import { normalizePhone, toAr } from "@/lib/format";
 import { fmtTime } from "@/lib/dates";
@@ -43,11 +42,11 @@ export function IdentityCard() {
     const phone = m.phone ? normalizePhone(m.phone).slice(0, 10) : "";
     if (!/^05\d{8}$/.test(phone)) return;
     let alive = true;
-    createClient()
-      .rpc("guest_status_by_phone", { p_phone: phone })
-      .then(({ data, error }) => {
+    fetch(`/api/my-status?phone=${phone}`)
+      .then((r) => (r.ok ? r.json() : { rows: [] }))
+      .then((j) => {
         if (!alive) return;
-        const rows = error ? [] : ((data ?? []) as Live[]);
+        const rows = (j.rows ?? []) as Live[];
         setLive(rows);
         // الاسم من الخادم أدقّ: قد يكون صحّحه المضيف عند الإجلاس
         const server = rows[0]?.full_name?.trim();
