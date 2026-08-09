@@ -125,6 +125,10 @@ jobs:
           gunzip -f "$DIR"/*.sql.gz
 
           # البنية: جداول المنتج الحرجة موجودة فعلًا لا مجرّد ملف بحجم معقول.
+          [ -s "$DIR/00-prereqs.sql" ] || { echo "::error::ملف المتطلّبات مفقود — النسخة لن تُسترجَع خارج المزوّد"; exit 1; }
+          grep -q 'uuid-ossp' "$DIR/00-prereqs.sql" \
+            || { echo "::error::المتطلّبات بلا uuid-ossp — كل جدولٍ مفتاحه uuid سيسقط"; exit 1; }
+
           for T in restaurants branches waitlist_entries customers customer_rewards; do
             grep -q "CREATE TABLE public\.$T" "$DIR/01-schema.sql" \
               || { echo "::error::جدول $T مفقود من نسخة البنية"; exit 1; }
@@ -171,22 +175,11 @@ jobs:
           done
           psql -Atc 'select version()' | head -1
 
-          # أدوار Supabase غير موجودة في بوستجرس نظيف، وسياسات RLS تشير
-          # إليها بالاسم. تُنشأ فارغة كي تُحمَّل السياسات كما هي.
-          # ‏printf لا heredoc: مسافة بادئة واحدة أمام منهي الـheredoc تبتلع
-          # بقيّة السكربت صامتةً — وهو صنف أخطاء لا يُرى في مراجعة عين.
-          printf '%s\n' \
-            "do \$\$ declare r text; begin" \
-            "  foreach r in array array['anon','authenticated','service_role','authenticator'," \
-            "                           'supabase_admin','supabase_auth_admin','supabase_storage_admin'," \
-            "                           'dashboard_user','pgbouncer','supabase_read_only_user'] loop" \
-            "    begin execute format('create role %I nologin', r);" \
-            "    exception when duplicate_object then null; end;" \
-            "  end loop; end \$\$;" \
-            "create schema if not exists auth;" \
-            "create schema if not exists extensions;" \
-            > /tmp/roles.sql
-          psql -v ON_ERROR_STOP=1 -f /tmp/roles.sql
+          # المتطلّبات تأتي مع النسخة نفسها الآن (00-prereqs.sql): الامتدادات
+          # والأدوار التي تعتمد عليها البنية. لا يُخترع شيء هنا.
+          echo "════════ المتطلّبات المسبقة ════════"
+          cat "$DIR/00-prereqs.sql"
+          psql -v ON_ERROR_STOP=1 -f "$DIR/00-prereqs.sql"
 
           echo "════════ تحميل البنية ════════"
           psql -v ON_ERROR_STOP=0 -f "$DIR/01-schema.sql" > /tmp/schema.out 2>&1 || true
