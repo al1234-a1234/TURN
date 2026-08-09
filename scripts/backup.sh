@@ -55,6 +55,43 @@ pg_dump "$SUPABASE_DB_URL" --data-only --no-owner --no-privileges \
   > "$OUT/03-data-auth.sql"
 
 # ٤) جرد: كم صفًّا في كل جدول — يكشف نسخة فارغة قبل أن تحتاجها.
+# ══ المتطلّبات المسبقة — تُحمَّل قبل البنية ══
+# لماذا؟ النسخة تأخذ public و auth فقط، وأعمدة المفاتيح تعتمد على
+# `extensions.uuid_generate_v4()`. فبلا الامتداد، كل جدولٍ مفتاحه uuid
+# يفشل إنشاؤه — وهي قلب المنتج: المطاعم والفروع والعملاء والطابور
+# والحجوزات. جرّبتُ الاسترجاع فعلًا فسقطت عشرة جداول ونجحت الأطراف،
+# والنتيجة نسخةٌ تبدو سليمة وتُرجع لك مطعمًا بلا مطاعم.
+#
+# وقيود الحجز تستعمل btree_gist (منع تداخل المواعيد على الطاولة نفسها)،
+# فغيابه يُسقط جدول الحجوزات وحده بلا رسالةٍ مفهومة.
+#
+# والأدوار تُنشأ فارغة: سياسات RLS تشير إليها بالاسم، ونسخةٌ تُسترجَع
+# بلا سياساتها تُفتح للعالم.
+echo "▸ المتطلّبات المسبقة…"
+{
+  echo "-- متطلّبات ما قبل الاسترجاع — حمّلها أولًا (انظر docs/RESTORE.md)"
+  echo "create schema if not exists extensions;"
+  echo "create schema if not exists auth;"
+  psql "$SUPABASE_DB_URL" -At -c "
+    select format('create extension if not exists %I with schema %I;', extname, nspname)
+      from pg_extension e join pg_namespace n on n.oid = e.extnamespace
+     where n.nspname = 'extensions' and extname <> 'pg_stat_statements'
+     order by extname;"
+  cat <<'ROLES'
+do $$
+declare r text;
+begin
+  foreach r in array array['anon','authenticated','service_role','authenticator',
+                           'supabase_admin','supabase_auth_admin','supabase_storage_admin',
+                           'dashboard_user','pgbouncer','supabase_read_only_user']
+  loop
+    begin execute format('create role %I nologin', r);
+    exception when duplicate_object then null; end;
+  end loop;
+end $$;
+ROLES
+} > "$OUT/00-prereqs.sql"
+
 echo "▸ الجرد…"
 psql "$SUPABASE_DB_URL" -At -F',' -o "$OUT/04-rowcounts.csv" <<'SQL'
 select relname, n_live_tup
@@ -63,7 +100,7 @@ where schemaname = 'public'
 order by n_live_tup desc;
 SQL
 
-for f in 01-schema.sql 02-data-public.sql 03-data-auth.sql; do
+for f in 00-prereqs.sql 01-schema.sql 02-data-public.sql 03-data-auth.sql; do
   [ -s "$OUT/$f" ] || die "$f خرج فارغًا — النسخة غير صالحة."
 done
 

@@ -47,6 +47,7 @@ export default async function RestaurantPublicPage({
     .select("id, name, name_en, description, is_active, logo_url, cover_url, links, cuisine, cuisine_en")
     .eq("slug", slug)
     .eq("is_active", true)
+      .eq("is_canary", false)
     .maybeSingle();
 
   if (!restaurant) notFound();
@@ -226,7 +227,8 @@ export const revalidate = 60;
 export async function generateStaticParams() {
   try {
     const { data } = await publicRead()
-      .from("restaurants").select("slug").eq("is_active", true);
+      .from("restaurants").select("slug").eq("is_active", true)
+      .eq("is_canary", false);
     return (data ?? []).map((r) => ({ slug: r.slug }));
   } catch {
     // انقطاعٌ لحظي وقت البناء لا يُفشل النشر — المطاعم تُولَّد عند أول طلب

@@ -15,6 +15,7 @@ export default async function SearchPage() {
     .from("restaurants")
     .select("id, name, slug, logo_url, cuisine, cuisine_en, branches(id, city, is_active)")
     .eq("is_active", true)
+      .eq("is_canary", false)
     .order("created_at", { ascending: false })
     .limit(30);
 

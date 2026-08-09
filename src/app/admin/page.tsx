@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AdminCreateForm } from "./admin-create-form";
-import { openRestaurantDashboard } from "./actions";
+import { openRestaurantDashboard, setPlatformPause } from "./actions";
 import { LangToggle } from "@/components/lang-toggle";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
@@ -18,10 +18,15 @@ export default async function AdminPage() {
   const { data: isAdmin } = await supabase.rpc("is_platform_admin");
   if (!isAdmin) redirect("/dashboard");
 
-  const { data: restaurants } = await supabase
-    .from("restaurants")
-    .select("id, name, slug, owner_username, owner_phone, is_active, created_at")
-    .order("created_at", { ascending: false });
+  // اسم دخول المالك وهاتفه لم يعودا مقروءَين من الجدول مباشرةً: كانا
+  // مفتوحَين لكلّ مسجَّل، وسُحبا في 0092. والدالّة تفتحهما لمدير المنصّة وحده.
+  const { data: restaurants } = await supabase.rpc("admin_restaurants_list");
+
+  const { data: status } = await supabase
+    .from("platform_status")
+    .select("paused, reason, since")
+    .maybeSingle();
+  const paused = status?.paused === true;
 
   const list = restaurants ?? [];
 
@@ -49,6 +54,52 @@ export default async function AdminPage() {
       </header>
 
       <main className="mx-auto -mt-4 w-full max-w-3xl flex-1 space-y-8 px-5 pb-12">
+        {/* المقود أوّلًا: ساعة الطوارئ ليست ساعة تمرير الصفحة بحثًا عن زرّ */}
+        <section>
+          <h2 className="mb-3 font-serif text-xl font-bold text-[color:var(--ink)]">
+            {tr(lang, "حالة المنصّة", "Platform status")}
+          </h2>
+          <div className="soft-card space-y-3 p-4">
+            <div className="flex items-center gap-2">
+              <span
+                className="inline-block h-2.5 w-2.5 rounded-full"
+                style={{ background: paused ? "var(--st-closed)" : "var(--st-open)" }}
+                aria-hidden
+              />
+              <span className="font-bold text-[color:var(--ink)]">
+                {paused
+                  ? tr(lang, "موقوفة — لا انضمام ولا حجز جديد", "Paused — no new joins or bookings")
+                  : tr(lang, "تعمل", "Running")}
+              </span>
+            </div>
+            {paused && status?.reason ? (
+              <p className="text-sm text-[color:var(--muted)]">{status.reason}</p>
+            ) : null}
+            <form action={setPlatformPause} className="flex flex-wrap items-center gap-2">
+              <input type="hidden" name="paused" value={paused ? "0" : "1"} />
+              {paused ? null : (
+                <input
+                  name="reason"
+                  required
+                  maxLength={200}
+                  placeholder={tr(lang, "سبب الإيقاف (يُسجَّل ويُعرض)", "Reason (logged and shown)")}
+                  className="field-input min-w-0 flex-1"
+                />
+              )}
+              <button type="submit" className={`btn ${paused ? "btn-primary" : "btn-danger"} shrink-0`}>
+                {paused ? tr(lang, "استئناف", "Resume") : tr(lang, "إيقاف المنصّة", "Pause platform")}
+              </button>
+            </form>
+            <p className="text-xs text-[color:var(--muted)]">
+              {tr(
+                lang,
+                "الإيقاف يمنع الانضمام والحجز الجديد فقط — ومن في الطابور يُجلَس ويُلغى كالمعتاد.",
+                "Pausing blocks new joins and bookings only — guests already in line are still seated and can cancel.",
+              )}
+            </p>
+          </div>
+        </section>
+
         <section>
           <h2 className="mb-3 font-serif text-xl font-bold text-[color:var(--ink)]">{tr(lang, "إضافة مطعم + حساب مالك", "Add restaurant + owner account")}</h2>
           <AdminCreateForm />

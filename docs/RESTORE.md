@@ -29,7 +29,16 @@
 1. أنشئ مشروعًا جديدًا على supabase.com (أي منطقة). خذ منه:
    - `Project URL` و `anon key` (Settings → API)
    - رابط الاتصال المباشر (Settings → Database → URI)
-2. طبّق البنية — إمّا الترحيلات بالترتيب (الأنظف):
+2. **حمّل المتطلّبات أولًا — لا تتخطَّ هذه الخطوة:**
+   ```bash
+   gunzip -c backups/<STAMP>/00-prereqs.sql.gz | psql "$NEW_DB_URL" -v ON_ERROR_STOP=1
+   ```
+   فيها الامتدادات (`uuid-ossp` و`pgcrypto` و`btree_gist`) وأدوار Supabase.
+   بدونها تفشل عشرة جداول بصمت — المطاعم والفروع والعملاء والطابور
+   والحجوزات والموظّفون والطاولات والقائمة والأقسام — وتنجح الأطراف، فتظنّ
+   الاسترجاع تمّ وأنت بلا مطاعم. اكتُشف هذا باسترجاعٍ فعليّ لا بمراجعة.
+
+3. طبّق البنية — إمّا الترحيلات بالترتيب (الأنظف):
    ```bash
    for f in supabase/migrations/*.sql; do
      psql "$NEW_DB_URL" -v ON_ERROR_STOP=1 -f "$f"
@@ -39,12 +48,12 @@
    ```bash
    gunzip -c backups/<STAMP>/01-schema.sql.gz | psql "$NEW_DB_URL" -v ON_ERROR_STOP=1
    ```
-3. أعد البيانات ثم الحسابات (**الترتيب مهم**):
+4. أعد البيانات ثم الحسابات (**الترتيب مهم**):
    ```bash
    gunzip -c backups/<STAMP>/02-data-public.sql.gz | psql "$NEW_DB_URL" -v ON_ERROR_STOP=1
    gunzip -c backups/<STAMP>/03-data-auth.sql.gz  | psql "$NEW_DB_URL" -v ON_ERROR_STOP=1
    ```
-4. انشر دالة الموظفين (إنشاء حسابات الاستقبال):
+5. انشر دالة الموظفين (إنشاء حسابات الاستقبال):
    ```bash
    npx supabase functions deploy provision-staff --project-ref <REF_الجديد>
    ```

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { publicRead } from "@/lib/supabase/public-cache";
+import { guestWriter } from "@/lib/supabase/guest-writes";
 import { saudiMobile } from "@/lib/format";
 
 /**
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "bad_request" }, { status: 400 });
   }
 
-  const { data, error } = await publicRead().rpc("set_reward_armed_by_phone", {
+  const { data, error } = await (await guestWriter()).rpc("set_reward_armed_by_phone", {
     p_reward_id: rewardId,
     p_phone: phone,
     p_arm: body.arm,

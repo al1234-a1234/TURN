@@ -99,3 +99,33 @@ export async function adminCreateRestaurant(
   revalidatePath("/admin");
   return { ok: { username: data.username, code: data.code, phone: data.phone ?? phone, slug: data.slug } };
 }
+
+/**
+ * مفتاح إيقاف المنصّة — الرافعة الوحيدة التي تُوقف الانضمام في كلّ مطعم.
+ *
+ * الحارس الحقيقي في القاعدة (مُطلِقٌ على الانضمام والحجز، 0094)، وهذا
+ * الإجراء يسحبه فحسب. والقرار في القاعدة لا هنا عمدًا: نشرةٌ قديمة في
+ * ذاكرة متصفّحٍ أو حافظةٍ على الحافة لا تستطيع تجاوز مُطلِقٍ في الجدول،
+ * وتستطيع تجاوز شرطٍ في كود الصفحة.
+ *
+ * والإيقاف يمنع الدخول الجديد ولا يمنع التصريف: من في الطابور يُجلَس
+ * ويُلغى كالمعتاد. وحبسُ مئةٍ واقفين على الأبواب بحجّة حمايتهم ليس حماية.
+ */
+export async function setPlatformPause(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/partners?redirect=/admin");
+
+  const paused = String(formData.get("paused") ?? "") === "1";
+  // السبب يُكتب في سجلّ التدقيق الذي لا يُعدَّل — ويُعرض للعميل حين يُوقَف
+  const reason = String(formData.get("reason") ?? "").trim().slice(0, 200);
+
+  // لا نتحقّق من الصلاحية هنا: الدالّة نفسها ترفض غير مدير المنصّة
+  // (‏42501). فحصٌ في الواجهة وفحصٌ في القاعدة يفترقان يومًا، والقاعدة
+  // هي التي تُصدَّق.
+  await supabase.rpc("set_platform_pause", { p_paused: paused, p_reason: reason || undefined });
+
+  revalidatePath("/admin");
+}

@@ -43,6 +43,7 @@ export function SearchList({
         .from("restaurants")
         .select("id, name, slug, logo_url, cuisine, cuisine_en, branches(city, is_active)")
         .eq("is_active", true)
+      .eq("is_canary", false)
         .or(`name.ilike.${like},cuisine.ilike.${like},cuisine_en.ilike.${like}`)
         .limit(30);
       const mapped: SearchItem[] = (data ?? []).flatMap((r) => {

@@ -38,7 +38,9 @@ permissions:
 jobs:
   backup:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
+
+
     steps:
       - name: جلب المستودع
         uses: actions/checkout@v4
@@ -123,6 +125,10 @@ jobs:
           gunzip -f "$DIR"/*.sql.gz
 
           # البنية: جداول المنتج الحرجة موجودة فعلًا لا مجرّد ملف بحجم معقول.
+          [ -s "$DIR/00-prereqs.sql" ] || { echo "::error::ملف المتطلّبات مفقود — النسخة لن تُسترجَع خارج المزوّد"; exit 1; }
+          grep -q 'uuid-ossp' "$DIR/00-prereqs.sql" \
+            || { echo "::error::المتطلّبات بلا uuid-ossp — كل جدولٍ مفتاحه uuid سيسقط"; exit 1; }
+
           for T in restaurants branches waitlist_entries customers customer_rewards; do
             grep -q "CREATE TABLE public\.$T" "$DIR/01-schema.sql" \
               || { echo "::error::جدول $T مفقود من نسخة البنية"; exit 1; }
@@ -138,8 +144,87 @@ jobs:
           [ "$ROWS" -ge 100 ] \
             || { echo "::error::مجموع الصفوف $ROWS — النسخة شبه فارغة"; exit 1; }
 
-          echo "✓ النسخة مُتحقَّق منها: $POL سياسة، $ROWS صفًّا، وكل الجداول الحرجة حاضرة"
+          echo "✓ فحص المحتوى: $POL سياسة، $ROWS صفًّا، وكل الجداول الحرجة حاضرة"
+          echo "VERIFY_DIR=$DIR" >> "$GITHUB_ENV"
+
+      # ══ الاسترجاع الفعليّ ══
+      # الخطوة السابقة تقرأ الملف؛ هذه تُحمّله في قاعدةٍ حقيقية وتستعلمه.
+      # نسخةٌ تُقرأ ولا تُستعاد قد تخذلك بعمودٍ مفقود أو قيدٍ يرفض بياناته،
+      # ولا يُكتشف ذلك إلا يوم الكارثة — وهو أسوأ يومٍ للاكتشاف.
+      # ══ الاسترجاع الفعليّ ══
+      # القاعدة تُشغَّل هنا بيدنا لا كـ service: خدمةُ GitHub تُفرّغ سجلّ
+      # حاويتها كاملًا في نهاية المهمّة، فيغرق فيه كل ما تطبعه الخطوات —
+      # وهو ما أعمى محاولتَي تشخيصٍ سابقتين.
+      - name: استرجاع النسخة في قاعدة نظيفة ثم مقارنتها بالجرد
+        env:
+          PGPASSWORD: postgres
+          PGHOST: 127.0.0.1
+          PGPORT: "5433"
+          PGUSER: postgres
+          PGDATABASE: restore_test
+        run: |
+          set -Eeuo pipefail
+          DIR="$VERIFY_DIR"
+
+          docker run -d --name scratch \
+            -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=restore_test \
+            -p 5433:5432 postgres:17 >/dev/null
+          for i in $(seq 1 30); do
+            docker exec scratch pg_isready -U postgres -q && break
+            sleep 2
+          done
+          psql -Atc 'select version()' | head -1
+
+          # المتطلّبات تأتي مع النسخة نفسها الآن (00-prereqs.sql): الامتدادات
+          # والأدوار التي تعتمد عليها البنية. لا يُخترع شيء هنا.
+          echo "════════ المتطلّبات المسبقة ════════"
+          cat "$DIR/00-prereqs.sql"
+          psql -v ON_ERROR_STOP=1 -f "$DIR/00-prereqs.sql"
+
+          echo "════════ تحميل البنية ════════"
+          psql -v ON_ERROR_STOP=0 -f "$DIR/01-schema.sql" > /tmp/schema.out 2>&1 || true
+          CREATED="$(psql -Atc "select count(*) from pg_tables where schemaname='public'")"
+          echo "▸ جداول أُنشئت: $CREATED"
+          echo "▸ أوّل ٢٥ خطأً:"; grep -m 25 -i 'error' /tmp/schema.out || echo "  (بلا أخطاء)"
+          echo "▸ رأس ملف البنية:"; head -12 "$DIR/01-schema.sql"
+
+          if [ "$CREATED" -lt 10 ]; then
+            echo "::error::البنية لم تُستعد ($CREATED جدولًا)"
+            docker rm -f scratch >/dev/null; exit 1
+          fi
+
+          echo "════════ تحميل البيانات ════════"
+          psql -v ON_ERROR_STOP=0 -f "$DIR/02-data-public.sql" > /tmp/data.out 2>&1 || true
+          grep -m 10 -i 'error' /tmp/data.out || echo "  (بلا أخطاء)"
+
+          echo "════════ المقارنة بالجرد ════════"
+          FAIL=0
+          while IFS=',' read -r T EXPECTED; do
+            [ -n "$T" ] || continue
+            [ "$EXPECTED" -gt 0 ] 2>/dev/null || continue
+            ACTUAL="$(psql -Atc "select count(*) from public.\"$T\"" 2>/dev/null || echo MISSING)"
+            if [ "$ACTUAL" = "MISSING" ]; then
+              echo "  ✗ $T لم يُستعد"; FAIL=1
+            elif [ "$ACTUAL" -lt $(( EXPECTED * 90 / 100 )) ]; then
+              echo "  ✗ $T: $ACTUAL/$EXPECTED"; FAIL=1
+            else
+              printf '  ✓ %-22s %s/%s\n' "$T" "$ACTUAL" "$EXPECTED"
+            fi
+          done < "$DIR/04-rowcounts.csv"
+
+          JOINED="$(psql -Atc "select count(*) from public.waitlist_entries w
+                                 join public.branches b on b.id=w.branch_id
+                                 join public.restaurants r on r.id=b.restaurant_id")"
+          POL="$(psql -Atc "select count(*) from pg_policies where schemaname='public'")"
+          echo "  ✓ استعلام مترابط عبر ٣ جداول: $JOINED صفًّا"
+          echo "  ✓ سياسات RLS بعد الاسترجاع: $POL"
+          [ "$JOINED" -gt 0 ] || { echo "::error::لا بيانات مترابطة"; FAIL=1; }
+          [ "$POL" -ge 20 ]   || { echo "::error::سياسات RLS لم تُستعد ($POL)"; FAIL=1; }
+
+          docker rm -f scratch >/dev/null
           rm -rf /tmp/verify
+          [ "$FAIL" -eq 0 ] || { echo "::error::فشل اختبار الاسترجاع"; exit 1; }
+          echo "✓ الاسترجاع نجح فعليًّا في قاعدةٍ نظيفة"
 
       - name: رفع النسخة المشفَّرة (تُحفظ ٩٠ يومًا)
         uses: actions/upload-artifact@v4

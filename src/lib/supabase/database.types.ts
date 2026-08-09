@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      platform_status: {
+        Row: {
+          by_user: string | null
+          only_row: boolean
+          paused: boolean
+          reason: string | null
+          since: string | null
+        }
+        Insert: {
+          by_user?: string | null
+          only_row?: boolean
+          paused?: boolean
+          reason?: string | null
+          since?: string | null
+        }
+        Update: {
+          by_user?: string | null
+          only_row?: boolean
+          paused?: boolean
+          reason?: string | null
+          since?: string | null
+        }
+        Relationships: []
+      }
+      admin_audit: {
+        Row: {
+          action: string
+          actor: string | null
+          at: string
+          branch_id: string | null
+          detail: Json
+          id: string
+          reason: string | null
+          restaurant_id: string | null
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          at?: string
+          branch_id?: string | null
+          detail?: Json
+          id?: string
+          reason?: string | null
+          restaurant_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          at?: string
+          branch_id?: string | null
+          detail?: Json
+          id?: string
+          reason?: string | null
+          restaurant_id?: string | null
+        }
+        Relationships: []
+      }
       branch_settings: {
         Row: {
           accepts_reservations: boolean
@@ -903,6 +960,7 @@ export type Database = {
           email: string | null
           id: string
           is_active: boolean
+          is_canary: boolean
           links: Json
           logo_url: string | null
           name: string
@@ -925,6 +983,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_active?: boolean
+          is_canary?: boolean
           links?: Json
           logo_url?: string | null
           name: string
@@ -947,6 +1006,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_active?: boolean
+          is_canary?: boolean
           links?: Json
           logo_url?: string | null
           name?: string
@@ -1260,6 +1320,30 @@ export type Database = {
           total: number
         }[]
       }
+      set_platform_pause: {
+        Args: { p_paused: boolean; p_reason?: string }
+        Returns: boolean
+      }
+      set_restaurant_pause: {
+        Args: { p_restaurant_id: string; p_paused: boolean; p_reason?: string }
+        Returns: boolean
+      }
+      staff_clear_branch_queue: {
+        Args: { p_branch_id: string; p_reason: string }
+        Returns: number
+      }
+      admin_restaurants_list: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          owner_phone: string | null
+          owner_username: string | null
+          slug: string
+        }[]
+      }
       admin_create_restaurant: {
         Args: {
           p_address?: string
@@ -1352,7 +1436,6 @@ export type Database = {
         Args: { p_endpoint: string }
         Returns: undefined
       }
-      demo_live_activity: { Args: never; Returns: undefined }
       expire_stale_waitlist: { Args: never; Returns: number }
       gen_claim_code: { Args: never; Returns: string }
       get_customer_rewards: {

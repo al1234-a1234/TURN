@@ -34,8 +34,18 @@ export async function GET() {
     }
   } catch { /* db تبقى fail */ }
 
-  const body = { ok: db === "ok", db, cron_fresh, db_ms: Date.now() - started };
-  // 503 فقط عند سقوط القاعدة — كرونات راكدة إنذار كلمة مفتاحية لا «الموقع ساقط»
+  // قلم الكتابة حاضر؟ بعد سحب دوالّ الكتابة من anon (0093) صار مفتاح
+  // الخدمة شرطًا لكلّ انضمامٍ وحجز — لا رفاهيةَ إشعارات. ونشرةٌ تفقده
+  // تُقابل العميل برسالة فشلٍ لا يُفهم سببها، فيُعلَن هنا: قيمةٌ منطقيّة
+  // لا سرّ فيها (لا تكشف المفتاح ولا طوله)، وراصدٌ خارجيّ يلتقط
+  // writer":false قبل أن يلتقطها زبون.
+  const writer = Boolean(
+    process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY,
+  );
+
+  const body = { ok: db === "ok" && writer, db, writer, cron_fresh, db_ms: Date.now() - started };
+  // 503 عند سقوط القاعدة أو غياب قلم الكتابة — كلاهما يمنع العميل من أخذ
+  // دوره. أمّا الكرونات الراكدة فإنذار كلمة مفتاحية لا «الموقع ساقط».
   return NextResponse.json(body, {
     status: body.ok ? 200 : 503,
     headers: { "Cache-Control": "no-store" },
