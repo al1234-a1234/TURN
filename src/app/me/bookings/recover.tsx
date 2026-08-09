@@ -86,16 +86,10 @@ export function RecoverBookings() {
 
   return (
     <div className="space-y-4">
-      {!editing && ok ? (
-        // رقمه معروف: سطرٌ صغير يقوله ويتيح تغييره — لا نموذجَ يطالبه به
-        <p className="px-1 text-[13px] font-bold text-[color:var(--muted)]">
-          <span dir="ltr" className="tabular-nums">{phone}</span>
-          {" · "}
-          <button onClick={() => setEditing(true)} className="underline" style={{ color: "var(--brand-d)" }}>
-            {tr(lang, "مو رقمك؟", "Not your number?")}
-          </button>
-        </p>
-      ) : (
+      {/* رقمه معروف ⇒ لا يُعرض هنا أصلًا: بطاقة الحساب تقوله مرّةً في
+          أعلى الصفحة، وإعادته في كل قسمٍ ضجيجٌ لا خبر. والنموذج لمن لا
+          رقم له وحده. */}
+      {!editing && ok ? null : (
       <div className="rq-card p-5">
         <p className="field-label mb-2">{tr(lang, "رقم جوّالك", "Your mobile number")}</p>
         <p className="mb-3 text-[13px] leading-6 text-[color:var(--muted)]">

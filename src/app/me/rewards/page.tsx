@@ -105,15 +105,8 @@ export default function MyRewardsPage() {
   return (
     <CustomerShell active="other" search={false}>
       <div className="space-y-5">
-        {!editing && /^05\d{8}$/.test(phone) ? (
-          <p className="px-1 text-[13px] font-bold text-[color:var(--muted)]">
-            <span dir="ltr" className="tabular-nums">{phone}</span>
-            {" · "}
-            <button onClick={() => setEditing(true)} className="underline" style={{ color: "var(--brand-d)" }}>
-              {tr(lang, "مو رقمك؟", "Not your number?")}
-            </button>
-          </p>
-        ) : (
+        {/* رقمه معروف ⇒ لا نموذج ولا سطر: بطاقة الحساب تقوله مرّةً */}
+        {!editing && /^05\d{8}$/.test(phone) ? null : (
         <div className="rq-card p-5">
           <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "هداياك", "Your gifts")}</p>
           <p className="mt-0.5 text-sm text-[color:var(--muted)]">
