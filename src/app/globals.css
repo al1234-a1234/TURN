@@ -414,6 +414,10 @@ h1, h2, h3, h4 {
   .btn-primary { background: var(--brand-solid); color: var(--brand-ink); box-shadow: 0 16px 30px -18px rgba(58, 18, 6,0.6); }
   .btn-primary:hover { transform: translateY(-1px); }
   .btn-secondary, .btn-ghost, .btn-cream { background: var(--surface); color: var(--brand-d); border: 1px solid var(--border); }
+  /* فعلٌ يوقف شيئًا أو يمحوه — يلبس لون التحذير لا لون العلامة، فلا
+     يُضغط بالعادة. ولون واحد للخطر في كل المنتج (var(--danger)). */
+  .btn-danger { background: var(--danger); color: var(--cream); }
+  .btn-danger:hover { filter: brightness(1.06); }
   .eyebrow { @apply inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold; background: var(--sage); color: var(--brand-d); }
   .badge { @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold; }
 

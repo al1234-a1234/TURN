@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      platform_status: {
+        Row: {
+          by_user: string | null
+          only_row: boolean
+          paused: boolean
+          reason: string | null
+          since: string | null
+        }
+        Insert: {
+          by_user?: string | null
+          only_row?: boolean
+          paused?: boolean
+          reason?: string | null
+          since?: string | null
+        }
+        Update: {
+          by_user?: string | null
+          only_row?: boolean
+          paused?: boolean
+          reason?: string | null
+          since?: string | null
+        }
+        Relationships: []
+      }
+      admin_audit: {
+        Row: {
+          action: string
+          actor: string | null
+          at: string
+          branch_id: string | null
+          detail: Json
+          id: string
+          reason: string | null
+          restaurant_id: string | null
+        }
+        Insert: {
+          action: string
+          actor?: string | null
+          at?: string
+          branch_id?: string | null
+          detail?: Json
+          id?: string
+          reason?: string | null
+          restaurant_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor?: string | null
+          at?: string
+          branch_id?: string | null
+          detail?: Json
+          id?: string
+          reason?: string | null
+          restaurant_id?: string | null
+        }
+        Relationships: []
+      }
       branch_settings: {
         Row: {
           accepts_reservations: boolean
@@ -1259,6 +1316,18 @@ export type Database = {
           outside: number
           total: number
         }[]
+      }
+      set_platform_pause: {
+        Args: { p_paused: boolean; p_reason?: string }
+        Returns: boolean
+      }
+      set_restaurant_pause: {
+        Args: { p_restaurant_id: string; p_paused: boolean; p_reason?: string }
+        Returns: boolean
+      }
+      staff_clear_branch_queue: {
+        Args: { p_branch_id: string; p_reason: string }
+        Returns: number
       }
       admin_restaurants_list: {
         Args: never

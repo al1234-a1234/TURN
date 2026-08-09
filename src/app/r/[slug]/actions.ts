@@ -40,6 +40,12 @@ const MSG = {
     "This branch isn't taking reservations right now.",
   ],
   branchGone: ["الفرع غير متاح.", "This branch is unavailable."],
+  // ‏P0432 — سُحب مفتاح الإيقاف العام. الصياغة تقول «نعرف، ونعمل، وارجع»:
+  // العميل واقفٌ على باب مطعمٍ الآن، وأسوأ ما يُقال له «حدث خطأ ما».
+  maintenance: [
+    "التطبيق تحت الصيانة لدقائق — رجاءً جرّب بعد قليل، ودورك محفوظ إن كنت في الطابور.",
+    "We're doing quick maintenance — try again shortly. Your place in line is safe.",
+  ],
   branchClosed: ["الفرع مغلق حاليًا.", "This branch is closed right now."],
   slotTaken: [
     "امتلأ هذا الوقت للتوّ — اختر موعدًا آخر.",
@@ -148,6 +154,7 @@ export async function joinWaitlistGuest(
     if (error.code === "P0001") {
       return { ok: false, error: msg(lang, "noWaitlist") };
     }
+    if (error.code === "P0432") return { ok: false, error: msg(lang, "maintenance") };
     if (error.code === "P0002") return { ok: false, error: msg(lang, "branchGone") };
     if (error.code === "P0003") return { ok: false, error: msg(lang, "branchClosed") };
     if (error.code === "P0429") return { ok: false, error: msg(lang, "tooMany") };
@@ -443,6 +450,7 @@ export async function bookReservationGuest(
 
   if (error) {
     // «امتلأ للتوّ» ليس خطأً في العميل: بين عرض المواعيد وضغطه حجز غيرُه
+    if (error.code === "P0432") return { ok: false, error: msg(lang, "maintenance") };
     if (error.code === "P0006" || error.code === "P0007") {
       return { ok: false, error: msg(lang, "slotTaken") };
     }
