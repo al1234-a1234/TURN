@@ -162,10 +162,14 @@ with checks(name, pass) as (
   -- (٤) RLS على كل جدول بلا استثناء — جدول واحد بلا حماية = القاعدة مكشوفة
   ('q04_rls_every_table',      not exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
                                           where n.nspname='public' and c.relkind='r' and not c.relrowsecurity)),
-  -- (٥) سطح الدوال المكشوفة للضيف لا يتوسّع خلسةً (٣٥ اليوم)
+  -- (٥) سطح الدوال المكشوفة للضيف لا يتوسّع خلسةً.
+  --     كان الحدّ ٣٥ والواقع ٣٩ — أي أنّ الفحص كان يمرّ وهو مخروق. ثم
+  --     أُغلقت خمس نقاط نهايةٍ بلا مستدعٍ (0097) فصار الواقع ٣٠، فشُدّ
+  --     الحدّ إليه. و«أصغر أو يساوي» لا «يساوي»: يمسك التوسّع ولا يعاقب
+  --     على إغلاقٍ جديد.
   ('q05_secdef_anon_surface',  (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
                                 where n.nspname='public' and p.prokind='f' and p.prosecdef
-                                  and has_function_privilege('anon',p.oid,'EXECUTE')) <= 35),
+                                  and has_function_privilege('anon',p.oid,'EXECUTE')) <= 30),
   -- (٦) مهلة الاستعلام: بدونها استعلامٌ جامح من لوحةٍ واحدة يُبطئ كل المطاعم
   ('q06_anon_stmt_timeout',    (select coalesce((select option_value from pg_options_to_table(rolconfig)
                                                  where option_name='statement_timeout'),'') <> ''
@@ -238,16 +242,16 @@ with checks(name, pass) as (
   ('q26_cancel_needs_phone',   (select pg_get_functiondef(oid) like '%norm_phone_input%'
                                 from pg_proc where proname='cancel_reservation_guest')),
   -- (٢٠) مرجع المخطط: أي انحراف عن البصمة المثبَّتة يظهر هنا قبل أن يفاجئنا
-  --      (٢٤ جدولًا · ٧٤ دالة · ٦١ سياسة · ٣٩ مفتاحًا أجنبيًّا) — راجع
+  --      (٢٧ جدولًا · ٩٣ دالة · ٦٧ سياسة · ٤٠ مفتاحًا أجنبيًّا) — راجع
   --      supabase/tests/schema_baseline.md وحدّثه عمدًا عند أي تغيير مقصود
   ('q20_schema_no_drift',      (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
-                                where n.nspname='public' and c.relkind='r') = 24
+                                where n.nspname='public' and c.relkind='r') = 27
                                and (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-                                    where n.nspname='public' and p.prokind='f') = 74
-                               and (select count(*) from pg_policies where schemaname='public') = 61
+                                    where n.nspname='public' and p.prokind='f') = 93
+                               and (select count(*) from pg_policies where schemaname='public') = 67
                                and (select count(*) from pg_constraint c join pg_class r on r.oid=c.conrelid
                                     join pg_namespace n on n.oid=r.relnamespace
-                                    where n.nspname='public' and c.contype='f') = 39)
+                                    where n.nspname='public' and c.contype='f') = 40)
 )
 select name, pass,
   case when pass then '✓' else '✗ FAIL' end as mark
