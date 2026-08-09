@@ -45,15 +45,39 @@ export async function GET() {
   // فالآن ينادي مسبارًا لا يملك تنفيذه إلا `service_role`. نجاحُه يعني
   // أنّ المفتاح مفتاح خدمةٍ يقينًا — لا ظنًّا.
   let writer = false;
+  // ولماذا فشل؟ — الحارس الذي يقول «لا» ولا يقول «لماذا» يترك صاحبه
+  // يُخمّن، وقد خمّنتُ مرّتين فأخطأتُ مرّتين. فيُفصح عن سبب الرفض:
+  //   • `probe_error` رسالة القاعدة (خطأ صلاحيّة؟ مفتاح مرفوض؟)
+  //   • `key_kind` صنف المفتاح من بادئته وحدها — `sb_secret` أو
+  //     `sb_publishable` أو `jwt` — بلا كشف حرفٍ من قيمته.
+  //   • `url_set` لأنّ العميل الإداريّ يرجع null إن غاب العنوان أيضًا.
+  let probe_error: string | null = null;
+  const rawKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  const key_kind = !rawKey
+    ? "missing"
+    : rawKey.startsWith("sb_secret_")
+      ? "sb_secret"
+      : rawKey.startsWith("sb_publishable_")
+        ? "sb_publishable"
+        : rawKey.startsWith("eyJ")
+          ? "jwt_legacy"
+          : "unknown";
+  const url_set = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL);
+
   try {
     const admin = createAdminClient();
-    if (admin) {
+    if (!admin) {
+      probe_error = "admin_client_null";
+    } else {
       const { error } = await admin.rpc("service_role_probe");
       writer = !error;
+      if (error) probe_error = `${error.code ?? "?"}: ${error.message ?? "?"}`.slice(0, 200);
     }
-  } catch { /* writer تبقى false */ }
+  } catch (e) {
+    probe_error = e instanceof Error ? e.message.slice(0, 200) : "unknown";
+  }
 
-  const body = { ok: db === "ok", db, writer, cron_fresh, db_ms: Date.now() - started };
+  const body = { ok: db === "ok", db, writer, key_kind, url_set, probe_error, cron_fresh, db_ms: Date.now() - started };
   // 503 عند سقوط القاعدة وحدها. وقد جعلتُ غياب قلم الكتابة يُسقطها أيضًا،
   // ثم تراجعت: ما دامت دوالّ الكتابة ممنوحةً للضيف (0093 متراجَعٌ عنه)
   // فالعميل يأخذ دوره والموقع قائم — وإعلانُه ساقطًا كذبٌ يعلّم صاحبه
