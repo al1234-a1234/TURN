@@ -101,7 +101,12 @@ export default async function AdminPage() {
         </section>
 
         <section>
-          <h2 className="mb-3 font-serif text-xl font-bold text-[color:var(--ink)]">{tr(lang, "إضافة مطعم + حساب مالك", "Add restaurant + owner account")}</h2>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="font-serif text-xl font-bold text-[color:var(--ink)]">{tr(lang, "إضافة مطعم + حساب مالك", "Add restaurant + owner account")}</h2>
+            <Link href="/admin/bulk" className="shrink-0 rounded-full border border-[var(--hairline)] px-3 py-2 text-xs font-bold text-[color:var(--gold-1)]">
+              {tr(lang, "بالجملة ←", "Bulk →")}
+            </Link>
+          </div>
           <AdminCreateForm />
         </section>
 
