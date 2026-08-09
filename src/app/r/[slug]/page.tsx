@@ -5,7 +5,7 @@ import { WaitlistForm } from "./waitlist-form";
 import { RestaurantTabs } from "./restaurant-tabs";
 import { ShareButton } from "./share-button";
 import { ReviewForm } from "./review-form";
-import { toAr, safeExternalUrl } from "@/lib/format";
+import { safeExternalUrl } from "@/lib/format";
 import { isWithinOpeningHours } from "@/lib/dates";
 import { HomeLink, BackLink, NoBranchesCard, RestaurantLinks } from "./localized";
 import type { Metadata } from "next";
@@ -147,9 +147,6 @@ export default async function RestaurantPublicPage({
   const initial = (restaurant.name ?? "").trim().charAt(0) || "م";
   const hasBranches = branchList.length > 0;
   const city = branchList[0]?.city ?? "";
-  // إجمالي الطابور من فرع العميل الفعلي (لا من الفرع الأول دائمًا)
-  const total = withCounts[0]?.total ?? 0;
-
   // النموذج دائمًا: هو من يقرّر عرض التذكرة بدلًا منه، بعد أن يقرأ الدور
   // المحفوظ محلّيًّا. كان الخادم يقرّر ذلك، وثمنه كان الصفحة كلّها.
   const waitlistPanel = !hasBranches ? (
@@ -200,7 +197,6 @@ export default async function RestaurantPublicPage({
           cover={restaurant.cover_url}
           logo={restaurant.logo_url}
           initial={initial}
-          queueTotal={toAr(total)}
           categories={categories ?? []}
           items={items ?? []}
           photos={photos ?? []}

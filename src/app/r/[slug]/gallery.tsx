@@ -43,7 +43,6 @@ export function Gallery({ photos }: { photos: Photo[] }) {
             className="relative aspect-[4/3] w-[80%] shrink-0 snap-center overflow-hidden rounded-3xl border text-start transition active:scale-[0.98] sm:w-[46%]"
             style={{ borderColor: "var(--border)" }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <SmartImage src={ph.url} fallbackText="٨" alt={ph.caption ?? ""} width={384} height={384} sizes="(max-width: 640px) 50vw, 240px" className="h-full w-full object-cover" />
             {ph.caption && (
               <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 to-transparent p-3 text-sm font-bold text-cream-100">{ph.caption}</span>
@@ -92,7 +91,6 @@ export function Gallery({ photos }: { photos: Photo[] }) {
           )}
 
           <figure className="max-h-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <SmartImage src={photos[open].url} fallbackText="٨" alt={photos[open].caption ?? ""} width={1080} height={1080} sizes="100vw" className="max-h-[80vh] w-full rounded-2xl object-contain" />
             {photos[open].caption && (
               <figcaption className="mt-3 text-center text-sm font-bold text-cream-100/90">{photos[open].caption}</figcaption>

@@ -99,7 +99,6 @@ export function RestaurantTabs({
   cover,
   logo,
   initial,
-  queueTotal,
   categories: seedCategories,
   items: seedItems,
   photos: seedPhotos,
@@ -120,7 +119,6 @@ export function RestaurantTabs({
   cover: string | null;
   logo: string | null;
   initial: string;
-  queueTotal: string;
   categories: Category[];
   items: Item[];
   photos: Photo[];
@@ -243,7 +241,6 @@ export function RestaurantTabs({
         {/* صورة الغلاف */}
         {cover && (
           <div className="overflow-hidden rounded-[22px]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <SmartImage src={cover} fallbackText={initial} alt="" width={828} height={416} sizes="(max-width: 640px) 100vw, 640px" className="h-52 w-full object-cover" />
           </div>
         )}
@@ -329,7 +326,6 @@ export function RestaurantTabs({
                 className="relative block w-full overflow-hidden rounded-3xl transition active:scale-[0.99]"
                 aria-label={tr(lang, "تكبير الصورة", "Zoom image")}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <SmartImage src={openItem.image_url} fallbackText={openItem.name} alt={openItem.name} width={828} height={621} sizes="(max-width: 640px) 100vw, 640px" className="aspect-[4/3] w-full object-cover" />
                 <span className="absolute end-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/45 text-sm text-cream-100">⤢</span>
               </button>
@@ -370,7 +366,6 @@ export function RestaurantTabs({
             ✕
           </button>
           <figure className="max-h-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <SmartImage src={openItem.image_url} fallbackText={openItem.name} alt={openItem.name} width={1080} height={1080} sizes="100vw" className="max-h-[80vh] w-full rounded-2xl object-contain" />
             <figcaption className="mt-3 text-center text-sm font-bold text-cream-100/90">{openItem.name}</figcaption>
           </figure>

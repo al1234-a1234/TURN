@@ -47,7 +47,6 @@ export default async function Home() {
     // توزيعٌ غائب لا يُفرغ القائمة — البطاقة تسقط إلى الإجمالي
     console.error("[home] zone counts unavailable:", err instanceof Error ? err.message : err);
   }
-  const zoneNameOf = new Map(zoneNameRows.map((z) => [`${z.branch_id}:${z.key}`, z]));
   const zoneCountOf = new Map<string, number>();
   for (const z of zoneRows) zoneCountOf.set(`${z.branch_id}:${z.zone_key}`, Number(z.waiting));
 

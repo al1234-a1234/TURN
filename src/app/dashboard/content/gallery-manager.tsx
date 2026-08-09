@@ -51,7 +51,6 @@ export function GalleryManager({ restaurantId, branchId, photos }: { restaurantI
       <div className="mb-4 grid grid-cols-3 gap-2 sm:grid-cols-4">
         {photos.map((p) => (
           <div key={p.id} className="group relative aspect-square overflow-hidden rounded-2xl border" style={{ borderColor: "var(--border)" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <Image src={p.url} alt={p.caption ?? ""} width={256} height={256} sizes="256px" className="h-full w-full object-cover" />
             <form action={deleteRestaurantPhoto} className="absolute end-1 top-1">
               <input type="hidden" name="photo_id" value={p.id} />
