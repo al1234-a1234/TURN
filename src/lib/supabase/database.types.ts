@@ -960,6 +960,7 @@ export type Database = {
           email: string | null
           id: string
           is_active: boolean
+          is_canary: boolean
           links: Json
           logo_url: string | null
           name: string
@@ -982,6 +983,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_active?: boolean
+          is_canary?: boolean
           links?: Json
           logo_url?: string | null
           name: string
@@ -1004,6 +1006,7 @@ export type Database = {
           email?: string | null
           id?: string
           is_active?: boolean
+          is_canary?: boolean
           links?: Json
           logo_url?: string | null
           name?: string

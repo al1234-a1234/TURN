@@ -50,6 +50,7 @@ export const getDiscovery = unstable_cache(
       .from("restaurants")
       .select("id, name, slug, logo_url, cover_url, cuisine, cuisine_en, branches(id, city, lat, lng, is_active, branch_settings(accepts_waitlist, manually_closed, busy_now, opening_hours))")
       .eq("is_active", true)
+      .eq("is_canary", false)
       .order("created_at", { ascending: false })
       .limit(60);
 
@@ -213,6 +214,7 @@ export const getRestaurantMeta = unstable_cache(
       .select("name, cuisine, logo_url, cover_url")
       .eq("slug", slug)
       .eq("is_active", true)
+      .eq("is_canary", false)
       .maybeSingle();
     // هذه وحدها لا ترمي — بخلاف بقيّة دوال الملف. سبب الرمي هناك أن الفشل
     // يُخزَّن فيُقدَّم للجميع؛ أمّا هنا فالمستدعي هو generateMetadata، والرمي

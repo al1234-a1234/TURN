@@ -73,3 +73,34 @@ jobs:
           echo "::error::قاعدة البيانات لا تستجيب بعد ٥ محاولات (آخر رمز: $CODE)"
           head -c 400 /tmp/health.json || true
           exit 1
+
+      # ── النبض: هل نجح إنسانٌ في أخذ دوره؟ ──
+      #
+      # الخطوتان فوق تقيسان الأجزاء: صفحةٌ ترجع ٢٠٠، وقاعدةٌ تنبض. وبينهما
+      # وبين ما يهمّ العميل مسافةٌ كاملة — نشرةٌ مكسورة، أو مفتاح خدمةٍ سقط
+      # من البيئة، أو حارس عنوانٍ اختلّ فمنع الجميع: كلّها تُبقي الصفحة ٢٠٠
+      # والقاعدة نابضة، والعميل واقفٌ على الباب لا يستطيع أخذ دوره.
+      #
+      # وتخطّيها بلا سرٍّ مضبوط عمدًا: إنذارٌ كاذبٌ كلّ ربع ساعة يعلّم المالك
+      # تجاهل الإنذارات — وذلك أخطر من العطل الذي جاءت تكشفه.
+      - name: النبض — رحلة دورٍ كاملة (انضمام ← تذكرة ← إلغاء)
+        env:
+          CANARY_SECRET: ${{ secrets.CANARY_SECRET }}
+        run: |
+          if [ -z "$CANARY_SECRET" ]; then
+            echo "::notice::CANARY_SECRET غير مضبوط — تُخطّى خطوة النبض."
+            exit 0
+          fi
+          for i in 1 2 3; do
+            CODE="$(curl -s -o /tmp/canary.json -w '%{http_code}' --max-time 25 \
+                     -H "x-canary-key: $CANARY_SECRET" \
+                     -A 'dour-canary/1.0' "https://ei8ht.app/api/canary" || echo 000)"
+            if [ "$CODE" = "200" ]; then
+              echo "✓ رحلة الدور تمّت (المحاولة $i)"; cat /tmp/canary.json; exit 0
+            fi
+            echo "المحاولة $i: رمز=$CODE"; cat /tmp/canary.json 2>/dev/null || true
+            sleep 20
+          done
+          echo "::error::تعذّر أخذ دورٍ عبر التطبيق بعد ٣ محاولات (آخر رمز: $CODE) — العميل لا يستطيع الانضمام الآن."
+          cat /tmp/canary.json 2>/dev/null || true
+          exit 1
