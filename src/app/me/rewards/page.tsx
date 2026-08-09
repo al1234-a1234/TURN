@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { CustomerShell } from "@/components/customer-shell";
-import { createClient } from "@/lib/supabase/client";
 import { useLang } from "@/components/lang-provider";
 import { tr } from "@/lib/i18n";
 import { toAr, money, normalizePhone } from "@/lib/format";
+import { getMe, saveMe } from "@/lib/local-store";
 
 /**
  * هدايا الزبون — المكان الوحيد الذي يرى فيه هديّة.
@@ -42,6 +42,7 @@ export default function MyRewardsPage() {
   const [lookupErr, setLookupErr] = useState(false);
   const [armErr, setArmErr] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
   const [, startTransition] = useTransition();
 
   const runLookup = useCallback(async (p: string) => {
@@ -49,20 +50,23 @@ export default function MyRewardsPage() {
     setLookupErr(false);
     setLoading(true);
     try {
-      // لا نحفظ الرقم كهوية للجهاز إلا بعد نجاح صيغته
-      window.localStorage.setItem("turn:phone", p);
-      const supabase = createClient();
-      const { data } = await supabase.rpc("rewards_by_phone", { p_phone: p });
-      setRewards((data ?? []) as Reward[]);
+      // في مخزن الهويّة المشترك لا في مفتاحٍ خاصّ بهذه الصفحة
+      saveMe({ phone: p });
+      const res = await fetch(`/api/my-rewards?phone=${p}`);
+      const j = res.ok ? await res.json() : { rows: [] };
+      setRewards((j.rows ?? []) as Reward[]);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // ‏«turn:phone» كان مفتاحًا خاصًّا بهذه الصفحة وحدها — ورقمُ العميل يُحفظ
+  // عند أخذ الدور في مخزن الهويّة (`getMe`). فكانت الصفحة لا ترى رقمًا
+  // موجودًا وتسأل عنه من جديد، وكأنّه لم يستعمل التطبيق قطّ.
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const saved = window.localStorage.getItem("turn:phone");
-    if (saved) { setPhone(saved); runLookup(saved); }
+    const saved = getMe().phone ? normalizePhone(getMe().phone!).slice(0, 10) : "";
+    if (/^05\d{8}$/.test(saved)) { setPhone(saved); runLookup(saved); }
+    else setEditing(true);
   }, [runLookup]);
 
   /** تسليح/فكّ — والقاعدة هي الحكم: فشلها يظهر رسالة ويعيد التحميل */
@@ -71,11 +75,15 @@ export default function MyRewardsPage() {
     setBusyId(r.id);
     setArmErr(null);
     startTransition(async () => {
-      const supabase = createClient();
-      const { data: ok, error } = await supabase.rpc("set_reward_armed_by_phone", {
-        p_reward_id: r.id, p_phone: phone, p_arm: next,
+      // عبر خادمنا لا مباشرةً: نداء RPC من متصفّح كان يرجع 405 (انظر
+      // api/my-status). والعميل يضغط «استعمال» عند الكاشير فلا يحدث شيء.
+      const res = await fetch("/api/arm-reward", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ reward_id: r.id, phone, arm: next }),
       });
-      if (ok && !error) {
+      const ok = res.ok ? (await res.json()).ok === true : false;
+      if (ok) {
         setRewards((prev) =>
           (prev ?? []).map((x) => (x.id === r.id ? { ...x, armed_at: next ? new Date().toISOString() : null } : x)),
         );
@@ -100,6 +108,8 @@ export default function MyRewardsPage() {
   return (
     <CustomerShell active="other" search={false}>
       <div className="space-y-5">
+        {/* رقمه معروف ⇒ لا نموذج ولا سطر: بطاقة الحساب تقوله مرّةً */}
+        {!editing && /^05\d{8}$/.test(phone) ? null : (
         <div className="rq-card p-5">
           <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "هداياك", "Your gifts")}</p>
           <p className="mt-0.5 text-sm text-[color:var(--muted)]">
@@ -115,6 +125,7 @@ export default function MyRewardsPage() {
             <button type="submit" disabled={loading} className="rq-btn shrink-0 px-5">{loading ? "…" : tr(lang, "عرض", "Show")}</button>
           </form>
         </div>
+        )}
 
         {armErr && (
           <p className="rounded-2xl bg-[color:var(--surface-2)] px-4 py-2.5 text-center text-xs font-bold text-[color:var(--danger)]">{armErr}</p>

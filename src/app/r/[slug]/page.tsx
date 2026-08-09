@@ -18,8 +18,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   // مكاش ٥ دقائق — كان استعلامًا حيًّا يحجب الرأس في كل فتحة (انظر public-cache)
   const r = await getRestaurantMeta(slug);
-  if (!r) return { title: "إيت | EIGHT" };
-  const title = `${r.name} | إيت`;
+  if (!r) return { title: "EIGHT" };
+  const title = `${r.name} | EIGHT`;
   const description = `خذ دورك في ${r.name}${r.cuisine ? ` — ${r.cuisine}` : ""} بلا انتظار على الباب. شوف الطابور الحيّ والقائمة والهدايا.`;
   const image = r.cover_url ?? r.logo_url;
   return {

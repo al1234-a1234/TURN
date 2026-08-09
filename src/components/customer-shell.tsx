@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Logo, Wordmark } from "@/components/logo";
+import { LiveTicketBar } from "@/components/live-ticket-bar";
 import { SharedHeader } from "@/components/page-header";
 import { useLang } from "@/components/lang-provider";
 import { tr } from "@/lib/i18n";
@@ -25,22 +26,19 @@ function IcRestaurants() {
     </svg>
   );
 }
-function IcList() {
+function IcAccount() {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M8 7h11M8 12h11M8 17h11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <circle cx="4" cy="7" r="1.2" fill="currentColor" /><circle cx="4" cy="12" r="1.2" fill="currentColor" /><circle cx="4" cy="17" r="1.2" fill="currentColor" />
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="8" r="3.6" stroke="currentColor" strokeWidth="1.9" />
+      <path d="M4.8 20c.6-3.6 3.6-5.6 7.2-5.6s6.6 2 7.2 5.6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" />
     </svg>
   );
 }
+
+// الدرج صار للتعريف والأنظمة وحدها: دوري وحجزي والهدايا والزيارات
+// والمفضّلة كانت هنا روابطَ إلى صفحاتٍ منفصلة، وقد صارت كلّها داخل
+// «حسابي» في الشريط السفلي. وبابان إلى الشيء نفسه ليس خيارًا، بل حَيرة.
 const DRAWER = [
-  // «دوري وحجزي» أوّلًا: هو ما يبحث عنه العميل بإلحاحٍ حين يفتح الدرج —
-  // دورٌ ضاع بإغلاق المتصفّح، أو حجزٌ يريد إلغاءه. وبقيّة البنود تصفّح.
-  { label: "دوري وحجزي", en: "My turn & booking", href: "/me/bookings" },
-  { label: "الهدايا", en: "Gifts", href: "/me/rewards" },
-  { label: "المفضلة", en: "Favorites", href: "/me/favorites" },
-  { label: "الزيارات", en: "Visits", href: "/me/visits" },
-  { label: "الإعدادات", en: "Settings", href: "/me" },
   { label: "من نحن", en: "About Us", href: "/about" },
   { label: "تواصل معنا", en: "Contact Us", href: "/contact" },
   { label: "سياسة الخصوصية", en: "Privacy Policy", href: "/privacy" },
@@ -52,26 +50,36 @@ export function CustomerShell({
   search = true,
   children,
 }: {
-  active?: "restaurants" | "other";
+  /** ‏"none" لصفحات الدرج (من نحن، الخصوصية…): لا تنتمي إلى تبويبٍ فتُضيئه كذبًا */
+  active?: "restaurants" | "other" | "none";
   search?: boolean;
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  // شريط التذكرة يعلو الشريط السفلي، فيأكل من المحتوى سطرًا. والحشو يعرف
+  // بظهوره كي لا يختفي آخرُ مطعمٍ في القائمة تحته.
+  const [hasLive, setHasLive] = useState(false);
+  const onLiveShow = useCallback((shown: boolean) => setHasLive(shown), []);
   const lang = useLang();
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
       {/* الهيدر — يمين: الشعار (يفتح القائمة) · وسط: EIGHT · يسار: بحث */}
       <SharedHeader>
+        {/* الشعار والبحث في قالبٍ واحد: كان الشعار بطاقةً لامعة والبحث
+            دائرةً هادئة، فيبدوان عنصرين من نظامين. والترويسة تُقرأ دفعةً
+            واحدة، فتفاوتُ حوافّها يُرى قبل أن يُفهم أيّهما زرّ. */}
         <button
           onClick={() => setOpen(true)}
           aria-label={tr(lang, "القائمة", "Menu")}
-          className="flex items-center justify-center transition active:scale-95"
+          className="rq-circle overflow-hidden p-0 transition active:scale-95"
         >
           <Logo size={44} />
         </button>
 
-        <Wordmark className="select-none" />
+        {/* أصغر على الجوّال: بحجمها الكامل كانت تزاحم الزرّين على جانبيها
+            في شاشةٍ ضيّقة، فتبدو الترويسة مكتظّةً بلا داعٍ. */}
+        <Wordmark className="select-none scale-[0.82] sm:scale-100" />
 
         {search ? (
           <Link href="/search" className="rq-circle" aria-label={tr(lang, "بحث", "Search")}>
@@ -85,7 +93,7 @@ export function CustomerShell({
       {/* المحتوى */}
       <main
         className="mx-auto w-full max-w-2xl flex-1 px-5 pb-28 pt-4"
-        style={{ paddingBottom: "calc(7rem + env(safe-area-inset-bottom))" }}
+        style={{ paddingBottom: `calc(${hasLive ? "11rem" : "7rem"} + env(safe-area-inset-bottom))` }}
       >
         {children}
       </main>
@@ -97,10 +105,20 @@ export function CustomerShell({
         className="fixed inset-x-0 bottom-0 z-30 px-4 pb-4"
         style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
       >
+        {/* التذكرة تتنقّل معه: من يفتح التطبيق وهو في الطابور لم يفتحه
+            ليتصفّح، بل ليطمئنّ على ترتيبه. */}
+        <div className="mx-auto max-w-2xl">
+          <LiveTicketBar onShow={onLiveShow} />
+        </div>
+
         <div className="rq-nav">
+          {/* تبويبان لا أكثر: المطاعم — وهو التصفّح، و«حسابي» — وفيه اسمه
+              ورقمه وتذكرة دوره وحجزه وهداياه وزياراته. وكان «حسابي» خلف
+              الشعار في الأعلى وحده، فلا يخطر لأحدٍ أن الشعار بابُ حساب.
+              وما يُفتح كل يوم لا يُخبَّأ خلف رمز. */}
           {[
-            { key: "other", href: "/me", icon: <IcList />, label: tr(lang, "حسابي", "My account") },
             { key: "restaurants", href: "/", icon: <IcRestaurants />, label: tr(lang, "المطاعم", "Restaurants") },
+            { key: "other", href: "/me", icon: <IcAccount />, label: tr(lang, "حسابي", "My account") },
           ].map((item) => {
             const isActive = active === item.key;
             return (
@@ -123,7 +141,7 @@ export function CustomerShell({
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" /></svg>
               </button>
               <div className="flex items-center justify-end gap-3">
-                <span className="font-display text-xl font-bold text-[color:var(--brand-maroon)]">{tr(lang, "إيت", "EIGHT")}</span>
+                <span className="font-display text-xl font-bold text-[color:var(--brand-maroon)]">EIGHT</span>
                 <Logo size={56} />
               </div>
             </div>

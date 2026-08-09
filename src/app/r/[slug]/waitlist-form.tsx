@@ -11,6 +11,7 @@ import { useSelectBranch } from "./restaurant-tabs";
 import { createClient } from "@/lib/supabase/client";
 import { isWithinOpeningHours } from "@/lib/dates";
 import { recordTurn, lastTurnFor, clearTurnRecovery, getMe, saveMe } from "@/lib/local-store";
+import { clearLiveTicketCache } from "@/components/live-ticket-bar";
 import { SmartImage } from "@/components/smart-image";
 import { zoneLabel, type Zone } from "@/lib/zones";
 // استيرادٌ عادي لا `dynamic`: كل ما يعتمد عليه نموذج الحجز (عميل Supabase،
@@ -58,6 +59,20 @@ function ZoneStat({ label, count }: { label: string; count: number }) {
       </p>
     </div>
   );
+}
+
+/**
+ * سطر توزيع الأقسام على بطاقة الفرع — «٣ داخلي · ٢ خارجي» بأسماء المالك.
+ *
+ * يُعرض ما فيه منتظرون فقط، وثلاثةٌ كحدٍّ أعلى كي لا يفيض السطر عن البطاقة.
+ */
+function zoneLine(b: Branch, lang: "ar" | "en"): string {
+  const parts = (b.zones ?? [])
+    .map((z) => ({ name: zoneLabel(z, lang), n: b.zoneCounts?.[z.key] ?? 0 }))
+    .filter((z) => z.n > 0)
+    .slice(0, 3)
+    .map((z) => `${toAr(z.n)} ${z.name}`);
+  return parts.join(" · ");
 }
 
 /** بطاقة فرع كصورة كبيرة داخل شريط أفقي منزلق (نمط ريكيو) — بهويتنا. */
@@ -113,9 +128,14 @@ function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; o
         ) : b.total > 0 ? (
           <span className="flex items-center justify-between rounded-2xl px-3.5 py-2.5"
                 style={{ background: "var(--brand-solid)", boxShadow: "0 12px 24px -16px rgba(102,28,10,0.72)" }}>
+            {/* التوزيع وحده — لا مجموعَ فوقه.
+                المجموع يجمع ما لا يُجمع: من ينتظر داخليًّا لا يزاحم من ينتظر
+                خارجيًّا. والعميل يسأل «أين أجلس؟»، فـ«٤ داخلي · ٢ خارجي»
+                تجيبه، و«٦ بالطابور» تخيفه بلا داعٍ. وسطرٌ واحد لا سطران:
+                البطاقة تضيق، والسطر الثاني كان يمطّها طولًا. */}
             <span className="flex items-center gap-2 text-sm font-extrabold text-cream-100">
-              <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
-              {tr(lang, `${toAr(b.total)} بالطابور الآن`, `${toAr(b.total)} in queue now`)}
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-white/90" />
+              {zoneLine(b, lang) || tr(lang, `${toAr(b.total)} بالطابور الآن`, `${toAr(b.total)} in queue now`)}
             </span>
             <span className="text-xs font-extrabold text-cream-100/85">{tr(lang, "خذ دورك ←", "Take turn ←")}</span>
           </span>
@@ -358,11 +378,14 @@ export function WaitlistForm({
     const phone = me.phone ? normalizePhone(me.phone).slice(0, 10) : "";
     if (!/^05\d{8}$/.test(phone)) return;
     let alive = true;
-    createClient()
-      .rpc("guest_status_by_phone", { p_phone: phone })
-      .then(({ data }) => {
+    fetch(`/api/my-status?phone=${phone}`)
+      .then((r) => (r.ok ? r.json() : { rows: [] }))
+      .then((j) => {
         if (!alive) return;
-        const mine = (data ?? []).find((r) => r.kind === "turn" && r.restaurant_slug === slug);
+        const mine = (j.rows ?? []).find(
+          (r: { kind: string; restaurant_slug: string; id: string }) =>
+            r.kind === "turn" && r.restaurant_slug === slug,
+        );
         if (mine) setRestored({ entryId: mine.id, phone });
       });
     return () => { alive = false; };
@@ -458,6 +481,8 @@ export function WaitlistForm({
       });
       // يُعبَّأ تلقائيًّا في المرّة القادمة — لأي مطعم، وللضيف كما للمسجَّل
       saveMe({ name: nameRef.current?.value?.trim() || undefined, phone: state.phone });
+      // دورٌ بدأ الآن يجب أن يظهر في الشريط المتنقّل فورًا لا بعد دقيقة
+      clearLiveTicketCache();
       // انضمام جديد بعد «خذ دورًا جديدًا»: startedOver كان يبقى true للأبد
       // فتُحجب تذكرة النجاح الجديدة — العميل في الطابور فعلًا والواجهة
       // تعرض النموذج الفارغ فيعيد الضغط حتى يضرب حدّ المعدّل.
@@ -468,11 +493,19 @@ export function WaitlistForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.ok, state.entryId]);
 
+  // الفرع مغلقٌ الآن؟ — للفرع المختار، وإلّا فحين تُغلق كل الفروع (تذكرةٌ
+  // مسترجَعة قد تصل بلا فرعٍ مختار). التذكرة تحتاجها كي لا تَعِد بتنبيهٍ
+  // لن يأتي: القاعدة تُنهي الطابور بعد الإغلاق، لكنها تمرّ كل ربع ساعة.
+  const ticketBranchClosed = branch
+    ? branch.closedNow
+    : branchesLive.length > 0 && branchesLive.every((b) => b.closedNow);
+
   if (state.ok && !startedOver) {
     return (
       <QueueTicket
         position={state.position ?? 0} total={state.total ?? 0}
         entryId={state.entryId} phone={state.phone} restaurantName={restaurantName}
+        branchClosed={ticketBranchClosed}
         onGone={() => { clearTurnRecovery(slug); setStartedOver(true); setRestored(null); }}
       />
     );
@@ -484,7 +517,7 @@ export function WaitlistForm({
     return (
       <QueueTicket
         position={0} total={0} entryId={restored.entryId} phone={restored.phone}
-        restaurantName={restaurantName} restored
+        restaurantName={restaurantName} restored branchClosed={ticketBranchClosed}
         onGone={() => { clearTurnRecovery(slug); setRestored(null); }}
       />
     );

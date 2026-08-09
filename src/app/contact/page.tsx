@@ -2,16 +2,16 @@ import { CustomerShell } from "@/components/customer-shell";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
 
-export const metadata = { title: "تواصل معنا · إيت" };
+export const metadata = { title: "تواصل معنا · EIGHT" };
 
 export default async function ContactPage() {
   const lang = await getLang();
   const channels = [
     { icon: "✉️", ar: "البريد", en: "Email", value: "albraalaan@gmail.com", href: "mailto:albraalaan@gmail.com" },
-    { icon: "🤝", ar: "انضمّ كشريك", en: "Join as a partner", value: tr(lang, "أضِف مطعمك إلى إيت", "Add your restaurant to EIGHT"), href: "/partners" },
+    { icon: "🤝", ar: "انضمّ كشريك", en: "Join as a partner", value: tr(lang, "أضِف مطعمك إلى EIGHT", "Add your restaurant to EIGHT"), href: "/partners" },
   ];
   return (
-    <CustomerShell active="other" search={false}>
+    <CustomerShell active="none" search={false}>
       <div className="space-y-5">
         <div className="rq-card p-7 text-center">
           <span className="text-4xl">💬</span>

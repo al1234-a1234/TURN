@@ -29,6 +29,7 @@ export function QueueTicket({
   restaurantName,
   onGone,
   restored,
+  branchClosed,
 }: {
   position: number;
   total: number;
@@ -39,6 +40,14 @@ export function QueueTicket({
   onGone?: () => void;
   /** تذكرة مسترجَعة من التخزين: لو كانت حالتها نهائية لا نعرضها أصلًا */
   restored?: boolean;
+  /**
+   * الفرع خارج ساعات عمله الآن.
+   *
+   * القاعدة تُنهي الطابور بعد الإغلاق (expire_stale_waitlist)، لكنها تمرّ كل
+   * ربع ساعة. وفي تلك الدقائق كانت التذكرة تقول «بننبّهك على جوّالك قبل
+   * دورك» ولا أحد سينبّه ولا أحد سيُجلس. ووعدٌ لا يُوفى أسوأ من لا وعد.
+   */
+  branchClosed?: boolean;
 }) {
   const lang = useLang();
   const [pending, start] = useTransition();
@@ -274,7 +283,11 @@ export function QueueTicket({
       <div>
         <p className="font-display text-2xl font-bold text-[color:var(--ink)]">{hasLive ? peopleAhead(ahead, lang) : tr(lang, "جارٍ تحديث دورك…", "Syncing your turn…")}</p>
         <p className="mt-1 text-sm text-[color:var(--muted)]">
-          {ahead === 0 ? tr(lang, "استعد — جاي دورك", "Get ready — your turn is coming") : tr(lang, "راقب رقمك، وننبّهك قبل دورك", "Keep an eye on your number, we'll alert you before your turn")}
+          {branchClosed
+            ? tr(lang, "المطعم أغلق الآن — إن كنت عند الباب راجع الاستقبال", "The restaurant is now closed — if you're at the door, see the host")
+            : ahead === 0
+              ? tr(lang, "استعد — جاي دورك", "Get ready — your turn is coming")
+              : tr(lang, "راقب رقمك، وننبّهك قبل دورك", "Keep an eye on your number, we'll alert you before your turn")}
         </p>
       </div>
 
@@ -290,8 +303,22 @@ export function QueueTicket({
         </div>
       </div>
 
+      {/* المطعم مغلق: لا نعرض زرّ التنبيه ولا نعده — نقول ما يجري بدله */}
+      {branchClosed && (
+        <p
+          className="w-full rounded-2xl px-4 py-3 text-center text-sm font-bold"
+          style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--brand-d)" }}
+        >
+          {tr(
+            lang,
+            "التنبيه متوقّف — الطابور ينتهي بإغلاق المطعم، وتقدر تاخذ دورك من جديد عند الفتح.",
+            "Alerts are off — the queue ends when the restaurant closes. Take a new turn when it opens.",
+          )}
+        </p>
+      )}
+
       {/* تنبيه الدور — يصل والتطبيق مُغلق */}
-      {entryId && phone && canPush && (
+      {!branchClosed && entryId && phone && canPush && (
         pushOn ? (
           <p className="flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-bold text-cream-100"
              style={{ background: "var(--brand-solid)" }}>

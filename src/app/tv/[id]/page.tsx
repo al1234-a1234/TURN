@@ -80,7 +80,7 @@ export default async function TvPage({ params }: { params: Promise<{ id: string 
       <TvBoard branchId={id} initial={rows} zones={zones} />
 
       <footer className="text-center text-sm font-bold" style={{ color: "rgba(102,28,10,0.4)" }} dir="ltr">
-        EIGHT · إيت
+        EIGHT
       </footer>
     </div>
   );

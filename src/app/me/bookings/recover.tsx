@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
 import { getMe, saveMe } from "@/lib/local-store";
+import { clearLiveTicketCache } from "@/components/live-ticket-bar";
 import { normalizePhone, toAr } from "@/lib/format";
 import { fmtTime } from "@/lib/dates";
 import { tr } from "@/lib/i18n";
@@ -41,21 +41,29 @@ export function RecoverBookings() {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [cancelling, setCancelling] = useState<string | null>(null);
+  const [cancelErr, setCancelErr] = useState(false);
+  // الحقل مخفيٌّ لمن رقمه معروف: سؤاله عمّا نعرفه يُشعره أن شيئًا ضاع
+  const [editing, setEditing] = useState(false);
 
   const lookup = useCallback(async (p: string) => {
     if (!/^05\d{8}$/.test(p)) return;
     setBusy(true);
-    const { data, error } = await createClient().rpc("guest_status_by_phone", { p_phone: p });
+    const res = await fetch(`/api/my-status?phone=${p}`);
     setBusy(false);
     // فشلٌ عابر ≠ «ما عندك شيء»: null يعني لم نعرف، والواجهة تفرّق
-    setRows(error ? null : ((data ?? []) as Row[]));
-    if (!error) saveMe({ phone: p });
+    if (!res.ok) { setRows(null); return; }
+    const j = await res.json();
+    setRows((j.rows ?? []) as Row[]);
+    saveMe({ phone: p });
   }, []);
 
   // الرقم محفوظ من آخر مرّة ⇒ يظهر جاهزًا بلا كتابة
   useEffect(() => {
     const me = getMe();
-    if (me.phone) setPhone(normalizePhone(me.phone).slice(0, 10));
+    const p = me.phone ? normalizePhone(me.phone).slice(0, 10) : "";
+    setPhone(p);
+    // بلا رقمٍ محفوظ وحده يُفتح الحقل — وإلا فالصفحة تعرض النتيجة مباشرةً
+    if (!/^05\d{8}$/.test(p)) setEditing(true);
   }, []);
 
   // ويبحث بمجرّد اكتمال الرقم — سواءٌ جاء من الذاكرة أو كتبه الآن.
@@ -70,15 +78,29 @@ export function RecoverBookings() {
 
   async function cancelReservation(id: string) {
     setCancelling(id);
-    const { data } = await createClient().rpc("cancel_reservation_guest", { p_id: id, p_phone: phone });
+    // عبر خادمنا لا مباشرةً: نداء RPC من متصفّح كان يرجع 405 صامتًا، فيضغط
+    // العميل «إلغاء» ولا يحدث شيء — ويبقى الحجز قائمًا وهو يحسبه ملغى.
+    const res = await fetch("/api/cancel-booking", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ id, phone }),
+    });
     setCancelling(null);
-    if (data) setRows((cur) => (cur ?? []).filter((r) => r.id !== id));
+    const j = res.ok ? await res.json() : { ok: false };
+    if (j.ok) {
+      setRows((cur) => (cur ?? []).filter((r) => r.id !== id));
+      clearLiveTicketCache();
+    } else setCancelErr(true);
   }
 
   const ok = /^05\d{8}$/.test(phone);
 
   return (
     <div className="space-y-4">
+      {/* رقمه معروف ⇒ لا يُعرض هنا أصلًا: بطاقة الحساب تقوله مرّةً في
+          أعلى الصفحة، وإعادته في كل قسمٍ ضجيجٌ لا خبر. والنموذج لمن لا
+          رقم له وحده. */}
+      {!editing && ok ? null : (
       <div className="rq-card p-5">
         <p className="field-label mb-2">{tr(lang, "رقم جوّالك", "Your mobile number")}</p>
         <p className="mb-3 text-[13px] leading-6 text-[color:var(--muted)]">
@@ -108,13 +130,20 @@ export function RecoverBookings() {
           </button>
         </div>
       </div>
+      )}
 
-      {rows === null && !busy && (
+      {rows === null && !busy && editing && (
         <p className="px-1 text-sm font-bold text-[color:var(--muted)]">
           {/* لا نقول «ما عندك شيء» ونحن لم نعرف — عميلٌ له حجز يقرؤها إلغاءً */}
           {phone.length > 0
             ? tr(lang, "أكمل رقمك (١٠ خانات) ليظهر دورك وحجزك.", "Complete your number (10 digits) to see your turn and booking.")
             : tr(lang, "اكتب رقمك لاسترجاع دورك أو حجزك.", "Enter your number to find your turn or booking.")}
+        </p>
+      )}
+
+      {cancelErr && (
+        <p className="px-1 text-[13px] font-bold" style={{ color: "var(--danger)" }}>
+          {tr(lang, "تعذّر الإلغاء — جرّب بعد لحظات، أو اتّصل بالمطعم.", "Couldn't cancel — try again shortly, or call the restaurant.")}
         </p>
       )}
 

@@ -2,7 +2,7 @@ import { CustomerShell } from "@/components/customer-shell";
 import { getLang } from "@/lib/i18n-server";
 import { tr } from "@/lib/i18n";
 
-export const metadata = { title: "سياسة الخصوصية · إيت" };
+export const metadata = { title: "سياسة الخصوصية · EIGHT" };
 
 /* إفصاح واضح بما نجمعه ولماذا — المنصّة تجمع أسماء وأرقام جوالات وتحسب
    مسافة تقريبية، ونظام حماية البيانات الشخصية السعودي (PDPL) يستوجب
@@ -66,7 +66,7 @@ export default async function PrivacyPage() {
   ];
 
   return (
-    <CustomerShell active="other" search={false}>
+    <CustomerShell active="none" search={false}>
       <div className="space-y-4">
         <div className="rq-card p-6">
           <h1 className="font-display text-2xl font-bold text-[color:var(--ink)]">{tr(lang, "سياسة الخصوصية", "Privacy Policy")}</h1>

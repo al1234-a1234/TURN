@@ -8,6 +8,7 @@ import { useLang } from "@/components/lang-provider";
 import { createClient } from "@/lib/supabase/client";
 import { riyadhISODate, fmtTime } from "@/lib/dates";
 import { getMe, saveMe } from "@/lib/local-store";
+import { clearLiveTicketCache } from "@/components/live-ticket-bar";
 import { zoneLabel, type Zone } from "@/lib/zones";
 
 /**
@@ -94,7 +95,12 @@ export function ReserveForm({
   }, [branchId, day, cappedParty, effectiveZone]);
 
   useEffect(() => {
-    if (state.ok) saveMe({ name: nameRef.current?.value?.trim() || undefined, phone });
+    // ويُبطَل كاش الشريط المتنقّل: حجزٌ صار قبل قليل يجب أن يظهر فوق كل
+    // صفحة الآن، لا بعد أن تنتهي مهلة الدقيقة
+    if (state.ok) {
+      saveMe({ name: nameRef.current?.value?.trim() || undefined, phone });
+      clearLiveTicketCache();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.ok]);
 
@@ -119,7 +125,7 @@ export function ReserveForm({
         </p>
         {/* أين يجده لاحقًا. بلا هذا كان يُغلق المتصفّح ولا يعرف أن حجزه
             مسترجَعٌ برقمه — ولا كيف يلغيه إن تغيّرت ظروفه. */}
-        <a href="/me/bookings" className="rq-btn-soft mt-4 inline-flex">
+        <a href="/me" className="rq-btn-soft mt-4 inline-flex">
           {tr(lang, "حجزي — للعرض أو الإلغاء ←", "My booking — view or cancel ←")}
         </a>
       </div>

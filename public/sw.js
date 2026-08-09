@@ -9,10 +9,10 @@ self.addEventListener("push", (event) => {
   try {
     payload = event.data ? event.data.json() : {};
   } catch {
-    payload = { title: "إيت", body: event.data ? event.data.text() : "" };
+    payload = { title: "EIGHT", body: event.data ? event.data.text() : "" };
   }
 
-  const title = payload.title || "إيت";
+  const title = payload.title || "EIGHT";
   const options = {
     body: payload.body || "",
     // ‏?v=6 كما في المانيفست: بدونها يُبقي الجهاز أيقونةً قديمة مخزّنة

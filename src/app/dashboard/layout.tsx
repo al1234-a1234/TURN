@@ -33,7 +33,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <div className="soft-card flex flex-col items-center gap-4 p-8 text-center">
             <span className="flex h-16 w-16 items-center justify-center rounded-2xl text-3xl" style={{ background: "var(--brand-solid)" }}>🍽️</span>
             <h1 className="font-display text-2xl font-bold text-[color:var(--ink)]">{tr(lang, "لا يوجد مطعم مرتبط بحسابك", "No restaurant linked to your account")}</h1>
-            <p className="max-w-sm text-sm text-[color:var(--muted)]">{tr(lang, "حسابات الملّاك تُنشأ من قِبل إدارة إيت فقط. تواصل معنا لإضافة مطعمك.", "Owner accounts are created by the EIGHT team only. Contact us to add your restaurant.")}</p>
+            <p className="max-w-sm text-sm text-[color:var(--muted)]">{tr(lang, "حسابات الملّاك تُنشأ من قِبل إدارة EIGHT فقط. تواصل معنا لإضافة مطعمك.", "Owner accounts are created by the EIGHT team only. Contact us to add your restaurant.")}</p>
             <a href="mailto:albraalaan@gmail.com" className="btn btn-primary w-full max-w-xs">{tr(lang, "تواصل مع الإدارة", "Contact the team")}</a>
             {load.isAdmin && <Link href="/admin" className="btn btn-secondary mt-2 w-full max-w-xs">{tr(lang, "⚙️ لوحة الأدمِن", "⚙️ Admin panel")}</Link>}
             <Link href="/account" className="mt-2 text-sm font-bold text-[color:var(--gold-1)]">{tr(lang, "حسابي — تغيير كلمة المرور", "My account — change password")}</Link>
