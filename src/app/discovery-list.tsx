@@ -73,7 +73,16 @@ function branchesLabel(n: number, lang: Lang): string {
  *
  * والصفر لا يُطبع: «خارجي 0» يُقرأ زخرفةً لا خبرًا، فالقسم الفارغ يسقط.
  */
-function cardState(r: DiscoveryItem, lang: Lang): { parts: string[]; color: string } {
+type Tone = "closed" | "open" | "busy";
+type CardState = {
+  /** الكبسولة في الطرف الأيسر تحت التقييم — كلمةُ الحالة وحدها */
+  chip: string | null;
+  tone: Tone;
+  /** التفصيل تحت الاسم: «٣ داخلي · ٢ خارجي» — خبرٌ لا حالة */
+  parts: string[];
+};
+
+function cardState(r: DiscoveryItem, lang: Lang): CardState {
   // المغلق يبقى بطاقةً كاملةً كبقيّة البطاقات — لا تخافُتَ ولا تصميمًا
   // مختلفًا. الخبر في سطر الحالة وحده، والمطعم يُعرض بكامل هيئته لأن العميل
   // قد يفتحه ليرى موقعه أو موعد فتحه.
@@ -82,8 +91,8 @@ function cardState(r: DiscoveryItem, lang: Lang): { parts: string[]; color: stri
   // الطابور، فصار الصفّ ثلاثة ألوان — اسمٌ داكن، وسطران عنابيّان، وسطرٌ
   // رماديّ — يُرى تفاوتًا قبل أن يُقرأ خبرًا. والالتباس مدفوعٌ أصلًا:
   // «مغلق حاليًّا» عنوانُ قسمٍ فوقه يجمع المغلقين وحدهم.
-  if (r.closedNow) return { parts: [tr(lang, "مغلق الآن", "Closed now")], color: "var(--brand-d)" };
-  if (!r.accepts) return { parts: [tr(lang, "استقبال مباشر", "Walk in directly")], color: "var(--st-open)" };
+  if (r.closedNow) return { chip: tr(lang, "مغلق الآن", "Closed now"), tone: "closed", parts: [] };
+  if (!r.accepts) return { chip: tr(lang, "استقبال مباشر", "Walk in"), tone: "open", parts: [] };
 
   // متعدّد الفروع: لا رقم من الخارج.
   //
@@ -95,21 +104,54 @@ function cardState(r: DiscoveryItem, lang: Lang): { parts: string[]; color: stri
   // كتبتُه أوّلًا «فرعان» بالذهبيّ — وكان تكرارًا: `branchesLabel` تقولها
   // فوقه تحت الاسم منذ البداية. وعنوان القسم («متاح الآن» / «فيه طابور»)
   // يحمل الحالة. فسطرٌ ثالث يعيد ما قيل مرّتين حشوٌ لا خبر.
-  if (r.branchCount > 1) return { parts: [], color: "var(--muted)" };
+  if (r.branchCount > 1) return { chip: null, tone: "busy", parts: [] };
 
-  // فرعٌ واحد: التوزيع بأسماء المالك — «٣ عوائل · ٢ أفراد».
-  // العميل يسأل «أين أجلس؟» لا «كم العدد؟»، والاسم يجيبه والرقم لا.
+  // فرعٌ واحد: الكبسولة تقول الحالة، والتفصيل تحت الاسم بأسماء المالك —
+  // «٣ عوائل · ٢ أفراد». العميل يسأل «أين أجلس؟» لا «كم العدد؟»، والاسم
+  // يجيبه والرقم لا. ولا يُحشر التوزيع في الكبسولة: يطول فيضغط الاسم.
   if (r.zones.length) {
     return {
+      chip: tr(lang, "فيه طابور", "In queue"),
+      tone: "busy",
       parts: r.zones.slice(0, 3).map((z) => tr(lang, `${toAr(z.waiting)} ${z.name}`, `${z.waiting} ${z.name}`)),
-      color: "var(--brand-solid)",
     };
   }
 
   if (r.waiting > 0) {
-    return { parts: [tr(lang, `${toAr(r.waiting)} بالانتظار`, `${r.waiting} waiting`)], color: "var(--brand-solid)" };
+    return {
+      chip: tr(lang, "فيه طابور", "In queue"),
+      tone: "busy",
+      parts: [tr(lang, `${toAr(r.waiting)} بالانتظار`, `${r.waiting} waiting`)],
+    };
   }
-  return { parts: [tr(lang, "بلا انتظار", "No wait")], color: "var(--st-open)" };
+  return { chip: tr(lang, "متاح الآن", "Available"), tone: "open", parts: [] };
+}
+
+/**
+ * كبسولة الحالة — في الطرف الأيسر تحت التقييم.
+ *
+ * كانت سطرًا رابعًا تحت الاسم، فيقرؤها العميل امتدادًا لوصف المطعم
+ * («فرعان · إيطالي · مغلق الآن») وهي ليست وصفًا بل حالةً تتغيّر كل ساعة.
+ * وأن يبحث عنها في آخر ثلاثة أسطر متشابهة يبطّئ الفرز — والشاشة مهمّةُ
+ * فرزٍ قبل كل شيء. فصارت لها زاويةٌ ثابتة: يمسح العين عمودًا واحدًا
+ * فيعرف من يستقبله الآن.
+ */
+const CHIP_STYLE: Record<Tone, React.CSSProperties> = {
+  // المغلق لا فعل فيه: كبسولةٌ هادئة بحدٍّ لا مساحةٌ مصمتة تنادي
+  closed: { background: "var(--surface-2)", color: "var(--brand-d)", border: "1px solid var(--border)" },
+  open: { background: "var(--st-open)", color: "var(--brand-ink)", border: "1px solid transparent" },
+  busy: { background: "var(--brand-solid)", color: "var(--brand-ink)", border: "1px solid transparent" },
+};
+
+function StateChip({ text, tone }: { text: string; tone: Tone }) {
+  return (
+    <span
+      className="shrink-0 whitespace-nowrap rounded-full px-2.5 py-[3px] text-[11px] font-extrabold leading-[1.6]"
+      style={CHIP_STYLE[tone]}
+    >
+      {text}
+    </span>
+  );
 }
 
 function Card({ r, lang }: { r: DiscoveryItem; lang: Lang }) {
@@ -138,20 +180,12 @@ function Card({ r, lang }: { r: DiscoveryItem; lang: Lang }) {
         )}
       </span>
 
-      {/* مواضع ثابتة من صفٍّ لآخر: الاسم، ثم الرمادي، ثم الحالة. الشاشة
-          مهمّة مقارنة («أيّهم يجلسني أسرع؟») والمقارنة تحتاج موضعًا متوقَّعًا. */}
+      {/* عمودان: يمينًا من هو المطعم، ويسارًا كيف حاله الآن.
+          كانت الحالة سطرًا رابعًا تحت الاسم فتُقرأ امتدادًا للوصف — «فرعان ·
+          إيطالي · مغلق الآن» — وهي ليست وصفًا بل حالةً تتغيّر كل ساعة.
+          والشاشة مهمّةُ فرز؛ فالحالة في زاويةٍ ثابتة تُمسح بعمودٍ واحد. */}
       <div className="min-w-0 flex-1">
-        {/* التقييم في صفّ الاسم لا معلّقًا وحده في الطرف: هما معًا «هويّة
-            المطعم»، والسطران تحتهما حالته. */}
-        <div className="flex items-baseline gap-2">
-          <p className="min-w-0 flex-1 truncate font-display text-[17px] font-semibold leading-[1.45] text-[color:var(--ink)]">{r.name}</p>
-          {r.rating && (
-            <span className="flex shrink-0 items-center gap-1 text-[13px] font-semibold tabular-nums text-[color:var(--ink)]">
-              <span style={{ color: "var(--star)" }}>★</span>
-              {r.rating}
-            </span>
-          )}
-        </div>
+        <p className="truncate font-display text-[17px] font-semibold leading-[1.45] text-[color:var(--ink)]">{r.name}</p>
         {/* سطران لا سطر: الفروع والمطبخ خبران مختلفان — «أين؟» و«ماذا؟» —
             وجمعهما بنقطةٍ كان يجعل العين تقرؤهما جملةً واحدة.
             وبلون الهوية لا الرمادي: هذا وصف المطعم لا حاشيةٌ باهتة.
@@ -167,7 +201,7 @@ function Card({ r, lang }: { r: DiscoveryItem; lang: Lang }) {
           </p>
         )}
         {state.parts.length > 0 && (
-        <p className="mt-px flex items-baseline text-[13px] font-semibold leading-[1.55]" style={{ color: state.color }}>
+        <p className="mt-px flex items-baseline text-[13px] font-semibold leading-[1.55]" style={{ color: "var(--brand-solid)" }}>
           {state.parts.map((p, i) => (
             <span key={p}>
               {i > 0 && <Dot />}
@@ -176,6 +210,18 @@ function Card({ r, lang }: { r: DiscoveryItem; lang: Lang }) {
           ))}
         </p>
         )}
+      </div>
+
+      {/* الطرف الأيسر: التقييم فوق الحالة — كلاهما حكمٌ على المطعم لا وصفٌ
+          له، وعمودٌ واحد يجمعهما يجعل الصفّ يُقرأ من طرفيه لا من وسطه. */}
+      <div className="flex shrink-0 flex-col items-end gap-1.5">
+        {r.rating ? (
+          <span className="flex items-center gap-1 text-[13px] font-semibold tabular-nums text-[color:var(--ink)]">
+            <span style={{ color: "var(--star)" }}>★</span>
+            {r.rating}
+          </span>
+        ) : null}
+        {state.chip && <StateChip text={state.chip} tone={state.tone} />}
       </div>
     </Link>
   );
