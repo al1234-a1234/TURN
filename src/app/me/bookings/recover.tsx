@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { getMe, saveMe } from "@/lib/local-store";
+import { clearLiveTicketCache } from "@/components/live-ticket-bar";
 import { normalizePhone, toAr } from "@/lib/format";
 import { fmtTime } from "@/lib/dates";
 import { tr } from "@/lib/i18n";
@@ -86,8 +87,10 @@ export function RecoverBookings() {
     });
     setCancelling(null);
     const j = res.ok ? await res.json() : { ok: false };
-    if (j.ok) setRows((cur) => (cur ?? []).filter((r) => r.id !== id));
-    else setCancelErr(true);
+    if (j.ok) {
+      setRows((cur) => (cur ?? []).filter((r) => r.id !== id));
+      clearLiveTicketCache();
+    } else setCancelErr(true);
   }
 
   const ok = /^05\d{8}$/.test(phone);

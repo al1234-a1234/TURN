@@ -8,6 +8,7 @@ import { useLang } from "@/components/lang-provider";
 import { createClient } from "@/lib/supabase/client";
 import { riyadhISODate, fmtTime } from "@/lib/dates";
 import { getMe, saveMe } from "@/lib/local-store";
+import { clearLiveTicketCache } from "@/components/live-ticket-bar";
 import { zoneLabel, type Zone } from "@/lib/zones";
 
 /**
@@ -94,7 +95,12 @@ export function ReserveForm({
   }, [branchId, day, cappedParty, effectiveZone]);
 
   useEffect(() => {
-    if (state.ok) saveMe({ name: nameRef.current?.value?.trim() || undefined, phone });
+    // ويُبطَل كاش الشريط المتنقّل: حجزٌ صار قبل قليل يجب أن يظهر فوق كل
+    // صفحة الآن، لا بعد أن تنتهي مهلة الدقيقة
+    if (state.ok) {
+      saveMe({ name: nameRef.current?.value?.trim() || undefined, phone });
+      clearLiveTicketCache();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.ok]);
 

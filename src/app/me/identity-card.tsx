@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getMe, saveMe } from "@/lib/local-store";
+import { clearLiveTicketCache } from "@/components/live-ticket-bar";
 import { normalizePhone, toAr } from "@/lib/format";
 import { fmtTime } from "@/lib/dates";
 import { tr } from "@/lib/i18n";
@@ -74,8 +75,11 @@ export function IdentityCard() {
     const j = res.ok ? await res.json() : { ok: false };
     // لا نُخفي الحجز إلّا إذا أكّدت القاعدة إلغاءه: إخفاؤه بلا تأكيد يجعل
     // العميل يظنّ أنه ألغى، فلا يأتي — والطاولة تبقى محجوزةً عند المطعم.
-    if (j.ok) setLive((cur) => (cur ?? []).filter((r) => r.id !== id));
-    else setCancelErr(true);
+    if (j.ok) {
+      setLive((cur) => (cur ?? []).filter((r) => r.id !== id));
+      // وإلّا بقي الشريط المتنقّل يعرض حجزًا ألغاه صاحبه حتى تنتهي مهلته
+      clearLiveTicketCache();
+    } else setCancelErr(true);
   }
 
   // الصفحة مُولَّدة مسبقًا، والاسم والرقم يُقرآن من الجهاز بعد الترطيب. فلو

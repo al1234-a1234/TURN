@@ -11,6 +11,7 @@ import { useSelectBranch } from "./restaurant-tabs";
 import { createClient } from "@/lib/supabase/client";
 import { isWithinOpeningHours } from "@/lib/dates";
 import { recordTurn, lastTurnFor, clearTurnRecovery, getMe, saveMe } from "@/lib/local-store";
+import { clearLiveTicketCache } from "@/components/live-ticket-bar";
 import { SmartImage } from "@/components/smart-image";
 import { zoneLabel, type Zone } from "@/lib/zones";
 // استيرادٌ عادي لا `dynamic`: كل ما يعتمد عليه نموذج الحجز (عميل Supabase،
@@ -480,6 +481,8 @@ export function WaitlistForm({
       });
       // يُعبَّأ تلقائيًّا في المرّة القادمة — لأي مطعم، وللضيف كما للمسجَّل
       saveMe({ name: nameRef.current?.value?.trim() || undefined, phone: state.phone });
+      // دورٌ بدأ الآن يجب أن يظهر في الشريط المتنقّل فورًا لا بعد دقيقة
+      clearLiveTicketCache();
       // انضمام جديد بعد «خذ دورًا جديدًا»: startedOver كان يبقى true للأبد
       // فتُحجب تذكرة النجاح الجديدة — العميل في الطابور فعلًا والواجهة
       // تعرض النموذج الفارغ فيعيد الضغط حتى يضرب حدّ المعدّل.

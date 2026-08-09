@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Logo, Wordmark } from "@/components/logo";
+import { LiveTicketBar } from "@/components/live-ticket-bar";
 import { SharedHeader } from "@/components/page-header";
 import { useLang } from "@/components/lang-provider";
 import { tr } from "@/lib/i18n";
@@ -55,6 +56,10 @@ export function CustomerShell({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  // شريط التذكرة يعلو الشريط السفلي، فيأكل من المحتوى سطرًا. والحشو يعرف
+  // بظهوره كي لا يختفي آخرُ مطعمٍ في القائمة تحته.
+  const [hasLive, setHasLive] = useState(false);
+  const onLiveShow = useCallback((shown: boolean) => setHasLive(shown), []);
   const lang = useLang();
 
   return (
@@ -88,7 +93,7 @@ export function CustomerShell({
       {/* المحتوى */}
       <main
         className="mx-auto w-full max-w-2xl flex-1 px-5 pb-28 pt-4"
-        style={{ paddingBottom: "calc(7rem + env(safe-area-inset-bottom))" }}
+        style={{ paddingBottom: `calc(${hasLive ? "11rem" : "7rem"} + env(safe-area-inset-bottom))` }}
       >
         {children}
       </main>
@@ -100,6 +105,12 @@ export function CustomerShell({
         className="fixed inset-x-0 bottom-0 z-30 px-4 pb-4"
         style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom))" }}
       >
+        {/* التذكرة تتنقّل معه: من يفتح التطبيق وهو في الطابور لم يفتحه
+            ليتصفّح، بل ليطمئنّ على ترتيبه. */}
+        <div className="mx-auto max-w-2xl">
+          <LiveTicketBar onShow={onLiveShow} />
+        </div>
+
         <div className="rq-nav">
           {/* تبويبان لا أكثر: المطاعم — وهو التصفّح، و«حسابي» — وفيه اسمه
               ورقمه وتذكرة دوره وحجزه وهداياه وزياراته. وكان «حسابي» خلف
