@@ -38,7 +38,21 @@ permissions:
 jobs:
   backup:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
+
+    # قاعدةٌ نظيفة بجانب المهمّة: النسخة تُستعاد فيها فعلًا لا يُتحقَّق من
+    # شكلها فحسب. هذا هو الفرق بين «الملف يبدو صحيحًا» و«الملف يُستعاد».
+    services:
+      scratch:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: restore_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s --health-timeout=5s --health-retries=10
+
     steps:
       - name: جلب المستودع
         uses: actions/checkout@v4
@@ -138,7 +152,81 @@ jobs:
           [ "$ROWS" -ge 100 ] \
             || { echo "::error::مجموع الصفوف $ROWS — النسخة شبه فارغة"; exit 1; }
 
-          echo "✓ النسخة مُتحقَّق منها: $POL سياسة، $ROWS صفًّا، وكل الجداول الحرجة حاضرة"
+          echo "✓ فحص المحتوى: $POL سياسة، $ROWS صفًّا، وكل الجداول الحرجة حاضرة"
+          echo "VERIFY_DIR=$DIR" >> "$GITHUB_ENV"
+
+      # ══ الاسترجاع الفعليّ ══
+      # الخطوة السابقة تقرأ الملف؛ هذه تُحمّله في قاعدةٍ حقيقية وتستعلمه.
+      # نسخةٌ تُقرأ ولا تُستعاد قد تخذلك بعمودٍ مفقود أو قيدٍ يرفض بياناته،
+      # ولا يُكتشف ذلك إلا يوم الكارثة — وهو أسوأ يومٍ للاكتشاف.
+      - name: استرجاع النسخة في قاعدة نظيفة ثم مقارنتها بالجرد
+        env:
+          PGPASSWORD: postgres
+          PGHOST: localhost
+          PGUSER: postgres
+          PGDATABASE: restore_test
+        run: |
+          set -Eeuo pipefail
+          DIR="$VERIFY_DIR"
+
+          # أدوار Supabase غير موجودة في بوستجرس النظيف، وسياسات RLS تشير
+          # إليها بالاسم. ننشئها فارغة كي تُحمَّل السياسات كما هي.
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          do $$
+          declare r text;
+          begin
+            foreach r in array array['anon','authenticated','service_role','authenticator',
+                                     'supabase_admin','supabase_auth_admin','supabase_storage_admin',
+                                     'dashboard_user','pgbouncer','supabase_read_only_user']
+            loop
+              begin execute format('create role %I nologin', r);
+              exception when duplicate_object then null; end;
+            end loop;
+          end $$;
+          create schema if not exists auth;
+          create schema if not exists extensions;
+          SQL
+
+          # ‏ON_ERROR_STOP=0 عمدًا: امتدادات المزوّد (pg_cron، vault، graphql)
+          # لا وجود لها في صورةٍ نظيفة، وأسطرها ستفشل ولا تعني فساد النسخة.
+          # الحكم على النتيجة لا على عدد الأسطر التي اشتكت.
+          echo "▸ تحميل البنية…"
+          psql -q -v ON_ERROR_STOP=0 -f "$DIR/01-schema.sql"      2> /tmp/schema.err || true
+          echo "▸ تحميل البيانات…"
+          psql -q -v ON_ERROR_STOP=0 -f "$DIR/02-data-public.sql" 2> /tmp/data.err   || true
+
+          echo "▸ المقارنة بالجرد المحفوظ…"
+          FAIL=0
+          while IFS=',' read -r T EXPECTED; do
+            [ -n "$T" ] || continue
+            [ "$EXPECTED" -gt 0 ] 2>/dev/null || continue
+            ACTUAL="$(psql -Atc "select count(*) from public.\"$T\"" 2>/dev/null || echo MISSING)"
+            if [ "$ACTUAL" = "MISSING" ]; then
+              echo "::error::جدول $T لم يُستعد إطلاقًا"; FAIL=1; continue
+            fi
+            # فرقٌ يسير مقبول: الجرد من pg_stat_user_tables وهو تقديريّ،
+            # والنسخة تُؤخذ بعده بثوانٍ. الفرق الكبير خللٌ حقيقي.
+            LO=$(( EXPECTED * 90 / 100 ))
+            if [ "$ACTUAL" -lt "$LO" ]; then
+              echo "::error::$T استُعيد بـ$ACTUAL صفًّا والمتوقَّع ~$EXPECTED"; FAIL=1
+            else
+              printf '  ✓ %-24s %s/%s\n' "$T" "$ACTUAL" "$EXPECTED"
+            fi
+          done < "$DIR/04-rowcounts.csv"
+
+          # واستعلامٌ حقيقيّ عبر ثلاثة جداول: البنية مترابطة لا أكوامًا منفصلة
+          JOINED="$(psql -Atc "select count(*) from public.waitlist_entries w
+                                 join public.branches b on b.id = w.branch_id
+                                 join public.restaurants r on r.id = b.restaurant_id")"
+          echo "  ✓ استعلام مترابط عبر ٣ جداول: $JOINED صفًّا"
+          [ "$JOINED" -gt 0 ] || { echo "::error::الاسترجاع لا يُنتج بيانات مترابطة"; FAIL=1; }
+
+          POL="$(psql -Atc "select count(*) from pg_policies where schemaname='public'")"
+          echo "  ✓ سياسات RLS بعد الاسترجاع: $POL"
+          [ "$POL" -ge 20 ] || { echo "::error::سياسات RLS لم تُستعد ($POL)"; FAIL=1; }
+
+          [ "$FAIL" -eq 0 ] || { echo "::error::فشل اختبار الاسترجاع"; exit 1; }
+          echo "✓ الاسترجاع نجح فعليًّا في قاعدةٍ نظيفة"
           rm -rf /tmp/verify
 
       - name: رفع النسخة المشفَّرة (تُحفظ ٩٠ يومًا)
