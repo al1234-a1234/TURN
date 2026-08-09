@@ -23,6 +23,26 @@ with checks(name, pass) as (
   ('public_cols_readable',     has_column_privilege('anon','public.restaurants','slug','SELECT')
                                and has_column_privilege('anon','public.restaurants','name','SELECT')),
   ('admin_list_locked',        not has_function_privilege('anon','public.admin_restaurants_list()','EXECUTE')),
+  -- ── باب الكتابة مغلق (0093) ──
+  -- الكتابة تمرّ بخادمنا وحده. وسقوط أيٍّ من هذه إلى «مفتوح» يعني أنّ
+  -- حرّاس الخادم — حدّ العنوان وتطبيع الرقم وقصّ القسم — صارت تُتخطّى
+  -- بنداءٍ مباشر إلى PostgREST بالمفتاح العلنيّ.
+  ('write_join_closed',        not has_function_privilege('anon','public.join_waitlist_guest(uuid,text,text,integer,text)','EXECUTE')
+                               and not has_function_privilege('authenticated','public.join_waitlist_guest(uuid,text,text,integer,text)','EXECUTE')),
+  ('write_cancel_closed',      not has_function_privilege('anon','public.cancel_waitlist_guest(uuid,text)','EXECUTE')),
+  ('write_review_closed',      not has_function_privilege('anon','public.submit_review(text,text,integer,text)','EXECUTE')),
+  ('phone_lookup_closed',      not has_function_privilege('anon','public.guest_status_by_phone(text)','EXECUTE')
+                               and not has_function_privilege('anon','public.rewards_by_phone(text)','EXECUTE')),
+  -- والحجز يبقى للموظّف: صندوق الاستقبال يحجز نيابةً عن العميل
+  ('book_stays_for_staff',     has_function_privilege('authenticated','public.book_reservation_guest(uuid,text,text,timestamptz,integer,text,text)','EXECUTE')
+                               and not has_function_privilege('anon','public.book_reservation_guest(uuid,text,text,timestamptz,integer,text,text)','EXECUTE')),
+  -- وما يناديه المتصفّح مباشرةً يبقى مفتوحًا، وإلّا انكسرت الواجهة صامتة
+  ('browser_reads_open',       has_function_privilege('anon','public.waitlist_ticket_status(uuid,text)','EXECUTE')
+                               and has_function_privilege('anon','public.waitlist_counts_for(uuid[])','EXECUTE')
+                               and has_function_privilege('anon','public.reservation_slots(uuid,date,integer,text)','EXECUTE')),
+  -- وبيانات المالك مغلقةٌ عن المسجَّل أيضًا بعد انتهاء تراجع 0096
+  ('owner_cols_closed_authed', not has_column_privilege('authenticated','public.restaurants','owner_phone','SELECT')
+                               and not has_column_privilege('authenticated','public.restaurants','owner_username','SELECT')),
   ('anon_blocked_rollup',      not has_function_privilege('anon','public.rollup_all_daily_stats(date)','EXECUTE')),
   ('anon_blocked_digest',      not has_function_privilege('anon','public.run_daily_digest()','EXECUTE')),
   ('anon_blocked_del_push',    not has_function_privilege('anon','public.delete_push_subscription(text)','EXECUTE')),
