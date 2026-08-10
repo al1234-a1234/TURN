@@ -9,12 +9,35 @@ function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   return out;
 }
 
-export type PushSupport = "ready" | "unsupported" | "no-key";
+export type PushSupport = "ready" | "needs-install" | "unsupported" | "no-key";
+
+/**
+ * أضاف الزائر الموقع إلى شاشته الرئيسية ويفتحه من الأيقونة؟
+ * (`standalone` خاصّة سفاري القديمة، و`display-mode` المعيار الحديث)
+ */
+function isStandalone(): boolean {
+  if (typeof window === "undefined") return false;
+  if (window.matchMedia?.("(display-mode: standalone)").matches) return true;
+  return (navigator as Navigator & { standalone?: boolean }).standalone === true;
+}
+
+/** آيفون أو آيباد — وآيباد الحديث يتنكّر في هيئة ماك، فيُكشف باللمس. */
+function isApplePhone(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  if (/iPhone|iPad|iPod/.test(ua)) return true;
+  return /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
+}
 
 /** هل يدعم هذا المتصفّح إشعارات الدفع، وهل المفتاح العام موجود؟ */
 export function pushSupport(): PushSupport {
   if (typeof window === "undefined") return "unsupported";
   if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+    // آبل لا تعطي `PushManager` لصفحةٍ في تبويب سفاري — تعطيها فقط لموقعٍ
+    // أُضيف إلى الشاشة الرئيسية ويُفتح من أيقونته. فالنقص هنا ليس عجز جهاز
+    // بل خطوةٌ لم تُطلَب من العميل بعد، والفرق بينهما هو الفرق بين رسالةٍ
+    // تقول «متصفّحك لا يدعم» — فيغلق — وبين خطوتين يتّبعهما فيصله التنبيه.
+    if (isApplePhone() && !isStandalone()) return "needs-install";
     return "unsupported";
   }
   if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) return "no-key";

@@ -1709,6 +1709,7 @@ export type Database = {
           queue_pos: number
         }[]
       }
+      log_push_sends: { Args: { p_rows: Json }; Returns: number }
       staff_branch_queue: {
         Args: { p_branch_id: string }
         Returns: {

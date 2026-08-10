@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { cancelWaitlistGuest, savePushSubscription } from "./actions";
 import { createClient } from "@/lib/supabase/client";
-import { pushSupport, subscribeToPush } from "@/lib/push-client";
+import { pushSupport, subscribeToPush, type PushSupport } from "@/lib/push-client";
 import { toAr, peopleAhead } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
@@ -85,10 +85,17 @@ export function QueueTicket({
   const [actErr, setActErr] = useState<string | null>(null);
   const [pushBusy, setPushBusy] = useState(false);
   const [canPush, setCanPush] = useState(false);
+  // ولماذا لا يستطيع؟ — الصمت هنا كان أسوأ عيبٍ في المنتج: على آيفون في
+  // تبويب سفاري لا يوجد `PushManager`، فكان الزرّ لا يُرسم أصلًا. فالعميل
+  // يأخذ دوره ولا يرى ذكرًا للتنبيه، ثم يقفل جوّاله فيتوقّف حتى الاستطلاع،
+  // فلا يصله شيء — **ولا يعلم أنّه لن يصله شيء**. فيمشي واثقًا فيفوته دوره،
+  // ويلوم المطعم. وعدٌ صامتٌ لا يُوفى أسوأ من لا وعد.
+  const [support, setSupport] = useState<PushSupport | null>(null);
 
   // الجهاز قد يكون مشتركًا من دورٍ سابق، لكن الاشتراك في القاعدة مربوط بعميل ذلك
   // الدور. فنعيد ربطه بصاحب الدور الحالي دائمًا — وإلا ظهر «مفعّل» ولا يصل شيء.
   useEffect(() => {
+    setSupport(pushSupport());
     if (pushSupport() !== "ready") return;
     setCanPush(true);
     if (!entryId || !phone) return;
@@ -191,6 +198,41 @@ export function QueueTicket({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entryId, phone, restaurantName, lang]);
+
+  // شاشةٌ صاحية لمن لا تصله التنبيهات.
+  //
+  // من لا يملك دفعًا (آيفون في تبويب، أو رفض الإذن) فحبله الوحيد هذه الصفحة —
+  // والاستطلاع يتوقّف عمدًا حين تُخفى. فإن نامت الشاشة انقطع كل شيء بلا
+  // إنذار. فنُمسك قفل الشاشة ما دام دوره قائمًا وما دام في المقدّمة، ونُفلته
+  // فور تفعيله التنبيه أو ابتعاد دوره — قفلٌ دائم يأكل بطاريّته وهو أمانةٌ لا
+  // نملكها. ويُعاد الطلب عند العودة للصفحة: النظام يُسقطه عند كل إخفاء.
+  useEffect(() => {
+    if (pushOn || branchClosed) return;
+    if (TERMINAL.has(status)) return;
+    if (ahead > 5) return;
+    if (typeof navigator === "undefined" || !("wakeLock" in navigator)) return;
+
+    let sentinel: WakeLockSentinel | null = null;
+    let dropped = false;
+
+    const acquire = async () => {
+      if (dropped || document.hidden) return;
+      try {
+        sentinel = await navigator.wakeLock.request("screen");
+      } catch {
+        /* المتصفّح قد يرفض (بطاريّة منخفضة) — لا نُزعج العميل بخطأ لا حيلة له فيه */
+      }
+    };
+    const onVis = () => { if (!document.hidden) acquire(); };
+
+    acquire();
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      dropped = true;
+      document.removeEventListener("visibilitychange", onVis);
+      sentinel?.release().catch(() => {});
+    };
+  }, [pushOn, branchClosed, status, ahead]);
 
   // تذكرة مسترجَعة انتهت حالتها → لا نحبس العميل على شاشة قديمة، نعيده للنموذج
   useEffect(() => {
@@ -340,6 +382,51 @@ export function QueueTicket({
             {pushBusy ? tr(lang, "جارٍ التفعيل…", "Enabling…") : tr(lang, "نبّهني قبل دوري", "Alert me before my turn")}
           </button>
         )
+      )}
+
+      {/* آيفون في تبويب سفاري: التنبيه ممكنٌ لكنه يحتاج خطوتين — لا «غير مدعوم» */}
+      {!branchClosed && entryId && phone && support === "needs-install" && (
+        <div className="w-full rounded-2xl p-4 text-right" style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}>
+          <p className="text-sm font-extrabold text-[color:var(--ink)]">
+            {tr(lang, "تبي ننبّهك وجوّالك مقفل؟", "Want an alert while your phone is locked?")}
+          </p>
+          <ol className="mt-2 space-y-1.5 text-[13px] leading-6 text-[color:var(--muted)]">
+            <li>
+              {tr(lang, "١) اضغط زر المشاركة", "1) Tap the Share button")}{" "}
+              <span
+                className="mx-0.5 inline-flex h-5 w-5 -translate-y-0.5 items-center justify-center rounded-md align-middle"
+                style={{ border: "1px solid var(--border)" }}
+                aria-hidden
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 16V4M12 4L8 8M12 4l4 4" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                </svg>
+              </span>{" "}
+              {tr(lang, "في أسفل سفاري", "at the bottom of Safari")}
+            </li>
+            <li>{tr(lang, "٢) اختر «إضافة إلى الشاشة الرئيسية»", "2) Choose “Add to Home Screen”")}</li>
+            <li>{tr(lang, "٣) افتح «دور» من الأيقونة، وارجع لدورك", "3) Open “Dour” from the icon and return to your turn")}</li>
+          </ol>
+          <p className="mt-2.5 text-[12px] font-bold" style={{ color: "var(--gold-1)" }}>
+            {tr(
+              lang,
+              "وإلى أن تفعلها: خلّ هذي الصفحة مفتوحة — نُبقي شاشتك صاحية حتى يجي دورك.",
+              "Until then: keep this page open — we'll keep your screen awake until your turn.",
+            )}
+          </p>
+        </div>
+      )}
+
+      {/* متصفّحٌ لا يدعم الدفع أصلًا — نقول الحقيقة بدل الصمت */}
+      {!branchClosed && entryId && phone && (support === "unsupported" || support === "no-key") && (
+        <p className="w-full rounded-2xl px-4 py-3 text-[13px] font-bold leading-6" style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--brand-d)" }}>
+          {tr(
+            lang,
+            "متصفّحك ما يدعم التنبيه وجوّالك مقفل — خلّ هذي الصفحة مفتوحة ونُبقي شاشتك صاحية، وبنعلّمك أوّل ما يجي دورك.",
+            "Your browser can't alert you while the phone is locked — keep this page open; we'll keep the screen awake and show you the moment it's your turn.",
+          )}
+        </p>
       )}
 
       {actErr && (
