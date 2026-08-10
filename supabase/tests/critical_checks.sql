@@ -47,6 +47,10 @@ with checks(name, pass) as (
   -- وأرقامهم بامتياز المالك — ففتحُها للزائر يساوي تسريب دفتر العملاء كلّه.
   ('board_rpc_closed_anon',    not has_function_privilege('anon','public.staff_branch_queue(uuid)','EXECUTE')
                                and has_function_privilege('authenticated','public.staff_branch_queue(uuid)','EXECUTE')),
+  -- وسجلّ الإرسال (0103) لا يُكتب إلا من خادمنا: سجلٌّ يستطيع أي مسجَّلٍ
+  -- أن يزرع فيه سطرًا لا يصلح شهادةً حين يُسأل «هل وصل العميلَ تنبيه؟».
+  ('push_log_server_only',     not has_function_privilege('anon','public.log_push_sends(jsonb)','EXECUTE')
+                               and not has_function_privilege('authenticated','public.log_push_sends(jsonb)','EXECUTE')),
   ('anon_blocked_rollup',      not has_function_privilege('anon','public.rollup_all_daily_stats(date)','EXECUTE')),
   ('anon_blocked_digest',      not has_function_privilege('anon','public.run_daily_digest()','EXECUTE')),
   ('anon_blocked_del_push',    not has_function_privilege('anon','public.delete_push_subscription(text)','EXECUTE')),
@@ -274,12 +278,12 @@ with checks(name, pass) as (
   ('q26_cancel_needs_phone',   (select pg_get_functiondef(oid) like '%norm_phone_input%'
                                 from pg_proc where proname='cancel_reservation_guest')),
   -- (٢٠) مرجع المخطط: أي انحراف عن البصمة المثبَّتة يظهر هنا قبل أن يفاجئنا
-  --      (٢٧ جدولًا · ٩٤ دالة · ٦٧ سياسة · ٤٠ مفتاحًا أجنبيًّا) — راجع
+  --      (٢٧ جدولًا · ٩٥ دالة · ٦٧ سياسة · ٤٠ مفتاحًا أجنبيًّا) — راجع
   --      supabase/tests/schema_baseline.md وحدّثه عمدًا عند أي تغيير مقصود
   ('q20_schema_no_drift',      (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
                                 where n.nspname='public' and c.relkind='r') = 27
                                and (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-                                    where n.nspname='public' and p.prokind='f') = 94
+                                    where n.nspname='public' and p.prokind='f') = 95
                                and (select count(*) from pg_policies where schemaname='public') = 67
                                and (select count(*) from pg_constraint c join pg_class r on r.oid=c.conrelid
                                     join pg_namespace n on n.oid=r.relnamespace

@@ -57,26 +57,79 @@ export type PushPayload = {
   silent?: boolean;
 };
 
-/** إرسال دفعة واحدة لاشتراك، مع تنظيف الاشتراك الميّت. يعيد true إن نجح. */
+/**
+ * سجلّ الإرسال — يُكتب بعد كل دفعة، لا داخلها.
+ *
+ * كان `notifications` فارغًا منذ أوّل يوم ونحن نرسل: نعدّ في الذاكرة ونرجع
+ * رقمًا يذهب أدراج الرياح. فلا نعرف من وصله ولا من رُفض ولا لماذا، ولو بدأت
+ * آبل ترفض لما علمنا إلا من شكوى مطعم. والفشل الصامت هو نفسه ما أبقى مفتاح
+ * الخدمة معطوبًا أحد عشر يومًا.
+ *
+ * نداءٌ واحد للدفعة كلّها: إجلاسٌ في فرعٍ ممتلئ قد يرسل مئة إشعار، ومئةُ
+ * نداءٍ للقاعدة ثمنٌ بلا مقابل. ولا يرمي أبدًا — السجلّ خادمٌ للإشعار لا سيّده.
+ */
+type SendLog = { endpoint: string; template: string; delivered: boolean; error?: string };
+/** حصيلة دفعة: ما يُسجَّل، وما مات من اشتراكات (يُحذف **بعد** التسجيل). */
+type Batch = { log: SendLog[]; dead: string[] };
+const newBatch = (): Batch => ({ log: [], dead: [] });
+
+/**
+ * الترتيب هنا ليس تفصيلًا: السجلّ ينسب الصفّ إلى صاحبه عبر جدول الاشتراكات،
+ * فلو حُذف الاشتراك الميّت أوّلًا لضاع أهمّ صفٍّ نريده — الفشل نفسه.
+ */
+async function finishBatch(supabase: SupabaseClient<Database>, batch: Batch): Promise<void> {
+  // بمفتاح الخدمة لا بعميل المنادي: أكثر الإشعارات تنطلق من فعل موظّفٍ
+  // (إجلاس/إزالة)، وعميلُه `authenticated`. ولو مُنح المسجَّلون كتابة
+  // السجلّ لصار بإمكان أيّ حسابٍ أن يزرع فيه سطورًا — وسجلٌّ يُكتب من
+  // الخارج لا يصلح شهادةً حين يُسأل: «هل وصل العميلَ تنبيه؟».
+  const db = createAdminClient() ?? supabase;
+
+  if (batch.log.length) {
+    try {
+      await db.rpc("log_push_sends", { p_rows: batch.log });
+    } catch {
+      /* تعذّر التسجيل لا يُبطل إشعارًا وصل */
+    }
+  }
+  for (const endpoint of batch.dead) {
+    try {
+      await db.rpc("delete_dead_push_subscription", { p_endpoint: endpoint });
+    } catch {
+      /* التنظيف يُعاد في المحاولة القادمة */
+    }
+  }
+}
+
+/** إرسال دفعة واحدة لاشتراك، مع تعليم الاشتراك الميّت. يعيد true إن نجح. */
 async function sendOne(
   supabase: SupabaseClient<Database>,
   sub: { endpoint: string; p256dh: string; auth: string },
   body: string,
+  batch?: Batch,
+  template = "queue",
 ): Promise<boolean> {
   try {
     await webpush.sendNotification(
       { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
       body,
     );
+    batch?.log.push({ endpoint: sub.endpoint, template, delivered: true });
     return true;
   } catch (err) {
     const code = (err as { statusCode?: number })?.statusCode;
-    // 404/410 = اشتراك ميّت (أُلغي التصريح أو حُذف التطبيق) → نظّفه.
+    batch?.log.push({
+      endpoint: sub.endpoint,
+      template,
+      delivered: false,
+      error: `${code ?? "?"}: ${(err as { body?: string })?.body ?? (err as Error)?.message ?? ""}`.slice(0, 300),
+    });
+    // 404/410 = اشتراك ميّت (أُلغي التصريح أو حُذف التطبيق) → يُنظَّف بعد التسجيل.
     // ملاحظة: `delete_dead_push_subscription` محجوبة عن `anon`. فمسار الضيف
     // كان ينظّف بلا صلاحية، فيفشل بصمت وتتراكم الاشتراكات الميّتة إلى الأبد.
     // يعمل الآن لأن مسارات الضيف تمرّ عميل الخدمة إلى هنا.
     if (code === 404 || code === 410) {
-      await supabase.rpc("delete_dead_push_subscription", { p_endpoint: sub.endpoint });
+      if (batch) batch.dead.push(sub.endpoint);
+      else await supabase.rpc("delete_dead_push_subscription", { p_endpoint: sub.endpoint });
     }
     return false;
   }
@@ -106,12 +159,14 @@ export async function pushQueueRankUpdates(
     if (error || !targets?.length) return 0;
 
     let sent = 0;
+    const batch = newBatch();
     await Promise.all(
       targets.map(async (t) => {
         const body = JSON.stringify(rankPayload(t.rank, venue, url));
-        if (await sendOne(supabase, t, body)) sent += 1;
+        if (await sendOne(supabase, t, body, batch, "queue_rank")) sent += 1;
       }),
     );
+    await finishBatch(supabase, batch);
 
     return sent;
   } catch {
@@ -164,13 +219,15 @@ export async function pushRankUpdatesAfterTicketCancel(
     if (error || !targets?.length) return 0;
 
     let sent = 0;
+    const batch = newBatch();
     await Promise.all(
       targets.map(async (t) => {
         const url = t.slug ? `/r/${t.slug}` : "/";
         const body = JSON.stringify(rankPayload(t.rank, t.venue ?? "المطعم", url));
-        if (await sendOne(db, t, body)) sent += 1;
+        if (await sendOne(db, t, body, batch, "queue_rank")) sent += 1;
       }),
     );
+    await finishBatch(db, batch);
     return sent;
   } catch {
     return 0;
@@ -197,14 +254,16 @@ export async function pushRankUpdatesAfterSelfCancel(
     if (error || !targets?.length) return 0;
 
     let sent = 0;
+    const batch = newBatch();
     await Promise.all(
       targets.map(async (t) => {
         const venue = t.venue ?? "المطعم";
         const url = t.slug ? `/r/${t.slug}` : "/";
         const body = JSON.stringify(rankPayload(t.rank, venue, url));
-        if (await sendOne(db, t, body)) sent += 1;
+        if (await sendOne(db, t, body, batch, "queue_rank")) sent += 1;
       }),
     );
+    await finishBatch(db, batch);
     return sent;
   } catch {
     return 0;
@@ -231,12 +290,14 @@ export async function pushToWaitlistEntry(
 
     const body = JSON.stringify(payload);
     let sent = 0;
+    const batch = newBatch();
 
     await Promise.all(
       subs.map(async (s) => {
-        if (await sendOne(supabase, s, body)) sent += 1;
+        if (await sendOne(supabase, s, body, batch, payload.tag ?? "entry")) sent += 1;
       }),
     );
+    await finishBatch(supabase, batch);
 
     return sent;
   } catch {
