@@ -10,17 +10,21 @@ import {
   addMenuItem,
   deleteMenuCategory,
   deleteMenuItem,
+  updateMenuCategoryTranslation,
+  updateMenuItemTranslation,
 } from "./actions";
 
 type Item = {
   id: string;
   name: string;
+  name_en: string | null;
   price: number | null;
   description: string | null;
+  description_en: string | null;
   image_url: string | null;
   category_id: string;
 };
-type Category = { id: string; name: string };
+type Category = { id: string; name: string; name_en: string | null };
 
 export function MenuManager({
   restaurantId,
@@ -41,6 +45,7 @@ export function MenuManager({
         <div className="flex-1">
           <label className="field-label">{tr(lang, "إضافة فئة جديدة", "Add new category")}</label>
           <input name="name" required placeholder={tr(lang, "مثال: المقبلات الباردة", "e.g. Cold appetizers")} className="field-input" />
+          <input name="name_en" dir="ltr" placeholder={tr(lang, "بالإنجليزية (اختياري)", "In English (optional)")} className="field-input mt-2" />
         </div>
         <button className="btn btn-primary shrink-0 px-5">{tr(lang, "إضافة", "Add")}</button>
       </form>
@@ -78,12 +83,24 @@ function CategoryBlock({
   const lang = useLang();
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
+  const [translating, setTranslating] = useState(false);
 
   return (
     <div className="soft-card p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-extrabold text-brand-800 dark:text-cream-100">{category.name}</h3>
+        <div className="min-w-0">
+          <h3 className="truncate text-lg font-extrabold text-brand-800 dark:text-cream-100">{category.name}</h3>
+          {category.name_en ? (
+            <p className="truncate text-xs text-[color:var(--muted)]" dir="ltr">{category.name_en}</p>
+          ) : null}
+        </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setTranslating((v) => !v)}
+            className="rounded-xl border border-[var(--border)] px-3 py-1.5 text-xs font-bold text-[color:var(--muted)]"
+          >
+            EN
+          </button>
           <button
             onClick={() => setOpen((v) => !v)}
             className="rounded-xl bg-brand-600 px-3 py-1.5 text-xs font-bold text-cream-100"
@@ -100,6 +117,27 @@ function CategoryBlock({
         </div>
       </div>
 
+      {translating && (
+        <form
+          action={updateMenuCategoryTranslation}
+          onSubmit={() => setTranslating(false)}
+          className="mt-3 flex items-end gap-2 rounded-2xl bg-sand-100 p-3"
+        >
+          <input type="hidden" name="category_id" value={category.id} />
+          <div className="min-w-0 flex-1">
+            <label className="field-label">{tr(lang, "اسم الفئة بالإنجليزية", "Category name in English")}</label>
+            <input
+              name="name_en"
+              dir="ltr"
+              defaultValue={category.name_en ?? ""}
+              placeholder={tr(lang, "اتركه فارغًا ليُعرض الاسم العربي", "Leave empty to show the Arabic name")}
+              className="field-input"
+            />
+          </div>
+          <button className="btn btn-primary shrink-0 px-5">{tr(lang, "حفظ", "Save")}</button>
+        </form>
+      )}
+
       {open && (
         <form action={addMenuItem} className="mt-4 space-y-3 rounded-2xl bg-sand-100 p-4 ">
             <input type="hidden" name="branch_id" value={branchId} />
@@ -107,35 +145,98 @@ function CategoryBlock({
           <ImageUploader restaurantId={restaurantId} name="image_url" label={tr(lang, "صورة الصنف", "Item image")} />
           <div className="grid gap-3 sm:grid-cols-2">
             <input name="name" required placeholder={tr(lang, "اسم الصنف", "Item name")} className="field-input" />
+            <input name="name_en" dir="ltr" placeholder={tr(lang, "الاسم بالإنجليزية (اختياري)", "English name (optional)")} className="field-input" />
             <input name="price" inputMode="decimal" placeholder={tr(lang, "السعر (ر.س)", "Price (SAR)")} className="field-input" />
           </div>
           <textarea name="description" rows={2} placeholder={tr(lang, "الوصف (اختياري)", "Description (optional)")} className="field-input" />
+          <textarea name="description_en" rows={2} dir="ltr" placeholder={tr(lang, "الوصف بالإنجليزية (اختياري)", "English description (optional)")} className="field-input" />
           <button className="btn btn-primary w-full">{tr(lang, "إضافة الصنف", "Add item")}</button>
         </form>
       )}
 
       <ul className="mt-3 space-y-2">
         {items.map((it) => (
-          <li key={it.id} className="flex items-center gap-3 rounded-2xl border border-[var(--border)] p-2">
-            <span className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-sand-100 ">
-              {it.image_url && (
-                <Image src={it.image_url} alt="" width={96} height={96} sizes="96px" className="h-full w-full object-cover" />
-              )}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate font-bold">{it.name}</p>
-              <p className="truncate text-xs text-[color:var(--muted)]">{it.description}</p>
-            </div>
-            {it.price != null && (
-              <span className="shrink-0 text-sm font-bold text-brand-700 dark:text-brand-300">
-                {it.price} {tr(lang, "ر.س", "SAR")}
-              </span>
-            )}
-            <ItemDelete id={it.id} />
-          </li>
+          <ItemRow key={it.id} item={it} />
         ))}
       </ul>
     </div>
+  );
+}
+
+function ItemRow({ item }: { item: Item }) {
+  const lang = useLang();
+  const [translating, setTranslating] = useState(false);
+  // «EN» بدل «ترجمة»: الزرّ نفسه يقول أيّ لغةٍ يفتح، ويقرأه المالك ولو
+  // كانت لوحته بالعربية. والنقطة الذهبية علامة نقصٍ لا خطأ — تدلّ المالك
+  // على ما لم يُترجَم بعد بلا أن تصرخ في وجهه بأحمر.
+  const missing = !item.name_en;
+  return (
+    <li className="rounded-2xl border border-[var(--border)] p-2">
+      <div className="flex items-center gap-3">
+        <span className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-sand-100 ">
+          {item.image_url && (
+            <Image src={item.image_url} alt="" width={96} height={96} sizes="96px" className="h-full w-full object-cover" />
+          )}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-bold">{item.name}</p>
+          {item.name_en ? (
+            <p className="truncate text-xs text-[color:var(--muted)]" dir="ltr">{item.name_en}</p>
+          ) : (
+            <p className="truncate text-xs text-[color:var(--muted)]">{item.description}</p>
+          )}
+        </div>
+        {item.price != null && (
+          <span className="shrink-0 text-sm font-bold text-brand-700 dark:text-brand-300">
+            {item.price} {tr(lang, "ر.س", "SAR")}
+          </span>
+        )}
+        <button
+          onClick={() => setTranslating((v) => !v)}
+          className="relative shrink-0 rounded-lg border border-[var(--border)] px-2 py-1 text-[11px] font-bold text-[color:var(--muted)]"
+          title={tr(lang, "الترجمة الإنجليزية", "English translation")}
+        >
+          EN
+          {missing && (
+            <span className="absolute -end-1 -top-1 h-2 w-2 rounded-full" style={{ background: "var(--gold-1)" }} aria-hidden />
+          )}
+        </button>
+        <ItemDelete id={item.id} />
+      </div>
+
+      {translating && (
+        <form
+          action={updateMenuItemTranslation}
+          onSubmit={() => setTranslating(false)}
+          className="mt-2 space-y-2 rounded-xl bg-sand-100 p-3"
+        >
+          <input type="hidden" name="item_id" value={item.id} />
+          <input
+            name="name_en"
+            dir="ltr"
+            defaultValue={item.name_en ?? ""}
+            placeholder={tr(lang, "اسم الصنف بالإنجليزية", "Item name in English")}
+            className="field-input"
+          />
+          <textarea
+            name="description_en"
+            rows={2}
+            dir="ltr"
+            defaultValue={item.description_en ?? ""}
+            placeholder={tr(lang, "الوصف بالإنجليزية", "Description in English")}
+            className="field-input"
+          />
+          <p className="text-xs text-[color:var(--muted)]">
+            {tr(
+              lang,
+              "الفراغ يعني «اعرض العربية» — لا سطرًا خاليًا في قائمة العميل.",
+              "Empty means “show the Arabic” — never a blank line in the guest's menu.",
+            )}
+          </p>
+          <button className="btn btn-primary w-full">{tr(lang, "حفظ الترجمة", "Save translation")}</button>
+        </form>
+      )}
+    </li>
   );
 }
 

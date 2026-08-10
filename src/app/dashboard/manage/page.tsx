@@ -44,8 +44,8 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
   const menuBranchId = activeBranchId || NO_BRANCH;
 
   const [{ data: categories }, { data: items }, { data: allBranches }, { data: reviewRows }] = await Promise.all([
-    supabase.from("menu_categories").select("id, name").eq("branch_id", menuBranchId).order("sort_order").order("created_at"),
-    supabase.from("menu_items").select("id, name, price, description, image_url, category_id").eq("branch_id", menuBranchId).order("created_at"),
+    supabase.from("menu_categories").select("id, name, name_en").eq("branch_id", menuBranchId).order("sort_order").order("created_at"),
+    supabase.from("menu_items").select("id, name, name_en, price, description, description_en, image_url, category_id").eq("branch_id", menuBranchId).order("created_at"),
     supabase.from("branches").select("id, name, city, address").eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at"),
     supabase.from("reviews").select("rating").eq("branch_id", menuBranchId),
   ]);
