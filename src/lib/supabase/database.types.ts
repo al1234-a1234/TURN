@@ -1709,6 +1709,22 @@ export type Database = {
           queue_pos: number
         }[]
       }
+      staff_branch_queue: {
+        Args: { p_branch_id: string }
+        Returns: {
+          confirmed_at: string | null
+          customer_id: string
+          distance_m: number | null
+          full_name: string
+          id: string
+          joined_at: string
+          party_size: number
+          phone: string
+          position: number | null
+          status: Database["public"]["Enums"]["waitlist_status"]
+          zone: string
+        }[]
+      }
       staff_can_read_customer: { Args: { cust_id: string }; Returns: boolean }
       staff_has_perm: {
         Args: { p_perm: string; rest_id: string }
