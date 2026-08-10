@@ -525,6 +525,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          name_en: string | null
           restaurant_id: string
           sort_order: number
         }
@@ -533,6 +534,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          name_en: string | null
           restaurant_id: string
           sort_order?: number
         }
@@ -541,6 +543,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          name_en?: string | null
           restaurant_id?: string
           sort_order?: number
         }
@@ -571,6 +574,8 @@ export type Database = {
           image_url: string | null
           is_available: boolean
           name: string
+          description_en: string | null
+          name_en: string | null
           price: number | null
           restaurant_id: string
           sort_order: number
@@ -585,6 +590,8 @@ export type Database = {
           image_url?: string | null
           is_available?: boolean
           name: string
+          description_en: string | null
+          name_en: string | null
           price?: number | null
           restaurant_id: string
           sort_order?: number
@@ -599,6 +606,8 @@ export type Database = {
           image_url?: string | null
           is_available?: boolean
           name?: string
+          description_en?: string | null
+          name_en?: string | null
           price?: number | null
           restaurant_id?: string
           sort_order?: number

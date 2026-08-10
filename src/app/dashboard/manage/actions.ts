@@ -177,11 +177,13 @@ export async function addMenuCategory(formData: FormData) {
   if (!caller) return;
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return;
+  // الترجمة اختيارية: فارغة تعني «اعرض العربية» لا «اعرض فراغًا»
+  const name_en = String(formData.get("name_en") ?? "").trim() || null;
   const branchId = await resolveWriteBranch(caller, formData.get("branch_id") as string);
   if (!branchId) return;
   const { error } = await caller.supabase
     .from("menu_categories")
-    .insert({ restaurant_id: caller.restaurantId, branch_id: branchId, name });
+    .insert({ restaurant_id: caller.restaurantId, branch_id: branchId, name, name_en });
   if (error) {
     console.error("[addMenuCategory]", error.message);
     return;
@@ -204,6 +206,45 @@ export async function deleteMenuCategory(id: string) {
   revalidateTag("discovery");
 }
 
+// القائمة القائمة لا تُترجَم بالحذف وإعادة الإدخال. من كتب قائمته قبل أن
+// يوجد عمود الإنجليزية — وهم كلّ مطاعمنا اليوم — لم يكن أمامه إلا أن يمحو
+// الصنف ويعيده، فيمحو معه صورته المرفوعة وتاريخه. فهذان تحديثان يمسّان
+// حقلي الترجمة وحدهما: العربية لا تُلمس، والفراغ يعني «ارجع للعربية».
+export async function updateMenuCategoryTranslation(formData: FormData) {
+  const caller = await requirePerm("settings");
+  if (!caller) return;
+  const id = String(formData.get("category_id") ?? "");
+  if (!id) return;
+  const name_en = String(formData.get("name_en") ?? "").trim() || null;
+  const { error } = await caller.supabase
+    .from("menu_categories").update({ name_en })
+    .eq("id", id).in("branch_id", await callerBranchIds(caller));
+  if (error) {
+    console.error("[updateMenuCategoryTranslation]", error.message);
+    return;
+  }
+  revalidatePath("/dashboard/manage");
+  revalidateTag("discovery");
+}
+
+export async function updateMenuItemTranslation(formData: FormData) {
+  const caller = await requirePerm("settings");
+  if (!caller) return;
+  const id = String(formData.get("item_id") ?? "");
+  if (!id) return;
+  const name_en = String(formData.get("name_en") ?? "").trim() || null;
+  const description_en = String(formData.get("description_en") ?? "").trim() || null;
+  const { error } = await caller.supabase
+    .from("menu_items").update({ name_en, description_en })
+    .eq("id", id).in("branch_id", await callerBranchIds(caller));
+  if (error) {
+    console.error("[updateMenuItemTranslation]", error.message);
+    return;
+  }
+  revalidatePath("/dashboard/manage");
+  revalidateTag("discovery");
+}
+
 export async function addMenuItem(formData: FormData) {
   const caller = await requirePerm("settings");
   if (!caller) return;
@@ -214,6 +255,8 @@ export async function addMenuItem(formData: FormData) {
   const priceRaw = String(formData.get("price") ?? "").trim();
   const price = priceRaw ? Number(priceRaw) : null;
   const description = String(formData.get("description") ?? "").trim() || null;
+  const name_en = String(formData.get("name_en") ?? "").trim() || null;
+  const description_en = String(formData.get("description_en") ?? "").trim() || null;
   const image_url = String(formData.get("image_url") ?? "").trim() || null;
   const branchId = await resolveWriteBranch(caller, formData.get("branch_id") as string);
   if (!branchId) return;
@@ -227,8 +270,10 @@ export async function addMenuItem(formData: FormData) {
     branch_id: branchId,
     category_id: categoryId,
     name,
+    name_en,
     price: Number.isFinite(price as number) ? price : null,
     description,
+    description_en,
     image_url,
   });
   if (error) {

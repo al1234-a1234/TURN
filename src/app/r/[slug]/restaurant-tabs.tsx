@@ -28,12 +28,20 @@ export const useSelectBranch = () => useContext(SelectBranchCtx);
 type Item = {
   id: string;
   name: string;
+  name_en?: string | null;
+  description_en?: string | null;
   price: number | null;
   description: string | null;
   image_url: string | null;
   category_id: string;
 };
-type Category = { id: string; name: string };
+type Category = { id: string; name: string; name_en?: string | null };
+
+/* الترجمة تُعرض إن وُجدت، وإلّا فالعربية — لا الفراغ.
+   مطعمٌ ترجم نصف قائمته يعرض النصف مترجَمًا والنصف كما هو، ولا يرى
+   العميل الإنجليزي سطرًا خاليًا مكان طبق. */
+const pick = (lang: string, ar: string, en?: string | null) =>
+  lang === "en" && en && en.trim() ? en : ar;
 // خام لا منسّق: التنسيق يحتاج اللغة، وهي هنا في المتصفّح لا على الخادم
 type Review = { name: string | null; stars: number; created_at: string; text: string };
 
@@ -183,6 +191,10 @@ export function RestaurantTabs({
       document.body.style.overflow = "";
     };
   }, [openItem, itemZoom]);
+  // الورقة السفلية هي شاشة القراءة الفعلية — فيها يقرأ العميل الوصف كاملًا.
+  // فلو تُرجم الصنف في القائمة وحدها، لغيّر النصُّ لغته بمجرّد الضغط عليه.
+  const openItemName = openItem ? pick(lang, openItem.name, openItem.name_en) : "";
+  const openItemDesc = openItem ? pick(lang, openItem.description ?? "", openItem.description_en) : "";
   const hasMenu = categories.length > 0;
 
   // متابعة = إضافة للمفضّلة (تخزين محلّي للضيف)
@@ -274,7 +286,7 @@ export function RestaurantTabs({
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className={`text-brand-600 transition-transform ${isOpen ? "rotate-180" : ""}`}>
                       <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    <span className="font-display text-lg font-bold text-[color:var(--ink)]">{cat.name}</span>
+                    <span className="font-display text-lg font-bold text-[color:var(--ink)]">{pick(lang, cat.name, cat.name_en)}</span>
                   </button>
                   {isOpen && list.length > 0 && (
                     <ul>
@@ -287,13 +299,13 @@ export function RestaurantTabs({
                           >
                             <span className="h-[76px] w-[76px] shrink-0 overflow-hidden rounded-2xl bg-[color:var(--surface-2)]">
                               {it.image_url && (
-                                <SmartImage src={it.image_url} fallbackText={it.name} alt="" width={96} height={96} sizes="96px" className="h-full w-full object-cover" />
+                                <SmartImage src={it.image_url} fallbackText={pick(lang, it.name, it.name_en)} alt="" width={96} height={96} sizes="96px" className="h-full w-full object-cover" />
                               )}
                             </span>
                             <div className="min-w-0 flex-1 text-right">
-                              <p className="font-bold text-[color:var(--ink)]">{it.name}</p>
-                              {it.description && (
-                                <p className="mt-0.5 line-clamp-2 text-[13px] leading-6 text-[color:var(--muted)]">{it.description}</p>
+                              <p className="font-bold text-[color:var(--ink)]">{pick(lang, it.name, it.name_en)}</p>
+                              {pick(lang, it.description ?? "", it.description_en) && (
+                                <p className="mt-0.5 line-clamp-2 text-[13px] leading-6 text-[color:var(--muted)]">{pick(lang, it.description ?? "", it.description_en)}</p>
                               )}
                             </div>
                             {it.price != null && (
@@ -326,12 +338,12 @@ export function RestaurantTabs({
                 className="relative block w-full overflow-hidden rounded-3xl transition active:scale-[0.99]"
                 aria-label={tr(lang, "تكبير الصورة", "Zoom image")}
               >
-                <SmartImage src={openItem.image_url} fallbackText={openItem.name} alt={openItem.name} width={828} height={621} sizes="(max-width: 640px) 100vw, 640px" className="aspect-[4/3] w-full object-cover" />
+                <SmartImage src={openItem.image_url} fallbackText={openItemName} alt={openItemName} width={828} height={621} sizes="(max-width: 640px) 100vw, 640px" className="aspect-[4/3] w-full object-cover" />
                 <span className="absolute end-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/45 text-sm text-cream-100">⤢</span>
               </button>
             )}
             <div className="mt-4 flex items-start justify-between gap-3">
-              <p className="min-w-0 flex-1 text-right font-display text-xl font-bold text-[color:var(--ink)]">{openItem.name}</p>
+              <p className="min-w-0 flex-1 text-right font-display text-xl font-bold text-[color:var(--ink)]">{openItemName}</p>
               {/* السعر بيانٌ عاديّ لا حالةٌ استثنائية — نصٌّ ملوّن لا كبسولة */}
               {openItem.price != null && (
                 <span className="shrink-0 whitespace-nowrap text-[17px] font-bold tabular-nums" style={{ color: "var(--brand-solid)" }}>
@@ -339,8 +351,8 @@ export function RestaurantTabs({
                 </span>
               )}
             </div>
-            {openItem.description && (
-              <p className="mt-2 whitespace-pre-line text-right text-[15px] leading-8 text-[color:var(--muted)]">{openItem.description}</p>
+            {openItemDesc && (
+              <p className="mt-2 whitespace-pre-line text-right text-[15px] leading-8 text-[color:var(--muted)]">{openItemDesc}</p>
             )}
             <button type="button" onClick={() => setOpenItem(null)} className="btn btn-primary mt-6 w-full">
               {tr(lang, "إغلاق", "Close")}
@@ -366,8 +378,8 @@ export function RestaurantTabs({
             ✕
           </button>
           <figure className="max-h-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
-            <SmartImage src={openItem.image_url} fallbackText={openItem.name} alt={openItem.name} width={1080} height={1080} sizes="100vw" className="max-h-[80vh] w-full rounded-2xl object-contain" />
-            <figcaption className="mt-3 text-center text-sm font-bold text-cream-100/90">{openItem.name}</figcaption>
+            <SmartImage src={openItem.image_url} fallbackText={openItemName} alt={openItemName} width={1080} height={1080} sizes="100vw" className="max-h-[80vh] w-full rounded-2xl object-contain" />
+            <figcaption className="mt-3 text-center text-sm font-bold text-cream-100/90">{openItemName}</figcaption>
           </figure>
         </div>
       )}

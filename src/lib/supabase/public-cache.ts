@@ -123,8 +123,8 @@ export const getBranchContent = unstable_cache(
   async (branchId: string) => {
     const sb = anon();
     const [categoriesRes, itemsRes, photosRes] = await Promise.all([
-      sb.from("menu_categories").select("id, name").eq("branch_id", branchId).order("sort_order").order("created_at"),
-      sb.from("menu_items").select("id, name, price, description, image_url, category_id").eq("branch_id", branchId).eq("is_available", true).order("created_at"),
+      sb.from("menu_categories").select("id, name, name_en").eq("branch_id", branchId).order("sort_order").order("created_at"),
+      sb.from("menu_items").select("id, name, name_en, price, description, description_en, image_url, category_id").eq("branch_id", branchId).eq("is_available", true).order("created_at"),
       sb.from("restaurant_photos").select("id, url, caption").eq("branch_id", branchId).order("sort_order").order("created_at"),
     ]);
     // فشلُ أيٍّ منها كان يظهر للزبون «مطعم بلا قائمة» — وهي كذبة تُخزَّن ٦٠ث
