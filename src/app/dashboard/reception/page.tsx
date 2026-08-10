@@ -61,14 +61,12 @@ export default async function ReceptionPage({
 
   const [queueRes, todayRes, statusRes, resvRes] = activeBranch
     ? await Promise.all([
-        supabase
-          .from("waitlist_entries")
-          .select("id, customer_id, position, party_size, zone, status, joined_at, confirmed_at, distance_m, customers(full_name, phone)")
-          .eq("branch_id", activeBranch.id)
-          // الحيّ بالحالة فقط — فلتر «يوم الرياض» كان يبخّر طابور ما بعد منتصف
-          // الليل من الشاشة؛ الصفوف المنسية يقتلها تقادم الـ٨ ساعات (0057)
-          .in("status", ["waiting", "notified"])
-          .order("position", { nullsFirst: false }),
+        // نداءٌ واحد بدل انضمامٍ تحرسه سياسةُ `customers` صفًّا صفًّا: كانت
+        // الحراسة تنادي دالّةً أمنيّة لكلّ منتظر، فبلغت القراءة ٢٥٠ مللي على
+        // فرعٍ فيه ٢٩٦ منتظرًا — والدالّة تسأل السؤال مرّةً وتقرأ (0102).
+        // الحيّ بالحالة فقط — فلتر «يوم الرياض» كان يبخّر طابور ما بعد منتصف
+        // الليل من الشاشة؛ الصفوف المنسية يقتلها تقادم الـ٨ ساعات (0057)
+        supabase.rpc("staff_branch_queue", { p_branch_id: activeBranch.id }),
         supabase.from("waitlist_entries").select("id", { count: "exact", head: true })
           .eq("branch_id", activeBranch.id).eq("status", "seated").gte("seated_at", startToday),
         supabase.from("branch_settings").select("manually_closed, busy_now, opening_hours, accepts_reservations").eq("branch_id", activeBranch.id).maybeSingle(),
@@ -87,14 +85,16 @@ export default async function ReceptionPage({
   // المناداة والناس واقفون. عند فشل الجلب نقول تعذّر التحميل ولا نرسم طابورًا.
   const { data: queue, error: queueError } = queueRes;
   if (queueError) {
-    console.error("[reception] waitlist_entries:", activeBranch?.id, queueError.message);
+    console.error("[reception] staff_branch_queue:", activeBranch?.id, queueError.message);
     return <LoadError lang={lang} />;
   }
   // فشل عدّاد «خدمناهم اليوم» لا يعطّل الشاشة — لكن لا نعرض صفرًا مكذوبًا (٠ أسفل)
   if (todayRes?.error) console.error("[reception] served-today count:", activeBranch?.id, todayRes.error.message);
   if (statusRes?.error) console.error("[reception] branch_settings:", activeBranch?.id, statusRes.error.message);
 
-  const list = queue ?? [];
+  // الدالّة تُرجع الاسم والهاتف مسطَّحَين؛ والبطاقات تقرأ `customers` منذ
+  // أوّل يوم. فنُعيد التشكيل هنا في سطرٍ واحد بدل تعديل كلّ موضع عرض.
+  const list = (queue ?? []).map((q) => ({ ...q, customers: { full_name: q.full_name, phone: q.phone } }));
 
   // شارة الهدية على بطاقة الدور أُزيلت بقرار المالك (تنظيف الملصقات). واعتماد
   // الهدية يبقى كاملًا في صندوق «اعتمد هدية» بالبحث بالرقم — وهو المسار الذي

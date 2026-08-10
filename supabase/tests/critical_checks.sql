@@ -43,6 +43,10 @@ with checks(name, pass) as (
   -- وبيانات المالك مغلقةٌ عن المسجَّل أيضًا بعد انتهاء تراجع 0096
   ('owner_cols_closed_authed', not has_column_privilege('authenticated','public.restaurants','owner_phone','SELECT')
                                and not has_column_privilege('authenticated','public.restaurants','owner_username','SELECT')),
+  -- لوحة الاستقبال تُقرأ بنداءٍ واحد (0102)، والدالّة تُخرج أسماء العملاء
+  -- وأرقامهم بامتياز المالك — ففتحُها للزائر يساوي تسريب دفتر العملاء كلّه.
+  ('board_rpc_closed_anon',    not has_function_privilege('anon','public.staff_branch_queue(uuid)','EXECUTE')
+                               and has_function_privilege('authenticated','public.staff_branch_queue(uuid)','EXECUTE')),
   ('anon_blocked_rollup',      not has_function_privilege('anon','public.rollup_all_daily_stats(date)','EXECUTE')),
   ('anon_blocked_digest',      not has_function_privilege('anon','public.run_daily_digest()','EXECUTE')),
   ('anon_blocked_del_push',    not has_function_privilege('anon','public.delete_push_subscription(text)','EXECUTE')),
@@ -50,7 +54,13 @@ with checks(name, pass) as (
   ('check_rate_locked',        not has_function_privilege('anon','public.check_rate(text,integer,interval)','EXECUTE')),
   ('del_dead_push_locked',     not has_function_privilege('anon','public.delete_dead_push_subscription(text)','EXECUTE')),
   -- ── الأمان: دوال الضيف المحروسة متاحة (كسرها = تعطّل المنتج) ──
-  ('anon_can_join',            has_function_privilege('anon','public.join_waitlist_guest(uuid,text,text,integer,text)','EXECUTE')),
+  -- كان هنا `anon_can_join`: «الزائر يستطيع الانضمام مباشرةً». وهو شرطٌ
+  -- انقلب معناه في 0093 — صار الانضمام يمرّ بخادمنا وحده — فصار الفحص
+  -- يناقض `write_join_closed` في هذا الملف نفسه: أحدهما يسقط حتمًا مهما
+  -- كانت القاعدة سليمة. كشفه أوّل تشغيلٍ كاملٍ بعد 0102: أربعة فحوصٍ
+  -- حمراء لا تعني عطبًا بل تعني أنّ الشبكة نفسها لم تُحدَّث مع الترحيل.
+  -- والبديل يحرس ما يهمّ فعلًا: الطريق موجود، ومفتاح الخدمة يسلكه.
+  ('join_path_alive',          has_function_privilege('service_role','public.join_waitlist_guest(uuid,text,text,integer,text)','EXECUTE')),
   ('anon_can_ticket',          has_function_privilege('anon','public.waitlist_ticket_status(uuid,text)','EXECUTE')),
   -- ── حرّاس الدوال: مدخلات فاسدة تُرفض ──
   ('guard_confirm_unknown',    public.confirm_attendance('00000000-0000-0000-0000-000000000000') = false),
@@ -237,8 +247,10 @@ with checks(name, pass) as (
   ('q23_push_targets_locked',  not has_function_privilege('anon','public.queue_push_targets_after_cancel(uuid,text)','EXECUTE')
                                and not has_function_privilege('anon','public.queue_push_targets_after_ticket_cancel(uuid)','EXECUTE')),
   -- وما يجب أن يبقى للضيف يبقى: إلغاء دوره بنفسه (كسره = عميلٌ حبيس طابور)
-  ('q24_guest_can_cancel',     has_function_privilege('anon','public.cancel_by_ticket(uuid)','EXECUTE')
-                               and has_function_privilege('anon','public.cancel_waitlist_guest(uuid,text)','EXECUTE')),
+  -- والطريق بعد 0093 خادمُنا لا متصفّحه — فالحارس أن تبقى الدالّتان
+  -- قائمتَين ومنفَّذتَين بمفتاح الخدمة، لا مفتوحتَين للزائر.
+  ('q24_guest_can_cancel',     has_function_privilege('service_role','public.cancel_by_ticket(uuid)','EXECUTE')
+                               and has_function_privilege('service_role','public.cancel_waitlist_guest(uuid,text)','EXECUTE')),
   -- (٢٥) فرعٌ جديد يولد بأقسامه: بدونها كان كل مطعمٍ جديد يُفتح له فرع
   --      لا يستطيع عميلُه أخذ دورٍ أبدًا — الحارس يكتب NULL في عمودٍ
   --      NOT NULL فيموت الإدخال بلا رسالة مفهومة (0082).
@@ -254,20 +266,20 @@ with checks(name, pass) as (
                                 from pg_proc where proname='enforce_zone_belongs_to_branch')),
   -- (٢٦) استرجاع الضيف بالرقم: التخزين المحلّي يضيع بتثبيت التطبيق أو
   --      بتبديل الجهاز، والحجز لم يكن يُسترجَع ولا يُلغى أصلًا (0084).
-  ('q26_guest_recovery',       has_function_privilege('anon','public.guest_status_by_phone(text)','EXECUTE')),
-  ('q26_guest_can_cancel_res', has_function_privilege('anon','public.cancel_reservation_guest(uuid,text)','EXECUTE')),
+  ('q26_guest_recovery',       has_function_privilege('service_role','public.guest_status_by_phone(text)','EXECUTE')),
+  ('q26_guest_can_cancel_res', has_function_privilege('service_role','public.cancel_reservation_guest(uuid,text)','EXECUTE')),
   -- وكلتاهما محروسة بحدّ معدّل: بلا ذلك يُعدّ المهاجم الأرقام ويقرأ أسماءها
   ('q26_recovery_rate_limited',(select pg_get_functiondef(oid) like '%check_rate%'
                                 from pg_proc where proname='guest_status_by_phone')),
   ('q26_cancel_needs_phone',   (select pg_get_functiondef(oid) like '%norm_phone_input%'
                                 from pg_proc where proname='cancel_reservation_guest')),
   -- (٢٠) مرجع المخطط: أي انحراف عن البصمة المثبَّتة يظهر هنا قبل أن يفاجئنا
-  --      (٢٧ جدولًا · ٩٣ دالة · ٦٧ سياسة · ٤٠ مفتاحًا أجنبيًّا) — راجع
+  --      (٢٧ جدولًا · ٩٤ دالة · ٦٧ سياسة · ٤٠ مفتاحًا أجنبيًّا) — راجع
   --      supabase/tests/schema_baseline.md وحدّثه عمدًا عند أي تغيير مقصود
   ('q20_schema_no_drift',      (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
                                 where n.nspname='public' and c.relkind='r') = 27
                                and (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-                                    where n.nspname='public' and p.prokind='f') = 93
+                                    where n.nspname='public' and p.prokind='f') = 94
                                and (select count(*) from pg_policies where schemaname='public') = 67
                                and (select count(*) from pg_constraint c join pg_class r on r.oid=c.conrelid
                                     join pg_namespace n on n.oid=r.relnamespace
