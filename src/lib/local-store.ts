@@ -109,6 +109,37 @@ export function clearTurnRecovery(slug: string) {
   if (touched) write(TURNS_KEY, list);
 }
 
+// ————— سجلّ الحجوزات —————
+//
+// أُضيف لأنّ الاستعلام بالرقم لم يعد يُرجع هويّة مكانٍ ولا معرّفًا (0104):
+// كان `/me` يبني قائمة حجوزاتك من ذلك الاستعلام، فلمّا سُحب منه المعرّف
+// ماتت قدرة الإلغاء عند **كل** عميل لا عند صاحب الجهاز الجديد وحده.
+//
+// والباب الصحيح لاستعادتها ليس إعادة المعرّف إلى الاستعلام — فمن يملكه
+// يفتح `/t/<id>` فيعرف المطعم، وهو التسريب نفسه بخطوة — بل أن يتذكّر
+// **جهازُك** حجزك كما يتذكّر دورك. فالنظام لا يخبرك أين أنت؛ جهازك يعرف.
+export type BookingRecord = {
+  id: string; slug: string; name: string; at: string; phone?: string;
+};
+const BOOKINGS_KEY = "turn:bookings";
+
+export function getBookings(): BookingRecord[] {
+  return read<BookingRecord>(BOOKINGS_KEY);
+}
+
+export function recordBooking(rec: BookingRecord) {
+  const list = getBookings().filter((b) => b.id !== rec.id);
+  list.unshift(rec);
+  write(BOOKINGS_KEY, list.slice(0, 50));
+}
+
+/** يُنسى فور الإلغاء أو انقضاء الموعد — قائمةٌ تعرض حجزًا ملغى تُضلّل صاحبها. */
+export function clearBooking(id: string) {
+  const list = getBookings();
+  const next = list.filter((b) => b.id !== id);
+  if (next.length !== list.length) write(BOOKINGS_KEY, next);
+}
+
 /** يوم الرياض للطابع الزمني — حدود اليوم عندنا رياضية لا UTC. */
 function riyadhDay(iso: string): string {
   return new Date(iso).toLocaleDateString("en-CA", { timeZone: "Asia/Riyadh" });

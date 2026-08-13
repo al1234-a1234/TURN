@@ -2,26 +2,21 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { getMe, saveMe } from "@/lib/local-store";
+import { getMe, getTurns, getBookings, clearBooking } from "@/lib/local-store";
 import { clearLiveTicketCache } from "@/components/live-ticket-bar";
 import { normalizePhone, toAr } from "@/lib/format";
 import { fmtTime } from "@/lib/dates";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 
+// مخرجات الاستعلام بالرقم بعد 0104: حالةٌ بلا هويّة مكان ولا معرّف.
+// المكان يأتي من ذاكرة الجهاز (`getTurns` / `getBookings`) لا من الخادم.
 type Live = {
   kind: string;
-  id: string;
-  restaurant: string;
-  restaurant_slug: string;
-  branch: string;
   status: string;
   at: string;
   party_size: number;
-  zone_name: string | null;
   position: number | null;
-  table_label: string | null;
-  full_name: string;
 };
 
 /**
@@ -53,12 +48,9 @@ export function IdentityCard() {
         if (!alive) return;
         const rows = (j.rows ?? []) as Live[];
         setLive(rows);
-        // الاسم من الخادم أدقّ: قد يكون صحّحه المضيف عند الإجلاس
-        const server = rows[0]?.full_name?.trim();
-        if (server && server !== m.name) {
-          saveMe({ name: server });
-          setMe((c) => ({ ...c, name: server }));
-        }
+        // كان الاسم يُؤخذ من الخادم هنا («أدقّ: قد يصحّحه المضيف»)، وسُحب
+        // في 0104: اسمٌ يخرج مقابل رقمٍ يعرفه أيّ أحد هو التسريب نفسه.
+        // والاسم المحفوظ على الجهاز يكفي — صاحبه هو من كتبه.
       });
     return () => { alive = false; };
   }, []);
@@ -76,7 +68,10 @@ export function IdentityCard() {
     // لا نُخفي الحجز إلّا إذا أكّدت القاعدة إلغاءه: إخفاؤه بلا تأكيد يجعل
     // العميل يظنّ أنه ألغى، فلا يأتي — والطاولة تبقى محجوزةً عند المطعم.
     if (j.ok) {
-      setLive((cur) => (cur ?? []).filter((r) => r.id !== id));
+      // الصفوف لم تعد تحمل معرّفًا، فنُسقط الحجز بموعده — والجهاز ينسى سجلّه
+      const gone = getBookings().find((b) => b.id === id)?.at;
+      setLive((cur) => (cur ?? []).filter((r) => !(r.kind === "reservation" && r.at === gone)));
+      clearBooking(id);
       // وإلّا بقي الشريط المتنقّل يعرض حجزًا ألغاه صاحبه حتى تنتهي مهلته
       clearLiveTicketCache();
     } else setCancelErr(true);
@@ -169,10 +164,15 @@ export function IdentityCard() {
           العميل يفتح «حسابي» ليرى دوره أو حجزه ويتصرّف فيه: يفتح تذكرة
           دوره، أو يلغي حجزًا لن يحضره. وصفحةٌ ثانية بينهما تُبقي طاولةً
           محجوزةً لمن لن يأتي لمجرّد أن الإلغاء كان بعيدًا خطوة. */}
-      {live?.map((r) => {
+      {live?.map((r, i) => {
         const isTurn = r.kind === "turn";
+        // المكان من الجهاز: الدور من آخر تذكرةٍ محفوظة، والحجز بمطابقة الموعد.
+        const mine = isTurn
+          ? getTurns().find((t) => t.entryId) ?? null
+          : getBookings().find((b) => b.at === r.at) ?? null;
+        const bookingId = !isTurn && mine && "id" in mine ? mine.id : null;
         return (
-          <div key={r.id} className="rq-card mt-3 p-5">
+          <div key={`${r.kind}-${r.at}-${i}`} className="rq-card mt-3 p-5">
             <div className="flex items-start justify-between gap-3">
               <span
                 className="shrink-0 rounded-full px-3 py-1 text-[11px] font-extrabold text-cream-100"
@@ -181,13 +181,16 @@ export function IdentityCard() {
                 {isTurn ? tr(lang, "دورك", "Your turn") : tr(lang, "حجزك", "Your booking")}
               </span>
               <div className="min-w-0 flex-1 text-end">
-                <Link href={`/r/${r.restaurant_slug}`} className="block truncate font-display text-lg font-bold text-[color:var(--ink)]">
-                  {r.restaurant}
-                </Link>
-                <p className="truncate text-[13px] text-[color:var(--muted)]">
-                  {r.branch}
-                  {r.zone_name ? ` · ${r.zone_name}` : ""}
-                </p>
+                {mine ? (
+                  <Link href={`/r/${mine.slug}`} className="block truncate font-display text-lg font-bold text-[color:var(--ink)]">
+                    {mine.name}
+                  </Link>
+                ) : (
+                  // جهازٌ جديد: نعرض الحالة بلا مكان بدل أن نكشفه لمن يعرف الرقم
+                  <p className="block truncate font-display text-lg font-bold text-[color:var(--ink)]">
+                    {isTurn ? tr(lang, "دورٌ قائم", "An active turn") : tr(lang, "حجزٌ قائم", "An active booking")}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -199,23 +202,30 @@ export function IdentityCard() {
               </span>
               <span className="text-[13px] font-bold text-[color:var(--muted)]">
                 {tr(lang, `${toAr(r.party_size)} أشخاص`, `${r.party_size} guests`)}
-                {r.table_label ? ` · ${tr(lang, `طاولة ${r.table_label}`, `Table ${r.table_label}`)}` : ""}
               </span>
             </div>
 
             {isTurn ? (
-              <Link href={`/r/${r.restaurant_slug}`} className="btn btn-primary mt-3 w-full">
-                {tr(lang, "افتح تذكرتي", "Open my ticket")}
-              </Link>
-            ) : (
+              mine ? (
+                <Link href={`/r/${mine.slug}`} className="btn btn-primary mt-3 w-full">
+                  {tr(lang, "افتح تذكرتي", "Open my ticket")}
+                </Link>
+              ) : null
+            ) : bookingId ? (
               <button
-                onClick={() => cancelReservation(r.id)}
-                disabled={cancelling === r.id}
+                onClick={() => cancelReservation(bookingId)}
+                disabled={cancelling === bookingId}
                 className="mt-3 w-full rounded-2xl px-4 py-3 text-sm font-bold disabled:opacity-50"
                 style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--danger)" }}
               >
-                {cancelling === r.id ? tr(lang, "…") : tr(lang, "إلغاء الحجز", "Cancel booking")}
+                {cancelling === bookingId ? tr(lang, "…") : tr(lang, "إلغاء الحجز", "Cancel booking")}
               </button>
+            ) : (
+              // جهازٌ لا يحمل هذا الحجز: الإلغاء يحتاج إثبات حيازةٍ لا معرفة رقم
+              <p className="mt-3 text-center text-[12px] text-[color:var(--muted)]">
+                {tr(lang, "للإلغاء افتح الرابط من جهازك الذي حجزت به، أو اتّصل بالمطعم.",
+                    "To cancel, open the link on the device you booked with, or call the restaurant.")}
+              </p>
             )}
           </div>
         );
