@@ -400,6 +400,12 @@ export type ReserveState = {
   table?: string;
   /** الموعد كما ثبّتته القاعدة (ISO) — لا كما ظنّه المتصفّح */
   at?: string;
+  /**
+   * معرّف الحجز — يُعاد للمتصفّح ليحفظه جهازُه (`recordBooking`).
+   * ضروريّ بعد 0104: الاستعلام بالرقم لم يعد يُرجع معرّفًا، فلولا حفظه هنا
+   * لما استطاع صاحبُ الحجز إلغاءه من «حسابي».
+   */
+  id?: string;
 };
 
 /**
@@ -464,8 +470,13 @@ export async function bookReservationGuest(
   }
 
   const row = (Array.isArray(data) ? data[0] : data) as
-    | { table_label?: string; reserved_at?: string }
+    | { reservation_id?: string; table_label?: string; reserved_at?: string }
     | null;
   if (slug) revalidatePath(`/r/${slug}`);
-  return { ok: true, table: row?.table_label ?? undefined, at: row?.reserved_at ?? when.toISOString() };
+  return {
+    ok: true,
+    table: row?.table_label ?? undefined,
+    at: row?.reserved_at ?? when.toISOString(),
+    id: row?.reservation_id ?? undefined,
+  };
 }

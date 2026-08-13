@@ -52,7 +52,7 @@ function SectionTitle({ children, more }: { children: React.ReactNode; more?: st
 // ═══ الهدايا ═══
 type Reward = {
   id: string;
-  restaurant: string;
+  // بلا هويّة مطعم بعد 0104 — انظر `rewards_by_phone`
   title: string;
   kind: string;
   value: number | null;
@@ -126,7 +126,7 @@ export function RewardsSection() {
             <div className="min-w-0 flex-1 text-end">
               <p className="truncate font-bold text-[color:var(--ink)]">{r.title}</p>
               <p className="truncate text-[13px] text-[color:var(--muted)]">
-                {r.restaurant}
+                {r.title}
                 {r.value != null && r.kind === "discount"
                   ? ` · ${r.value_kind === "amount" ? money(r.value, lang) : `${toAr(r.value)}٪`}`
                   : ""}

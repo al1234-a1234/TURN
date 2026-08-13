@@ -3,22 +3,22 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getMe } from "@/lib/local-store";
+import { getMe, getTurns } from "@/lib/local-store";
 import { normalizePhone, toAr } from "@/lib/format";
 import { fmtTime } from "@/lib/dates";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 
+// الاستعلام بالرقم لم يعد يُرجع هويّة مكانٍ ولا معرّفًا (0104): الموقع كان
+// كامل جائزة المهاجم — أن يعرف أنّ صاحب هذا الرقم في هذا المطعم الآن.
+// فالخادم يقول «لك دورٌ وترتيبك كذا» ولا يقول أين، و**جهازك** يعرف أين
+// لأنّه سجّل المطعم لحظة انضمامك (`recordTurn`).
 type Live = {
   kind: string;
-  id: string;
-  restaurant: string;
-  restaurant_slug: string;
   status: string;
   at: string;
-  zone_name: string | null;
   position: number | null;
-  table_label: string | null;
+  party_size: number | null;
 };
 
 const CACHE_KEY = "live-ticket";
@@ -93,8 +93,13 @@ export function LiveTicketBar({ onShow }: { onShow?: (shown: boolean) => void })
   // الدور قبل الحجز: الدور يجري الآن، والحجز موعدٌ لاحق
   const row = rows?.find((r) => r.kind === "turn") ?? rows?.[0] ?? null;
 
+  // اسم المطعم ورابطه من ذاكرة الجهاز لا من الخادم. وإن كان الجهاز جديدًا
+  // (استرجاعٌ برقمٍ فقط) بقي الشريط نافعًا بلا اسم: «دورك — ترتيبك ٣»،
+  // وهو ما يحتاجه الواقف في الطابور فعلًا.
+  const venue = row?.kind === "turn" ? getTurns().find((t) => t.entryId) ?? null : null;
+
   // معروضةٌ كاملةً في هذين المكانين — فلا تُعاد مصغّرةً فوقهما
-  const hidden = !row || path === "/me" || path === `/r/${row.restaurant_slug}`;
+  const hidden = !row || path === "/me" || (venue ? path === `/r/${venue.slug}` : false);
 
   useEffect(() => { onShow?.(!hidden); }, [hidden, onShow]);
 
@@ -103,7 +108,7 @@ export function LiveTicketBar({ onShow }: { onShow?: (shown: boolean) => void })
   const isTurn = row.kind === "turn";
   return (
     <Link
-      href={isTurn ? `/r/${row.restaurant_slug}` : "/me"}
+      href={isTurn && venue ? `/r/${venue.slug}` : "/me"}
       className="mb-2 flex items-center gap-3 rounded-3xl px-4 py-3 shadow-lg transition active:scale-[0.99]"
       style={{ background: "var(--brand-solid)" }}
     >
@@ -111,13 +116,13 @@ export function LiveTicketBar({ onShow }: { onShow?: (shown: boolean) => void })
         {isTurn ? tr(lang, "دورك", "Your turn") : tr(lang, "حجزك", "Your booking")}
       </span>
       <span className="min-w-0 flex-1 text-end">
-        <span className="block truncate text-sm font-extrabold text-cream-100">{row.restaurant}</span>
+        <span className="block truncate text-sm font-extrabold text-cream-100">
+          {venue?.name ?? (isTurn ? tr(lang, "دورك محفوظ", "Your turn is saved") : tr(lang, "حجزك محفوظ", "Your booking is saved"))}
+        </span>
         <span className="block truncate text-[12px] font-bold text-cream-100/85">
           {isTurn
             ? tr(lang, `ترتيبك ${toAr(row.position ?? 0)}`, `You're #${row.position ?? 0}`)
             : fmtTime(row.at, lang)}
-          {row.zone_name ? ` · ${row.zone_name}` : ""}
-          {row.table_label ? ` · ${tr(lang, `طاولة ${row.table_label}`, `Table ${row.table_label}`)}` : ""}
         </span>
       </span>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="shrink-0 text-cream-100/80" aria-hidden>
