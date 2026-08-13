@@ -32,7 +32,39 @@ with checks(name, pass) as (
   ('write_cancel_closed',      not has_function_privilege('anon','public.cancel_waitlist_guest(uuid,text)','EXECUTE')),
   ('write_review_closed',      not has_function_privilege('anon','public.submit_review(text,text,integer,text)','EXECUTE')),
   ('phone_lookup_closed',      not has_function_privilege('anon','public.guest_status_by_phone(text)','EXECUTE')
-                               and not has_function_privilege('anon','public.rewards_by_phone(text)','EXECUTE')),
+                               and not has_function_privilege('anon','public.guest_status_by_phone(text,text)','EXECUTE')
+                               and not has_function_privilege('anon','public.rewards_by_phone(text)','EXECUTE')
+                               and not has_function_privilege('anon','public.rewards_by_phone(text,text)','EXECUTE')),
+  -- ── تسريب الاستعلام بالرقم (0104) ──
+  -- برقمٍ وحده كان يخرج الاسم الكامل والمطعم والفرع والحالة وعدد المرافقين.
+  -- والموقع هو كامل جائزة المهاجم: أن يعرف أنّ صاحب هذا الرقم هنا الآن.
+  ('phone_lookup_hides_name',
+   (select pg_get_functiondef(oid) not like '%full_name%'
+      from pg_proc where proname='guest_status_by_phone' and pronargs=2)),
+  ('phone_lookup_hides_venue',
+   (select pg_get_functiondef(oid) not like '%r.name%' and pg_get_functiondef(oid) not like '%b.name%'
+      from pg_proc where proname='guest_status_by_phone' and pronargs=2)),
+  ('rewards_lookup_hides_venue',
+   (select pg_get_functiondef(oid) not like '%r.name%'
+      from pg_proc where proname='rewards_by_phone' and pronargs=2)),
+  -- والحدّ يعدّ على الطالب لا على المطلوب، وإلّا فكلّ رقمٍ جديدٍ نافذةٌ جديدة
+  ('phone_lookup_rate_by_caller',
+   (select pg_get_functiondef(oid) like '%gstat:ip%'
+      from pg_proc where proname='guest_status_by_phone' and pronargs=2)),
+  ('rewards_lookup_rate_by_caller',
+   (select pg_get_functiondef(oid) like '%rewards:ip%'
+      from pg_proc where proname='rewards_by_phone' and pronargs=2)),
+  -- وسقف الأرقام المختلفة لكل طالب: هذا العدّاد وحده هو الذي يقتل التعداد
+  ('phone_lookup_distinct_cap',
+   (select pg_get_functiondef(oid) like '%gstat:ipn:%'
+      from pg_proc where proname='guest_status_by_phone' and pronargs=2)),
+  ('phone_lookup_audited',      to_regclass('public.phone_lookup_log') is not null),
+  -- والسجلّ لا يحفظ رقمًا ولا عنوانًا صريحًا: سجلٌّ يجمع أرقام الناس يصير هو الثغرة
+  ('phone_log_hashed_only',
+   (select pg_get_functiondef(oid) like '%digest(v_salt%'
+      from pg_proc where proname='guest_status_by_phone' and pronargs=2)),
+  ('phone_log_server_only',     not has_function_privilege('anon','public.retire_phone_lookup_log()','EXECUTE')
+                               and not has_function_privilege('authenticated','public.retire_phone_lookup_log()','EXECUTE')),
   -- والحجز يبقى للموظّف: صندوق الاستقبال يحجز نيابةً عن العميل
   ('book_stays_for_staff',     has_function_privilege('authenticated','public.book_reservation_guest(uuid,text,text,timestamptz,integer,text,text)','EXECUTE')
                                and not has_function_privilege('anon','public.book_reservation_guest(uuid,text,text,timestamptz,integer,text,text)','EXECUTE')),
@@ -270,20 +302,20 @@ with checks(name, pass) as (
                                 from pg_proc where proname='enforce_zone_belongs_to_branch')),
   -- (٢٦) استرجاع الضيف بالرقم: التخزين المحلّي يضيع بتثبيت التطبيق أو
   --      بتبديل الجهاز، والحجز لم يكن يُسترجَع ولا يُلغى أصلًا (0084).
-  ('q26_guest_recovery',       has_function_privilege('service_role','public.guest_status_by_phone(text)','EXECUTE')),
+  ('q26_guest_recovery',       has_function_privilege('service_role','public.guest_status_by_phone(text,text)','EXECUTE')),
   ('q26_guest_can_cancel_res', has_function_privilege('service_role','public.cancel_reservation_guest(uuid,text)','EXECUTE')),
   -- وكلتاهما محروسة بحدّ معدّل: بلا ذلك يُعدّ المهاجم الأرقام ويقرأ أسماءها
   ('q26_recovery_rate_limited',(select pg_get_functiondef(oid) like '%check_rate%'
-                                from pg_proc where proname='guest_status_by_phone')),
+                                from pg_proc where proname='guest_status_by_phone' and pronargs=2)),
   ('q26_cancel_needs_phone',   (select pg_get_functiondef(oid) like '%norm_phone_input%'
                                 from pg_proc where proname='cancel_reservation_guest')),
   -- (٢٠) مرجع المخطط: أي انحراف عن البصمة المثبَّتة يظهر هنا قبل أن يفاجئنا
-  --      (٢٧ جدولًا · ٩٥ دالة · ٦٧ سياسة · ٤٠ مفتاحًا أجنبيًّا) — راجع
+  --      (٢٩ جدولًا · ٩٨ دالة · ٦٧ سياسة · ٤٠ مفتاحًا أجنبيًّا) — راجع
   --      supabase/tests/schema_baseline.md وحدّثه عمدًا عند أي تغيير مقصود
   ('q20_schema_no_drift',      (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
-                                where n.nspname='public' and c.relkind='r') = 27
+                                where n.nspname='public' and c.relkind='r') = 29
                                and (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-                                    where n.nspname='public' and p.prokind='f') = 95
+                                    where n.nspname='public' and p.prokind='f') = 98
                                and (select count(*) from pg_policies where schemaname='public') = 67
                                and (select count(*) from pg_constraint c join pg_class r on r.oid=c.conrelid
                                     join pg_namespace n on n.oid=r.relnamespace

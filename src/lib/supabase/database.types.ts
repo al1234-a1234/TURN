@@ -1494,21 +1494,13 @@ export type Database = {
         Returns: number
       }
       guest_status_by_phone: {
-        Args: { p_phone: string }
+        Args: { p_phone: string; p_ip?: string }
         Returns: {
           at: string
-          branch: string
-          branch_id: string
-          full_name: string
-          id: string
           kind: string
           party_size: number
-          position: number
-          restaurant: string
-          restaurant_slug: string
+          position: number | null
           status: string
-          table_label: string
-          zone_name: string
         }[]
       }
       has_feature: {
@@ -1630,21 +1622,19 @@ export type Database = {
       restaurant_of_branch: { Args: { b_id: string }; Returns: string }
       retire_dormant_customers: { Args: { p_months?: number }; Returns: number }
       rewards_by_phone: {
-        Args: { p_phone: string }
+        Args: { p_phone: string; p_ip?: string }
         Returns: {
-          armed_at: string
+          armed_at: string | null
           created_at: string
-          description: string
-          expires_at: string
+          description: string | null
+          expires_at: string | null
           id: string
           kind: string
-          redeemed_at: string
-          restaurant: string
-          restaurant_slug: string
+          redeemed_at: string | null
           status: string
           title: string
-          value: number
-          value_kind: string
+          value: number | null
+          value_kind: string | null
         }[]
       }
       rollup_all_daily_stats: { Args: { p_date: string }; Returns: number }
@@ -1710,6 +1700,7 @@ export type Database = {
         }[]
       }
       log_push_sends: { Args: { p_rows: Json }; Returns: number }
+      retire_phone_lookup_log: { Args: Record<PropertyKey, never>; Returns: number }
       staff_branch_queue: {
         Args: { p_branch_id: string }
         Returns: {
