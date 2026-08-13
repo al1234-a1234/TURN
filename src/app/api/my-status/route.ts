@@ -30,13 +30,24 @@ import { saudiMobile } from "@/lib/format";
  */
 export const dynamic = "force-dynamic";
 
+/**
+ * عنوان الطالب — أوّل قيمة في `x-forwarded-for` (وهي التي وضعها وكيلنا).
+ * وغيابه يُعامَل طالبًا مجهولًا واحدًا مشتركًا (الأشدّ) لا طالبًا جديدًا لكل
+ * طلب: ولو عاملناه بالثانية لصار كتمُ الترويسة أسهل طريقٍ لتعطيل الحدّ.
+ */
+function callerIp(req: Request): string {
+  const fwd = req.headers.get("x-forwarded-for") ?? "";
+  return fwd.split(",")[0]?.trim() || req.headers.get("x-real-ip")?.trim() || "";
+}
+
+
 export async function GET(req: Request) {
   const raw = new URL(req.url).searchParams.get("phone") ?? "";
   // نفس تطبيع مسار الانضمام: رقمٌ مشوّه يُرفض هنا فلا يصل القاعدة أصلًا
   const phone = saudiMobile(raw);
   if (!phone) return NextResponse.json({ rows: [] }, { status: 400, headers: { "Cache-Control": "no-store" } });
 
-  const { data, error } = await (await guestWriter()).rpc("guest_status_by_phone", { p_phone: phone });
+  const { data, error } = await (await guestWriter()).rpc("guest_status_by_phone", { p_phone: phone, p_ip: callerIp(req) });
   if (error) {
     console.error("[api/my-status]", error.message);
     // ‏502 لا 200 بمصفوفةٍ فارغة: «لم نعرف» غير «ما عندك شيء»، والواجهة
