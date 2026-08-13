@@ -2,26 +2,21 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { getMe, saveMe } from "@/lib/local-store";
+import { getMe, saveMe, getTurns, getBookings, clearBooking } from "@/lib/local-store";
 import { clearLiveTicketCache } from "@/components/live-ticket-bar";
 import { normalizePhone, toAr } from "@/lib/format";
 import { fmtTime } from "@/lib/dates";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 
+// مخرجات الاستعلام بالرقم بعد 0104: حالةٌ بلا هويّة مكان ولا معرّف —
+// الموقع كان كامل جائزة المهاجم. والمكان يأتي من ذاكرة الجهاز إن عرفه.
 type Row = {
   kind: string;
-  id: string;
-  restaurant: string;
-  restaurant_slug: string;
-  branch: string;
   status: string;
   at: string;
   party_size: number;
-  zone_name: string | null;
   position: number | null;
-  table_label: string | null;
-  full_name: string;
 };
 
 /**
@@ -88,7 +83,10 @@ export function RecoverBookings() {
     setCancelling(null);
     const j = res.ok ? await res.json() : { ok: false };
     if (j.ok) {
-      setRows((cur) => (cur ?? []).filter((r) => r.id !== id));
+      // الصفوف بلا معرّف بعد 0104 — يُسقَط الحجز بموعده، وينسى الجهاز سجلّه
+      const gone = getBookings().find((b) => b.id === id)?.at;
+      setRows((cur) => (cur ?? []).filter((r) => !(r.kind === "reservation" && r.at === gone)));
+      clearBooking(id);
       clearLiveTicketCache();
     } else setCancelErr(true);
   }
@@ -159,10 +157,17 @@ export function RecoverBookings() {
         </div>
       )}
 
-      {rows?.map((r) => {
+      {rows?.map((r, i) => {
         const isTurn = r.kind === "turn";
+        // هذه الصفحة هي الاسترجاع بالرقم بعينه، وأكثر من يفتحها على جهازٍ
+        // جديد. فالمكان قد لا يعرفه الجهاز — ونقولها بدل أن نكشفه لمن يعرف
+        // الرقم. الميزة باقية: يرى أنّ له دورًا وترتيبَه فيه.
+        const mine = isTurn
+          ? getTurns().find((t) => t.entryId) ?? null
+          : getBookings().find((b) => b.at === r.at) ?? null;
+        const bookingId = !isTurn && mine && "id" in mine ? mine.id : null;
         return (
-          <div key={r.id} className="rq-card p-5">
+          <div key={`${r.kind}-${r.at}-${i}`} className="rq-card p-5">
             <div className="flex items-start justify-between gap-3">
               <span
                 className="shrink-0 rounded-full px-3 py-1 text-[11px] font-extrabold text-cream-100"
@@ -171,13 +176,15 @@ export function RecoverBookings() {
                 {isTurn ? tr(lang, "دور", "Turn") : tr(lang, "حجز", "Booking")}
               </span>
               <div className="min-w-0 flex-1 text-end">
-                <Link href={`/r/${r.restaurant_slug}`} className="block truncate font-display text-lg font-bold text-[color:var(--ink)]">
-                  {r.restaurant}
-                </Link>
-                <p className="truncate text-[13px] text-[color:var(--muted)]">
-                  {r.branch}
-                  {r.zone_name ? ` · ${r.zone_name}` : ""}
-                </p>
+                {mine ? (
+                  <Link href={`/r/${mine.slug}`} className="block truncate font-display text-lg font-bold text-[color:var(--ink)]">
+                    {mine.name}
+                  </Link>
+                ) : (
+                  <p className="block truncate font-display text-lg font-bold text-[color:var(--ink)]">
+                    {isTurn ? tr(lang, "دورٌ قائم", "An active turn") : tr(lang, "حجزٌ قائم", "An active booking")}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -189,23 +196,29 @@ export function RecoverBookings() {
               </span>
               <span className="text-[13px] font-bold text-[color:var(--muted)]">
                 {tr(lang, `${toAr(r.party_size)} أشخاص`, `${r.party_size} guests`)}
-                {r.table_label ? ` · ${tr(lang, `طاولة ${r.table_label}`, `Table ${r.table_label}`)}` : ""}
               </span>
             </div>
 
             {isTurn ? (
-              <Link href={`/r/${r.restaurant_slug}`} className="btn btn-primary mt-3 w-full">
-                {tr(lang, "افتح تذكرتي", "Open my ticket")}
-              </Link>
-            ) : (
+              mine ? (
+                <Link href={`/r/${mine.slug}`} className="btn btn-primary mt-3 w-full">
+                  {tr(lang, "افتح تذكرتي", "Open my ticket")}
+                </Link>
+              ) : null
+            ) : bookingId ? (
               <button
-                onClick={() => cancelReservation(r.id)}
-                disabled={cancelling === r.id}
+                onClick={() => cancelReservation(bookingId)}
+                disabled={cancelling === bookingId}
                 className="mt-3 w-full rounded-2xl px-4 py-3 text-sm font-bold disabled:opacity-50"
                 style={{ background: "var(--surface)", border: "1px solid var(--border)", color: "var(--danger)" }}
               >
-                {cancelling === r.id ? tr(lang, "…") : tr(lang, "إلغاء الحجز", "Cancel booking")}
+                {cancelling === bookingId ? tr(lang, "…") : tr(lang, "إلغاء الحجز", "Cancel booking")}
               </button>
+            ) : (
+              <p className="mt-3 text-center text-[12px] text-[color:var(--muted)]">
+                {tr(lang, "للإلغاء افتح الرابط من جهازك الذي حجزت به، أو اتّصل بالمطعم.",
+                    "To cancel, open the link on the device you booked with, or call the restaurant.")}
+              </p>
             )}
           </div>
         );

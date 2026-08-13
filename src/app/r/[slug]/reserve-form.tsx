@@ -7,7 +7,7 @@ import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 import { createClient } from "@/lib/supabase/client";
 import { riyadhISODate, fmtTime } from "@/lib/dates";
-import { getMe, saveMe } from "@/lib/local-store";
+import { getMe, saveMe, recordBooking } from "@/lib/local-store";
 import { clearLiveTicketCache } from "@/components/live-ticket-bar";
 import { zoneLabel, type Zone } from "@/lib/zones";
 
@@ -99,6 +99,12 @@ export function ReserveForm({
     // صفحة الآن، لا بعد أن تنتهي مهلة الدقيقة
     if (state.ok) {
       saveMe({ name: nameRef.current?.value?.trim() || undefined, phone });
+      // جهازك يتذكّر حجزك. صار لازمًا بعد 0104: الاستعلام بالرقم لم يعد
+      // يُرجع معرّفًا — لأنّ من يملكه يفتح `/t/<id>` فيعرف المطعم — فلولا
+      // هذا السطر لما استطاع صاحب الحجز إلغاءه من «حسابي».
+      if (state.id && state.at) {
+        recordBooking({ id: state.id, slug, name: slug, at: state.at, phone });
+      }
       clearLiveTicketCache();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

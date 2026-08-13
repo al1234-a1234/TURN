@@ -21,8 +21,8 @@ import { getMe, saveMe } from "@/lib/local-store";
 
 type Reward = {
   id: string;
-  restaurant: string;
-  restaurant_slug: string;
+  // هويّة المطعم سُحبت من `rewards_by_phone` في 0104: الهدايا تكشف أين
+  // يأكل الشخص عادةً — وهي جائزةٌ للمهاجم لا فائدةٌ لصاحبها، فهو يعرف.
   kind: string;
   title: string;
   value: number | null;
@@ -158,7 +158,7 @@ export default function MyRewardsPage() {
                         {r.title}{valueLabel(r) ? ` · ${valueLabel(r)}` : ""}
                       </p>
                       <p className="mt-0.5 truncate text-[13px] font-medium text-[color:var(--muted)]">
-                        {r.restaurant}{r.expires_at ? ` · ${tr(lang, "ينتهي", "ends")} ${fmtDate(r.expires_at)}` : ""}
+                        {r.expires_at ? `${tr(lang, "ينتهي", "ends")} ${fmtDate(r.expires_at)}` : ""}
                       </p>
                     </div>
                   </div>
@@ -173,7 +173,7 @@ export default function MyRewardsPage() {
                         ✓ {tr(lang, "جاهزة — خذ دورك وبتظهر للموظّف", "Ready — take your turn and staff will see it")}
                       </p>
                       <div className="flex gap-2">
-                        <Link href={`/r/${r.restaurant_slug}`} className="rq-btn flex-1">{tr(lang, "خذ دورك", "Take your turn")}</Link>
+                        <Link href="/" className="rq-btn flex-1">{tr(lang, "خذ دورك", "Take your turn")}</Link>
                         <button type="button" onClick={() => toggleArm(r)} disabled={busyId === r.id} className="btn btn-ghost shrink-0 px-4">
                           {busyId === r.id ? "…" : tr(lang, "تراجع", "Undo")}
                         </button>
@@ -199,7 +199,7 @@ export default function MyRewardsPage() {
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[color:var(--surface-2)] text-lg">✓</span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-[color:var(--ink)] line-through">{r.title}</p>
-                    <p className="text-xs text-[color:var(--muted)]">{r.restaurant} · {tr(lang, "استُخدمت", "used")} {fmtDate(r.redeemed_at)}</p>
+                    <p className="text-xs text-[color:var(--muted)]">{tr(lang, "استُخدمت", "used")} {fmtDate(r.redeemed_at)}</p>
                   </div>
                 </div>
               ))}
