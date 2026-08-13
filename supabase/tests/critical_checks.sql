@@ -309,14 +309,54 @@ with checks(name, pass) as (
                                 from pg_proc where proname='guest_status_by_phone' and pronargs=2)),
   ('q26_cancel_needs_phone',   (select pg_get_functiondef(oid) like '%norm_phone_input%'
                                 from pg_proc where proname='cancel_reservation_guest')),
+  -- ══ الموجة الثانية (0105, 0106): الكتابة المباشرة ══
+  --
+  -- (ث‑١) التقييمات: submit_review تفرض حدّ معدّلٍ وزيارةً فعليّة وتقييمًا
+  --       واحدًا لكلّ مطعم، والجدول كان لا يفرض شيئًا — فأيّ حسابٍ مسجَّل
+  --       كتب ٢٠٠ تقييمًا بنجمةٍ واحدة لمطعمٍ لم يزره. الباب أُغلق لا ضُيِّق.
+  ('w2_reviews_insert_locked', not has_table_privilege('anon','public.reviews','insert')
+                               and not has_table_privilege('authenticated','public.reviews','insert')),
+  -- وسياسة الإدخال المباشر أُزيلت معها: بقاؤها ميّتةً يُوهم القارئ بباب مفتوح
+  ('w2_reviews_no_ins_policy', not exists(select 1 from pg_policies
+                                where schemaname='public' and tablename='reviews' and cmd='INSERT')),
+  -- «تقييمٌ واحدٌ لكلّ عميلٍ لكلّ مطعم» قيدٌ في القاعدة لا سطرٌ في دالّة —
+  -- يصمد لأيّ مسارٍ قادم، ولمفتاح الخدمة نفسه
+  ('w2_review_one_per_cust',   exists(select 1 from pg_indexes
+                                where indexname='uniq_review_per_customer_restaurant')),
+  --
+  -- (ث‑٢) الطابور والحجوزات: كانت سياسةٌ واحدةٌ تغطّي ALL وتفحص الفرع وحده،
+  --       فموظّفٌ كلّ صلاحيّاته false مسح ٧٨٧ صفَّ طابورٍ و١٢٠٧ حجزًا.
+  --       الآن: قراءةٌ وإدخالٌ وتعديلٌ بحسب الصلاحيّة، والحذف للإدارة وحدها.
+  ('w2_queue_delete_managers', (select bool_and(qual like '%my_managed_branch_ids%')
+                                from pg_policies where schemaname='public'
+                                  and tablename in ('waitlist_entries','reservations')
+                                  and cmd='DELETE')
+                               and (select count(*) from pg_policies where schemaname='public'
+                                     and tablename in ('waitlist_entries','reservations')
+                                     and cmd='DELETE') = 2),
+  ('w2_queue_perm_scoped',     (select count(*) from pg_policies where schemaname='public'
+                                and tablename in ('waitlist_entries','reservations')
+                                and cmd in ('SELECT','INSERT','UPDATE')
+                                and coalesce(qual,with_check) like '%my_branch_ids_for%') = 6),
+  -- ولا حذفَ بلا أثر: مُطلِقٌ يحفظ الصفّ كاملًا في admin_audit، يصمد لـPostgREST
+  -- ولمفتاح الخدمة ولسكربتٍ يدويّ — فالمحذوف قابلٌ للاسترجاع لا للبكاء عليه
+  ('w2_queue_delete_audited',  (select count(*) from pg_trigger
+                                where tgname in ('trg_audit_delete_waitlist',
+                                                 'trg_audit_delete_reservations')) = 2),
+  -- مؤجَّلٌ عمدًا (ث‑٣): «rewards_status_no_revival» — صاحب صلاحية customers
+  -- ما زال يعيد هديّةً مستهلكةً إلى active ويرفع عدّاد الزيارات. قرارٌ صريحٌ
+  -- بتأجيله إلى ما بعد الإطلاق، ولا يُضاف فحصٌ أحمر يكسر شبكةً كلّها خضراء.
+  --
   -- (٢٠) مرجع المخطط: أي انحراف عن البصمة المثبَّتة يظهر هنا قبل أن يفاجئنا
-  --      (٢٩ جدولًا · ٩٨ دالة · ٦٧ سياسة · ٤٠ مفتاحًا أجنبيًّا) — راجع
+  --      (٢٩ جدولًا · ١٠١ دالة · ٧٢ سياسة · ٤٠ مفتاحًا أجنبيًّا) — راجع
   --      supabase/tests/schema_baseline.md وحدّثه عمدًا عند أي تغيير مقصود
+  --      تغيّرت في 0105/0106: +٣ دوال (my_branch_ids_for، my_managed_branch_ids،
+  --      audit_row_delete) و+٥ سياسات (‑١ إدخال تقييم، +٣ طابور، +٣ حجوزات)
   ('q20_schema_no_drift',      (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
                                 where n.nspname='public' and c.relkind='r') = 29
                                and (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-                                    where n.nspname='public' and p.prokind='f') = 98
-                               and (select count(*) from pg_policies where schemaname='public') = 67
+                                    where n.nspname='public' and p.prokind='f') = 101
+                               and (select count(*) from pg_policies where schemaname='public') = 72
                                and (select count(*) from pg_constraint c join pg_class r on r.oid=c.conrelid
                                     join pg_namespace n on n.oid=r.relnamespace
                                     where n.nspname='public' and c.contype='f') = 40)
