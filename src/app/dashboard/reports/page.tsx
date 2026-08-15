@@ -65,6 +65,8 @@ export default async function ReportsPage({
 
   if (!isModuleOn(modules, "analytics") || !staffHasPermission(role, permissions, "analytics")) redirect("/dashboard");
 
+  const canCustomers = staffHasPermission(role, permissions, "customers");
+
   const { data: branches } = await supabase
     .from("branches")
     .select("id, name")
@@ -91,11 +93,16 @@ export default async function ReportsPage({
 
   const [rev, profiles, analytics] = await Promise.all([
     supabase.from("reviews").select("rating").eq("restaurant_id", restaurant.id),
-    supabase
-      .from("customer_restaurant")
-      // !inner: يقصر العملاء على من زار فروع المتصل (لا أرقام العلامة كلها)
-      .select("visits, customers!inner(id)")
-      .eq("restaurant_id", restaurant.id),
+    // التقارير محروسة بصلاحية «التحليلات»، وأرقام العملاء محروسة بصلاحية
+    // «العملاء» — وهما لا تتلازمان. من يملك الأولى دون الثانية كان سيرى صفرًا
+    // يقرؤه «لا عملاء لنا»، فنسأل قبل الجلب ونكتب السبب مكان الرقم.
+    canCustomers
+      ? supabase
+          .from("customer_restaurant")
+          // !inner: يقصر العملاء على من زار فروع المتصل (لا أرقام العلامة كلها)
+          .select("visits, customers!inner(id)")
+          .eq("restaurant_id", restaurant.id)
+      : Promise.resolve({ data: [] as { visits: number }[] }),
     branchIds.length
       ? supabase
           .from("waitlist_entries")
@@ -288,8 +295,12 @@ export default async function ReportsPage({
         <Kpi label={tr(lang, "متوسط المجموعة", "Average Party")} value={toAr(avgParty)} tone="var(--brand-d)" tint="rgba(120,30,12,0.05)" />
         <Kpi label={tr(lang, "أكثر الساعات ازدحامًا", "Busiest Hour")} value={busiestLabel} tone="var(--st-full)" tint="rgba(169,114,30,0.10)" />
         <Kpi label={tr(lang, "متوسط التقييم", "Average Rating")} value={ratings.length ? `★ ${toAr(avgRating)}` : "—"} tone="var(--star)" tint="rgba(120,30,12,0.06)" />
-        <Kpi label={tr(lang, "إجمالي العملاء", "Total Customers")} value={toAr(totalCustomers)} tone="var(--brand-d)" tint="rgba(120,30,12,0.10)" />
-        <Kpi label={tr(lang, "عملاء عائدون", "Returning Customers")} value={pct(toAr(returningPct), lang)} tone="var(--st-open)" tint="rgba(63,125,93,0.10)" />
+        <Kpi label={tr(lang, "إجمالي العملاء", "Total Customers")}
+             value={canCustomers ? toAr(totalCustomers) : tr(lang, "لا صلاحية", "No access")}
+             tone="var(--brand-d)" tint="rgba(120,30,12,0.10)" />
+        <Kpi label={tr(lang, "عملاء عائدون", "Returning Customers")}
+             value={canCustomers ? pct(toAr(returningPct), lang) : tr(lang, "لا صلاحية", "No access")}
+             tone="var(--st-open)" tint="rgba(63,125,93,0.10)" />
         <Kpi label={tr(lang, "نسبة التغيّب", "No-show Rate")} value={pct(toAr(noShowRate), lang)} tone={noShowRate >= 20 ? "var(--st-closed)" : "var(--muted)"} tint="var(--surface-2)" />
         <Kpi label={tr(lang, "نسبة الإلغاء", "Cancel Rate")} value={pct(toAr(cancelRate), lang)} tone={cancelRate >= 20 ? "var(--st-closed)" : "var(--muted)"} tint="var(--surface-2)" />
       </div>
