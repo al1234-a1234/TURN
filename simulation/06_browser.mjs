@@ -29,8 +29,12 @@ const sessions = JSON.parse(readFileSync("./sessions.json", "utf8"));
 const PASSWORD = sessions.password;
 
 // ── مراحل k6: ٣٠ث صعود + ٦٠٠ث ثبات + ١٢٠ث تهدئة = ٧٥٠ث لكل درجة ──
+// SIM_STAGE (اختياريّ): يُقصر التشغيل على درجةٍ واحدة، مطابقةً لـ03_load.js
+// حين يُشغَّل بنفس المتغيّر — للتصعيد التسلسليّ مع بوّابة 04_verify بينهما.
 const STAGE_SECONDS = 750;
-const STAGE_NAMES = ["١٠ مطاعم", "٢٥ مطعمًا", "٥٠ مطعمًا", "١٠٠ مطعم"];
+const ALL_STAGE_NAMES = { 10: "١٠ مطاعم", 25: "٢٥ مطعمًا", 50: "٥٠ مطعمًا", 100: "١٠٠ مطعم" };
+const SIM_STAGE = process.env.SIM_STAGE;
+const STAGE_NAMES = SIM_STAGE ? [ALL_STAGE_NAMES[SIM_STAGE] ?? `${SIM_STAGE} مطعمًا`] : Object.values(ALL_STAGE_NAMES);
 const TOTAL_MS = STAGE_SECONDS * STAGE_NAMES.length * 1000;
 const T0 = Date.now();
 

@@ -34,7 +34,12 @@ const owners = sessions.owners;
 const reception = sessions.reception;
 
 // ── معدّلات مشتقّة من القياس: ~٠٫٥ طلب/ث لكل مطعم ──
-const STAGES = [10, 25, 50, 100];
+// SIM_STAGE (اختياريّ): درجةٌ واحدة فقط (١٠/٢٥/٥٠/١٠٠) — للتصعيد التسلسليّ
+// الحقيقيّ حيث يُشغَّل 04_verify.sql بين كل درجةٍ وأخرى ويُقرَّر الاستمرار
+// من خارج هذا الملفّ. بلا SIM_STAGE يعمل الملفّ كما في الدليل: أربع درجاتٍ
+// متتاليةٌ بلا توقّفٍ للتحقّق بينها (للتشغيل اليدويّ من طرفيّةٍ واحدة).
+const ALL_STAGES = [10, 25, 50, 100];
+const STAGES = __ENV.SIM_STAGE ? [Number(__ENV.SIM_STAGE)] : ALL_STAGES;
 const MIN = 60;
 const HOLD = 10 * MIN;
 const COOL = 2 * MIN;
@@ -204,6 +209,7 @@ export function handleSummary(data) {
     stdout: `
 ════════════════════════════════════════════
   انتهى التشغيل — انقل هذه الأرقام إلى الجدول
+  الدرجة: ${STAGES.join("، ")} مطعمًا
 ════════════════════════════════════════════
   إجماليّ الطلبات   : ${m.http_reqs?.values?.count ?? "—"}
   معدّل الخطأ       : ${((m.http_req_failed?.values?.rate ?? 0) * 100).toFixed(2)}٪

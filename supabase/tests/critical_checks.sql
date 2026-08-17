@@ -163,7 +163,7 @@ with checks(name, pass) as (
   ('armed_at_col',             exists(select 1 from information_schema.columns
                                       where table_schema='public' and table_name='customer_rewards' and column_name='armed_at')),
   ('rewards_by_phone_guarded', (select pg_get_functiondef(oid) like '%check_rate%'
-                                from pg_proc where proname='rewards_by_phone')),
+                                from pg_proc where proname='rewards_by_phone' and pronargs=2)),
   ('arm_by_phone_guarded',     (select pg_get_functiondef(oid) like '%check_rate%'
                                 from pg_proc where proname='set_reward_armed_by_phone')),
   ('reception_gifts_fn',       exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace

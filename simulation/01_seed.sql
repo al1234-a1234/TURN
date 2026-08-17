@@ -22,9 +22,33 @@ begin
   end if;
 end $$;
 
+-- ── ٠) مالكٌ بدئيّ وحيد: restaurants.owner_id NOT NULL بلا افتراضي، وليس
+--     لهذا الملف مستخدمٌ حقيقيّ بعد (02_make_sessions.mjs يُنشئ مالكًا فعليًّا
+--     لكل مطعمٍ لاحقًا ويربطه عبر staff — والوصول الفعليّ يمرّ من هناك،
+--     لا من هذا العمود). فهذا حسابٌ بدئيّ مؤقّت لا غير، يملأ القيد فقط.
+do $$
+declare
+  v_owner uuid;
+begin
+  select id into v_owner from auth.users where email = 'seed-bootstrap-owner@sim.local';
+  if v_owner is null then
+    insert into auth.users (
+      instance_id, id, aud, role, email, encrypted_password,
+      email_confirmed_at, created_at, updated_at,
+      raw_app_meta_data, raw_user_meta_data, is_sso_user
+    ) values (
+      '00000000-0000-0000-0000-000000000000',
+      gen_random_uuid(), 'authenticated', 'authenticated',
+      'seed-bootstrap-owner@sim.local', '',
+      now(), now(), now(), '{}'::jsonb, '{}'::jsonb, false
+    );
+  end if;
+end $$;
+
 -- ── ١) المطاعم: ١٠٠، وأحجامها متفاوتة ──
-insert into public.restaurants (name, name_en, slug, cuisine, cuisine_en, is_active, is_canary)
-select 'مطعم المحاكاة ' || g, 'Sim Restaurant ' || g, 'sim-' || lpad(g::text,3,'0'),
+insert into public.restaurants (owner_id, name, name_en, slug, cuisine, cuisine_en, is_active, is_canary)
+select (select id from auth.users where email = 'seed-bootstrap-owner@sim.local'),
+       'مطعم المحاكاة ' || g, 'Sim Restaurant ' || g, 'sim-' || lpad(g::text,3,'0'),
        (array['إيطالي','سعودي','هندي','ياباني','مشويات'])[1 + (g % 5)],
        (array['Italian','Saudi','Indian','Japanese','Grill'])[1 + (g % 5)],
        true, false
@@ -48,7 +72,8 @@ update public.branch_settings s
  where s.branch_id = b.id and r.slug like 'sim-%';
 
 -- ── ٤) الطاولات: من ٥ إلى ٤٠ بحسب حجم المطعم ──
-insert into public.tables (branch_id, name, seats, is_active)
+-- العمود label لا name (انحراف اسمٍ قديم — الجدول أُعيد تسميته منذ ترحيلٍ مبكّر)
+insert into public.tables (branch_id, label, seats, is_active)
 select b.id, 'ط' || n, 2 + (n % 6), true
 from public.branches b
 join public.restaurants r on r.id = b.restaurant_id
