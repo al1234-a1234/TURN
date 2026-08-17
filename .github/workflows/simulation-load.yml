@@ -1,0 +1,155 @@
+# ============================================================================
+#  محاكاة ١٠٠ مطعم — تشغيلٌ من مشغّل GitHub بدل جهازك
+#
+#  لماذا هذا الملفّ؟ k6 يعمل على تابلت أندرويد بحيلةٍ غير رسميّة (بناء Go
+#  داخل Termux)، وPlaywright لا يعمل بثقة — Chromium ليس له بناءٌ رسميّ
+#  موثوق تحت Bionic/proot. فبدل أن تراهن على قياسٍ قد ينكسر بسبب الجهاز لا
+#  النظام، هذا المشغّل يُشغّل الاثنين معًا على خادم لينكس حقيقيّ.
+#
+#  وضعان (mode)، لأنّ التصعيد يجب أن يتوقّف فورًا إن رجع صفٌّ من 04_verify —
+#  وهذا يستحيل داخل تشغيلٍ واحدٍ متواصل لأربع درجات:
+#    • prepare — يُشغَّل مرّةً واحدة: يولّد ١٠٠ مالك + ٢٠٠ استقبال (Admin API،
+#      غير قابلٍ للتكرار — تشغيلٌ ثانٍ يفشل على البريد المكرَّر) ويرفع
+#      sessions.json كملفٍّ يُحمَّل في كل تشغيل stage لاحق.
+#    • stage — حملٌ لدرجةٍ واحدة فقط (SIM_STAGE)، يُشغَّل أربع مرّاتٍ منفصلة
+#      (١٠ ثمّ ٢٥ ثمّ ٥٠ ثمّ ١٠٠)، وبين كل تشغيلٍ وآخر يُشغَّل 04_verify.sql
+#      خارج هذا الملفّ — فإن رجع صفٌّ، لا يبدأ التشغيل التالي.
+#
+#  ⛔ لا يعمل تلقائيًّا على أي دفعة — تشغيلٌ يدويٌّ فقط (workflow_dispatch)،
+#  ويرفض العمل إن أشارت الأسرار إلى ei8ht.app. الأسرار SIM_* يجب أن تشير
+#  إلى مشروع المحاكاة المنفصل فقط — راجع simulation/README.md.
+# ============================================================================
+name: محاكاة ١٠٠ مطعم — حمل + متصفّحات
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'اكتب "نعم" لتأكيد أن الأسرار تشير إلى مشروع المحاكاة لا الإنتاج'
+        required: true
+      mode:
+        description: 'prepare (مرّةً واحدة) أو stage (حملٌ لدرجةٍ واحدة)'
+        required: true
+        type: choice
+        options: [prepare, stage]
+      stage:
+        description: 'الدرجة — يُستعمل فقط مع mode=stage'
+        required: false
+        type: choice
+        options: ["10", "25", "50", "100"]
+      sessions_run_id:
+        description: 'رقم تشغيل prepare (الذي أنتج sessions.json) — يُستعمل فقط مع mode=stage'
+        required: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_URL: ${{ secrets.SIM_SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SIM_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SIM_SUPABASE_SERVICE_KEY }}
+      TARGET_URL: ${{ secrets.SIM_TARGET_URL }}
+      SIM_STAGE: ${{ inputs.stage }}
+    steps:
+      - name: تأكيد صريح
+        run: |
+          if [ "${{ inputs.confirm }}" != "نعم" ]; then
+            echo "::error::لم تكتب «نعم» في حقل التأكيد — توقّف."
+            exit 1
+          fi
+          if [ "${{ inputs.mode }}" = "stage" ] && [ -z "${{ inputs.sessions_run_id }}" ]; then
+            echo "::error::mode=stage يحتاج sessions_run_id من تشغيل prepare السابق."
+            exit 1
+          fi
+
+      - name: حارس الإنتاج — الأسرار يجب ألّا تشير إلى ei8ht.app
+        run: |
+          if echo "$TARGET_URL $SUPABASE_URL" | grep -qi "ei8ht\.app\|nkdfxmjuigslmangzuua"; then
+            echo "::error::الأسرار SIM_* تشير إلى الإنتاج. هذا المشغّل لبيئة المحاكاة المنفصلة وحدها."
+            exit 1
+          fi
+          if [ -z "$SUPABASE_URL" ] || [ -z "$TARGET_URL" ]; then
+            echo "::error::أضف أسرار SIM_SUPABASE_URL / SIM_SUPABASE_ANON_KEY / SIM_SUPABASE_SERVICE_KEY / SIM_TARGET_URL من Settings → Secrets → Actions."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # ══════════════════════════ mode: prepare ══════════════════════════
+      - name: الجلسات — ١٠٠ مالك + ٢٠٠ استقبال (prepare فقط)
+        if: inputs.mode == 'prepare'
+        working-directory: simulation
+        run: node 02_make_sessions.mjs
+
+      - name: رفع sessions.json (prepare فقط)
+        if: inputs.mode == 'prepare'
+        uses: actions/upload-artifact@v4
+        with:
+          name: sim-sessions
+          path: simulation/sessions.json
+          retention-days: 3
+
+      # ══════════════════════════ mode: stage ══════════════════════════
+      - name: تنزيل sessions.json من تشغيل prepare (stage فقط)
+        if: inputs.mode == 'stage'
+        uses: actions/download-artifact@v4
+        with:
+          name: sim-sessions
+          path: simulation
+          run-id: ${{ inputs.sessions_run_id }}
+          github-token: ${{ github.token }}
+
+      - name: تثبيت k6 (stage فقط)
+        if: inputs.mode == 'stage'
+        run: |
+          curl -fsSL https://dl.k6.io/key.gpg | gpg --dearmor | sudo tee /usr/share/keyrings/k6-archive-keyring.gpg >/dev/null
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update -q && sudo apt-get install -y k6
+
+      - name: تثبيت Playwright + Chromium (stage فقط)
+        if: inputs.mode == 'stage'
+        working-directory: simulation
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      # ── الاثنان معًا: نفس الوظيفة، نفس الساعة، لا فارق بدءٍ يدويّ ──
+      - name: الحمل (k6) + المتصفّحات (Playwright) — بالتوازي، لدرجة SIM_STAGE (stage فقط)
+        if: inputs.mode == 'stage'
+        working-directory: simulation
+        run: |
+          k6 run 03_load.js | tee results.txt &
+          K6_PID=$!
+          sleep 60   # نفس فارق الدقيقة الموصوف في README حتى مع التوازي هنا
+          node 06_browser.mjs | tee browser.txt &
+          BROWSER_PID=$!
+          wait $K6_PID; K6_STATUS=$?
+          wait $BROWSER_PID; BROWSER_STATUS=$?
+          echo "k6 خرج بـ$K6_STATUS، المتصفّحات خرجت بـ$BROWSER_STATUS"
+          exit 0   # لا نُسقط المهمّة هنا — النتائج تُقرأ من الملفّات، لا من كود الخروج
+
+      - name: رفع النتائج (stage فقط)
+        if: always() && inputs.mode == 'stage'
+        uses: actions/upload-artifact@v4
+        with:
+          name: نتائج-درجة-${{ inputs.stage }}
+          path: |
+            simulation/results.txt
+            simulation/browser.txt
+            simulation/browser-results.json
+          retention-days: 14
+
+      - name: التذكير التالي (stage فقط)
+        if: always() && inputs.mode == 'stage'
+        run: |
+          echo "::notice::شغّل simulation/04_verify.sql الآن على مشروع المحاكاة — لا يُشغَّل هنا تلقائيًّا. أي صفٍّ يرجع = توقّف عن التصعيد."
