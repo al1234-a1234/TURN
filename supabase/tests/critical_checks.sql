@@ -361,6 +361,33 @@ with checks(name, pass) as (
   -- اللوحة والاستقبال لكلّ من لا يملك team. هذا الفحص يمسك ذلك قبل النشر.
   ('w2_staff_self_readable',   (select bool_or(qual like '%auth.uid()%') from pg_policies
                                 where schemaname='public' and tablename='staff' and cmd='SELECT')),
+  -- ══ 0108: الطابور يعبر منتصف الليل سليمًا ══
+  --
+  -- المطعم السعوديّ النمطيّ يفتح ٦ مساءً ويغلق ٢ فجرًا، فطابوره حيٌّ عند
+  -- ٠٠:٠٠. وكان الترقيم محصورًا بتاريخ الرياض، فيُصفَّر عند منتصف الليل
+  -- ويتصدّر الوافدُ الجديد من انتظر قبله — بلا خطأ ولا تحذير.
+  --
+  -- (أ) الترقيم لا يعرف التاريخ: أيّ عودةٍ لحصر الحدّ الأقصى بيومٍ تقويميّ
+  --     تُعيد العطب، وهذا الفحص يمسكها.
+  ('w3_position_no_daily_reset',(select pg_get_functiondef(oid) not like '%::date%'
+                                 from pg_proc where proname='set_waitlist_position')),
+  -- (ب) والقفل يبقى مشتقًّا من الفرع وحده — لولاه لتسلسلت كلّ الفروع خلف
+  --     قفلٍ واحد واختنقت المنصّة عند ٢٥ مطعمًا
+  ('w3_position_lock_per_branch',(select pg_get_functiondef(oid) like '%hashtext(new.branch_id%'
+                                 from pg_proc where proname='set_waitlist_position')),
+  -- (ج) والتنظيف لا يُنهي صفوفًا حيّة بحلول يومٍ جديد: قاعدته زمنٌ منقضٍ
+  --     (٨ ساعات، أو ٤٥ دقيقة والفرع مغلق) — لا تاريخ. فُحص قبل 0108
+  --     وثبت سليمًا، وهذا الفحص يحرسه من انحرافٍ لاحق.
+  ('w3_expire_by_elapsed_only', (select pg_get_functiondef(oid) not like '%::date%'
+                                  and pg_get_functiondef(oid) like '%8 hours%'
+                                 from pg_proc where proname='expire_stale_waitlist')),
+  -- (د) وسلامة الترتيب على بيانات الإنتاج: لا رقمَ مكرّرًا بين صفّين حيّين
+  --     في الفرع الواحد — وهو ما كان تصفير منتصف الليل يصنعه فعليًّا
+  ('w3_no_duplicate_live_pos',  not exists(
+                                 select 1 from public.waitlist_entries w
+                                 where w.status in ('waiting','notified')
+                                 group by w.branch_id, w."position"
+                                 having count(*) > 1)),
   -- مؤجَّلٌ عمدًا (ث‑٣): «rewards_status_no_revival» — صاحب صلاحية customers
   -- ما زال يعيد هديّةً مستهلكةً إلى active ويرفع عدّاد الزيارات. قرارٌ صريحٌ
   -- بتأجيله إلى ما بعد الإطلاق، ولا يُضاف فحصٌ أحمر يكسر شبكةً كلّها خضراء.
