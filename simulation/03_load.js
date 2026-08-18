@@ -217,8 +217,8 @@ export function handleSummary(data) {
   إجماليّ الطلبات   : ${m.http_reqs?.values?.count ?? "—"}
   معدّل الخطأ       : ${((m.http_req_failed?.values?.rate ?? 0) * 100).toFixed(2)}٪
   p50 / p95 / p99   : ${(m.http_req_duration?.values?.med ?? 0).toFixed(0)} / ${(m.http_req_duration?.values?.["p(95)"] ?? 0).toFixed(0)} / ${(m.http_req_duration?.values?.["p(99)"] ?? 0).toFixed(0)} ms
-  انضمام / إلغاء    : ${m["سلوك_انضمام"]?.values?.count ?? 0} / ${m["سلوك_إلغاء"]?.values?.count ?? 0}
-  حجز / إجلاس       : ${m["سلوك_حجز"]?.values?.count ?? 0} / ${m["سلوك_إجلاس"]?.values?.count ?? 0}
+  انضمام / إلغاء    : ${m["behavior_joins"]?.values?.count ?? 0} / ${m["behavior_cancels"]?.values?.count ?? 0}
+  حجز / إجلاس       : ${m["behavior_bookings"]?.values?.count ?? 0} / ${m["behavior_seats"]?.values?.count ?? 0}
 
   ⚠ لا تكتب «نجح» قبل تشغيل 04_verify.sql — السرعة وحدها لا تكفي.
 `,

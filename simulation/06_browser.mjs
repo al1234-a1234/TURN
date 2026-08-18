@@ -100,8 +100,10 @@ async function guestSession(browser, idx) {
         if (await card.count()) await card.click({ timeout: 5000 }).catch(() => {});
       }
       await submit.click({ timeout: 20_000 });
-      // الدليل على النجاح: انتقالٌ إلى صفحة التذكرة
-      await page.waitForURL(/\/t\//, { timeout: 45_000 });
+      // الدليل على النجاح: التذكرة تظهر مكانيًّا في الصفحة نفسها — لا تنقّل
+      // إلى مسارٍ جديد (لا يوجد /t/ أصلًا؛ raced ضدّ افتراضٍ خاطئ سابق كان
+      // يُسقط كل محاولة انضمامٍ رغم نجاحها فعليًّا على مستوى القاعدة).
+      await page.getByText(/رقم دورك/).first().waitFor({ timeout: 45_000 });
     });
     if (!joined) { await page.waitForTimeout(5000); continue; }
 
@@ -117,7 +119,9 @@ async function guestSession(browser, idx) {
     await timed("عميل: الإلغاء (Server Action)", async () => {
       await page.getByRole("button", { name: /ألغِ دوري/ }).click({ timeout: 15_000 });
       await page.getByRole("button", { name: /^نعم|تأكيد|إلغاء الدور/ }).first().click({ timeout: 10_000 });
-      await page.getByText(/أُلغي|ملغى|cancelled/i).first().waitFor({ timeout: 25_000 });
+      // النصّ الفعليّ في queue-ticket.tsx هو "تم إلغاء دورك" — لا "أُلغي" ولا
+      // "ملغى"، فكان هذا الحارس يفشل دومًا رغم نجاح الإلغاء فعليًّا.
+      await page.getByText(/تم إلغاء دورك|إلغاء دورك|cancelled/i).first().waitFor({ timeout: 25_000 });
     });
 
     await page.waitForTimeout(3000);
