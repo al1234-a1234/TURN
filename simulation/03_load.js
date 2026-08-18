@@ -79,11 +79,14 @@ export const options = {
   },
 };
 
-const joins = new Counter("سلوك_انضمام");
-const cancels = new Counter("سلوك_إلغاء");
-const books = new Counter("سلوك_حجز");
-const seats = new Counter("سلوك_إجلاس");
-const ticketPoll = new Trend("زمن_التذكرة", true);
+// أسماء المقاييس هنا يجب أن تكون ASCII بحتة — قيدٌ من k6 نفسه (حتى ١٢٨ حرفًا
+// إنجليزيًّا/رقمًا/شرطة سفلية). اسمٌ عربيّ هنا يُسقط السكربت كاملًا بخطأٍ
+// فوريّ (GoError: Invalid metric name) قبل أن يُرسَل طلبٌ واحد.
+const joins = new Counter("behavior_joins");
+const cancels = new Counter("behavior_cancels");
+const books = new Counter("behavior_bookings");
+const seats = new Counter("behavior_seats");
+const ticketPoll = new Trend("ticket_poll_duration", true);
 
 const rpcAnon = (fn, body) =>
   http.post(`${URL_}/rest/v1/rpc/${fn}`, JSON.stringify(body), {
