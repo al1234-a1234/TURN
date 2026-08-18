@@ -67,12 +67,24 @@ async function createUser(email) {
   return (await res.json()).id;
 }
 
-async function signIn(email) {
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * تسجيل دخول ٣٠٠ حسابٍ تباعًا يصطدم بحدّ معدّل GoTrue على /token — رصدناه
+ * فعليًّا بعد ٣٥ دخولًا متتاليًا (429). إعادة المحاولة بتراجعٍ أسّي هنا
+ * أرخص بكثير من حذف ٣٠٠ حسابٍ وإعادة تشغيل prepare من الصفر في كل مرّة.
+ */
+async function signIn(email, attempt = 1) {
   const res = await fetch(`${URL_}/auth/v1/token?grant_type=password`, {
     method: "POST",
     headers: { apikey: ANON, "Content-Type": "application/json" },
     body: JSON.stringify({ email, password: PASSWORD }),
   });
+  if (res.status === 429 && attempt <= 6) {
+    const wait = Math.min(2000 * 2 ** (attempt - 1), 30000);
+    await sleep(wait);
+    return signIn(email, attempt + 1);
+  }
   if (!res.ok) throw new Error(`دخول ${email} فشل: ${res.status}`);
   return (await res.json()).access_token;
 }
@@ -139,8 +151,10 @@ const main = async () => {
 
   // تسجيل الدخول واستخراج التوكنات
   console.log("\nتسجيل الدخول واستخراج التوكنات…");
-  for (const s of [...sessions.owners, ...sessions.reception]) {
-    s.token = await signIn(s.email);
+  const all = [...sessions.owners, ...sessions.reception];
+  for (let i = 0; i < all.length; i++) {
+    all[i].token = await signIn(all[i].email);
+    if (i % 20 === 19) await sleep(300); // تهدئة كل ٢٠ دخولًا — الحدّ يضرب حوالي الدخول رقم ٣٥
   }
 
   writeFileSync("sessions.json", JSON.stringify(sessions, null, 2));
