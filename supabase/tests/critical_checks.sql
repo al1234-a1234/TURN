@@ -114,8 +114,14 @@ with checks(name, pass) as (
   -- ── البنية: فهارس المسارات الساخنة موجودة ──
   ('idx_phone_norm',           exists(select 1 from pg_indexes where indexname='idx_customers_phone_norm')),
   ('idx_waitlist_active',      exists(select 1 from pg_indexes where indexname='idx_waitlist_active')),
-  -- ── الترقيم: القفل الاستشاري داخل التريغر ──
-  ('trigger_has_lock',         (select pg_get_functiondef(oid) ilike '%pg_advisory_xact_lock%' from pg_proc where proname='set_waitlist_position')),
+  -- ── الترقيم: قفل صفّ الفرع داخل التريغر (0109 استبدل القفل الاستشاري —
+  --    محاكاة حمل ١٠ مطاعم عبر k6/PostgREST أثبتت تكرار position رغمه؛
+  --    السبب الدقيق لفشل القفل الاستشاري تحت ذاك التزامن غير مؤكَّد، لكن
+  --    قفل الصفّ القياسيّ لا يعتمد على دلالات القفل الاستشاري ولا على
+  --    سلوك أي مُجمِّع اتصالات) ──
+  ('trigger_has_row_lock',     (select pg_get_functiondef(oid) ilike '%for update%'
+                                and pg_get_functiondef(oid) not ilike '%pg_advisory_xact_lock%'
+                                from pg_proc where proname='set_waitlist_position')),
   -- ── سلامة فصل الفروع: لا صفوف بلا فرع ولا إحالات عابرة ──
   ('no_null_branch_menu',      not exists(select 1 from public.menu_items where branch_id is null)),
   ('no_cross_branch_refs',     not exists(select 1 from public.menu_items i join public.menu_categories c on c.id=i.category_id where c.branch_id<>i.branch_id)),
@@ -372,8 +378,11 @@ with checks(name, pass) as (
   ('w3_position_no_daily_reset',(select pg_get_functiondef(oid) not like '%::date%'
                                  from pg_proc where proname='set_waitlist_position')),
   -- (ب) والقفل يبقى مشتقًّا من الفرع وحده — لولاه لتسلسلت كلّ الفروع خلف
-  --     قفلٍ واحد واختنقت المنصّة عند ٢٥ مطعمًا
-  ('w3_position_lock_per_branch',(select pg_get_functiondef(oid) like '%hashtext(new.branch_id%'
+  --     قفلٍ واحد واختنقت المنصّة عند ٢٥ مطعمًا. 0109 بدّل الآلية (صفٌّ
+  --     FOR UPDATE بدل قفلٍ استشاريّ، بعد أن أثبتت محاكاة حملٍ حقيقيّة أنّ
+  --     الاستشاريّ لا يمنع التكرار فعليًّا) — لكن الشرط نفسه يبقى: المفتاح
+  --     new.branch_id وحده.
+  ('w3_position_lock_per_branch',(select pg_get_functiondef(oid) like '%where id = new.branch_id for update%'
                                  from pg_proc where proname='set_waitlist_position')),
   -- (ج) والتنظيف لا يُنهي صفوفًا حيّة بحلول يومٍ جديد: قاعدته زمنٌ منقضٍ
   --     (٨ ساعات، أو ٤٥ دقيقة والفرع مغلق) — لا تاريخ. فُحص قبل 0108
@@ -382,7 +391,8 @@ with checks(name, pass) as (
                                   and pg_get_functiondef(oid) like '%8 hours%'
                                  from pg_proc where proname='expire_stale_waitlist')),
   -- (د) وسلامة الترتيب على بيانات الإنتاج: لا رقمَ مكرّرًا بين صفّين حيّين
-  --     في الفرع الواحد — وهو ما كان تصفير منتصف الليل يصنعه فعليًّا
+  --     في الفرع الواحد — وهو ما كان تصفير منتصف الليل يصنعه فعليًّا، وما
+  --     أثبتت محاكاة الحمل (0109) أن القفل الاستشاريّ وحده لا يكفي لمنعه
   ('w3_no_duplicate_live_pos',  not exists(
                                  select 1 from public.waitlist_entries w
                                  where w.status in ('waiting','notified')
