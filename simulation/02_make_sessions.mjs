@@ -46,6 +46,11 @@ const admin = (path, opts = {}) =>
 /** حارس: نرفض العمل على قاعدةٍ فيها مطاعم غير مبذورة (أي: الإنتاج). */
 async function assertSimDatabase() {
   const res = await admin("/rest/v1/restaurants?select=slug&slug=not.like.sim-*&limit=1");
+  if (!res.ok) {
+    // بلا هذا الفحص: مفتاحٌ خاطئ يُرجع كائن خطأ لا مصفوفة، فتصمت رسالة
+    // الفشل الحقيقية وتظهر بدلًا منها "لا مطاعم مبذورة" المضلّلة.
+    throw new Error(`فشل الاتصال بـ Supabase (${res.status}): ${await res.text()}`);
+  }
   const rows = await res.json();
   if (Array.isArray(rows) && rows.length > 0) {
     console.error("توقّف: القاعدة فيها مطاعم غير مبذورة — يبدو أنّها الإنتاج.");
@@ -76,6 +81,9 @@ const main = async () => {
   await assertSimDatabase();
 
   const rRes = await admin("/rest/v1/restaurants?select=id,slug&slug=like.sim-*&order=slug");
+  if (!rRes.ok) {
+    throw new Error(`فشل الاتصال بـ Supabase (${rRes.status}): ${await rRes.text()}`);
+  }
   const restaurants = await rRes.json();
   if (!restaurants.length) {
     console.error("لا مطاعم مبذورة — شغّل 01_seed.sql أوّلًا.");
