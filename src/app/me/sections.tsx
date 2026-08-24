@@ -6,6 +6,7 @@ import { getMe, getTurns, getFavorites, type TurnRecord, type FavRestaurant } fr
 import { normalizePhone, toAr, money } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
+import { IconHeart } from "@/components/icons";
 
 /**
  * أقسام الحساب — مفتوحةً في مكانها لا خلف روابط.
@@ -220,7 +221,7 @@ export function FavoritesSection() {
       <div className="rq-card divide-y divide-[color:var(--border)] overflow-hidden p-0">
         {favs.map((f) => (
           <Link key={f.slug} href={`/r/${f.slug}`} className="flex items-center justify-between px-5 py-3.5 transition active:bg-[color:var(--surface-2)]">
-            <span className="text-[color:var(--muted)]">♥</span>
+            <IconHeart size={16} className="shrink-0 text-[color:var(--muted)]" />
             <span className="truncate font-bold text-[color:var(--ink)]">{f.name}</span>
           </Link>
         ))}

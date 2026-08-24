@@ -205,7 +205,7 @@ summary {
    الإحداثيات. الارتفاع وحده يُضبط هنا والعرض يتبعه. */
 .eight-wordmark {
   display: block;
-  height: 1.22rem;                 /* ارتفاع الحروف — العرض تلقائي بالنسبة */
+  height: 1.5rem;                  /* ارتفاع الحروف — العرض تلقائي بالنسبة */
   width: auto;
   color: var(--brand-maroon);
 }
@@ -248,7 +248,7 @@ h1, h2, h3, h4 {
    بعرضين مختلفين يزيحان العنصر الأوسط عن منتصف الصفحة فعليًّا. */
 .rq-header .eight-wordmark {
   position: absolute;
-  left: 50%;
+  left: calc(50% + 10px);
   transform: translateX(-50%);
   pointer-events: none;
 }
