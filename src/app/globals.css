@@ -210,6 +210,14 @@ summary {
   color: var(--brand-maroon);
 }
 
+/* الرقم العاري (بلا لوح) — نفس فكرة eight-wordmark: ارتفاعٌ ثابت والعرض تابع */
+.eight-mark {
+  display: block;
+  height: 2.1rem;
+  width: auto;
+  color: var(--brand-maroon);
+}
+
 h1, h2, h3, h4 {
   font-family: var(--font-display);
   /* لا letter-spacing سالب: العربي متّصل، وتضييقه يشوّه وصلات الحروف */

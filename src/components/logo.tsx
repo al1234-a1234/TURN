@@ -66,6 +66,25 @@ export function Logo({
   );
 }
 
+/** رقم ٨ وحده بلا لوح — نفس مسار الشعار المعتمد حرفيًّا، بلا خلفيةٍ ولا
+    ظلّ ولا حدّ. اللوح (`.eight-badge`) كان يظهر «بطاقةً»/«علبةً» في الهيدر
+    حيث لا داعي له — الرقم يقرأ كعلامةٍ مباشرةً فوق لون الصفحة، تمامًا
+    كما تقرأ Wordmark كلمتها بلا لوح. */
+export const DIGIT_VIEWBOX = "372 221 244 388";
+
+export function Mark({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      className={`eight-mark ${className}`}
+      viewBox={DIGIT_VIEWBOX}
+      role="img"
+      aria-label="EIGHT"
+    >
+      <path fillRule="evenodd" fill="currentColor" d={DIGIT_PATH} />
+    </svg>
+  );
+}
+
 /** كلمة العلامة وحدها — حروف الشعار المعتمد ذاتها، للهيدر */
 export function Wordmark({ className = "" }: { className?: string }) {
   return (
