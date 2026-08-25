@@ -167,17 +167,20 @@ export default async function RestaurantPublicPage({
           // يبتلع ضغطات زرّي الرجوع/المشاركة تحته لأنه يُرسَم بعدهما بالـDOM
           <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center">
             {/* نصفه داخل الهيدر ونصفه خارجه — على الحافة السفلية بالضبط. */}
-            <span className="flex h-20 w-20 shrink-0 translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-white/15 font-serif text-2xl font-bold text-cream-100 ring-4 ring-[var(--background)] backdrop-blur-sm">
-<SmartImage src={restaurant.logo_url} fallbackText={initial} alt="" width={72} height={72} sizes="72px" className="h-full w-full object-cover" />
+            <span className="flex h-24 w-24 shrink-0 translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-white/15 font-serif text-2xl font-bold text-cream-100 ring-4 ring-[var(--background)] backdrop-blur-sm">
+<SmartImage src={restaurant.logo_url} fallbackText={initial} alt="" width={88} height={88} sizes="88px" className="h-full w-full object-cover" />
             </span>
           </div>
         }
       >
         <HomeLink />
         <h1 className="sr-only">{restaurant.name}</h1>
+        {/* المشاركة في الزاوية اليسرى فعليًّا — لا الرجوع. البحث والرجوع
+            أفعالٌ ثانوية تتكرّر أثناء التصفّح، والمشاركة فعلٌ نادرٌ يستحق
+            الزاوية الثابتة نفسها التي يشغلها البحث في الرئيسية. */}
         <div className="flex items-center gap-2">
-          <ShareButton title={restaurant.name} />
           <BackLink />
+          <ShareButton title={restaurant.name} />
         </div>
       </SharedHeader>
 

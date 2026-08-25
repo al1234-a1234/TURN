@@ -78,9 +78,13 @@ export function CustomerShell({
           <Logo size={44} />
         </button>
 
-        {/* أصغر على الجوّال: بحجمها الكامل كانت تزاحم الزرّين على جانبيها
-            في شاشةٍ ضيّقة، فتبدو الترويسة مكتظّةً بلا داعٍ. */}
-        <Wordmark className="select-none scale-[0.82] sm:scale-100" />
+        {/* بلا scale-*: صنف Tailwind `scale` يضبط خاصّية CSS `scale` المستقلّة
+            لا `transform` — فيتراكب فوق `transform: translateX(-50%)` في
+            globals.css بدل أن يُستبدَل بها، ويزيح مركز الكلمة بصريًّا نحو
+            اليمين (قِسته: ~14px عند 0.82 — هذا العطب المُبلَّغ بالضبط، لا
+            وهمٌ بصريّ ولا نسخةٌ قديمة مخبَّأة). لا داعي له أصلًا بعد تكبير
+            الحروف. */}
+        <Wordmark className="select-none" />
 
         {search ? (
           <Link href="/search" className="rq-circle" aria-label={tr(lang, "بحث", "Search")}>
