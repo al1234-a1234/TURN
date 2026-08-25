@@ -398,6 +398,17 @@ with checks(name, pass) as (
                                  where w.status in ('waiting','notified')
                                  group by w.branch_id, w."position"
                                  having count(*) > 1)),
+  -- ══ 0110: سقف party_size على الحجوزات أيضًا، لا الطابور وحده ══
+  --
+  -- 0071 قصّت party_size بطبقتين على الطابور: الدالة تقصّ إلى ماكس الفرع،
+  -- والقيد (<= 50) حاجزٌ أخير في القاعدة. الحجوزات أخذت طبقة الدالة فقط —
+  -- فُحص فعليًّا (سالب/ضخم داخل begin/rollback) ولا خطأ خامٌ يصل الضيف،
+  -- لكن لو صار max_party_size نفسه رقمًا غير معقول (بلا قيدٍ عليه أصلًا)
+  -- لمرّ من مسار الحجز وحده. 0110 يسدّ الاثنين.
+  ('w4_reservation_party_capped', exists(select 1 from pg_constraint
+                                where conname='reservations_party_size_max')),
+  ('w4_max_party_size_ranged',    exists(select 1 from pg_constraint
+                                where conname='branch_settings_max_party_size_range')),
   -- مؤجَّلٌ عمدًا (ث‑٣): «rewards_status_no_revival» — صاحب صلاحية customers
   -- ما زال يعيد هديّةً مستهلكةً إلى active ويرفع عدّاد الزيارات. قرارٌ صريحٌ
   -- بتأجيله إلى ما بعد الإطلاق، ولا يُضاف فحصٌ أحمر يكسر شبكةً كلّها خضراء.
