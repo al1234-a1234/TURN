@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
+import { withBotId } from "botid/next/config";
 
 const nextConfig: NextConfig = {
   eslint: { ignoreDuringBuilds: true },
@@ -37,6 +38,31 @@ const nextConfig: NextConfig = {
    * وإغلاق واجهات الأجهزة التي لا نستعملها.
    */
   async headers() {
+    /*
+     * CSP عبر next.config لا عبر middleware عمدًا: الmiddleware مقصورٌ على
+     * /dashboard و/admin وحدهما (انظر src/middleware.ts) — كل صفحات العميل
+     * العامّة (/ و/r/* و/t/*) لا تمرّ به إطلاقًا، وهذا تعمّدٌ موثَّق لأداء
+     * تلك الصفحات. لو وُلِّدت الترويسة عبر middleware لاضطُرّ التوسّع
+     * ليشمل كل مسار، فيعيد تكلفة تفعيلٍ كانت مُزالة قصدًا. الثمن: بلا
+     * nonce فريدٍ لكل طلب (يحتاج middleware)، فـscript-src يبقى بـ
+     * 'unsafe-inline' — أضعف من nonce، لكن أفضل من عدم وجود CSP أصلًا،
+     * ولا يمسّ أداء الصفحات العامّة ولا SSG لـ/r/[slug].
+     */
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob:",
+      "font-src 'self' data:",
+      "connect-src 'self' https://nkdfxmjuigslmangzuua.supabase.co wss://nkdfxmjuigslmangzuua.supabase.co",
+      "worker-src 'self'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'self'",
+      "upgrade-insecure-requests",
+    ].join("; ");
+
     return [
       {
         source: "/:path*",
@@ -46,6 +72,8 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=(self), payment=()" },
           { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+          { key: "Content-Security-Policy", value: csp },
+          { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
         ],
       },
     ];
@@ -61,11 +89,13 @@ const nextConfig: NextConfig = {
  * Sentry المباشرة، وهي شائعة على الجوّالات — فبدونه نفقد بلاغات الزبائن
  * تحديدًا، وهم أصلًا من لا يشتكي.
  */
-export default withSentryConfig(nextConfig, {
-  silent: true,
-  widenClientFileUpload: true,
-  disableLogger: true,
-  tunnelRoute: "/monitoring",
-  // مراقبة وظائف Vercel المجدولة تلقائيًّا
-  automaticVercelMonitors: true,
-});
+export default withBotId(
+  withSentryConfig(nextConfig, {
+    silent: true,
+    widenClientFileUpload: true,
+    disableLogger: true,
+    tunnelRoute: "/monitoring",
+    // مراقبة وظائف Vercel المجدولة تلقائيًّا
+    automaticVercelMonitors: true,
+  }),
+);

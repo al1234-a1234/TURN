@@ -6,6 +6,21 @@ import {
   IGNORE_ERRORS,
   scrubEvent,
 } from "@/lib/sentry-shared";
+import { initBotId } from "botid/client/core";
+
+/**
+ * حماية البوتات — الأفعال الثلاثة التي تكتب نيابةً عن ضيفٍ بلا حساب ولا
+ * كلمة مرور: الانضمام للطابور، الحجز، وتأكيد الحضور من رابط التذكرة.
+ * هذه أفعالٌ خادميّة (Server Actions) لا نقاط نهاية REST، فالمسار المحمي
+ * هو مسار الصفحة نفسها (`/r/*`، `/t/*`) لا مسار الدالّة. مستوى الفحص هنا
+ * يجب أن يطابق `checkLevel` في `checkBotId()` بجانب الخادم حرفيًّا.
+ */
+initBotId({
+  protect: [
+    { path: "/r/*", method: "POST", advancedOptions: { checkLevel: "deepAnalysis" } },
+    { path: "/t/*", method: "POST", advancedOptions: { checkLevel: "deepAnalysis" } },
+  ],
+});
 
 /**
  * تهيئة Sentry في متصفّح الزبون — **مؤجَّلة عن المسار الحرج**.

@@ -8,6 +8,7 @@ import { saudiMobile } from "@/lib/format";
 import { pushRankUpdatesAfterSelfCancel } from "@/lib/push";
 import { getLang } from "@/lib/i18n-server";
 import { allowByIp } from "@/lib/ip-guard";
+import { checkBotId } from "botid/server";
 import type { Lang } from "@/lib/i18n";
 
 /**
@@ -60,6 +61,11 @@ const MSG = {
     "محاولات كثيرة — انتظر دقائق ثم حاول مجددًا.",
     "Too many attempts — wait a few minutes and try again.",
   ],
+  // رسالة عمدًا مطابقة لحدّ العنوان: لا نُفصح للبوت أنه اكتُشف بالتحديد
+  botBlocked: [
+    "تعذّر إتمام الطلب الآن — حاول مرة أخرى بعد قليل.",
+    "Couldn't complete the request right now — try again shortly.",
+  ],
   tooManySoon: [
     "محاولات كثيرة — انتظر قليلًا ثم حاول.",
     "Too many attempts — wait a moment and try again.",
@@ -106,6 +112,12 @@ export async function joinWaitlistGuest(
   formData: FormData,
 ): Promise<WaitlistState> {
   const lang = await getLang();
+
+  // بوّابة البوتات أوّل شيء: قبل أي لمسٍ للقاعدة أو حدّ العنوان — بوتٌ
+  // مكتشَف لا يستحقّ حتى استهلاك حصّة allowByIp لعميلٍ حقيقيّ خلفه.
+  const bot = await checkBotId({ advancedOptions: { checkLevel: "deepAnalysis" } });
+  if (bot.isBot) return { ok: false, error: msg(lang, "botBlocked") };
+
   const supabase = await createClient();
 
   const slug = String(formData.get("slug") ?? "");
@@ -419,6 +431,10 @@ export async function bookReservationGuest(
   formData: FormData,
 ): Promise<ReserveState> {
   const lang = await getLang();
+
+  const bot = await checkBotId({ advancedOptions: { checkLevel: "deepAnalysis" } });
+  if (bot.isBot) return { ok: false, error: msg(lang, "botBlocked") };
+
   const slug = String(formData.get("slug") ?? "");
   const branchId = String(formData.get("branch_id") ?? "");
   const fullName = String(formData.get("full_name") ?? "").trim();
