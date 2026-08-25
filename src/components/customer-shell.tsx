@@ -66,13 +66,14 @@ export function CustomerShell({
     <div className="flex min-h-full flex-1 flex-col">
       {/* الهيدر — يمين: الشعار (يفتح القائمة) · وسط: EIGHT · يسار: بحث */}
       <SharedHeader>
-        {/* الشعار والبحث في قالبٍ واحد: كان الشعار بطاقةً لامعة والبحث
-            دائرةً هادئة، فيبدوان عنصرين من نظامين. والترويسة تُقرأ دفعةً
-            واحدة، فتفاوتُ حوافّها يُرى قبل أن يُفهم أيّهما زرّ. */}
+        {/* الشعار الكامل (٨ + EIGHT) داخل لوحه الخاص — لا يُلبَس زرّ rq-circle
+            فوقه: كان مربّعين متراكبين بزاويتَين مختلفتَين (لوح الشعار ٢٢٫٨٪
+            نصف قطر، وrq-circle ١rem) بلا فراغٍ بينهما، فتتصادم الحافّتان
+            عند كل ركن وتبين «أطرافًا غريبة». اللوح وحده كافٍ بصريًّا. */}
         <button
           onClick={() => setOpen(true)}
           aria-label={tr(lang, "القائمة", "Menu")}
-          className="rq-circle overflow-hidden p-0 transition active:scale-95"
+          className="flex h-11 w-11 items-center justify-center overflow-hidden p-0 transition active:scale-95"
         >
           <Logo size={44} />
         </button>

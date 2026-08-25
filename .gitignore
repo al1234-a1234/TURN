@@ -44,3 +44,10 @@ yarn-error.log*
 next-env.d.ts
 
 backups/
+
+# توكنات محاكاة الحمل — لا تُرفع أبدًا
+simulation/sessions.json
+simulation/results.txt
+simulation/browser-results.json
+simulation/browser-results.txt
+simulation/browser.txt

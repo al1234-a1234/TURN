@@ -1526,6 +1526,8 @@ export type Database = {
         }[]
       }
       my_branch_ids: { Args: never; Returns: string[] }
+      my_branch_ids_for: { Args: { p_perm: string }; Returns: string[] }
+      my_managed_branch_ids: { Args: never; Returns: string[] }
       my_rewards: {
         Args: never
         Returns: {

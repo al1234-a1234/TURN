@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { loadOwner, scopeBranchIds } from "./owner-context";
+import { staffHasPermission } from "@/lib/features";
 
 const LIVE_ZONE_TONES = ["var(--st-full)", "var(--brand)", "var(--st-open)", "var(--brand-d)", "var(--muted)"];
 import { ColumnChart, SplitBars, ChartCard } from "./manage/charts";
@@ -22,7 +23,12 @@ export default async function OverviewPage() {
   const load = await loadOwner();
   if (load.state !== "ok") return null;
 
-  const { supabase, restaurant } = load.ctx;
+  const { supabase, restaurant, role, permissions } = load.ctx;
+
+  // صلاحية «العملاء» تُقرأ هنا لا في القاعدة وحدها: RLS يردّ صفوفًا صفرًا لمن
+  // لا يملكها، وصفرٌ في لوحة المالك يُقرأ «ما عندك عملاء» لا «ما لك صلاحية» —
+  // فالكذبة أخطر من المنع. نسأل قبل الجلب، ونقول السبب صراحةً في مكان الرقم.
+  const canCustomers = staffHasPermission(role, permissions, "customers");
 
   const { data: branches } = await supabase.from("branches").select("id, name").eq("restaurant_id", restaurant.id).order("created_at");
   const branchIds = scopeBranchIds(load.ctx, (branches ?? []).map((b) => b.id));
@@ -32,13 +38,15 @@ export default async function OverviewPage() {
 
   const [rev, profiles, analytics, insightsRes, liveRes] = await Promise.all([
     supabase.from("reviews").select("rating").eq("restaurant_id", restaurant.id),
-    supabase
-      .from("customer_restaurant")
-      // !inner: RLS على customers يقصر النتيجة على من زار فروع المتصل،
-      // فلا تختلط أرقام العلامة بأرقام الفرع ولا تظهر أسماء فارغة
-      .select("visits, is_vip, customers!inner(full_name)")
-      .eq("restaurant_id", restaurant.id)
-      .order("visits", { ascending: false }),
+    canCustomers
+      ? supabase
+          .from("customer_restaurant")
+          // !inner: RLS على customers يقصر النتيجة على من زار فروع المتصل،
+          // فلا تختلط أرقام العلامة بأرقام الفرع ولا تظهر أسماء فارغة
+          .select("visits, is_vip, customers!inner(full_name)")
+          .eq("restaurant_id", restaurant.id)
+          .order("visits", { ascending: false })
+      : Promise.resolve({ data: [] as { visits: number; is_vip: boolean; customers: { full_name: string } | { full_name: string }[] | null }[] }),
     branchIds.length
       ? supabase.from("waitlist_entries").select("joined_at, seated_at, status, zone, party_size").in("branch_id", branchIds).gte("joined_at", since30)
       : Promise.resolve({ data: [] as { joined_at: string; seated_at: string | null; status: string; zone: string; party_size: number }[] }),
@@ -164,10 +172,10 @@ export default async function OverviewPage() {
         <Kpi label={tr(lang, "متوسط التقييم", "Average Rating")} value={ratings.length ? `★ ${toAr(avgRating)}` : "—"} tone="var(--star)" tint="rgba(120,30,12,0.06)" />
         <Kpi label={tr(lang, "متوسط الانتظار", "Average Wait")} value={`${toAr(avgWait)} ${tr(lang, "د", "min")}`} tone="var(--st-full)" tint="rgba(169,114,30,0.10)" />
         <Kpi label={tr(lang, "جالسون اليوم", "Seated Today")} value={toAr(seatedToday)} tone="var(--st-open)" tint="rgba(63,125,93,0.10)" />
-        <Kpi label={tr(lang, "إجمالي العملاء", "Total Customers")} value={toAr(totalCustomers)} tone="var(--brand-d)" tint="rgba(120,30,12,0.05)" />
+        {canCustomers && <Kpi label={tr(lang, "إجمالي العملاء", "Total Customers")} value={toAr(totalCustomers)} tone="var(--brand-d)" tint="rgba(120,30,12,0.05)" />}
         <Kpi label={tr(lang, "خدمناهم (30 يوم)", "Served (30 days)")} value={toAr(served30)} tone="var(--brand)" tint="rgba(120,30,12,0.08)" />
-        <Kpi label={tr(lang, "عملاء عائدون", "Returning Customers")} value={pct(toAr(returningPct), lang)} tone="var(--st-open)" tint="rgba(63,125,93,0.10)" />
-        <Kpi label={tr(lang, "عملاء مميّزون", "VIP Customers")} value={toAr(vips)} tone="var(--brand-d)" tint="rgba(120,30,12,0.10)" />
+        {canCustomers && <Kpi label={tr(lang, "عملاء عائدون", "Returning Customers")} value={pct(toAr(returningPct), lang)} tone="var(--st-open)" tint="rgba(63,125,93,0.10)" />}
+        {canCustomers && <Kpi label={tr(lang, "عملاء مميّزون", "VIP Customers")} value={toAr(vips)} tone="var(--brand-d)" tint="rgba(120,30,12,0.10)" />}
         <Kpi label={tr(lang, "نسبة التغيّب", "No-show Rate")} value={pct(toAr(noShowRate), lang)} tone={noShowRate >= 20 ? "var(--st-closed)" : "var(--muted)"} tint="var(--surface-2)" />
       </div>
 
@@ -218,7 +226,12 @@ export default async function OverviewPage() {
             <h2 className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "أبرز عملائك", "Your Top Customers")}</h2>
             <Link href="/dashboard/customers" className="text-xs font-bold text-brand-700">{tr(lang, "الكل ←", "All ←")}</Link>
           </div>
-          {topCustomers.length === 0 ? (
+          {!canCustomers ? (
+            // القائمة الفارغة تكذب: تقول «لا عملاء» وهي تعني «لا صلاحية».
+            <p className="py-4 text-center text-sm font-bold" style={{ color: "var(--st-closed)" }}>
+              {tr(lang, "لا تملك صلاحية عرض العملاء.", "You don't have customers permission.")}
+            </p>
+          ) : topCustomers.length === 0 ? (
             <p className="py-4 text-center text-sm text-[color:var(--muted)]">{tr(lang, "لا يوجد عملاء بعد.", "No customers yet.")}</p>
           ) : (
             <ul className="space-y-2">
