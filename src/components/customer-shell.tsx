@@ -91,7 +91,12 @@ export function CustomerShell({
             <IcSearch />
           </Link>
         ) : (
-          <span className="h-11 w-11" />
+          // صفحات الدرج (من نحن، الخصوصية…) بلا بحث — لكن فراغًا فارغًا هنا
+          // يترك الشعار وحيدًا في الطرف الآخر، فتحسّ العين خللًا لا توازنًا.
+          // زرّ رجوعٍ حقيقيّ يملأ المكان بوظيفةٍ لا بزخرفة.
+          <Link href="/" className="rq-circle" aria-label={tr(lang, "رجوع", "Back")}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </Link>
         )}
       </SharedHeader>
 

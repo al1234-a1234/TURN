@@ -225,7 +225,7 @@ export function RestaurantTabs({
         <button className="rq-tile" data-active={tab === "waitlist"} onClick={() => setTab("waitlist")}>
           <IcWait /><span className="rq-tile-label">{tr(lang, "الانتظار", "Waitlist")}</span>
         </button>
-        <button className="rq-tile" data-active={tab === "menu"} onClick={() => setTab("menu")} disabled={!hasMenu}>
+        <button className="rq-tile" data-active={tab === "menu"} onClick={() => setTab("menu")}>
           <IcMenu /><span className="rq-tile-label">{tr(lang, "القائمة", "Menu")}</span>
         </button>
         <button className="rq-tile" data-active={tab === "reviews"} onClick={() => setTab("reviews")}>
