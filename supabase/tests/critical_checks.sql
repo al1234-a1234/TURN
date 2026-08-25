@@ -418,16 +418,23 @@ with checks(name, pass) as (
   -- بتأجيله إلى ما بعد الإطلاق، ولا يُضاف فحصٌ أحمر يكسر شبكةً كلّها خضراء.
   --
   -- (٢٠) مرجع المخطط: أي انحراف عن البصمة المثبَّتة يظهر هنا قبل أن يفاجئنا
-  --      (٢٩ جدولًا · ١٠١ دالة · ٧١ سياسة · ٤٠ مفتاحًا أجنبيًّا) — راجع
+  --      (٢٩ جدولًا · ١٠٢ دالة · ٧١ سياسة · ٤٠ مفتاحًا أجنبيًّا) — راجع
   --      supabase/tests/schema_baseline.md وحدّثه عمدًا عند أي تغيير مقصود
   --      تغيّرت في 0105/0106: +٣ دوال (my_branch_ids_for، my_managed_branch_ids،
   --      audit_row_delete) و+٥ سياسات (‑١ إدخال تقييم، +٣ طابور، +٣ حجوزات)
   --      وفي 0107: ‑١ سياسة (أُسقطت قراءة ملفّات العملاء الواسعة بلا بديل،
   --      إذ تغطّيها سياسة ALL المحروسة بـcustomers أصلًا)
+  --      وفي 0115: +١ دالة (check_platform_health) — ١٠١ صارت ١٠٢
+  -- ══ 0115: check_platform_health() — لا ربط إرسال، للمشغّل وحده ══
+  ('w5_platform_health_exists', exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+                                where n.nspname='public' and p.proname='check_platform_health')),
+  ('w5_platform_health_anon_blocked', not has_function_privilege('anon','public.check_platform_health()','EXECUTE')),
+  ('w5_platform_health_authed_ok',    has_function_privilege('authenticated','public.check_platform_health()','EXECUTE')),
+  ('w5_platform_health_shape',  (public.check_platform_health() ?& array['cron','waitlist_anomaly','generated_at'])),
   ('q20_schema_no_drift',      (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
                                 where n.nspname='public' and c.relkind='r') = 29
                                and (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-                                    where n.nspname='public' and p.prokind='f') = 101
+                                    where n.nspname='public' and p.prokind='f') = 102
                                and (select count(*) from pg_policies where schemaname='public') = 71
                                and (select count(*) from pg_constraint c join pg_class r on r.oid=c.conrelid
                                     join pg_namespace n on n.oid=r.relnamespace
