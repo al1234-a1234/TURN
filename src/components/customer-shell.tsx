@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useState } from "react";
-import { Logo, Mark, Wordmark } from "@/components/logo";
+import { Logo, Wordmark } from "@/components/logo";
 import { LiveTicketBar } from "@/components/live-ticket-bar";
 import { SharedHeader } from "@/components/page-header";
 import { useLang } from "@/components/lang-provider";
@@ -66,15 +66,16 @@ export function CustomerShell({
     <div className="flex min-h-full flex-1 flex-col">
       {/* الهيدر — يمين: الشعار (يفتح القائمة) · وسط: EIGHT · يسار: بحث */}
       <SharedHeader>
-        {/* الشعار مسارٌ متجه لا أيقونة تُحبَس في بطاقة — بطاقةٌ حوله كانت
-            تقرأ «زرّ تطبيق» لا علامة، فصار عاريًا فوق لون الهيدر مباشرةً
-            كبقية الشعارات المطبوعة. البحث يبقى في دائرته: هو فعلٌ، لا هوية. */}
+        {/* الشعار الكامل (٨ + EIGHT) داخل لوحه الخاص — لا يُلبَس زرّ rq-circle
+            فوقه: كان مربّعين متراكبين بزاويتَين مختلفتَين (لوح الشعار ٢٢٫٨٪
+            نصف قطر، وrq-circle ١rem) بلا فراغٍ بينهما، فتتصادم الحافّتان
+            عند كل ركن وتبين «أطرافًا غريبة». اللوح وحده كافٍ بصريًّا. */}
         <button
           onClick={() => setOpen(true)}
           aria-label={tr(lang, "القائمة", "Menu")}
           className="flex h-11 w-11 items-center justify-center overflow-hidden p-0 transition active:scale-95"
         >
-          <Mark />
+          <Logo size={44} />
         </button>
 
         {/* أصغر على الجوّال: بحجمها الكامل كانت تزاحم الزرّين على جانبيها
