@@ -237,11 +237,15 @@ with checks(name, pass) as (
   -- (٥) سطح الدوال المكشوفة للضيف لا يتوسّع خلسةً.
   --     كان الحدّ ٣٥ والواقع ٣٩ — أي أنّ الفحص كان يمرّ وهو مخروق. ثم
   --     أُغلقت خمس نقاط نهايةٍ بلا مستدعٍ (0097) فصار الواقع ٣٠، فشُدّ
-  --     الحدّ إليه. و«أصغر أو يساوي» لا «يساوي»: يمسك التوسّع ولا يعاقب
-  --     على إغلاقٍ جديد.
+  --     الحدّ إليه. ثم فاحص أمان Supabase كشف ١٤ دالّةً مساعدةً داخلية
+  --     (is_staff_of، is_platform_admin، staff_has_perm، ...) كانت تحمل
+  --     EXECUTE لـanon بلا داعٍ — منحٌ افتراضيٌّ من PUBLIC/إعداد المشروع
+  --     الأولي، لا استعمالٌ فعليّ (0111-0114 سحبته، والباقي سبعةٌ فقط
+  --     الآن — كل الدوال الفعليّة المكشوفة للضيف عمدًا). و«أصغر أو يساوي»
+  --     لا «يساوي»: يمسك التوسّع ولا يعاقب على إغلاقٍ جديد.
   ('q05_secdef_anon_surface',  (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
                                 where n.nspname='public' and p.prokind='f' and p.prosecdef
-                                  and has_function_privilege('anon',p.oid,'EXECUTE')) <= 30),
+                                  and has_function_privilege('anon',p.oid,'EXECUTE')) <= 7),
   -- (٦) مهلة الاستعلام: بدونها استعلامٌ جامح من لوحةٍ واحدة يُبطئ كل المطاعم
   ('q06_anon_stmt_timeout',    (select coalesce((select option_value from pg_options_to_table(rolconfig)
                                                  where option_name='statement_timeout'),'') <> ''
