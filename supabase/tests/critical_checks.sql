@@ -480,6 +480,15 @@ with checks(name, pass) as (
   ('w6_admin_canary_exists',    exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
                                 where n.nspname='public' and p.proname='admin_set_restaurant_canary')),
   ('w6_admin_canary_anon_blocked', not has_function_privilege('anon','public.admin_set_restaurant_canary(uuid,boolean)','EXECUTE')),
+  -- ══ 0120: دالتا التنبيهات (وُلدتا خارج المستودع بمنح افتراضي مفتوح) ══
+  -- notify_telegram كانت قابلة للتنفيذ من anon — أي حامل مفتاحٍ علني يرسل
+  -- سبامًا لتيليجرام المشغّل. المستدعي الشرعي الوحيد كرونُ postgres.
+  ('w7_telegram_locked',        not has_function_privilege('anon','public.notify_telegram(text)','EXECUTE')
+                               and not has_function_privilege('authenticated','public.notify_telegram(text)','EXECUTE')),
+  ('w7_alerts_locked',          not has_function_privilege('anon','public.send_platform_alerts()','EXECUTE')
+                               and not has_function_privilege('authenticated','public.send_platform_alerts()','EXECUTE')),
+  ('w7_alerts_cron_alive',      exists(select 1 from cron.job
+                                where jobname='platform-health-alerts' and active)),
   -- (٢٠) مرجع المخطط — البصمة تحرّكت خارج ترحيلات هذا الفرع أيضًا (عمل
   -- موازٍ اكتُشف الليلة: نظام /api/canary، جداول جديدة، ...) — الأرقام هنا
   -- قياسٌ فعليٌّ للواقع الحاليّ لا حسابٌ يدويّ تراكميّ. راجع schema_baseline.md.
