@@ -209,8 +209,10 @@ export function RestaurantTabs({
   // وهذا هو الموضع الذي كان يجعل الشعار نفسه يبدو مطعمين مختلفين بين
   // الرئيسية وصفحة المطعم.
   const LogoBox = ({ size }: { size: string }) => (
+    // دائرة لا مربّع: الشعار الدائري كان يظهر داخل مربّعٍ بزواياه وفراغه
+    // (شكوى مباشرة بلقطة شاشة) — دائرةٌ كدائرة الشعار الكبير أعلى الصفحة.
     <span
-      className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white font-serif text-2xl font-bold`}
+      className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-full bg-white font-serif text-2xl font-bold`}
       style={{ border: "1px solid var(--border)", color: "var(--brand-solid)" }}
     >
 <SmartImage src={logo} fallbackText={initial} alt="" width={72} height={72} sizes="72px" className="h-full w-full object-cover" />

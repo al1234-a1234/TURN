@@ -29,9 +29,9 @@ export function PeekHero() {
 
   return (
     <div className="flex flex-col items-center">
-      {/* دائرة بمقاس بطل الصفحة الحقيقي (h-24 rounded-full) — كان مربّعًا
+      {/* دائرة بمقاس بطل الصفحة الحقيقي (h-28 rounded-full) — كان مربّعًا
           h-20 فيقفز الشكل والمقاس لحظة وصول المحتوى الفعلي. */}
-      <span className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-brand-800 font-serif text-2xl font-bold text-cream-100 shadow-lg">
+      <span className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-brand-800 font-serif text-2xl font-bold text-cream-100 shadow-md">
         {peek?.logo ? (
           <SmartImage src={peek.logo} fallbackText={peek.name} alt="" width={80} height={80} sizes="80px" className="h-full w-full object-cover" />
         ) : peek ? (

@@ -171,9 +171,13 @@ export default async function RestaurantPublicPage({
           // pointer-events-none: بلا هذا، هذا الغلاف الشفاف (عرض كامل الهيدر)
           // يبتلع ضغطات زرّي الرجوع/المشاركة تحته لأنه يُرسَم بعدهما بالـDOM
           <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center">
-            {/* نصفه داخل الهيدر ونصفه خارجه — على الحافة السفلية بالضبط. */}
-            <span className="flex h-24 w-24 shrink-0 translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-white/15 font-serif text-2xl font-bold text-cream-100 ring-4 ring-[var(--background)] backdrop-blur-sm">
-<SmartImage src={restaurant.logo_url} fallbackText={initial} alt="" width={88} height={88} sizes="88px" className="h-full w-full object-cover" />
+            {/* نصفه داخل الهيدر ونصفه خارجه — على الحافة السفلية بالضبط.
+                بلا ring ولا خلفية شبه شفافة: كانتا تُريان «شريطًا أبيض/فراغًا»
+                حول شعارٍ دائريٍّ أصلًا (طلب المشغّل: الشعار وحده). و١١٢px لا
+                ٩٦: طلب تكبيره. الخلفية البيضاء لا تُرى مع شعارٍ يملأ الدائرة —
+                هي فقط خلف الحرف الأول لمن لا شعار له. */}
+            <span className="flex h-28 w-28 shrink-0 translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-white font-serif text-3xl font-bold text-[color:var(--brand-solid)] shadow-md">
+<SmartImage src={restaurant.logo_url} fallbackText={initial} alt="" width={112} height={112} sizes="112px" className="h-full w-full object-cover" />
             </span>
           </div>
         }
@@ -189,7 +193,8 @@ export default async function RestaurantPublicPage({
         </div>
       </SharedHeader>
 
-      <main className="mx-auto w-full max-w-2xl flex-1 px-5 pb-14 pt-16">
+      {/* pt-20 لا pt-16: الشعار كبر إلى ١١٢px فزاد نصفه المتدلّي تحت الهيدر */}
+      <main className="mx-auto w-full max-w-2xl flex-1 px-5 pb-14 pt-20">
         <RestaurantTabs
           slug={slug}
           name={restaurant.name}

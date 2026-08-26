@@ -167,11 +167,10 @@ function Card({ r, lang }: { r: DiscoveryItem; lang: Lang }) {
       {/* البلاطة بيضاء بحدٍّ شعرة: الشعار يضعه صاحب المطعم، فلا نصبغه بلوننا.
           و٦٤ لا ٧٢: عند ٧٢ يتجاوز ارتفاعُ البلاطة كتلةَ الأسطر الثلاثة فيبقى
           فراغٌ ميّت أسفل النصّ، والصفّ يُقرأ غير مستوٍ.
-          ودائرة لا مربّع: أغلب شعارات المطاعم مرسومة دائرةً داخل صورةٍ
-          مربّعة، فكان المربّع يُظهرها دائرةً تسبح في فراغٍ أبيض. الدائرة
-          تقصّ ذلك الفراغ، وتطابق دائرة الشعار في صفحة المطعم نفسها. */}
+          والانحناء ١٢ لا دائرة: جُرِّبت الدائرة هنا فرآها المشغّل «غير جيدة»
+          وطلب إرجاعها صراحةً — البلاطة المربّعة أهدأ داخل صفٍّ انحناؤه ١٤. */}
       <span
-        className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full bg-white text-2xl font-bold"
+        className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[12px] bg-white text-2xl font-bold"
         style={{ border: "1px solid var(--border)", color: "var(--brand-solid)" }}
       >
         {r.logo_url ? (

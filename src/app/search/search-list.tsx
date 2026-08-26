@@ -101,10 +101,9 @@ export function SearchList({
               <Link key={r.slug} href={`/r/${r.slug}`} onClick={() => storePeek(r.slug, { name: r.name, logo: r.logo ?? null })} className="rq-row flex items-center gap-3 px-4 py-3">
                 {/* كانت `bg-brand-800`: كل شعارٍ بشفافيّة يخرج مصبوغًا بعنابيّنا،
                     والشعار يضعه صاحب المطعم. نفس بلاطة الرئيسية: بيضاء بحدٍّ
-                    شعرة، دائرةٌ كدائرة صفحة المطعم (الشعارات الدائرية كانت
-                    تسبح في فراغ المربّع). */}
+                    شعرة، مربّعة ١٢ (جُرِّبت دائرةً وطلب المشغّل إرجاعها). */}
                 <span
-                  className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white font-serif text-xl font-bold"
+                  className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[12px] bg-white font-serif text-xl font-bold"
                   style={{ border: "1px solid var(--border)", color: "var(--brand-solid)" }}
                 >
                   {r.logo ? (
