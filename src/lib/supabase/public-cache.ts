@@ -211,7 +211,7 @@ export const getRestaurantMeta = unstable_cache(
   async (slug: string) => {
     const { data, error } = await anon()
       .from("restaurants")
-      .select("name, cuisine, logo_url, cover_url")
+      .select("name, cuisine, description, logo_url, cover_url")
       .eq("slug", slug)
       .eq("is_active", true)
       .eq("is_canary", false)

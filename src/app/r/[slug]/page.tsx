@@ -19,8 +19,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   // مكاش ٥ دقائق — كان استعلامًا حيًّا يحجب الرأس في كل فتحة (انظر public-cache)
   const r = await getRestaurantMeta(slug);
   if (!r) return { title: "EIGHT" };
-  const title = `${r.name} | EIGHT`;
-  const description = `خذ دورك في ${r.name}${r.cuisine ? ` — ${r.cuisine}` : ""} بلا انتظار على الباب. شوف الطابور الحيّ والقائمة والهدايا.`;
+  // اسم البراند وحده — بلا لاحقة «| EIGHT» ولا شعار المنصّة العام. تبويب
+  // المتصفّح والمشاركة يمثّلان المطعم أمام عميله، لا منصّتنا.
+  const title = r.name;
+  // وصف المطعم بكلماته هو، إن كتبه صاحبه — لا الجملة العامة نفسها مكرَّرةً
+  // على كل مطعم. الوصف العام يبقى احتياطًا فقط لمن لم يكتب وصفًا بعد.
+  const description = (r.description ?? "").trim()
+    || `خذ دورك في ${r.name}${r.cuisine ? ` — ${r.cuisine}` : ""} بلا انتظار على الباب. شوف الطابور الحيّ والقائمة والهدايا.`;
   const image = r.cover_url ?? r.logo_url;
   return {
     title,
