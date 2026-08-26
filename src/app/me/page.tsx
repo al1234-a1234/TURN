@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { CustomerShell } from "@/components/customer-shell";
 import { LangToggle } from "@/components/lang-toggle";
 import { IdentityCard } from "./identity-card";
@@ -33,12 +32,6 @@ export default function MePage() {
         <div className="rq-card flex items-center justify-between p-5">
           <span className="font-bold text-[color:var(--ink)]">{tr(lang, "اللغة", "Language")}</span>
           <LangToggle variant="plain" />
-        </div>
-
-        <div className="rq-card p-5">
-          <p className="font-display text-sm font-bold text-[color:var(--ink)]">{tr(lang, "عندك مطعم؟", "Own a restaurant?")}</p>
-          <p className="mt-0.5 text-sm text-[color:var(--muted)]">{tr(lang, "انضمّ إلى EIGHT وابدأ بإدارة طابورك وحجوزاتك.", "Join EIGHT and start managing your queue and reservations.")}</p>
-          <Link href="/partners" className="rq-btn-soft mt-3 inline-flex">{tr(lang, "بوابة الشركاء ←", "Partners portal ←")}</Link>
         </div>
       </div>
     </CustomerShell>
