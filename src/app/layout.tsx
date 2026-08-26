@@ -22,7 +22,10 @@ const plexArabic = IBM_Plex_Sans_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: "EIGHT — خذ دورك بأناقة",
+  // اسم البراند وحده في تبويب المتصفّح — كان «EIGHT — خذ دورك بأناقة» يطول
+  // على كل صفحةٍ لا تعرّف عنوانها الخاص (اللوحة الداخلية مثلًا)، والشعار
+  // مكانه معاينة المشاركة والوصف لا شريط التبويب.
+  title: "EIGHT",
   description:
     "EIGHT: اختر مطعمك، سجّل اسمك ورقمك، وتابع طابورك لحظة بلحظة.",
   manifest: "/manifest.webmanifest",
