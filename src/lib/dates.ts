@@ -107,22 +107,41 @@ function parseHHMM(s: string | null | undefined): number | null {
   return h * 60 + mi;
 }
 
+type DayHours = { open?: string | null; close?: string | null };
+export type OpeningHours = DayHours & {
+  /** استثناءات بحسب اليوم — المفتاح يوم الأسبوع بتوقيت الرياض (0=الأحد
+      كـgetDay)، واليوم الغائب يتبع open/close العامّين. */
+  days?: Record<string, DayHours | null> | null;
+};
+
 /**
  * هل الوقت الآن (بتوقيت الرياض) ضمن ساعات الدوام [open, close)؟ يدعم النطاق
- * الليلي (يفتح مساءً ويقفل بعد منتصف الليل). بلا ساعات مضبوطة أو بقيمة
- * تالفة = مفتوح دائمًا — لا نغلق فرعًا لم يضبط ساعاته أصلًا. يطابق دالة
- * branch_open_by_hours في القاعدة (نفس المنطق على الطرفين).
+ * الليلي (يفتح مساءً ويقفل بعد منتصف الليل — وحينها يُحسب أيضًا ذيلُ دوامِ
+ * أمسِ بعد منتصف الليل بجدول أمس لا جدول اليوم)، ودوامًا مختلفًا لبعض
+ * الأيام عبر hours.days. بلا ساعات مضبوطة أو بقيمة تالفة = مفتوح دائمًا —
+ * لا نغلق فرعًا لم يضبط ساعاته أصلًا. يطابق دالة branch_open_by_hours في
+ * القاعدة (نفس المنطق على الطرفين).
  */
-export function isWithinOpeningHours(
-  hours: { open?: string | null; close?: string | null } | null | undefined,
-): boolean {
-  const open = parseHHMM(hours?.open);
-  const close = parseHHMM(hours?.close);
-  if (open == null || close == null) return true;
-  if (open === close) return true;
+export function isWithinOpeningHours(hours: OpeningHours | null | undefined): boolean {
+  if (!hours) return true;
   const nowRiyadh = new Date(Date.now() + 3 * 3600_000);
+  const dow = nowRiyadh.getUTCDay();
   const cur = nowRiyadh.getUTCHours() * 60 + nowRiyadh.getUTCMinutes();
-  return open < close ? cur >= open && cur < close : cur >= open || cur < close;
+
+  const sched = (d: number): { open: number; close: number } | null => {
+    const o = hours.days?.[String(d)];
+    const open = parseHHMM(o?.open) ?? parseHHMM(hours.open);
+    const close = parseHHMM(o?.close) ?? parseHHMM(hours.close);
+    return open == null || close == null ? null : { open, close };
+  };
+
+  const today = sched(dow);
+  // يومٌ بلا دوامٍ مضبوط = مفتوح — نفس عهد «بلا ساعات = مفتوح دائمًا»
+  if (today == null || today.open === today.close) return true;
+  if (today.open < today.close ? cur >= today.open && cur < today.close : cur >= today.open) return true;
+
+  const y = sched((dow + 6) % 7);
+  return y != null && y.open > y.close && cur < y.close;
 }
 
 /**

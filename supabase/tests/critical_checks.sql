@@ -489,6 +489,28 @@ with checks(name, pass) as (
                                and not has_function_privilege('authenticated','public.send_platform_alerts()','EXECUTE')),
   ('w7_alerts_cron_alive',      exists(select 1 from cron.job
                                 where jobname='platform-health-alerts' and active)),
+  -- ══ 0121: دوامٌ مختلف بحسب اليوم (opening_hours.days) ══
+  -- تواريخ مثبّتة: 2026-08-28 جمعة (dow=5) و2026-08-29 سبت — الفحص حتميّ.
+  ('w8_hours_day_override',     public.branch_open_by_hours(
+                                  '{"open":"16:00","close":"23:00","days":{"5":{"open":"14:00","close":"23:00"}}}'::jsonb,
+                                  '2026-08-28 15:00:00+03'::timestamptz) = true
+                               and public.branch_open_by_hours(
+                                  '{"open":"16:00","close":"23:00","days":{"5":{"open":"14:00","close":"23:00"}}}'::jsonb,
+                                  '2026-08-26 15:00:00+03'::timestamptz) = false),
+  -- ذيل الليل يُحسب بجدول أمس: الجمعة تقفل ٣ فجرًا فالسبت ٢ فجرًا مفتوح
+  ('w8_hours_overnight_tail',   public.branch_open_by_hours(
+                                  '{"open":"16:00","close":"23:00","days":{"5":{"open":"20:00","close":"03:00"}}}'::jsonb,
+                                  '2026-08-29 02:00:00+03'::timestamptz) = true
+                               and public.branch_open_by_hours(
+                                  '{"open":"16:00","close":"23:00","days":{"5":{"open":"20:00","close":"03:00"}}}'::jsonb,
+                                  '2026-08-29 04:00:00+03'::timestamptz) = false),
+  -- التوافق الخلفي: الشكل القديم {open,close} وحده يعمل كما كان حرفيًّا
+  ('w8_hours_backcompat',       public.branch_open_by_hours('{"open":"18:00","close":"02:00"}'::jsonb, '2026-08-26 01:00:00+03'::timestamptz) = true
+                               and public.branch_open_by_hours('{"open":"18:00","close":"02:00"}'::jsonb, '2026-08-26 03:00:00+03'::timestamptz) = false
+                               and public.branch_open_by_hours('{}'::jsonb, '2026-08-26 04:00:00+03'::timestamptz) = true),
+  -- مواعيد الحجز تقرأ دوام يوم الطلب نفسه لا العام وحده
+  ('w8_slots_day_aware',        (select pg_get_functiondef(oid) like '%''days''%'
+                                 from pg_proc where proname='reservation_slots')),
   -- (٢٠) مرجع المخطط — البصمة تحرّكت خارج ترحيلات هذا الفرع أيضًا (عمل
   -- موازٍ اكتُشف الليلة: نظام /api/canary، جداول جديدة، ...) — الأرقام هنا
   -- قياسٌ فعليٌّ للواقع الحاليّ لا حسابٌ يدويّ تراكميّ. راجع schema_baseline.md.

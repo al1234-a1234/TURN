@@ -29,3 +29,49 @@ test("riyadhWeekday: يتقدّم يومًا بعد منتصف الليل بال
 });
 
 test("TZ ثابت على الرياض", () => { assert.equal(TZ, "Asia/Riyadh"); });
+
+/* دوام الأيام المختلفة (0121) — نفس بطارية اختبارات دالة القاعدة
+   branch_open_by_hours حرفيًّا (المنطق مكرَّرٌ على الطرفين عمدًا، فأي
+   انحرافٍ بينهما يظهر هنا). الدالة تقرأ الوقت الحالي، فيُثبَّت Date.now
+   على لحظاتٍ معلومة: 2026-08-26 أربعاء، 28 جمعة، 29 سبت (بالرياض). */
+import { isWithinOpeningHours } from "../src/lib/dates.ts";
+
+function atRiyadh(iso: string, fn: () => void) {
+  const real = Date.now;
+  Date.now = () => new Date(iso).getTime();
+  try { fn(); } finally { Date.now = real; }
+}
+
+test("دوام عام وحده: داخل النطاق مفتوح وخارجه مغلق", () => {
+  const h = { open: "16:00", close: "23:00" };
+  atRiyadh("2026-08-26T17:00:00+03:00", () => assert.equal(isWithinOpeningHours(h), true));
+  atRiyadh("2026-08-26T15:00:00+03:00", () => assert.equal(isWithinOpeningHours(h), false));
+});
+
+test("نطاق ليلي عام (18-02): فجرًا مفتوح، بعد القفل مغلق، مساءً مفتوح", () => {
+  const h = { open: "18:00", close: "02:00" };
+  atRiyadh("2026-08-26T01:00:00+03:00", () => assert.equal(isWithinOpeningHours(h), true));
+  atRiyadh("2026-08-26T03:00:00+03:00", () => assert.equal(isWithinOpeningHours(h), false));
+  atRiyadh("2026-08-26T19:00:00+03:00", () => assert.equal(isWithinOpeningHours(h), true));
+});
+
+test("استثناء الجمعة يفتح أبكر، وبقية الأيام على العام", () => {
+  const h = { open: "16:00", close: "23:00", days: { "5": { open: "14:00", close: "23:00" } } };
+  atRiyadh("2026-08-28T15:00:00+03:00", () => assert.equal(isWithinOpeningHours(h), true));   // جمعة 15:00
+  atRiyadh("2026-08-26T15:00:00+03:00", () => assert.equal(isWithinOpeningHours(h), false));  // أربعاء 15:00
+});
+
+test("ذيل ليل الجمعة يمتدّ إلى فجر السبت بجدول الجمعة لا السبت", () => {
+  const h = { open: "16:00", close: "23:00", days: { "5": { open: "20:00", close: "03:00" } } };
+  atRiyadh("2026-08-29T02:00:00+03:00", () => assert.equal(isWithinOpeningHours(h), true));   // سبت 02:00
+  atRiyadh("2026-08-29T04:00:00+03:00", () => assert.equal(isWithinOpeningHours(h), false));  // سبت 04:00
+});
+
+test("بلا ساعات أو بقيمة تالفة أو يومٍ بلا دوام = مفتوح", () => {
+  atRiyadh("2026-08-26T04:00:00+03:00", () => {
+    assert.equal(isWithinOpeningHours(null), true);
+    assert.equal(isWithinOpeningHours({}), true);
+    assert.equal(isWithinOpeningHours({ open: "غير صالح", close: "23:00" }), true);
+    assert.equal(isWithinOpeningHours({ days: { "5": { open: "14:00", close: "23:00" } } }), true);
+  });
+});

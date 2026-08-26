@@ -87,7 +87,11 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
       : Promise.resolve({ count: 0 }),
   ]);
   const tableCount = tableCountRes?.count ?? 0;
-  const hours = (settings?.opening_hours ?? {}) as { open?: string; close?: string };
+  const hours = (settings?.opening_hours ?? {}) as {
+    open?: string; close?: string;
+    days?: Record<string, { open?: string; close?: string }>;
+  };
+  const dayOverrides = hours.days ?? {};
   const rows = analytics ?? [];
 
   // مخدومون آخر 7 أيام
@@ -365,6 +369,32 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
                 <input name="max_party_size" inputMode="numeric" defaultValue={settings?.max_party_size ?? 20} className="field-input" />
               </div>
             </div>
+            {/* دوامٌ مختلف لبعض الأيام — مطعمٌ يفتح الجمعة عصرًا مثلًا.
+                details لا مكوّن عميل: طيٌّ مجانيّ بلا JS، ومفتوحٌ تلقائيًّا
+                لمن ضبط استثناءً فعلًا كي لا يُخفى عنه ما يسري على عملائه. */}
+            <details
+              className="rounded-2xl border p-4"
+              style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}
+              open={Object.keys(dayOverrides).length > 0}
+            >
+              <summary className="cursor-pointer select-none font-bold text-[color:var(--ink)]">
+                {tr(lang, "دوام مختلف لبعض الأيام (اختياري)", "Different hours on some days (optional)")}
+              </summary>
+              <p className="mb-3 mt-1 text-xs text-[color:var(--muted)]">
+                {tr(lang, "اليوم الفارغ يتبع «فتح/إغلاق» أعلاه. عبّئ الوقتين معًا ليُحتسب اليوم.", "An empty day follows the Open/Close above. Fill both times for a day to count.")}
+              </p>
+              <div className="space-y-2">
+                {AR_DAYS.map((_, d) => (
+                  <div key={d} className="grid grid-cols-[4.5rem_1fr_1fr] items-center gap-2">
+                    <span className="text-[13px] font-bold text-[color:var(--ink)]">
+                      {(lang === "en" ? EN_DAYS : AR_DAYS)[d]}
+                    </span>
+                    <input type="time" name={`day_open_${d}`} defaultValue={dayOverrides[String(d)]?.open ?? ""} className="field-input" aria-label={tr(lang, "فتح", "Open")} />
+                    <input type="time" name={`day_close_${d}`} defaultValue={dayOverrides[String(d)]?.close ?? ""} className="field-input" aria-label={tr(lang, "إغلاق", "Close")} />
+                  </div>
+                ))}
+              </div>
+            </details>
             <button className="btn btn-primary w-full">{tr(lang, "حفظ الإعدادات", "Save settings")}</button>
           </form>
         </section>

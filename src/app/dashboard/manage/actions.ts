@@ -60,11 +60,21 @@ export async function updateBranchSettings(formData: FormData) {
     if ((count ?? 0) === 0) acceptsReservations = false;
   }
 
+  // دوامٌ مختلف لبعض الأيام: المفتاح يوم الأسبوع (0=الأحد كـgetDay بتوقيت
+  // الرياض)، ولا يُحتسب اليوم إلا بفتحٍ وإغلاقٍ معًا — نصف دوامٍ ليس دوامًا،
+  // واليوم الفارغ يتبع open/close العامّين أعلاه.
+  const days: Record<string, { open: string; close: string }> = {};
+  for (let d = 0; d < 7; d++) {
+    const dOpen = String(formData.get(`day_open_${d}`) ?? "").trim();
+    const dClose = String(formData.get(`day_close_${d}`) ?? "").trim();
+    if (dOpen && dClose) days[String(d)] = { open: dOpen, close: dClose };
+  }
+
   const patch: TablesUpdate<"branch_settings"> = {
     accepts_waitlist: acceptsWaitlist,
     accepts_reservations: acceptsReservations,
     max_party_size: Number.isFinite(maxParty) ? maxParty : 20,
-    opening_hours: { open, close },
+    opening_hours: Object.keys(days).length ? { open, close, days } : { open, close },
   };
 
   // حقلا الحجز يغيبان عن النموذج حين لا طاولات للفرع. الكتابة بقيمةٍ افتراضية
