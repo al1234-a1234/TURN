@@ -70,12 +70,16 @@ export function CustomerShell({
             فوقه: كان مربّعين متراكبين بزاويتَين مختلفتَين (لوح الشعار ٢٢٫٨٪
             نصف قطر، وrq-circle ١rem) بلا فراغٍ بينهما، فتتصادم الحافّتان
             عند كل ركن وتبين «أطرافًا غريبة». اللوح وحده كافٍ بصريًّا. */}
+        {/* بلا overflow-hidden وبلا مقاسٍ مطابقٍ للوح: كانا يقصّان ظلَّ
+            اللوح الخارجي على حدود الزرّ المربّعة فتظهر «أطرافٌ غريبة»
+            مربّعة حوله — بينما نفس اللوح في صفحة المطعم (HomeLink بلا
+            قصّ) نظيف. شكوى مباشرة بلقطتَي مقارنة. */}
         <button
           onClick={() => setOpen(true)}
           aria-label={tr(lang, "القائمة", "Menu")}
-          className="flex h-11 w-11 items-center justify-center overflow-hidden p-0 transition active:scale-95"
+          className="flex items-center justify-center p-0 transition active:scale-95"
         >
-          <Logo size={44} bare />
+          <Logo size={44} />
         </button>
 
         {/* بلا scale-*: صنف Tailwind `scale` يضبط خاصّية CSS `scale` المستقلّة

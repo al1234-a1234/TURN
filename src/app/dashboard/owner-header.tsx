@@ -66,7 +66,7 @@ export function OwnerHeader({
             aria-label={tr(lang, "القائمة", "Menu")}
             className="flex items-center justify-center transition active:scale-95"
           >
-            <Logo size={44} bare />
+            <Logo size={44} />
           </button>
 
           <Wordmark className="select-none" />
