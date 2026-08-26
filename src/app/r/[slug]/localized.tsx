@@ -28,7 +28,7 @@ export function HomeLink() {
       aria-label={tr(lang, "الصفحة الرئيسية", "Home")}
       className="flex items-center justify-center transition active:scale-95"
     >
-      <Logo size={44} />
+      <Logo size={44} bare />
     </Link>
   );
 }

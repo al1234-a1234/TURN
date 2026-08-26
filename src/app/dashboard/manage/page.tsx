@@ -33,12 +33,12 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
     resolveBranchScope(load.ctx, (await searchParams).branch),
     supabase
       .from("restaurants")
-      .select("id, name, slug, description, logo_url, cover_url, cuisine, cuisine_en")
+      .select("id, name, slug, description, logo_url, cover_url, cuisine, cuisine_en, manual_rating")
       .eq("id", base.id)
       .maybeSingle(),
   ]);
   const activeBranchId = scope.active?.id ?? "";
-  const restaurant = full ?? { ...base, description: null, logo_url: null, cover_url: null, cuisine: null, cuisine_en: null };
+  const restaurant = full ?? { ...base, description: null, logo_url: null, cover_url: null, cuisine: null, cuisine_en: null, manual_rating: null };
 
   // فرع نشِط مفقود (حساب مربوط بفرع معطَّل) → لا نمرّر "" لعمود uuid فيفشل الاستعلام صامتًا
   const menuBranchId = activeBranchId || NO_BRANCH;
@@ -235,6 +235,13 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
             <div>
               <label className="field-label">{tr(lang, "الوصف", "Description")}</label>
               <textarea name="description" rows={3} defaultValue={restaurant.description ?? ""} className="field-input" placeholder={tr(lang, "نبذة عن المطعم…", "About the restaurant…")} />
+            </div>
+            <div>
+              <label className="field-label">{tr(lang, "التقييم المعروض (مثل تقييمك في قوقل ماب)", "Displayed rating (e.g. your Google Maps rating)")}</label>
+              <input name="manual_rating" inputMode="decimal" dir="ltr" defaultValue={restaurant.manual_rating ?? ""} className="field-input" placeholder="4.7" />
+              <p className="mt-1 text-[11px] font-medium text-[color:var(--muted)]">
+                {tr(lang, "من 0 إلى 5 — يظهر بجانب اسمك في الرئيسية وصفحة مطعمك. اتركه فارغًا ليُحسب من تقييمات المنصّة.", "0 to 5 — shown next to your name on the homepage and your page. Leave empty to use platform reviews.")}
+              </p>
             </div>
             <button className="btn btn-primary w-full">{tr(lang, "حفظ المعلومات", "Save info")}</button>
           </form>

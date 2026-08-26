@@ -78,7 +78,14 @@ export default async function Home() {
       : null;
     const best = free ?? shortest ?? decorated[0];
     const ra = ratingAgg.get(r.id);
-    const rating = ra && ra.n > 0 ? (Math.round((ra.sum / ra.n) * 10) / 10).toFixed(1) : null;
+    // تقييم المالك اليدوي (0122) يتقدّم على متوسط تقييمات المنصّة الداخلية
+    // القليلة — قراره وذمّته، إلى أن تُربط مزامنة قوقل ماب بمفتاح API.
+    const rating =
+      r.manual_rating != null
+        ? Number(r.manual_rating).toFixed(1)
+        : ra && ra.n > 0
+          ? (Math.round((ra.sum / ra.n) * 10) / 10).toFixed(1)
+          : null;
     // البطاقة لا تعرض المدينة ولا المسافة ولا «مزدحم الآن»، فلا نرسلها:
     // كل حقلٍ هنا يُسلسَل في حمولة الصفحة لكل مطعمٍ في القائمة.
     return {

@@ -972,6 +972,7 @@ export type Database = {
           is_canary: boolean
           links: Json
           logo_url: string | null
+          manual_rating: number | null
           name: string
           name_en: string | null
           owner_id: string
@@ -995,6 +996,7 @@ export type Database = {
           is_canary?: boolean
           links?: Json
           logo_url?: string | null
+          manual_rating?: number | null
           name: string
           name_en?: string | null
           owner_id: string
@@ -1018,6 +1020,7 @@ export type Database = {
           is_canary?: boolean
           links?: Json
           logo_url?: string | null
+          manual_rating?: number | null
           name?: string
           name_en?: string | null
           owner_id?: string

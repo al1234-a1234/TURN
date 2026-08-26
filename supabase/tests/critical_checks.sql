@@ -402,10 +402,13 @@ with checks(name, pass) as (
   ('w3_position_lock_per_branch',(select pg_get_functiondef(oid) like '%where id = new.branch_id for update%'
                                  from pg_proc where proname='set_waitlist_position')),
   -- (ج) والتنظيف لا يُنهي صفوفًا حيّة بحلول يومٍ جديد: قاعدته زمنٌ منقضٍ
-  --     (٨ ساعات، أو ٤٥ دقيقة والفرع مغلق) — لا تاريخ. فُحص قبل 0108
-  --     وثبت سليمًا، وهذا الفحص يحرسه من انحرافٍ لاحق.
+  --     (٨ ساعات لفرعٍ بلا ساعات) أو إغلاقُ الفرع بجدول دوامه — لا تاريخ.
+  --     0123 حذف مهلة الـ٤٥ دقيقة بعد الإغلاق بطلبٍ صريح («بمجرد ما يجي
+  --     وقت الاغلاق تصفر») — الفحص يحرس الحذف من العودة أيضًا.
   ('w3_expire_by_elapsed_only', (select pg_get_functiondef(oid) not like '%::date%'
                                   and pg_get_functiondef(oid) like '%8 hours%'
+                                  and pg_get_functiondef(oid) not like '%45 minutes%'
+                                  and pg_get_functiondef(oid) like '%branch_open_by_hours%'
                                  from pg_proc where proname='expire_stale_waitlist')),
   -- (د) وسلامة الترتيب على بيانات الإنتاج: لا رقمَ مكرّرًا بين صفّين حيّين
   --     في الفرع الواحد — وهو ما كان تصفير منتصف الليل يصنعه فعليًّا، وما
@@ -511,6 +514,13 @@ with checks(name, pass) as (
   -- مواعيد الحجز تقرأ دوام يوم الطلب نفسه لا العام وحده
   ('w8_slots_day_aware',        (select pg_get_functiondef(oid) like '%''days''%'
                                  from pg_proc where proname='reservation_slots')),
+  -- ══ 0122: تقييم المالك اليدوي — العمود موجود ومقروء للزائر ومقيّد 0-5 ══
+  ('w9_manual_rating_col',      exists(select 1 from information_schema.columns
+                                 where table_schema='public' and table_name='restaurants'
+                                   and column_name='manual_rating')),
+  ('w9_manual_rating_readable', has_column_privilege('anon','public.restaurants','manual_rating','SELECT')),
+  ('w9_manual_rating_ranged',   exists(select 1 from pg_constraint
+                                 where conname='restaurants_manual_rating_range')),
   -- (٢٠) مرجع المخطط — البصمة تحرّكت خارج ترحيلات هذا الفرع أيضًا (عمل
   -- موازٍ اكتُشف الليلة: نظام /api/canary، جداول جديدة، ...) — الأرقام هنا
   -- قياسٌ فعليٌّ للواقع الحاليّ لا حسابٌ يدويّ تراكميّ. راجع schema_baseline.md.

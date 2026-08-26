@@ -30,6 +30,9 @@ type LogoProps = {
   withName?: boolean;
   /** النسخة المعكوسة — كريمي على عنابي، اقرأ القسم ٦ قبل استخدامها */
   inverted?: boolean;
+  /** بلا لوح: الرسم وحده بلون الهوية — للهيدر الملوّن حيث اللوح الأبيض
+      يُقرأ «مربّعًا حوله فراغ» لا شعارًا مندمجًا (شكوى مباشرة). */
+  bare?: boolean;
   className?: string;
 };
 
@@ -37,6 +40,7 @@ export function Logo({
   size = 96,
   withName = true,
   inverted = false,
+  bare = false,
   className = "",
 }: LogoProps) {
   // 40px حدّ المواصفة. رفعتُه إلى 64 مرّةً خوفًا من بهتان عروق الكلمة
@@ -47,7 +51,7 @@ export function Logo({
 
   return (
     <span
-      className={`eight-badge${inverted ? " eight-badge--inverted" : ""} ${className}`}
+      className={`eight-badge${inverted ? " eight-badge--inverted" : ""}${bare ? " eight-badge--bare" : ""} ${className}`}
       style={{ fontSize: size }}
       role="img"
       aria-label="EIGHT"

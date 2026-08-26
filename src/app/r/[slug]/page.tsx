@@ -49,7 +49,7 @@ export default async function RestaurantPublicPage({
 
   const { data: restaurant } = await supabase
     .from("restaurants")
-    .select("id, name, name_en, description, is_active, logo_url, cover_url, links, cuisine, cuisine_en")
+    .select("id, name, name_en, description, is_active, logo_url, cover_url, links, cuisine, cuisine_en, manual_rating")
     .eq("slug", slug)
     .eq("is_active", true)
       .eq("is_canary", false)
@@ -202,7 +202,9 @@ export default async function RestaurantPublicPage({
           cuisine={restaurant.cuisine}
           cuisineEn={restaurant.cuisine_en}
           description={restaurant.description}
-          rating={reviewCount ? String(avgRating) : "—"}
+          rating={restaurant.manual_rating != null
+            ? Number(restaurant.manual_rating).toFixed(1)
+            : reviewCount ? String(avgRating) : "—"}
           reviewCount={String(reviewCount)}
           reviews={reviewList}
           reviewForm={<ReviewForm slug={slug} googleUrl={safeExternalUrl(((restaurant.links ?? {}) as Record<string, string>).google)} />}

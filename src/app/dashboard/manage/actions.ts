@@ -16,7 +16,14 @@ export async function updateRestaurantInfo(formData: FormData) {
   const cover_url = String(formData.get("cover_url") ?? "").trim() || null;
   const cuisine = String(formData.get("cuisine") ?? "").trim() || null;
   const cuisine_en = String(formData.get("cuisine_en") ?? "").trim() || null;
-  const patch: TablesUpdate<"restaurants"> = { logo_url, cover_url, description, cuisine, cuisine_en };
+  // تقييمٌ يكتبه المالك بذمّته (0122) — بديل مزامنة قوقل ماب لحين توفّر
+  // مفتاح API. يُقصّ إلى [0..5] بمنزلةٍ عشرية، والفراغ يمسحه.
+  const ratingRaw = String(formData.get("manual_rating") ?? "").trim();
+  const ratingNum = ratingRaw ? Number(ratingRaw.replace(",", ".")) : NaN;
+  const manual_rating = Number.isFinite(ratingNum)
+    ? Math.round(Math.min(Math.max(ratingNum, 0), 5) * 10) / 10
+    : null;
+  const patch: TablesUpdate<"restaurants"> = { logo_url, cover_url, description, cuisine, cuisine_en, manual_rating };
   if (name) patch.name = name;
   const { error } = await supabase.from("restaurants").update(patch).eq("id", rid);
   // إبطال الكاش بعد كتابةٍ فاشلة يبثّ حالةً لم تُحفظ: تعود الصفحة بالقيم القديمة

@@ -27,6 +27,8 @@ export type DiscoveryRestaurant = {
   cover_url: string | null;
   cuisine: string | null;
   cuisine_en: string | null;
+  /** تقييمٌ كتبه المالك بنفسه (0122) — يتقدّم على متوسط تقييمات المنصّة */
+  manual_rating: number | null;
   branches: {
     id: string; city: string | null; lat: number | null; lng: number | null; is_active: boolean;
     branch_settings:
@@ -48,7 +50,7 @@ export const getDiscovery = unstable_cache(
     const sb = anon();
     const { data: restaurants, error } = await sb
       .from("restaurants")
-      .select("id, name, slug, logo_url, cover_url, cuisine, cuisine_en, branches(id, city, lat, lng, is_active, branch_settings(accepts_waitlist, manually_closed, busy_now, opening_hours))")
+      .select("id, name, slug, logo_url, cover_url, cuisine, cuisine_en, manual_rating, branches(id, city, lat, lng, is_active, branch_settings(accepts_waitlist, manually_closed, busy_now, opening_hours))")
       .eq("is_active", true)
       .eq("is_canary", false)
       .order("created_at", { ascending: false })

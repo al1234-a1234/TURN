@@ -75,7 +75,7 @@ export function CustomerShell({
           aria-label={tr(lang, "القائمة", "Menu")}
           className="flex h-11 w-11 items-center justify-center overflow-hidden p-0 transition active:scale-95"
         >
-          <Logo size={44} />
+          <Logo size={44} bare />
         </button>
 
         {/* بلا scale-*: صنف Tailwind `scale` يضبط خاصّية CSS `scale` المستقلّة
@@ -126,9 +126,11 @@ export function CustomerShell({
               ورقمه وتذكرة دوره وحجزه وهداياه وزياراته. وكان «حسابي» خلف
               الشعار في الأعلى وحده، فلا يخطر لأحدٍ أن الشعار بابُ حساب.
               وما يُفتح كل يوم لا يُخبَّأ خلف رمز. */}
+          {/* «حسابي» أولًا = يمين الشريط في RTL، و«المطاعم» يسارًا —
+              طلبٌ صريح بعكس الترتيب السابق. */}
           {[
-            { key: "restaurants", href: "/", icon: <IcRestaurants />, label: tr(lang, "المطاعم", "Restaurants") },
             { key: "other", href: "/me", icon: <IcAccount />, label: tr(lang, "حسابي", "My account") },
+            { key: "restaurants", href: "/", icon: <IcRestaurants />, label: tr(lang, "المطاعم", "Restaurants") },
           ].map((item) => {
             const isActive = active === item.key;
             return (
