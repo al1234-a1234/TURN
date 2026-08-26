@@ -237,15 +237,28 @@ with checks(name, pass) as (
   -- (٥) سطح الدوال المكشوفة للضيف لا يتوسّع خلسةً.
   --     كان الحدّ ٣٥ والواقع ٣٩ — أي أنّ الفحص كان يمرّ وهو مخروق. ثم
   --     أُغلقت خمس نقاط نهايةٍ بلا مستدعٍ (0097) فصار الواقع ٣٠، فشُدّ
-  --     الحدّ إليه. ثم فاحص أمان Supabase كشف ١٤ دالّةً مساعدةً داخلية
-  --     (is_staff_of، is_platform_admin، staff_has_perm، ...) كانت تحمل
-  --     EXECUTE لـanon بلا داعٍ — منحٌ افتراضيٌّ من PUBLIC/إعداد المشروع
-  --     الأولي، لا استعمالٌ فعليّ (0111-0114 سحبته، والباقي سبعةٌ فقط
-  --     الآن — كل الدوال الفعليّة المكشوفة للضيف عمدًا). و«أصغر أو يساوي»
-  --     لا «يساوي»: يمسك التوسّع ولا يعاقب على إغلاقٍ جديد.
+  --     الحدّ إليه.
+  --
+  --     ⚠ محاولة تشديدٍ فاشلة (0111-0114 ثم تراجع 0117): فاحص أمان
+  --     Supabase أظهر ١٤ دالّةً مساعدة (is_staff_of، my_branch_ids،
+  --     staff_has_perm، ...) قابلةً للتنفيذ من anon، فسُحبت — لكن التحقّق
+  --     كان ناقصًا: بحث عن 'anon' حرفيًّا في pg_policies.roles، ففاته أن
+  --     سياسة RLS بلا TO صريح تُسجَّل roles={public} لا {anon}، وPUBLIC
+  --     يشمل anon فعليًّا. النتيجة: سياسات SELECT حقيقية على restaurants
+  --     وbranch_settings (roles={public}) تستدعي is_staff_of/my_branch_ids،
+  --     فكسرت الصفحة الرئيسية وr/[slug] لكل زائرٍ مجهول لعشر ساعات قبل
+  --     أن يُكتشف عبر Vercel runtime errors. 0117 أعاد المنح لهذه الدوال
+  --     تحديدًا (لا check_platform_health — غير مُشارةٍ إليها من أي
+  --     سياسة). الحدّ هنا عاد لواقعه الحقيقي: ٢١، لا ٧.
+  --
+  --     الدرس لأي تضييقٍ لاحق: التحقّق الصحيح `roles @> ARRAY['public']
+  --     OR roles @> ARRAY['anon']`، لا `'anon' = any(roles)` وحدها —
+  --     وتأكيدٌ تجريبي حتمًا (`set role anon` ثم تنفيذ نفس استعلام
+  --     التطبيق الفعلي) قبل أي `revoke`، لا قراءة pg_policies وحدها.
+  --     و«أصغر أو يساوي» لا «يساوي»: يمسك التوسّع ولا يعاقب على إغلاقٍ جديد.
   ('q05_secdef_anon_surface',  (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
                                 where n.nspname='public' and p.prokind='f' and p.prosecdef
-                                  and has_function_privilege('anon',p.oid,'EXECUTE')) <= 7),
+                                  and has_function_privilege('anon',p.oid,'EXECUTE')) <= 30),
   -- (٦) مهلة الاستعلام: بدونها استعلامٌ جامح من لوحةٍ واحدة يُبطئ كل المطاعم
   ('q06_anon_stmt_timeout',    (select coalesce((select option_value from pg_options_to_table(rolconfig)
                                                  where option_name='statement_timeout'),'') <> ''
@@ -431,6 +444,29 @@ with checks(name, pass) as (
   ('w5_platform_health_anon_blocked', not has_function_privilege('anon','public.check_platform_health()','EXECUTE')),
   ('w5_platform_health_authed_ok',    has_function_privilege('authenticated','public.check_platform_health()','EXECUTE')),
   ('w5_platform_health_shape',  (public.check_platform_health() ?& array['cron','waitlist_anomaly','generated_at'])),
+  -- ══ 0117 هوتفكس: حارسٌ دائم ضد نفس فئة العطب — دالّةٌ تستدعيها سياسة
+  --    RLS بلا EXECUTE لـanon ══
+  --
+  -- 0111-0114 سحبت EXECUTE من anon عن دوالٍّ ظهرت في pg_policies بلا
+  -- 'anon' حرفيًّا في roles — لكن سياسةً بلا TO صريح تُسجَّل roles={public}
+  -- وPUBLIC يشمل anon. سياسات SELECT حقيقية (restaurants، branch_settings)
+  -- كسرت الصفحة الرئيسية وr/[slug] لعشر ساعات قبل 0117. هذا الفحص يستخرج
+  -- كل اسم دالّةٍ يظهر داخل qual/with_check لأي سياسةٍ بـroles={public}
+  -- أو {anon}، ويتأكّد أن anon يملك EXECUTE عليها إن كانت SECURITY
+  -- DEFINER في public — فلا يتكرّر هذا العطب صامتًا خلف "أصغر أو يساوي".
+  ('q27_public_policy_fns_anon_executable',
+    not exists (
+      select 1
+      from pg_policies pol
+      cross join lateral regexp_matches(
+             coalesce(pol.qual,'') || ' ' || coalesce(pol.with_check,''),
+             '([a-z_][a-z0-9_]*)\s*\(', 'g') as fn(name)
+      join pg_proc p on p.proname = fn.name[1]
+        and p.pronamespace = (select oid from pg_namespace where nspname='public')
+      where pol.schemaname='public'
+        and (pol.roles @> array['public']::name[] or pol.roles @> array['anon']::name[])
+        and p.prosecdef
+        and not has_function_privilege('anon', p.oid, 'EXECUTE'))),
   ('q20_schema_no_drift',      (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
                                 where n.nspname='public' and c.relkind='r') = 29
                                and (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
