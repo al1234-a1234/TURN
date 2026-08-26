@@ -58,7 +58,11 @@ export async function adminCreateRestaurant(
   if (!session) return { error: "يجب تسجيل الدخول." };
 
   const name = String(formData.get("name") ?? "").trim();
-  const slug = String(formData.get("slug") ?? "").trim().toLowerCase();
+  // تطبيعٌ قبل التحقّق لا بعده: النموذج يحوّل أي حرفٍ غير مسموح إلى شرطة
+  // أثناء الكتابة، فمسافةٌ قبل الاسم أو بعده تصل هنا شرطةً في طرف المعرّف
+  // — هكذا وُلد ‎/r/-pizza-peel-‎ فعليًّا. الشُّرَط المكرّرة تُدمج والطرفية تُقصّ.
+  const slug = String(formData.get("slug") ?? "")
+    .trim().toLowerCase().replace(/-+/g, "-").replace(/^-+|-+$/g, "");
   const username = String(formData.get("username") ?? "").trim().toLowerCase();
   const phone = String(formData.get("phone") ?? "").trim();
   const city = String(formData.get("city") ?? "").trim();
@@ -67,7 +71,9 @@ export async function adminCreateRestaurant(
   if (!name) return { error: "أدخل اسم المطعم." };
   if (!username || !/^[a-z0-9_.-]+$/.test(username))
     return { error: "اسم مستخدم صالح (أحرف إنجليزية وأرقام فقط)." };
-  if (!slug || !/^[a-z0-9-]+$/.test(slug))
+  // الشكل القانوني الوحيد: مقاطع [a-z0-9] تفصلها شرطات مفردة — لا شرطة
+  // طرفية ولا مكرّرة (التطبيع أعلاه ضمنها، والتحقّق يحرس أي مسارٍ آخر)
+  if (!slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))
     return { error: "معرّف رابط صالح (أحرف إنجليزية صغيرة وأرقام وشُرَط)." };
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;

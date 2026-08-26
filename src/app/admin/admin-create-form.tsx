@@ -42,7 +42,8 @@ export function AdminCreateForm() {
             <label htmlFor="slug" className="field-label">{tr(lang, "معرّف الرابط", "URL slug")}</label>
             <input
               id="slug" name="slug" required dir="ltr" value={slug}
-              onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-"))}
+              onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-+/, ""))}
+              onBlur={(e) => setSlug(e.target.value.replace(/-+$/, ""))}
               placeholder="my-cafe" className="field-input"
             />
           </div>
