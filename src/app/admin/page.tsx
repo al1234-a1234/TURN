@@ -2,7 +2,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { AdminCreateForm } from "./admin-create-form";
-import { openRestaurantDashboard, setPlatformPause } from "./actions";
+import { openRestaurantDashboard, setPlatformPause, adminToggleCanary } from "./actions";
+import { DeleteRestaurantButton } from "./delete-restaurant-button";
 import { LangToggle } from "@/components/lang-toggle";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
@@ -119,7 +120,14 @@ export default async function AdminPage() {
               {list.map((r) => (
                 <li key={r.id} className="soft-card flex items-center gap-3 p-4">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-bold text-[color:var(--ink)]">{r.name}</p>
+                    <p className="truncate font-bold text-[color:var(--ink)]">
+                      {r.name}
+                      {r.is_canary ? (
+                        <span className="ms-2 rounded-full px-2 py-0.5 text-[10px] font-extrabold" style={{ background: "rgba(201,169,97,0.16)", color: "var(--gold-1)" }}>
+                          {tr(lang, "مخفيّ عن الجمهور", "Hidden from public")}
+                        </span>
+                      ) : null}
+                    </p>
                     <p className="truncate text-xs text-[color:var(--muted)]" dir="ltr">
                       /r/{r.slug}
                       {r.owner_username ? ` · 👤 ${r.owner_username}` : ""}
@@ -142,6 +150,26 @@ export default async function AdminPage() {
                   >
                     {tr(lang, "الباقة", "Plan")}
                   </Link>
+                  <form action={adminToggleCanary} className="shrink-0">
+                    <input type="hidden" name="restaurant_id" value={r.id} />
+                    <input type="hidden" name="canary" value={r.is_canary ? "0" : "1"} />
+                    <button
+                      type="submit"
+                      title={tr(lang, r.is_canary ? "أظهِر للجمهور" : "أخفِ عن الجمهور — يبقى قابلًا للاختبار برابطه", r.is_canary ? "Show to the public" : "Hide from the public — still testable via its link")}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--hairline)] text-[color:var(--muted)] transition"
+                    >
+                      {r.is_canary ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+                          <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+                        </svg>
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+                          <path d="M3 3l18 18M10.6 10.6a3 3 0 004.2 4.2M9.9 5.1A10.9 10.9 0 0112 5c6.5 0 10 7 10 7a13.2 13.2 0 01-3.1 3.9M6.5 6.6C3.9 8.3 2 12 2 12a13.4 13.4 0 004.2 4.9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      )}
+                    </button>
+                  </form>
                   <Link
                     href={`/r/${r.slug}`}
                     title={tr(lang, "الصفحة العامة", "Public page")}
@@ -151,6 +179,7 @@ export default async function AdminPage() {
                       <path d="M14 3h7v7M21 3l-9 9M10 5H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </Link>
+                  <DeleteRestaurantButton restaurantId={r.id} slug={r.slug} />
                 </li>
               ))}
             </ul>

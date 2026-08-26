@@ -129,3 +129,42 @@ export async function setPlatformPause(formData: FormData) {
 
   revalidatePath("/admin");
 }
+
+/**
+ * حذف مطعم كامل — لا رجوع. الحارس الحقيقي داخل admin_delete_restaurant
+ * نفسها (ترفض غير مدير المنصّة)، وهي أيضًا من تقرّر أيّ حساب موظّف/مالك
+ * يُحذف معه (فقط إن لم يكن له وجودٌ في مطعمٍ آخر) — لا شيء من هذا هنا.
+ */
+export async function adminDeleteRestaurant(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/partners?redirect=/admin");
+
+  const restaurantId = String(formData.get("restaurant_id") ?? "").trim();
+  if (!restaurantId) return;
+
+  await supabase.rpc("admin_delete_restaurant", { p_restaurant_id: restaurantId });
+  revalidatePath("/admin");
+}
+
+/**
+ * إخفاء/إظهار مطعم عن الاكتشاف العامّ (الرئيسية، البحث، صفحته نفسها) —
+ * نفس عمود is_canary الذي يُخفي "نبض دور" اليوم. المطعم يبقى شغّالًا
+ * بالكامل عبر رابطه المباشر /r/[slug]، فقط لا يظهر لزائرٍ يتصفّح عاديًّا.
+ */
+export async function adminToggleCanary(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/partners?redirect=/admin");
+
+  const restaurantId = String(formData.get("restaurant_id") ?? "").trim();
+  const canary = String(formData.get("canary") ?? "") === "1";
+  if (!restaurantId) return;
+
+  await supabase.rpc("admin_set_restaurant_canary", { p_restaurant_id: restaurantId, p_canary: canary });
+  revalidatePath("/admin");
+}

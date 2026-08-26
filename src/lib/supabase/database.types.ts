@@ -1348,11 +1348,20 @@ export type Database = {
           created_at: string
           id: string
           is_active: boolean
+          is_canary: boolean
           name: string
           owner_phone: string | null
           owner_username: string | null
           slug: string
         }[]
+      }
+      admin_delete_restaurant: {
+        Args: { p_restaurant_id: string }
+        Returns: undefined
+      }
+      admin_set_restaurant_canary: {
+        Args: { p_restaurant_id: string; p_canary: boolean }
+        Returns: undefined
       }
       admin_create_restaurant: {
         Args: {

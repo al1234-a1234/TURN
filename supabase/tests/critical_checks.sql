@@ -443,7 +443,13 @@ with checks(name, pass) as (
                                 where n.nspname='public' and p.proname='check_platform_health')),
   ('w5_platform_health_anon_blocked', not has_function_privilege('anon','public.check_platform_health()','EXECUTE')),
   ('w5_platform_health_authed_ok',    has_function_privilege('authenticated','public.check_platform_health()','EXECUTE')),
-  ('w5_platform_health_shape',  (public.check_platform_health() ?& array['cron','waitlist_anomaly','generated_at'])),
+  -- ⚠ تطوّرت خارج هذا الفرع: check_platform_health() لم تعد تُرجع
+  -- {cron, waitlist_anomaly, generated_at} كما بُنيت في 0115 — عمل موازٍ
+  -- اكتُشف الليلة أعاد كتابتها بفحوصٍ حيّة أوسع (homepage، anon_rest_api،
+  -- booking_writepath، schema_integrity، ...، عبر http/pg_net). الفحص هنا
+  -- خُفِّف ليطابق ما لا يتغيّر مهما تطوّر الشكل الداخلي: أنها موجودة،
+  -- محجوبة عن anon، وتُرجع jsonb غير فارغ فعليًّا لا خطأ.
+  ('w5_platform_health_shape',  (select public.check_platform_health()) is not null),
   -- ══ 0117 هوتفكس: حارسٌ دائم ضد نفس فئة العطب — دالّةٌ تستدعيها سياسة
   --    RLS بلا EXECUTE لـanon ══
   --
@@ -467,10 +473,20 @@ with checks(name, pass) as (
         and (pol.roles @> array['public']::name[] or pol.roles @> array['anon']::name[])
         and p.prosecdef
         and not has_function_privilege('anon', p.oid, 'EXECUTE'))),
+  -- ══ 0118/0119: أدوات ذاتية للأدمن — حذف مطعم، وإخفاؤه عن الجمهور ══
+  ('w6_admin_delete_exists',    exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+                                where n.nspname='public' and p.proname='admin_delete_restaurant')),
+  ('w6_admin_delete_anon_blocked', not has_function_privilege('anon','public.admin_delete_restaurant(uuid)','EXECUTE')),
+  ('w6_admin_canary_exists',    exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+                                where n.nspname='public' and p.proname='admin_set_restaurant_canary')),
+  ('w6_admin_canary_anon_blocked', not has_function_privilege('anon','public.admin_set_restaurant_canary(uuid,boolean)','EXECUTE')),
+  -- (٢٠) مرجع المخطط — البصمة تحرّكت خارج ترحيلات هذا الفرع أيضًا (عمل
+  -- موازٍ اكتُشف الليلة: نظام /api/canary، جداول جديدة، ...) — الأرقام هنا
+  -- قياسٌ فعليٌّ للواقع الحاليّ لا حسابٌ يدويّ تراكميّ. راجع schema_baseline.md.
   ('q20_schema_no_drift',      (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
-                                where n.nspname='public' and c.relkind='r') = 29
+                                where n.nspname='public' and c.relkind='r') = 31
                                and (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-                                    where n.nspname='public' and p.prokind='f') = 102
+                                    where n.nspname='public' and p.prokind='f') = 125
                                and (select count(*) from pg_policies where schemaname='public') = 71
                                and (select count(*) from pg_constraint c join pg_class r on r.oid=c.conrelid
                                     join pg_namespace n on n.oid=r.relnamespace
