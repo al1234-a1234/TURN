@@ -1509,10 +1509,13 @@ export type Database = {
         Args: { p_phone: string; p_ip?: string }
         Returns: {
           at: string
+          id: string | null
           kind: string
           party_size: number
           position: number | null
           status: string
+          venue_name: string | null
+          venue_slug: string | null
         }[]
       }
       has_feature: {

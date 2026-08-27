@@ -112,12 +112,6 @@ export async function joinWaitlistGuest(
   formData: FormData,
 ): Promise<WaitlistState> {
   const lang = await getLang();
-
-  // بوّابة البوتات أوّل شيء: قبل أي لمسٍ للقاعدة أو حدّ العنوان — بوتٌ
-  // مكتشَف لا يستحقّ حتى استهلاك حصّة allowByIp لعميلٍ حقيقيّ خلفه.
-  const bot = await checkBotId({ advancedOptions: { checkLevel: "deepAnalysis" } });
-  if (bot.isBot) return { ok: false, error: msg(lang, "botBlocked") };
-
   const supabase = await createClient();
 
   const slug = String(formData.get("slug") ?? "");
@@ -133,9 +127,21 @@ export async function joinWaitlistGuest(
   if (!fullName) return { ok: false, error: msg(lang, "yourName") };
   if (!phone) return { ok: false, error: msg(lang, "badPhone") };
 
-  // حدّ العنوان قبل ملامسة القاعدة: حدودها تُقاس بالرقم أو بالفرع، والمهاجم
-  // يملك أرقامًا بلا حدّ ولا يملك عناوين بلا حدّ. عشرة في الدقيقة تكفي
-  // عائلةً كاملة على شبكة مطعمٍ واحدة، ولا تكفي سكربتًا.
+  // بوّابة البوتات مع قراءتَي الفرع معًا لا تباعًا: فحص deepAnalysis وحده
+  // يستغرق ثوانيَ أحيانًا، وكان العميل يقفها كلّها ثم يقف القراءتين فوقها
+  // («جارٍ التسجيل…» خمس ثوانٍ — شكوى المشغّل نصًّا). القراءتان سقفهما
+  // مقصوصٌ بالقاعدة نفسها، فبوتٌ مكتشَف لا يكسب منهما شيئًا يُكتب —
+  // وقرارُه (البوّابة ثم حدّ العنوان) بترتيبه المحفوظ بعد اكتمالها.
+  const [bot, zone, partySize] = await Promise.all([
+    checkBotId({ advancedOptions: { checkLevel: "deepAnalysis" } }),
+    resolveZone(supabase, branchId, zoneRaw),
+    resolvePartySize(supabase, branchId, partyRaw),
+  ]);
+  if (bot.isBot) return { ok: false, error: msg(lang, "botBlocked") };
+
+  // حدّ العنوان قبل ملامسة الكتابة: حدود القاعدة تُقاس بالرقم أو بالفرع،
+  // والمهاجم يملك أرقامًا بلا حدّ ولا يملك عناوين بلا حدّ. عشرة في الدقيقة
+  // تكفي عائلةً كاملة على شبكة مطعمٍ واحدة، ولا تكفي سكربتًا.
   if (!(await allowByIp("join", 10, 60_000))) {
     return { ok: false, error: msg(lang, "tooMany") };
   }
@@ -147,9 +153,6 @@ export async function joinWaitlistGuest(
   const lat = Number(formData.get("lat"));
   const lng = Number(formData.get("lng"));
   const hasCoords = Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0);
-
-  const zone = await resolveZone(supabase, branchId, zoneRaw);
-  const partySize = await resolvePartySize(supabase, branchId, partyRaw);
 
   // الكتابة بقلم الخادم لا بمفتاح المتصفّح: كلّ ما فوق — حدّ العنوان،
   // تطبيع الرقم، قصّ القسم، سقف الحجم — كان يُتخطّى بنداءٍ مباشر يتجاوزنا.
@@ -175,20 +178,19 @@ export async function joinWaitlistGuest(
 
   const row = Array.isArray(data) ? data[0] : data;
 
-  // المسافة عن الفرع: تُحسب على الخادم من الإحداثيات، ولا تُخزَّن الإحداثيات
-  if (row?.entry_id && hasCoords) {
-    await writer.rpc("set_entry_distance", { p_entry_id: row.entry_id, p_lat: lat, p_lng: lng });
-  }
-
-  // الترتيب الحيّ نفسه الذي سيراه الاستطلاع والاستقبال — لا الرقم المخزَّن،
-  // وإلا رأى العميل «5» ثم صارت «2» بعد أول نبضة (رقمان لمفهوم واحد).
+  // بعد الانضمام نداءان مستقلّان — معًا لا تباعًا (نصف زمن الذيل):
+  // المسافة عن الفرع تُحسب على الخادم ولا تُخزَّن الإحداثيات، والترتيب
+  // الحيّ نفسه الذي سيراه الاستطلاع والاستقبال — لا الرقم المخزَّن، وإلا
+  // رأى العميل «5» ثم صارت «2» بعد أول نبضة (رقمان لمفهوم واحد).
   let livePos: number | undefined;
   let liveTotal: number | undefined;
   if (row?.entry_id) {
-    const { data: st } = await supabase.rpc("waitlist_ticket_status", {
-      p_entry_id: row.entry_id,
-      p_phone: phone,
-    });
+    const [, { data: st }] = await Promise.all([
+      hasCoords
+        ? writer.rpc("set_entry_distance", { p_entry_id: row.entry_id, p_lat: lat, p_lng: lng })
+        : Promise.resolve(null),
+      supabase.rpc("waitlist_ticket_status", { p_entry_id: row.entry_id, p_phone: phone }),
+    ]);
     const t = Array.isArray(st) ? st[0] : st;
     livePos = t?.position ?? undefined;
     liveTotal = t?.total ?? undefined;

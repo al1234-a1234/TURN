@@ -35,14 +35,21 @@ with checks(name, pass) as (
                                and not has_function_privilege('anon','public.guest_status_by_phone(text,text)','EXECUTE')
                                and not has_function_privilege('anon','public.rewards_by_phone(text)','EXECUTE')
                                and not has_function_privilege('anon','public.rewards_by_phone(text,text)','EXECUTE')),
-  -- ── تسريب الاستعلام بالرقم (0104) ──
-  -- برقمٍ وحده كان يخرج الاسم الكامل والمطعم والفرع والحالة وعدد المرافقين.
-  -- والموقع هو كامل جائزة المهاجم: أن يعرف أنّ صاحب هذا الرقم هنا الآن.
+  -- ── تسريب الاستعلام بالرقم (0104، عُدّل في 0130/0131) ──
+  -- برقمٍ وحده كان يخرج الاسم الكامل. يبقى محجوبًا. أمّا اسم المطعم
+  -- ومعرّفه فأعادهما المشغّل عمدًا (0130): بطاقة «دورٌ قائم» بلا اسمٍ
+  -- حُكم عليها «ما في فايدة». ومعرّف الدور عاد في 0131 (استرجاع التذكرة
+  -- من أي جهاز — join_waitlist_guest تعيده لمن يعرف الرقم أصلًا).
   ('phone_lookup_hides_name',
    (select pg_get_functiondef(oid) not like '%full_name%'
       from pg_proc where proname='guest_status_by_phone' and pronargs=2)),
-  ('phone_lookup_hides_venue',
-   (select pg_get_functiondef(oid) not like '%r.name%' and pg_get_functiondef(oid) not like '%b.name%'
+  ('phone_lookup_returns_venue',
+   (select pg_get_functiondef(oid) like '%venue_slug%'
+      from pg_proc where proname='guest_status_by_phone' and pronargs=2)),
+  -- معرّف الحجز وحده يبقى محجوبًا: هو مفتاح الإلغاء، وإلغاء الحجز
+  -- إثباتُ حيازةٍ لا معرفةُ رقم
+  ('phone_lookup_hides_res_id',
+   (select pg_get_functiondef(oid) like '%null::uuid%'
       from pg_proc where proname='guest_status_by_phone' and pronargs=2)),
   ('rewards_lookup_hides_venue',
    (select pg_get_functiondef(oid) not like '%r.name%'

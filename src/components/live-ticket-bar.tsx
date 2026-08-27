@@ -9,16 +9,17 @@ import { fmtTime } from "@/lib/dates";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 
-// الاستعلام بالرقم لم يعد يُرجع هويّة مكانٍ ولا معرّفًا (0104): الموقع كان
-// كامل جائزة المهاجم — أن يعرف أنّ صاحب هذا الرقم في هذا المطعم الآن.
-// فالخادم يقول «لك دورٌ وترتيبك كذا» ولا يقول أين، و**جهازك** يعرف أين
-// لأنّه سجّل المطعم لحظة انضمامك (`recordTurn`).
+// 0130: الاستعلام بالرقم عاد يُرجع اسم المطعم ومعرّفه العلني — قرار
+// المشغّل الصريح بعد أن أنتج إخفاء 0104 بطاقة «دورٌ قائم» بلا اسمٍ حكم
+// عليها «ما في فايدة». الاسم الشخصي يبقى مخفيًّا والحدود المركّبة قائمة.
 type Live = {
   kind: string;
   status: string;
   at: string;
   position: number | null;
   party_size: number | null;
+  venue_name: string | null;
+  venue_slug: string | null;
 };
 
 const CACHE_KEY = "live-ticket";
@@ -93,13 +94,14 @@ export function LiveTicketBar({ onShow }: { onShow?: (shown: boolean) => void })
   // الدور قبل الحجز: الدور يجري الآن، والحجز موعدٌ لاحق
   const row = rows?.find((r) => r.kind === "turn") ?? rows?.[0] ?? null;
 
-  // اسم المطعم ورابطه من ذاكرة الجهاز لا من الخادم. وإن كان الجهاز جديدًا
-  // (استرجاعٌ برقمٍ فقط) بقي الشريط نافعًا بلا اسم: «دورك — ترتيبك ٣»،
-  // وهو ما يحتاجه الواقف في الطابور فعلًا.
-  const venue = row?.kind === "turn" ? getTurns().find((t) => t.entryId) ?? null : null;
+  // 0130: الاسم والمعرّف من الخادم مع الصفّ نفسه — دقيقان لكل صفّ ويعملان
+  // من أي جهاز. ذاكرة الجهاز تبقى احتياطًا (نسخةٌ قديمة من الاستجابة مثلًا).
+  const localTurn = row?.kind === "turn" ? getTurns().find((t) => t.entryId) ?? null : null;
+  const venueName = row?.venue_name ?? localTurn?.name ?? null;
+  const venueSlug = row?.venue_slug ?? localTurn?.slug ?? null;
 
   // معروضةٌ كاملةً في هذين المكانين — فلا تُعاد مصغّرةً فوقهما
-  const hidden = !row || path === "/me" || (venue ? path === `/r/${venue.slug}` : false);
+  const hidden = !row || path === "/me" || (venueSlug ? path === `/r/${venueSlug}` : false);
 
   useEffect(() => { onShow?.(!hidden); }, [hidden, onShow]);
 
@@ -108,7 +110,7 @@ export function LiveTicketBar({ onShow }: { onShow?: (shown: boolean) => void })
   const isTurn = row.kind === "turn";
   return (
     <Link
-      href={isTurn && venue ? `/r/${venue.slug}` : "/me"}
+      href={isTurn && venueSlug ? `/r/${venueSlug}` : "/me"}
       className="mb-2 flex items-center gap-3 rounded-3xl px-4 py-3 shadow-lg transition active:scale-[0.99]"
       style={{ background: "var(--brand-solid)" }}
     >
@@ -117,7 +119,7 @@ export function LiveTicketBar({ onShow }: { onShow?: (shown: boolean) => void })
       </span>
       <span className="min-w-0 flex-1 text-end">
         <span className="block truncate text-sm font-extrabold text-cream-100">
-          {venue?.name ?? (isTurn ? tr(lang, "دورك محفوظ", "Your turn is saved") : tr(lang, "حجزك محفوظ", "Your booking is saved"))}
+          {venueName ?? (isTurn ? tr(lang, "دورك محفوظ", "Your turn is saved") : tr(lang, "حجزك محفوظ", "Your booking is saved"))}
         </span>
         <span className="block truncate text-[12px] font-bold text-cream-100/85">
           {isTurn

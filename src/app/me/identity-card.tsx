@@ -9,14 +9,17 @@ import { fmtTime } from "@/lib/dates";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 
-// مخرجات الاستعلام بالرقم بعد 0104: حالةٌ بلا هويّة مكان ولا معرّف.
-// المكان يأتي من ذاكرة الجهاز (`getTurns` / `getBookings`) لا من الخادم.
+// 0130: الاستعلام بالرقم عاد يحمل اسم المطعم ومعرّفه العلني — إخفاء 0104
+// أنتج بطاقة «دورٌ قائم» بلا اسم حكم صاحبُها عليها «ما في فايدة»، فقرّر
+// المشغّل إظهارَه. الاسم الشخصي وحده يبقى مخفيًّا، والحدود المركّبة قائمة.
 type Live = {
   kind: string;
   status: string;
   at: string;
   party_size: number;
   position: number | null;
+  venue_name: string | null;
+  venue_slug: string | null;
 };
 
 /**
@@ -166,11 +169,16 @@ export function IdentityCard() {
           محجوزةً لمن لن يأتي لمجرّد أن الإلغاء كان بعيدًا خطوة. */}
       {live?.map((r, i) => {
         const isTurn = r.kind === "turn";
-        // المكان من الجهاز: الدور من آخر تذكرةٍ محفوظة، والحجز بمطابقة الموعد.
-        const mine = isTurn
+        // 0130: المكان من الخادم مع الصفّ نفسه — دقيقٌ لكل صفّ ويعمل من أي
+        // جهاز. وذاكرة الجهاز تبقى احتياطًا (نسخةٌ قديمة من الاستجابة مثلًا).
+        const local = isTurn
           ? getTurns().find((t) => t.entryId) ?? null
           : getBookings().find((b) => b.at === r.at) ?? null;
-        const bookingId = !isTurn && mine && "id" in mine ? mine.id : null;
+        const venueName = r.venue_name ?? local?.name ?? null;
+        const venueSlug = r.venue_slug ?? local?.slug ?? null;
+        // الإلغاء وحده يبقى مشروطًا بسجلّ الجهاز: يحتاج معرّف الحجز، وهو
+        // إثباتُ حيازةٍ لا يُشتقّ من معرفة الرقم.
+        const bookingId = !isTurn && local && "id" in local ? local.id : null;
         return (
           <div key={`${r.kind}-${r.at}-${i}`} className="rq-card mt-3 p-5">
             <div className="flex items-start justify-between gap-3">
@@ -181,14 +189,13 @@ export function IdentityCard() {
                 {isTurn ? tr(lang, "دورك", "Your turn") : tr(lang, "حجزك", "Your booking")}
               </span>
               <div className="min-w-0 flex-1 text-end">
-                {mine ? (
-                  <Link href={`/r/${mine.slug}`} className="block truncate font-display text-lg font-bold text-[color:var(--ink)]">
-                    {mine.name}
+                {venueName && venueSlug ? (
+                  <Link href={`/r/${venueSlug}`} className="block truncate font-display text-lg font-bold text-[color:var(--ink)]">
+                    {venueName}
                   </Link>
                 ) : (
-                  // جهازٌ جديد: نعرض الحالة بلا مكان بدل أن نكشفه لمن يعرف الرقم
                   <p className="block truncate font-display text-lg font-bold text-[color:var(--ink)]">
-                    {isTurn ? tr(lang, "دورٌ قائم", "An active turn") : tr(lang, "حجزٌ قائم", "An active booking")}
+                    {venueName ?? (isTurn ? tr(lang, "دورٌ قائم", "An active turn") : tr(lang, "حجزٌ قائم", "An active booking"))}
                   </p>
                 )}
               </div>
@@ -206,8 +213,9 @@ export function IdentityCard() {
             </div>
 
             {isTurn ? (
-              mine ? (
-                <Link href={`/r/${mine.slug}`} className="btn btn-primary mt-3 w-full">
+              venueSlug ? (
+                // صفحة المطعم تستعيد التذكرة بالرقم — فالزرّ يعمل من أي جهاز
+                <Link href={`/r/${venueSlug}`} className="btn btn-primary mt-3 w-full">
                   {tr(lang, "افتح تذكرتي", "Open my ticket")}
                 </Link>
               ) : null

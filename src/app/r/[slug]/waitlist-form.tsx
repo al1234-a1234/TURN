@@ -382,14 +382,41 @@ export function WaitlistForm({
       .then((r) => (r.ok ? r.json() : { rows: [] }))
       .then((j) => {
         if (!alive) return;
+        // 0131: الصفّ يحمل venue_slug ومعرّف الدور — قبلها كان هذا المسار
+        // يبحث عن حقلَين سحبتهما 0104 فلا يجد شيئًا أبدًا، وصاحب الدور
+        // يفتح صفحة المطعم من جهازٍ آخر فيرى نموذجًا فارغًا لا تذكرته.
         const mine = (j.rows ?? []).find(
-          (r: { kind: string; restaurant_slug: string; id: string }) =>
-            r.kind === "turn" && r.restaurant_slug === slug,
+          (r: { kind: string; venue_slug: string | null; id: string | null }) =>
+            r.kind === "turn" && r.venue_slug === slug && r.id,
         );
         if (mine) setRestored({ entryId: mine.id, phone });
       });
     return () => { alive = false; };
   }, [slug]);
+
+  // جلبٌ صامت مسبق: من سمح بالموقع من قبل كان ينتظره عند «أحجز» ثوانيَ
+  // كاملة («جارٍ التسجيل…» خمس ثوانٍ — شكوى المشغّل نصًّا). الإذن الممنوح
+  // يعني ألّا نافذة نظامٍ ستظهر، فنستبق ونحضّر الإحداثيات مع فتح الصفحة.
+  // لا نلمس حالة `geo` إطلاقًا: فشل الاستباق لا يُظهر رسالةً لعميلٍ لم
+  // يطلب شيئًا بعد — ومسار الإرسال يتصرّف حينها كما كان.
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    let cancelled = false;
+    navigator.permissions?.query?.({ name: "geolocation" })
+      .then((s) => {
+        if (cancelled || s.state !== "granted") return;
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            if (cancelled) return;
+            setCoords((cur) => cur ?? { lat: pos.coords.latitude, lng: pos.coords.longitude });
+          },
+          () => { /* صامت — يعالجه مسار الإرسال إن لزم */ },
+          { enableHighAccuracy: false, timeout: 8_000, maximumAge: 300_000 },
+        );
+      })
+      .catch(() => { /* متصفّح بلا Permissions API — نبقى على مسار الإرسال */ });
+    return () => { cancelled = true; };
+  }, []);
 
   function askLocation(thenSubmit: boolean, attempt = 1) {
     if (typeof navigator === "undefined" || !navigator.geolocation) { setGeo("unavailable"); return; }
