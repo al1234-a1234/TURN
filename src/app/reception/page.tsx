@@ -76,8 +76,9 @@ function ReceptionLogin() {
         <p className="mt-4 text-xs font-bold tracking-[0.35em] text-[color:var(--gold-1)]/80" dir="ltr">
           EIGHT · RECEPTION
         </p>
-        <h1 className="font-serif mt-1 text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "بوابة الاستقبال", "Reception Portal")}</h1>
-        <p className="mt-2 text-sm text-[color:var(--muted)]">{tr(lang, "دخول موظّف الاستقبال إلى شاشة الطابور مباشرة", "Reception staff sign in straight to the live queue")}</p>
+        {/* فوق العنابي: كريمي الهوية — كان حبرًا داكنًا يكاد يختفي (نفس عطب بوابة الشركاء) */}
+        <h1 className="font-serif mt-1 text-3xl font-bold">{tr(lang, "بوابة الاستقبال", "Reception Portal")}</h1>
+        <p className="mt-2 text-sm text-cream-200/85">{tr(lang, "دخول موظّف الاستقبال إلى شاشة الطابور مباشرة", "Reception staff sign in straight to the live queue")}</p>
         <div className="gold-rule mx-auto mt-5 max-w-[160px]" />
       </header>
 

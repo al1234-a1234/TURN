@@ -51,7 +51,8 @@ function ResetInner() {
         <span className="mx-auto block w-fit drop-shadow-[0_14px_30px_rgba(0,0,0,0.55)]">
           <Logo size={56} />
         </span>
-        <h1 className="font-serif mt-4 text-3xl font-bold text-[color:var(--ink)]">
+        {/* فوق العنابي: يرث كريمي app-header — كان حبرًا داكنًا يكاد يختفي */}
+        <h1 className="font-serif mt-4 text-3xl font-bold">
           {tr(lang, "تعيين كلمة مرور جديدة", "Set a new password")}
         </h1>
       </header>

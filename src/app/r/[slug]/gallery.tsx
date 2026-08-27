@@ -9,8 +9,8 @@ type Photo = { id: string; url: string; caption: string | null };
 
 export function Gallery({ photos }: { photos: Photo[] }) {
   const lang = useLang();
-  // «أجواء» بطلب المشغّل الحرفي — وتطابق تسمية اللوحة نفسها («صور الأجواء»)
-  const label = tr(lang, "أجواء", "Ambience");
+  // «أجواء من المطعم» — صيغة المشغّل النهائية بعد «أجواء» المجرّدة
+  const label = tr(lang, "أجواء من المطعم", "Restaurant ambience");
   const [open, setOpen] = useState<number | null>(null);
 
   useEffect(() => {

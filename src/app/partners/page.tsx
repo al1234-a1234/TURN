@@ -111,8 +111,11 @@ function PartnersLogin() {
         <p className="mt-4 text-xs font-bold tracking-[0.35em] text-[color:var(--gold-1)]/80" dir="ltr">
           EIGHT PARTNERS
         </p>
-        <h1 className="font-serif mt-1 text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "بوابة الشركاء", "Partners Portal")}</h1>
-        <p className="mt-2 text-sm text-[color:var(--muted)]">{tr(lang, "دخول أصحاب المطاعم ببيانات الإدارة", "Restaurant owners sign in with their admin credentials")}</p>
+        {/* كانا بحبر داكن (--ink/--muted) فوق العنابي فيكادان يختفيان —
+            لقطة شاشة من شريك. فوق العنابي: كريمي الهوية لا الأبيض الصريح،
+            والعنوان يرث لون app-header نفسه (نمط صفحة الباقة حرفيًّا). */}
+        <h1 className="font-serif mt-1 text-3xl font-bold">{tr(lang, "بوابة الشركاء", "Partners Portal")}</h1>
+        <p className="mt-2 text-sm text-cream-200/85">{tr(lang, "دخول أصحاب المطاعم ببيانات الإدارة", "Restaurant owners sign in with their admin credentials")}</p>
         <div className="gold-rule mx-auto mt-5 max-w-[160px]" />
       </header>
 

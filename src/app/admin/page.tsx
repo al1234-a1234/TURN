@@ -50,7 +50,8 @@ export default async function AdminPage() {
         </div>
         <div className="mx-auto mt-6 max-w-3xl">
           <p className="text-sm tracking-widest text-[color:var(--gold-1)]/80">{tr(lang, "إدارة المنصّة", "Platform management")}</p>
-          <h1 className="font-serif text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "المطاعم", "Restaurants")}</h1>
+          {/* فوق العنابي: يرث كريمي app-header — كان حبرًا داكنًا يكاد يختفي */}
+          <h1 className="font-serif text-3xl font-bold">{tr(lang, "المطاعم", "Restaurants")}</h1>
         </div>
       </header>
 

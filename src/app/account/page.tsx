@@ -35,8 +35,9 @@ export default async function AccountPage() {
         <span className="mx-auto mt-4 block w-fit drop-shadow-[0_14px_30px_rgba(0,0,0,0.55)]">
           <Logo size={56} />
         </span>
-        <h1 className="font-serif mt-4 text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "حسابي", "My account")}</h1>
-        <p className="mt-2 text-sm text-[color:var(--muted)]" dir="ltr">{user.email}</p>
+        {/* فوق العنابي: كريمي الهوية — كان حبرًا داكنًا يكاد يختفي */}
+        <h1 className="font-serif mt-4 text-3xl font-bold">{tr(lang, "حسابي", "My account")}</h1>
+        <p className="mt-2 text-sm text-cream-200/85" dir="ltr">{user.email}</p>
       </header>
 
       <main className="mx-auto -mt-8 w-full max-w-md flex-1 px-5 pb-12">
