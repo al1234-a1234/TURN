@@ -1,7 +1,7 @@
 {
   "name": "EIGHT",
   "short_name": "EIGHT",
-  "description": "خذ دورك بأناقة — قوائم انتظار المطاعم",
+  "description": "قوائم انتظار وحجوزات المطاعم — لحظة بلحظة",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ede7dc",
