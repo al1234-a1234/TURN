@@ -802,29 +802,19 @@ export function WaitlistForm({
         </div>
       )}
 
-      {/* لا مفاجآت: نخبره قبل الضغط أن الموقع التقريبي سيُطلب */}
-      {geo === "idle" && !coords && (
-        <p className="text-center text-[11px] font-bold text-[color:var(--muted)]">
-          {tr(lang, "عند الضغط سيطلب متصفحك السماح بموقعك التقريبي", "Your browser will ask to share your approximate location")}
-        </p>
-      )}
-
       <button
         type="submit"
-        disabled={pending || geo === "asking" || !branchId || !/^05\d{8}$/.test(phone)}
-        onClick={(e) => {
-          // الزر لا «يموت» أبدًا: بلا موقع نطلب الإذن ثم نُرسل تلقائيًّا بعد
-          // السماح؛ ومع رفضٍ محفوظ تفشل المحاولة فورًا فيبرز صندوق التعليمات
-          // — كل ضغطة لها ردّ فعل مرئي.
-          if (!coords && !geoWaivedRef.current) { e.preventDefault(); askLocation(true); }
-        }}
+        // ٢٧-٠٨: الموقع عاد اختياريًّا بحتًا بطلب المشغّل المباشر — عملاء
+        // حقيقيون وقفوا عاجزين عن أخذ دورهم لأن جهازهم لا يدعم تحديد الموقع
+        // أو رفضوا الإذن، والزرّ كان يرفض المتابعة بلا موقع. الآن يرسل
+        // فورًا دائمًا؛ الإحداثيات إن وُجدت (استباقٌ صامتٌ خلفيّ فقط، بلا أي
+        // طلب إذنٍ من هذا الزر) تُرفَق، وغيابها لا يمنع أحدًا من الانضمام.
+        disabled={pending || !branchId || !/^05\d{8}$/.test(phone)}
         className="rq-btn"
       >
-        {geo === "asking"
-          ? tr(lang, "جارٍ تحديد موقعك…", "Getting your location…")
-          : pending
-            ? tr(lang, "جارٍ التسجيل…", "Registering…")
-            : tr(lang, "خذ دورك الآن", "Take your turn now")}
+        {pending
+          ? tr(lang, "جارٍ التسجيل…", "Registering…")
+          : tr(lang, "خذ دورك الآن", "Take your turn now")}
       </button>
 
       {/* دليل تفعيل الموقع — نافذة سفلية بالهوية تظهر فقط عند الحظر الدائم */}
