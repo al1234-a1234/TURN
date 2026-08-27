@@ -614,6 +614,18 @@ with checks(name, pass) as (
                                  where n.nspname='public' and p.proname='check_domain_expiry')),
   ('w16_domain_cron_alive',     exists(select 1 from cron.job
                                  where jobname='domain-expiry-watch' and active)),
+  -- ══ 0132: ملخّص الحالة الدوري على تيليجرام — طلب مباشر: التنبيه القائم
+  --    (send_platform_alerts) يصمت عمدًا ما دام كل شيء سليمًا، فطلب المشغّل
+  --    رسالةً حتى وهي "بخير" كل نصف ساعة، وملخّص شبكة الفحوص الحرجة كاملةً
+  --    مرفقًا كل ساعة — هذا السكربت نفسه صار أيضًا دالّةً مخزَّنة
+  --    (run_critical_checks) لتُستدعى آليًّا من هناك، مع بقائه قابلًا
+  --    للتشغيل يدويًّا هنا تمامًا كما كان ══
+  ('w17_run_checks_locked',     not has_function_privilege('anon','public.run_critical_checks()','EXECUTE')
+                               and not has_function_privilege('authenticated','public.run_critical_checks()','EXECUTE')),
+  ('w17_digest_locked',         not has_function_privilege('anon','public.send_platform_status_digest(boolean)','EXECUTE')
+                               and not has_function_privilege('authenticated','public.send_platform_status_digest(boolean)','EXECUTE')),
+  ('w17_digest_cron_alive',     exists(select 1 from cron.job
+                                 where jobname='operator-status-digest' and active)),
   -- (٢٠) مرجع المخطط — البصمة تحرّكت خارج ترحيلات هذا الفرع أيضًا (عمل
   -- موازٍ اكتُشف الليلة: نظام /api/canary، جداول جديدة، ...) — الأرقام هنا
   -- قياسٌ فعليٌّ للواقع الحاليّ لا حسابٌ يدويّ تراكميّ. راجع schema_baseline.md.
@@ -625,8 +637,9 @@ with checks(name, pass) as (
                                -- 0127: +١ دالة (watchdog_kill_stuck) — ١٢٨
                                -- 0128: +٣ دوال (log_client_error، backup_snapshot_daily،
                                --        check_domain_expiry) — ١٣١
+                               -- 0132: +٢ دالة (run_critical_checks، send_platform_status_digest) — ١٣٣
                                and (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-                                    where n.nspname='public' and p.prokind='f') = 131
+                                    where n.nspname='public' and p.prokind='f') = 133
                                and (select count(*) from pg_policies where schemaname='public') = 71
                                and (select count(*) from pg_constraint c join pg_class r on r.oid=c.conrelid
                                     join pg_namespace n on n.oid=r.relnamespace
