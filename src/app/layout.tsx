@@ -30,7 +30,10 @@ export const metadata: Metadata = {
     "EIGHT: اختر مطعمك، سجّل اسمك ورقمك، وتابع طابورك لحظة بلحظة.",
   manifest: "/manifest.webmanifest",
   openGraph: {
-    title: "EIGHT — خذ دورك بأناقة",
+    // كانت هنا الشعار الفرعي أيضًا — لكن معاينة مشاركة الرابط (شير شيت
+    // آيفون مثلًا) تسحب هذا العنوان لا وسم <title>، فبقي «خذ دورك بأناقة»
+    // ظاهرًا رغم تفريغه من شريط التبويب. اسم البراند وحده الآن، في كل مكان.
+    title: "EIGHT",
     description: "EIGHT: اختر مطعمك، سجّل اسمك ورقمك، وتابع طابورك لحظة بلحظة.",
     siteName: "EIGHT",
     images: [{ url: "/brand/v7/og-image.png", width: 1200, height: 630 }],
@@ -58,7 +61,11 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#781e0c",
+  // كريمي الهيدر (--brand-cream-2) لا عنابي: سفاري يلوّن شريط عنوانه بهذا
+  // اللون، وكان عنابيًّا غامقًا لا يطابق شيئًا مرئيًّا فيبهت إلى نغمةٍ باهتة
+  // لا تُطابق كريمي الهيدر تحته — فتبين «فجوة» بينهما. لونٌ واحدٌ متطابق
+  // يذيب الحدّ فيمتدّ لون الهوية للأعلى فعلًا لا الشريط فقط.
+  themeColor: "#e4d7c2",
   width: "device-width",
   initialScale: 1,
   // بدون `cover` لا تعمل `env(safe-area-inset-*)` أصلًا، فيقع الشريط السفلي
