@@ -22,6 +22,8 @@ export function SmartImage({
   alt,
   fallbackText,
   fallbackClassName,
+  style,
+  onLoad,
   ...rest
 }: Omit<ImageProps, "src"> & {
   src: string | null | undefined;
@@ -32,6 +34,10 @@ export function SmartImage({
 }) {
   const [attempt, setAttempt] = useState(0);
   const [dead, setDead] = useState(false);
+  // كانت الصورة تظهر فجأة لحظة اكتمال الفكّ — شعارٌ دائريّ فوق خلفيةٍ بيضاء
+  // يقفز إليها بلا مقدّمة، فيُقرأ الوصول تعليقًا لا تحميلًا. تلاشٍ خفيف
+  // (٢٠٠مللي) يحوّلها انتقالًا هادئًا — الوسيط الوحيد المتأثر، لا شيء آخر.
+  const [loaded, setLoaded] = useState(false);
 
   // بديل الهوية: لا رابط أصلًا، أو فشل بعد إعادة المحاولة
   if (!src || dead) {
@@ -54,6 +60,11 @@ export function SmartImage({
       {...rest}
       alt={alt}
       src={finalSrc}
+      style={{ ...style, opacity: loaded ? 1 : 0, transition: "opacity 200ms ease" }}
+      onLoad={(e) => {
+        setLoaded(true);
+        onLoad?.(e);
+      }}
       onError={() => {
         if (attempt < 1) setAttempt((a) => a + 1);
         else setDead(true);
