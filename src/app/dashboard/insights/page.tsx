@@ -51,7 +51,8 @@ export default async function InsightsPage() {
             href={`/dashboard/customers/${it.data.customer_id}`}
             className="mt-1.5 inline-block text-xs font-bold text-[color:var(--brand-d)] underline decoration-2 underline-offset-4"
           >
-            {tr(lang, "افتح ملفه وأهدِه هدية عودة ←", "Open profile & grant a come-back gift ←")}
+            {/* «وأهدِه هدية عودة» حُذفت بطلب المشغّل — وجدها مبتذلة */}
+            {tr(lang, "افتح ملفه ←", "Open profile ←")}
           </Link>
         )}
       </div>
