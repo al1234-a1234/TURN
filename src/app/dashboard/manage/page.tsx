@@ -213,9 +213,9 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
           <h2 className="mb-4 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "معلومات المطعم والصور", "Restaurant info & images")}</h2>
           <form action={updateRestaurantInfo} className="space-y-4">
             <div className="flex flex-wrap gap-6">
-              <ImageUploader restaurantId={restaurant.id} name="logo_url" label={tr(lang, "الشعار", "Logo")} defaultUrl={restaurant.logo_url} shape="circle" />
+              <ImageUploader restaurantId={restaurant.id} name="logo_url" label={tr(lang, "الشعار", "Logo")} defaultUrl={restaurant.logo_url} shape="circle" persistField="logo_url" />
               <div className="min-w-[220px] flex-1">
-                <ImageUploader restaurantId={restaurant.id} name="cover_url" label={tr(lang, "صورة الغلاف", "Cover image")} defaultUrl={restaurant.cover_url} shape="wide" />
+                <ImageUploader restaurantId={restaurant.id} name="cover_url" label={tr(lang, "صورة الغلاف", "Cover image")} defaultUrl={restaurant.cover_url} shape="wide" persistField="cover_url" />
               </div>
             </div>
             <div>

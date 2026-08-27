@@ -34,6 +34,41 @@ export async function updateRestaurantInfo(formData: FormData) {
   }
   revalidatePath("/dashboard/manage");
   revalidateTag("discovery");
+  // الاسم والشعار والوصف يعيشون في صفحة المطعم العامة أيضًا — كانت تفوت،
+  // فيبقى الزائر يرى القديم إلى أن يُبطلها تعديلُ إعدادات فرعٍ صدفةً.
+  revalidatePath("/r/[slug]", "page");
+}
+
+/**
+ * حفظٌ فوريّ لصورة العلامة (شعار/غلاف) لحظةَ اكتمال رفعها — لا عبر زرّ
+ * «حفظ المعلومات».
+ *
+ * السبب حادثة فعلية: المشغّل اختار شعارًا جديدًا وضغط الحفظ قبل اكتمال
+ * الرفع بثوانٍ (الرفع من جوّال يأخذ وقتًا)، فحُفظ الرابط القديم الذي كان
+ * لا يزال في الحقل المخفيّ — ثلاث محاولات «ما تغيّرت الصورة» وهو مصيبٌ.
+ * اختيار الصورة = حفظُها، كما يتوقّع مستخدمٌ غير تقنيّ أصلًا.
+ */
+export async function setRestaurantImage(field: "logo_url" | "cover_url", url: string | null) {
+  const caller = await requirePerm("settings");
+  if (!caller) return { ok: false };
+  // هوية العلامة لمالكها — كما في updateRestaurantInfo أعلاه حرفيًّا
+  if (caller.branchId) return { ok: false };
+  // قائمة بيضاء صريحة: الحقل يأتي من العميل، ولا يُفتح باب كتابة عمودٍ حرّ
+  if (field !== "logo_url" && field !== "cover_url") return { ok: false };
+  const v = url && url.trim() !== "" ? url.trim() : null;
+  const patch: TablesUpdate<"restaurants"> = field === "logo_url" ? { logo_url: v } : { cover_url: v };
+  const { error } = await caller.supabase
+    .from("restaurants")
+    .update(patch)
+    .eq("id", caller.restaurantId);
+  if (error) {
+    console.error("[setRestaurantImage]", error.message);
+    return { ok: false };
+  }
+  revalidatePath("/dashboard/manage");
+  revalidateTag("discovery");
+  revalidatePath("/r/[slug]", "page");
+  return { ok: true };
 }
 
 export async function updateBranchSettings(formData: FormData) {

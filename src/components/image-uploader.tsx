@@ -2,12 +2,19 @@
 
 import { useState } from "react";
 import { uploadMedia } from "@/lib/upload-action";
+import { setRestaurantImage } from "@/app/dashboard/manage/actions";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 
 /**
  * يرفع صورة إلى Supabase Storage (bucket: media) تحت مجلّد المطعم،
  * ويضع الرابط العام في input مخفي باسم `name` ليُرسَل مع النموذج.
+ *
+ * persistField (شعار/غلاف العلامة فقط): الصورة تُحفظ فورَ اكتمال رفعها —
+ * لا انتظارَ لزرّ «حفظ المعلومات». حادثة فعلية: المشغّل ضغط الحفظ قبل
+ * اكتمال الرفع بثوانٍ فحُفظ الرابط القديم، وكرّرها ثلاثًا وهو يظن الصورة
+ * «ما تتغيّر». صور أصناف القائمة تبقى بلا هذه الخاصية — صنفها الجديد لم
+ * يُنشأ بعدُ أصلًا وقت الرفع، فليس ثمّة صفٌّ يُحفظ إليه.
  */
 export function ImageUploader({
   restaurantId,
@@ -15,17 +22,20 @@ export function ImageUploader({
   label,
   defaultUrl,
   shape = "square",
+  persistField,
 }: {
   restaurantId: string;
   name: string;
   label: string;
   defaultUrl?: string | null;
   shape?: "square" | "wide" | "circle";
+  persistField?: "logo_url" | "cover_url";
 }) {
   const lang = useLang();
   const [url, setUrl] = useState(defaultUrl ?? "");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
 
   /** تصغير الصورة قبل الرفع: صورة جوال خام (5MB) كانت تُخزَّن وتُنزَّل كما
       هي على كل زائر — أكبر مستهلك بيانات وبطء في الرئيسية وصفحة المطعم.
@@ -88,6 +98,7 @@ export function ImageUploader({
     }
     setBusy(true);
     setErr(null);
+    setSaved(false);
     // الرفع عبر الخادم (server action) لا عبر جلسة المتصفح — جلسة متصفح
     // متقادمة كانت تُفشل كل رفع بينما أزرار الحفظ العادية تعمل. الآن الرفع
     // يسلك الطريق الموثوق نفسه الذي تسلكه أزرار الحفظ.
@@ -103,7 +114,26 @@ export function ImageUploader({
       return;
     }
     setUrl(res.url);
+    if (persistField) {
+      const r = await setRestaurantImage(persistField, res.url);
+      if (r?.ok) {
+        setSaved(true);
+      } else {
+        setErr(tr(lang, "انرفعت الصورة لكن تعذّر حفظها — اضغط «حفظ المعلومات»", "Uploaded but couldn't save — press “Save info”"));
+      }
+    }
     setBusy(false);
+  }
+
+  async function onRemove() {
+    setUrl("");
+    setErr(null);
+    setSaved(false);
+    if (persistField) {
+      const r = await setRestaurantImage(persistField, null);
+      if (r?.ok) setSaved(true);
+      else setErr(tr(lang, "تعذّر حذف الصورة — حاول ثانية", "Couldn't remove the image — try again"));
+    }
   }
 
   const box =
@@ -136,11 +166,16 @@ export function ImageUploader({
       {url && (
         <button
           type="button"
-          onClick={() => setUrl("")}
+          onClick={onRemove}
           className="mt-2 text-xs font-bold text-[color:var(--muted)] transition hover:text-[color:var(--danger)]"
         >
           {tr(lang, "🗑 إزالة الصورة", "🗑 Remove image")}
         </button>
+      )}
+      {saved && !err && (
+        <p className="mt-1 text-xs font-bold" style={{ color: "var(--st-open)" }}>
+          {tr(lang, "✓ محفوظة — تظهر للزوار خلال لحظات", "✓ Saved — visible to visitors shortly")}
+        </p>
       )}
       {err && <p className="mt-1 text-xs text-[color:var(--danger)]">{err}</p>}
     </div>
