@@ -59,7 +59,7 @@ export default async function ReceptionPage({
   const soonFrom = new Date(Date.now() - 60 * 60e3).toISOString();
   const soonTo = new Date(Date.now() + 4 * 3600e3).toISOString();
 
-  const [queueRes, todayRes, statusRes, resvRes] = activeBranch
+  const [queueRes, todayRes, statusRes, resvRes, zoneRes] = activeBranch
     ? await Promise.all([
         // نداءٌ واحد بدل انضمامٍ تحرسه سياسةُ `customers` صفًّا صفًّا: كانت
         // الحراسة تنادي دالّةً أمنيّة لكلّ منتظر، فبلغت القراءة ٢٥٠ مللي على
@@ -78,8 +78,13 @@ export default async function ReceptionPage({
           .gte("reserved_at", soonFrom)
           .lte("reserved_at", soonTo)
           .order("reserved_at"),
+        // كانت هذي القراءة تنتظر اكتمال الأربع فوق ثم ترحل وحدها — رحلةٌ
+        // كاملة إلى فرانكفورت زيادةً على كل تحميل شاشة، بلا أي داعٍ (لا شيء
+        // فوق يعتمد على نتيجتها). الآن تسافر معهنّ في نفس الدفعة.
+        supabase.from("branch_zones").select("id, key, name, name_en, sort_order, is_active")
+          .eq("branch_id", activeBranch.id).order("sort_order"),
       ])
-    : [{ data: [], error: null }, { count: 0, error: null }, { data: null, error: null }, { data: [], error: null }];
+    : [{ data: [], error: null }, { count: 0, error: null }, { data: null, error: null }, { data: [], error: null }, { data: [], error: null }];
 
   // أخطر كذبة في الشاشة: طابور فارغ. الموظّف يقرأه «لا أحد ينتظر» فيتوقّف عن
   // المناداة والناس واقفون. عند فشل الجلب نقول تعذّر التحميل ولا نرسم طابورًا.
@@ -106,11 +111,7 @@ export default async function ReceptionPage({
   // أقسام هذا الفرع بأسماء المالك. الاستقبال لا يعرض عمودًا لقسمٍ لا يملكه
   // المطعم — لكن عمودًا فيه أدوارٌ قائمة يبقى معروضًا ولو أُطفئ القسم بعد
   // انضمامها: من وقف في الطابور لا يختفي لأن المالك غيّر إعدادًا.
-  const { data: zoneRows } = activeBranch
-    ? await supabase.from("branch_zones").select("id, key, name, name_en, sort_order, is_active")
-        .eq("branch_id", activeBranch.id).order("sort_order")
-    : { data: [] };
-  const zones = (zoneRows ?? []) as { id: string; key: string; name: string; name_en: string | null; sort_order: number; is_active: boolean }[];
+  const zones = (zoneRes?.data ?? []) as { id: string; key: string; name: string; name_en: string | null; sort_order: number; is_active: boolean }[];
   const rowsOf = (key: string) => list.filter((q) => q.zone === key);
   const shownZones = zones.filter((z) => z.is_active || rowsOf(z.key).length > 0);
   // أدوارٌ بمفتاحٍ لا قسمَ له (بياناتٌ قديمة) لا تختفي من شاشة المضيف
@@ -204,7 +205,10 @@ export default async function ReceptionPage({
   return (
     <>
       {/* تحديث ذكي: نبضة خفيفة، وريندر كامل فقط عند تغيّر الطابور */}
-      {activeBranch && <AutoRefresh branchId={activeBranch.id} intervalMs={10_000} />}
+      {/* ٤ث لا ١٠: الاستقبال والعميل طرفا نفس الطابور، وكان أحدهما يرى تحرّك
+          الآخر بعد عشر ثوانٍ — يُقرأ «بطيء ويكاد يعلّق». النبضة خفيفة (رقمٌ
+          واحد مفهرس) فتكرارها لا يكلّف القاعدة شيئًا يُذكر. */}
+      {activeBranch && <AutoRefresh branchId={activeBranch.id} intervalMs={4_000} />}
 
       <div className="mb-5 hidden items-center justify-between lg:flex">
         <div>

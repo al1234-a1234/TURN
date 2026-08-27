@@ -17,20 +17,15 @@ export async function updateWaitlistStatus(id: string, action: Action): Promise<
   if (action === "seated") patch.seated_at = new Date().toISOString();
   if (action === "notified") patch.notified_at = new Date().toISOString();
 
-  // تضييق التحديث على فروع مطعم المتصل فقط (دفاع في العمق فوق RLS)
+  // تضييق التحديث على فروع مطعم المتصل فقط (دفاع في العمق فوق RLS). كان
+  // هذا وقراءة «قبل» لأجل الإشعار المؤجَّل يمشيان تباعًا — رحلةٌ كاملة إلى
+  // فرانكفورت ورجعتها زيادةً على كل ضغطة. القراءة لا يحتاجها المسار
+  // المتزامن أصلًا (الإشعار مؤجَّلٌ بعد الردّ)، فحُذفت من هنا، لا أُجّلت فقط.
   const branchIds = await callerBranchIds(caller);
   if (branchIds.length === 0) return false;
 
-  // نلتقط الفرع والقسم قبل التحديث — نحتاجهما لإشعار من تقدّم دوره
-  const { data: before } = await caller.supabase
-    .from("waitlist_entries")
-    .select("branch_id, zone")
-    .eq("id", id)
-    .in("branch_id", branchIds)
-    .maybeSingle();
-
-  // حارس الحالة: صفحة الاستقبال قد تتأخر ١٠ ثوانٍ عن الواقع — لو ألغى الضيف
-  // دوره من تذكرته، ضغطةُ «إجلاس» متأخرة كانت تحييه وتحسب زيارة لمن غادر.
+  // حارس الحالة: صفحة الاستقبال قد تتأخر عن الواقع — لو ألغى الضيف دوره من
+  // تذكرته، ضغطةُ «إجلاس» متأخرة كانت تحييه وتحسب زيارة لمن غادر.
   const allowedFrom: ("waiting" | "notified" | "seated")[] = action === "cancelled"
     ? ["waiting", "notified", "seated"]
     : ["waiting", "notified"];
@@ -40,14 +35,17 @@ export async function updateWaitlistStatus(id: string, action: Action): Promise<
     .eq("id", id)
     .in("branch_id", branchIds)
     .in("status", allowedFrom)
-    .select("id");
+    .select("id, branch_id, zone");
   // صفر صفوف = الحالة تغيّرت تحتنا (ألغى الضيف/جُلس من جهاز آخر) — نُعلم
   // الواجهة بدل صمتٍ يدفع المضيف يضغط مرارًا ظانًّا الشبكة بطيئة
-  const changed = !error && (updated?.length ?? 0) > 0;
+  const row = updated?.[0];
+  const changed = !error && Boolean(row);
 
   // إشعارات الدفع — فقط إن تغيّر صف فعلًا، وتُرسل بعد ردّ الاستجابة (after) كي لا يعلّق زر الإجلاس:
   // إجلاس في طابور ٥٠ شخصًا = ٥٠ استدعاء HTTPS، ولا يصح أن ينتظرها الموظّف.
-  if (!error) if (changed) after(async () => {
+  // الفرع والقسم اللذان كانا يُقرآن قبل التحديث نأخذهما الآن من نتيجة
+  // التحديث نفسها (select يعيدهما) — بلا استدعاءٍ إضافي مطلقًا.
+  if (changed && row) after(async () => {
     const { data: rest } = await caller.supabase
       .from("restaurants")
       .select("name, slug")
@@ -68,8 +66,8 @@ export async function updateWaitlistStatus(id: string, action: Action): Promise<
     }
 
     // 2) تلقائيًّا: كل من تقدّم دوره بخروج هذا الصف من الطابور
-    if ((action === "seated" || action === "cancelled") && before?.branch_id) {
-      await pushQueueRankUpdates(caller.supabase, before.branch_id, before.zone ?? null, venue, url);
+    if (action === "seated" || action === "cancelled") {
+      await pushQueueRankUpdates(caller.supabase, row.branch_id, row.zone ?? null, venue, url);
     }
   });
 
