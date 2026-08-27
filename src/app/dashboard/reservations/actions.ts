@@ -109,7 +109,12 @@ export async function setReservationStatus(id: string, status: ResStatus) {
     .eq("id", id)
     .in("branch_id", branchIds);
   if (error) {
+    // 0126: حارس القاعدة يرفض قلب حالةٍ نهائية (شاشةٌ قديمة تسابق زميلًا).
+    // الرفض صحيح — لكن ترك الشاشة على معلوماتها القديمة يُغري بكبسةٍ ثانية.
+    // فنُنعشها هي أيضًا: يرى الموظفُ الحالةَ الحقيقية فيفهم لماذا لم تمرّ.
     console.error("[setReservationStatus]", error.message);
+    revalidatePath("/dashboard/reservations");
+    revalidatePath("/dashboard/reception");
     return;
   }
   revalidatePath("/dashboard/reservations");

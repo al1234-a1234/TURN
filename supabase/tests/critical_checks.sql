@@ -551,14 +551,31 @@ with checks(name, pass) as (
                                  from pg_proc where proname='check_platform_health')
                                and (select pg_get_functiondef(oid) like '%net_queue%'
                                  from pg_proc where proname='send_platform_alerts')),
+  -- ══ 0126: حرّاس سباقات التجليس والتكرار (تدقيقٌ عدائيّ قبل أول ذروة) ══
+  -- اختُبرت الخمسة فعليًّا داخل معاملةٍ مُرجَعة على الإنتاج: كبسة حجزٍ
+  -- مزدوجة تُعيد الحجز نفسه، وجالس-الطابور لا يُقلب، وجالس-الحجز لا يصير
+  -- «لم يحضر»، وجالس←مكتمل يمرّ، والمنتهي مجمّد. هذه الفحوص تحرس البنية.
+  ('w12_wl_terminal_frozen',    (select pg_get_functiondef(oid) like '%is distinct from old.status%'
+                                 from pg_proc where proname='guard_waitlist_status_transition')),
+  ('w12_res_guard_trigger',     exists(select 1 from pg_trigger t join pg_class c on c.oid=t.tgrelid
+                                 where c.relname='reservations' and t.tgname='trg_guard_reservation_status')),
+  ('w12_res_seated_oneway',     (select pg_get_functiondef(oid) like '%seated%'
+                                  and pg_get_functiondef(oid) like '%completed%'
+                                 from pg_proc where proname='guard_reservation_status_transition')),
+  ('w12_booking_idempotent',    (select pg_get_functiondef(oid) like '%90 seconds%'
+                                 from pg_proc where proname='book_reservation_guest')),
+  -- قيد الطاولة الرياضي (كان قائمًا وأثبت التدقيق قيمته — يُحرس من الإسقاط)
+  ('w12_no_double_table',       exists(select 1 from pg_constraint
+                                 where conname='no_double_booking' and contype='x')),
   -- (٢٠) مرجع المخطط — البصمة تحرّكت خارج ترحيلات هذا الفرع أيضًا (عمل
   -- موازٍ اكتُشف الليلة: نظام /api/canary، جداول جديدة، ...) — الأرقام هنا
   -- قياسٌ فعليٌّ للواقع الحاليّ لا حسابٌ يدويّ تراكميّ. راجع schema_baseline.md.
   ('q20_schema_no_drift',      (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
                                 where n.nspname='public' and c.relkind='r') = 31
                                -- 0125: +١ دالة (run_daily_heartbeat) — ١٢٥ صارت ١٢٦
+                               -- 0126: +١ دالة (guard_reservation_status_transition) — ١٢٧
                                and (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-                                    where n.nspname='public' and p.prokind='f') = 126
+                                    where n.nspname='public' and p.prokind='f') = 127
                                and (select count(*) from pg_policies where schemaname='public') = 71
                                and (select count(*) from pg_constraint c join pg_class r on r.oid=c.conrelid
                                     join pg_namespace n on n.oid=r.relnamespace
