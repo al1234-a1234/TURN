@@ -215,7 +215,12 @@ export function RestaurantTabs({
       className={`flex ${size} shrink-0 items-center justify-center overflow-hidden rounded-full bg-white font-serif text-2xl font-bold`}
       style={{ border: "1px solid var(--border)", color: "var(--brand-solid)" }}
     >
-<SmartImage src={logo} fallbackText={initial} alt="" width={72} height={72} sizes="72px" className="h-full w-full object-cover" />
+      {/* ١١٢px لا ٧٢ — نفس مقاس شعار اللمحة وبطل الصفحة بالضبط (نفس رابط
+          next/image)، فهذا الشعار الثالث كان يفتح تحميلًا مستقلًّا خاصًّا
+          به رغم أن الصورة نفسها محمَّلةٌ في الذاكرة أصلًا. عرضه ٩٢px فقط،
+          فطلب ١١٢px لا يكبّرها ظاهريًّا — يكتفي بمشاركة الكاش. priority:
+          هذه البطاقة أوّل ما يراه العميل في تبويب الانتظار الافتراضي. */}
+      <SmartImage src={logo} fallbackText={initial} alt="" width={112} height={112} sizes="112px" priority className="h-full w-full object-cover" />
     </span>
   );
 
@@ -252,10 +257,11 @@ export function RestaurantTabs({
           </div>
         </div>
 
-        {/* صورة الغلاف */}
+        {/* صورة الغلاف — priority: مرئيةٌ مباشرة في تبويب الانتظار الافتراضي،
+            فلا داعي لانتظار كاسح الرؤية اللاحق (lazy) قبل أن تبدأ تحميلها */}
         {cover && (
           <div className="overflow-hidden rounded-[22px]">
-            <SmartImage src={cover} fallbackText={initial} alt="" width={828} height={416} sizes="(max-width: 640px) 100vw, 640px" className="h-52 w-full object-cover" />
+            <SmartImage src={cover} fallbackText={initial} alt="" width={828} height={416} sizes="(max-width: 640px) 100vw, 640px" priority className="h-52 w-full object-cover" />
           </div>
         )}
 
