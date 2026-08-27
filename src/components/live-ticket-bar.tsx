@@ -23,7 +23,11 @@ type Live = {
 };
 
 const CACHE_KEY = "live-ticket";
-const TTL_MS = 60_000;
+// ١٥ث لا ٦٠: كانت هذي المهلة تعني أن إزالة الموظّف من الاستقبال (شاشته هو
+// سريعة) لا تصل شريط العميل الجالس على صفحةٍ ثابتة إلا بعد دقيقة كاملة —
+// شكوى المشغّل اليوم بالحرف: «التحكم عند الاستقبال سريع، لكن العكسي بطيء».
+const TTL_MS = 15_000;
+const POLL_MS = 12_000;
 
 /** يُنادى بعد الإلغاء: الشريط لا يُبقي حجزًا ألغاه صاحبه دقيقةً كاملة */
 export function clearLiveTicketCache() {
@@ -104,10 +108,17 @@ export function LiveTicketBar({ onShow }: { onShow?: (shown: boolean) => void })
     const onVisible = () => { if (!document.hidden) load(false); };
     window.addEventListener("pageshow", onPageShow);
     document.addEventListener("visibilitychange", onVisible);
+
+    // نبضةٌ خفيفة أثناء الجلوس على صفحةٍ واحدة بلا أي تنقّل: بدونها كان
+    // الشريط لا يعرف أن الاستقبال أزال صاحبه إلا حين يغادر التبويب ويعود.
+    // تتوقّف عند خمول التبويب فلا تستهلك شيئًا في الخلفية.
+    const timer = setInterval(() => { if (!document.hidden) load(true); }, POLL_MS);
+
     return () => {
       alive = false;
       window.removeEventListener("pageshow", onPageShow);
       document.removeEventListener("visibilitychange", onVisible);
+      clearInterval(timer);
     };
   }, [path]);
 

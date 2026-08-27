@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { after } from "next/server";
 import type { TablesUpdate } from "@/lib/supabase/database.types";
 import { requirePerm, callerBranchIds } from "./guard";
@@ -73,5 +73,14 @@ export async function updateWaitlistStatus(id: string, action: Action): Promise<
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/reception");
+  // كانت مفقودة هنا كليًّا: مسار الضيف نفسه يُبطل وسم الرئيسية عند إلغائه
+  // الذاتي، لكن جلوس/إزالة الموظّف — الأكثر وقوعًا فعليًّا — لا يمسّه.
+  // فالعميل يلغي دوره على شاشة الاستقبال ولا شيء يخبر شاشة العميل ولا
+  // الرئيسية؛ تبقيان على الرقم القديم حتى تقادم الكاش الطبيعي — بالضبط
+  // ما رآه المشغّل: «الاستقبال سريع، لكن العكسي بطيء». وقبل الردّ لا بعده،
+  // لنفس درس اليوم: after() لا يضمن تنفيذ الإبطال بعد انتهاء الطلب.
+  if (changed && (action === "seated" || action === "cancelled")) {
+    try { revalidateTag("queue-counts"); revalidatePath("/"); } catch { /* التقادم العشري يصحّحها */ }
+  }
   return changed;
 }
