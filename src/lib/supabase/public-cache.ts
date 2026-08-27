@@ -110,8 +110,11 @@ export const getHomeQueueCounts = unstable_cache(
     // بالإجمالي، فلا نُسلسل لكل مطعمٍ في القائمة حقلين ميّتين.
     return (data ?? []) as { branch_id: string; total: number }[];
   },
+  // «queue-counts» وسمٌ خاص يُبطله انضمام الضيف وإلغاؤه فورًا (after) —
+  // كان العدّاد يعيش تقادمَه العشريّ كاملًا بعد الإلغاء فتقول الرئيسية
+  // «فيه طابور ١» والمطعم نفسه يقول «متاح» — شكوى المشغّل: «متناقض».
   ["home-queue-counts"],
-  { revalidate: 10, tags: ["discovery"] },
+  { revalidate: 10, tags: ["discovery", "queue-counts"] },
 );
 
 /**
@@ -250,7 +253,7 @@ export const getHomeZoneCounts = unstable_cache(
     return (data ?? []) as { branch_id: string; zone_key: string; waiting: number }[];
   },
   ["home-zone-counts"],
-  { revalidate: 10, tags: ["discovery"] },
+  { revalidate: 10, tags: ["discovery", "queue-counts"] },
 );
 
 /** أسماء الأقسام كما سمّاها المالك — كاش ٦٠ث (تتغيّر نادرًا). */

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { guestWriter } from "@/lib/supabase/guest-writes";
@@ -205,8 +205,15 @@ export async function joinWaitlistGuest(
   // إعادة توليد صفحة المطعم بعد الردّ لا داخله: revalidatePath في صلب
   // الإجراء يجعل الاستجابة نفسها تحمل الصفحة معاد بناؤها — مئات
   // المللي ثانية يقفها العميل لأجل زائرٍ قادم. والعدّادات الظاهرة تُحدَّث
-  // من المتصفّح حيًّا على كل حال.
-  if (slug) after(() => { try { revalidatePath(`/r/${slug}`); } catch { /* تُصحّحها الزيارة القادمة */ } });
+  // من المتصفّح حيًّا على كل حال. ووسم عدّادات الرئيسية يُبطَل معها:
+  // «فيه طابور ١» بعد أن صار صفرًا هو التناقض الذي اشتكاه المشغّل نصًّا.
+  after(() => {
+    try {
+      if (slug) revalidatePath(`/r/${slug}`);
+      revalidateTag("queue-counts");
+      revalidatePath("/");
+    } catch { /* تُصحّحها الزيارة القادمة */ }
+  });
   return {
     ok: true,
     position: livePos ?? row?.queue_pos ?? undefined,
@@ -243,7 +250,11 @@ export async function cancelWaitlistGuest(entryId: string, phone: string): Promi
   const ok = !error && data === true;
 
   // من كان خلف المُلغي تقدّم دوره — أشعِرهم بعد ردّ الاستجابة (لا يعلّق زر الإلغاء)
-  if (ok) after(async () => { await pushRankUpdatesAfterSelfCancel(supabase, entryId, phone); });
+  // وعدّادات الرئيسية تُبطَل فورًا: إلغاءٌ صار الآن يجب ألّا تعرضه «فيه طابور ١»
+  if (ok) after(async () => {
+    try { revalidateTag("queue-counts"); revalidatePath("/"); } catch { /* التقادم العشري يصحّحها */ }
+    await pushRankUpdatesAfterSelfCancel(supabase, entryId, phone);
+  });
 
   return ok;
 }

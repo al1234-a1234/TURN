@@ -65,30 +65,50 @@ export function LiveTicketBar({ onShow }: { onShow?: (shown: boolean) => void })
   const [rows, setRows] = useState<Live[] | null>(null);
 
   useEffect(() => {
-    const p = getMe().phone ? normalizePhone(getMe().phone!).slice(0, 10) : "";
-    // زائرٌ لم يأخذ دورًا قطّ: لا رقم ⇒ لا نداء. وهم أكثر من يفتح الرئيسية.
-    if (!/^05\d{8}$/.test(p)) return;
-
-    const cached = readCache(p);
-    if (cached) { setRows(cached); return; }
-
     let alive = true;
-    fetch(`/api/my-status?phone=${p}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((j) => {
-        if (!alive || !j) return;
-        const fresh = (j.rows ?? []) as Live[];
-        setRows(fresh);
-        try {
-          sessionStorage.setItem(CACHE_KEY, JSON.stringify({ phone: p, at: Date.now(), rows: fresh }));
-        } catch {
-          /* التخزين مقفل — نكتفي بالحالة في الذاكرة */
-        }
-      })
-      .catch(() => {
-        /* فشلٌ عابر: لا شريط، ولا رسالة خطأ فوق كل صفحة */
-      });
-    return () => { alive = false; };
+
+    const load = (force: boolean) => {
+      const p = getMe().phone ? normalizePhone(getMe().phone!).slice(0, 10) : "";
+      // زائرٌ لم يأخذ دورًا قطّ: لا رقم ⇒ لا نداء. وهم أكثر من يفتح الرئيسية.
+      if (!/^05\d{8}$/.test(p)) return;
+
+      if (!force) {
+        const cached = readCache(p);
+        if (cached) { setRows(cached); return; }
+      }
+
+      fetch(`/api/my-status?phone=${p}`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j) => {
+          if (!alive || !j) return;
+          const fresh = (j.rows ?? []) as Live[];
+          setRows(fresh);
+          try {
+            sessionStorage.setItem(CACHE_KEY, JSON.stringify({ phone: p, at: Date.now(), rows: fresh }));
+          } catch {
+            /* التخزين مقفل — نكتفي بالحالة في الذاكرة */
+          }
+        })
+        .catch(() => {
+          /* فشلٌ عابر: لا شريط، ولا رسالة خطأ فوق كل صفحة */
+        });
+    };
+
+    load(false);
+
+    // رجوع سفاري من ذاكرة الصفحات (bfcache) لا يعيد تشغيل شيء: الصفحة
+    // ترجع بحالتها القديمة كاملةً، فكان الشريط يعرض دورًا أُلغي قبل لحظات
+    // — «ألغيت وخرجت ولا يزال كاتب إني حاجز». الرجوع المحفوظ يسأل من جديد
+    // متجاوزًا الكاش، وعودة التبويب للواجهة تسأل باحترام مهلة الدقيقة.
+    const onPageShow = (e: PageTransitionEvent) => { if (e.persisted) load(true); };
+    const onVisible = () => { if (!document.hidden) load(false); };
+    window.addEventListener("pageshow", onPageShow);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      alive = false;
+      window.removeEventListener("pageshow", onPageShow);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [path]);
 
   // الدور قبل الحجز: الدور يجري الآن، والحجز موعدٌ لاحق

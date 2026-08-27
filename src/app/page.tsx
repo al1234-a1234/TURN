@@ -1,5 +1,6 @@
 import { getDiscovery, getHomeQueueCounts, getHomeZoneCounts, getHomeZoneNames } from "@/lib/supabase/public-cache";
 import { CustomerShell } from "@/components/customer-shell";
+import { AutoRefresh } from "@/components/auto-refresh";
 import { DiscoveryList } from "./discovery-list";
 import { isWithinOpeningHours } from "@/lib/dates";
 
@@ -121,6 +122,9 @@ export default async function Home() {
 
   return (
     <CustomerShell active="restaurants">
+      {/* أرقام الطابور تتحرّك والصفحة واقفة — خصوصًا رجوع سفاري من
+          ذاكرة الصفحات الذي يعيدها بحالتها القديمة بلا أي طلب */}
+      <AutoRefresh />
       <DiscoveryList items={withStatus} />
     </CustomerShell>
   );

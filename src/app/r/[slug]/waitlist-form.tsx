@@ -534,6 +534,7 @@ export function WaitlistForm({
         entryId={state.entryId} phone={state.phone} restaurantName={restaurantName}
         branchClosed={ticketBranchClosed}
         onGone={() => { clearTurnRecovery(slug); setStartedOver(true); setRestored(null); }}
+        onCancelled={() => clearTurnRecovery(slug)}
       />
     );
   }
@@ -546,6 +547,7 @@ export function WaitlistForm({
         position={0} total={0} entryId={restored.entryId} phone={restored.phone}
         restaurantName={restaurantName} restored branchClosed={ticketBranchClosed}
         onGone={() => { clearTurnRecovery(slug); setRestored(null); }}
+        onCancelled={() => clearTurnRecovery(slug)}
       />
     );
   }

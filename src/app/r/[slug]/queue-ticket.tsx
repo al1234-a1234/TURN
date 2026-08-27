@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { cancelWaitlistGuest, savePushSubscription } from "./actions";
+import { clearLiveTicketCache } from "@/components/live-ticket-bar";
 import { createClient } from "@/lib/supabase/client";
 import { pushSupport, subscribeToPush, type PushSupport } from "@/lib/push-client";
 import { toAr, peopleAhead } from "@/lib/format";
@@ -28,6 +29,7 @@ export function QueueTicket({
   phone,
   restaurantName,
   onGone,
+  onCancelled,
   restored,
   branchClosed,
 }: {
@@ -38,6 +40,8 @@ export function QueueTicket({
   restaurantName?: string;
   /** تُستدعى لإنهاء التذكرة والعودة لنموذج الانضمام (انتهت أو أراد دورًا جديدًا) */
   onGone?: () => void;
+  /** بعد إلغاءٍ ناجح — لينسى الجهاز سجلّ الاسترجاع فلا يُحيي دورًا ملغيًّا */
+  onCancelled?: () => void;
   /** تذكرة مسترجَعة من التخزين: لو كانت حالتها نهائية لا نعرضها أصلًا */
   restored?: boolean;
   /**
@@ -435,7 +439,15 @@ export function QueueTicket({
       {entryId && phone && (
         <button
           onClick={() => start(async () => {
-            if (await cancelWaitlistGuest(entryId, phone)) { setActErr(null); setStatus("cancelled"); }
+            if (await cancelWaitlistGuest(entryId, phone)) {
+              setActErr(null);
+              setStatus("cancelled");
+              // كان الشريط المتنقّل يعرض «دورك — ترتيبك ١» دقيقةً كاملة بعد
+              // الإلغاء (كاش الجلسة لم يكن يُمسح من هذا الزر تحديدًا) —
+              // شكوى المشغّل: «ألغيت وخرجت ولا يزال الموقع كاتب إني حاجز».
+              clearLiveTicketCache();
+              onCancelled?.();
+            }
             else setActErr(tr(lang, "تعذّر الإلغاء — ربما تغيّرت حالة دورك، حدّث الصفحة", "Couldn't cancel — your turn may have changed; refresh the page"));
           })}
           disabled={pending}
