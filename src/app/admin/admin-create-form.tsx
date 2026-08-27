@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { adminCreateRestaurant, type AdminCreateState } from "./actions";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
@@ -12,6 +12,13 @@ export function AdminCreateForm() {
     {},
   );
   const [slug, setSlug] = useState("");
+  // اسم المستخدم يُقترح محايدًا (ow + أرقام) لا مشتقًّا من اسم المطعم:
+  // «eficto-rec» على شاشة دخول الاستقبال أعلن للواقفين أمامها لمن تعود —
+  // ملاحظة المشغّل نصًّا. التوليد بعد الترطيب كي لا يختلف الخادم عن المتصفّح.
+  const [username, setUsername] = useState("");
+  useEffect(() => {
+    setUsername((cur) => cur || `ow${Math.floor(1000 + Math.random() * 9000)}`);
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -54,7 +61,14 @@ export function AdminCreateForm() {
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="username" className="field-label">{tr(lang, "اسم مستخدم المالك", "Owner username")}</label>
-            <input id="username" name="username" required dir="ltr" placeholder="aldeyafa" className="field-input" />
+            <input
+              id="username" name="username" required dir="ltr" value={username}
+              onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+              className="field-input"
+            />
+            <p className="mt-1 text-[11px] text-[color:var(--muted)]">
+              {tr(lang, "محايد عمدًا — لا تجعل اسم المطعم جزءًا منه: يظهر على شاشات الدخول.", "Deliberately neutral — don't include the restaurant name: it shows on login screens.")}
+            </p>
           </div>
           <div>
             <label htmlFor="phone" className="field-label">{tr(lang, "جوال المالك", "Owner phone")}</label>

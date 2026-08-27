@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { createStaffAccount, resetStaffCode, type ProvisionState } from "./provision-actions";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
@@ -36,6 +36,12 @@ export function StaffProvision({
   const lang = useLang();
   const [state, action, pending] = useActionState<ProvisionState, FormData>(createStaffAccount, {});
   const [open, setOpen] = useState(false);
+  // اسم دخولٍ محايد (rc + أرقام) لا مشتقّ من اسم المطعم: يُكتب على شاشة
+  // الاستقبال أمام الواقفين، و«eficto-rec» كان يعلن لهم لمن تعود الشاشة.
+  const [username, setUsername] = useState("");
+  useEffect(() => {
+    setUsername((cur) => cur || `rc${Math.floor(1000 + Math.random() * 9000)}`);
+  }, []);
 
   if (state.ok) {
     return <Credentials username={state.ok.username} code={state.ok.code} onDone={() => location.reload()} />;
@@ -61,8 +67,13 @@ export function StaffProvision({
 
       <div>
         <label className="field-label">{tr(lang, "اسم المستخدم للدخول", "Login username")}</label>
-        <input name="username" required dir="ltr" className="field-input text-left" placeholder="eficto-rec2" />
-        <p className="mt-1 text-[11px] text-[color:var(--muted)]">{tr(lang, "أحرف إنجليزية صغيرة وأرقام وشُرَط فقط", "Lowercase letters, numbers and dashes only")}</p>
+        <input
+          name="username" required dir="ltr" className="field-input text-left" value={username}
+          onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
+        />
+        <p className="mt-1 text-[11px] text-[color:var(--muted)]">
+          {tr(lang, "محايد عمدًا — لا تضع اسم المطعم فيه: يُكتب على شاشة الدخول أمام الضيوف.", "Deliberately neutral — don't include the restaurant name: it's typed on the login screen in front of guests.")}
+        </p>
       </div>
 
       {branches.length > 1 && (
