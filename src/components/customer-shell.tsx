@@ -88,8 +88,11 @@ export function CustomerShell({
             العميل وحده، لا في lib/logo.tsx — الشعار المتجه <Wordmark />
             يبقى كما هو لبقية المواضع (لوحة المالك). صنفٌ مستقلّ
             eight-wordmark-text في globals.css — لا eight-wordmark، فذاك
-            محدود الارتفاع بمقاس حروف الشعار ويقصّ نصًّا أطول منه. */}
-        <span className="eight-wordmark-text select-none font-display text-[1.7rem] font-bold tracking-tight">
+            محدود الارتفاع بمقاس حروف الشعار ويقصّ نصًّا أطول منه.
+            والحجم ١٫٣٥rem بالضبط — ارتفاع مسارات الشعار القديمة نفسه
+            (انظر eight-wordmark)، بطلبٍ صريح: «تباعد الحروف وحجمها نفس
+            اللي السابق». */}
+        <span className="eight-wordmark-text select-none font-display text-[1.35rem] font-bold tracking-tight">
           EIGHT
         </span>
 
