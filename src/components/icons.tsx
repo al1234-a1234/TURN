@@ -89,6 +89,15 @@ export function IconSparkle({ size = 20, className }: P) {
   );
 }
 
+/** «توجّه إلى الاستقبال» — سهمٌ يدلّ على الاتجاه بدل إيموجي احتفالٍ (🎉) لا علاقة له بالمعنى */
+export function IconArrowGo({ size = 20, className }: P) {
+  return (
+    <svg {...base(size)} className={className}>
+      <path d="M5 12h13.5M13 6.5l6 5.5-6 5.5" />
+    </svg>
+  );
+}
+
 export function IconHeart({ size = 20, className }: P) {
   return (
     <svg {...base(size)} className={className}>

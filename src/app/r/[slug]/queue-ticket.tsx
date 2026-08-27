@@ -5,6 +5,7 @@ import { cancelWaitlistGuest, savePushSubscription } from "./actions";
 import { clearLiveTicketCache } from "@/components/live-ticket-bar";
 import { createClient } from "@/lib/supabase/client";
 import { pushSupport, subscribeToPush, type PushSupport } from "@/lib/push-client";
+import { IconArrowGo } from "@/components/icons";
 import { toAr, peopleAhead } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
@@ -286,9 +287,12 @@ export function QueueTicket({
   if (seated) {
     return (
       <div className="rq-card flex flex-col items-center gap-3 p-8 text-center">
-        <span className="flex h-16 w-16 items-center justify-center rounded-full text-3xl text-cream-100" style={{ background: "var(--brand-solid)" }}>🎉</span>
+        {/* سهمٌ أبيض على دائرة عنابية بهويتنا — بدل 🎉 الذي لا يحمل معنى
+            «توجّه إلى الاستقبال»، وأزلنا «بالهناء والشفاء»: الضيف لم يُجلَس
+            بعد فضلًا عن أن يأكل — طلب المشغّل بعد رؤيتها حيّة */}
+        <span className="flex h-16 w-16 items-center justify-center rounded-full text-cream-100" style={{ background: "var(--brand-solid)" }}><IconArrowGo size={28} /></span>
         <p className="font-display text-2xl font-extrabold text-[color:var(--ink)]">{tr(lang, "تفضّل، دورك جاهز", "You're up — please come in")}</p>
-        <p className="text-sm text-[color:var(--muted)]">{tr(lang, "توجّه إلى الاستقبال. بالهناء والشفاء 🌿", "Head to the reception. Enjoy your visit 🌿")}</p>
+        <p className="text-sm text-[color:var(--muted)]">{tr(lang, "توجّه إلى الاستقبال", "Head to reception")}</p>
         <RestartButton />
       </div>
     );
