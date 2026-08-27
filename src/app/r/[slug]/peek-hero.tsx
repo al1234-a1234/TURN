@@ -33,7 +33,13 @@ export function PeekHero() {
           h-20 فيقفز الشكل والمقاس لحظة وصول المحتوى الفعلي. */}
       <span className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-brand-800 font-serif text-2xl font-bold text-cream-100 shadow-md">
         {peek?.logo ? (
-          <SmartImage src={peek.logo} fallbackText={peek.name} alt="" width={80} height={80} sizes="80px" className="h-full w-full object-cover" />
+          // ١١٢px لا ٨٠: نفس مقاس بطل الصفحة الحقيقي بالضبط (page.tsx) —
+          // مقاسان مختلفان يعنيان رابطَي next/image مختلفَين، فكانت هذي
+          // الصورة تُحمَّل هنا ثم تُحمَّل من جديد للحظة عند وصول المحتوى
+          // الفعلي: فراغٌ أبيض قصير كان يُقرأ «تعليقًا». نفس المقاس ⇐ نفس
+          // الرابط ⇐ الصورة موجودةٌ في ذاكرة المتصفّح قبل أن يحتاجها الهيكل
+          // الحقيقي أصلًا. priority تطلبها فور الضغط لا عند دخولها الشاشة.
+          <SmartImage src={peek.logo} fallbackText={peek.name} alt="" width={112} height={112} sizes="112px" priority className="h-full w-full object-cover" />
         ) : peek ? (
           initial
         ) : (

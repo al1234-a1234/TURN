@@ -35,8 +35,10 @@ export function SmartImage({
   const [attempt, setAttempt] = useState(0);
   const [dead, setDead] = useState(false);
   // كانت الصورة تظهر فجأة لحظة اكتمال الفكّ — شعارٌ دائريّ فوق خلفيةٍ بيضاء
-  // يقفز إليها بلا مقدّمة، فيُقرأ الوصول تعليقًا لا تحميلًا. تلاشٍ خفيف
-  // (٢٠٠مللي) يحوّلها انتقالًا هادئًا — الوسيط الوحيد المتأثر، لا شيء آخر.
+  // يقفز إليها بلا مقدّمة، فيُقرأ الوصول تعليقًا لا تحميلًا. تلاشٍ خفيفٌ
+  // جدًّا (١٢٠مللي — أسرع من رمشة عين) يكفي ليمحو القفزة بلا أن يُحسّ
+  // كتأخير بنفسه؛ ومع أن الصورة صارت غالبًا محمَّلةً في الذاكرة مسبقًا
+  // (نفس مقاس شعار اللمحة تمامًا) يمرّ هذا التلاشي غالبًا بلا أن يُلحَظ.
   const [loaded, setLoaded] = useState(false);
 
   // بديل الهوية: لا رابط أصلًا، أو فشل بعد إعادة المحاولة
@@ -60,7 +62,7 @@ export function SmartImage({
       {...rest}
       alt={alt}
       src={finalSrc}
-      style={{ ...style, opacity: loaded ? 1 : 0, transition: "opacity 200ms ease" }}
+      style={{ ...style, opacity: loaded ? 1 : 0, transition: "opacity 120ms ease" }}
       onLoad={(e) => {
         setLoaded(true);
         onLoad?.(e);

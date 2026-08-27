@@ -177,7 +177,11 @@ export default async function RestaurantPublicPage({
                 ٩٦: طلب تكبيره. الخلفية البيضاء لا تُرى مع شعارٍ يملأ الدائرة —
                 هي فقط خلف الحرف الأول لمن لا شعار له. */}
             <span className="flex h-28 w-28 shrink-0 translate-y-1/2 items-center justify-center overflow-hidden rounded-full bg-white font-serif text-3xl font-bold text-[color:var(--brand-solid)] shadow-md">
-<SmartImage src={restaurant.logo_url} fallbackText={initial} alt="" width={112} height={112} sizes="112px" className="h-full w-full object-cover" />
+{/* priority: نفس رابط شعار اللمحة (peek-hero) تمامًا الآن — ١١٢px هناك
+                أيضًا — فالصورة غالبًا محمَّلةٌ في ذاكرة المتصفّح مسبقًا من
+                لحظة الضغط، وpriority تطلبها فورًا لا عند دخولها الشاشة
+                لبقية الحالات (زيارة مباشرة برابط، مثلًا). */}
+              <SmartImage src={restaurant.logo_url} fallbackText={initial} alt="" width={112} height={112} sizes="112px" priority className="h-full w-full object-cover" />
             </span>
           </div>
         }
