@@ -202,18 +202,18 @@ export async function joinWaitlistGuest(
     liveTotal = t?.total ?? undefined;
   }
 
-  // إعادة توليد صفحة المطعم بعد الردّ لا داخله: revalidatePath في صلب
-  // الإجراء يجعل الاستجابة نفسها تحمل الصفحة معاد بناؤها — مئات
-  // المللي ثانية يقفها العميل لأجل زائرٍ قادم. والعدّادات الظاهرة تُحدَّث
-  // من المتصفّح حيًّا على كل حال. ووسم عدّادات الرئيسية يُبطَل معها:
-  // «فيه طابور ١» بعد أن صار صفرًا هو التناقض الذي اشتكاه المشغّل نصًّا.
-  after(() => {
-    try {
-      if (slug) revalidatePath(`/r/${slug}`);
-      revalidateTag("queue-counts");
-      revalidatePath("/");
-    } catch { /* تُصحّحها الزيارة القادمة */ }
-  });
+  // إبطال العدّادات قبل الردّ لا بعده: داخل after() كان Next.js لا يضمن
+  // تنفيذ revalidateTag/revalidatePath فعليًّا (الطلب انتهى فعلًا)، فكانت
+  // الرئيسية تعتمد على تقادم الكاش الطبيعي (١٠-٣٠ث) بدل الإبطال الفوري —
+  // بالضبط ما رآه المشغّل حيًّا: «ظهر بس طوّل». هذان النداءان لا يُعيدان
+  // بناء شيء متزامنًا، فكلفتهما مهملة — لا يُبطئان استجابة العميل.
+  try {
+    revalidateTag("queue-counts");
+    revalidatePath("/");
+  } catch { /* تُصحّحها الزيارة القادمة */ }
+  // صفحة المطعم نفسها تبقى بعد الردّ: إعادة بنائها الكاملة هي التي كانت
+  // تكلّف مئات المللي ثانية، ولا يحتاجها المُنضمّ نفسه (تذكرته حيّة فعلًا).
+  if (slug) after(() => { try { revalidatePath(`/r/${slug}`); } catch { /* تُصحّحها الزيارة القادمة */ } });
   return {
     ok: true,
     position: livePos ?? row?.queue_pos ?? undefined,
@@ -249,12 +249,15 @@ export async function cancelWaitlistGuest(entryId: string, phone: string): Promi
   });
   const ok = !error && data === true;
 
-  // من كان خلف المُلغي تقدّم دوره — أشعِرهم بعد ردّ الاستجابة (لا يعلّق زر الإلغاء)
-  // وعدّادات الرئيسية تُبطَل فورًا: إلغاءٌ صار الآن يجب ألّا تعرضه «فيه طابور ١»
-  if (ok) after(async () => {
+  if (ok) {
+    // قبل الردّ لا بعده — نفس درس الانضمام: هذان النداءان لا يُعيدان بناء
+    // شيء متزامنًا فكلفتهما مهملة، وداخل after() لا يضمن Next.js تنفيذهما
+    // فعليًّا (الطلب منتهٍ) فتبقى الرئيسية على «فيه طابور ١» حتى تقادمٍ طبيعي.
     try { revalidateTag("queue-counts"); revalidatePath("/"); } catch { /* التقادم العشري يصحّحها */ }
-    await pushRankUpdatesAfterSelfCancel(supabase, entryId, phone);
-  });
+    // ومن كان خلف المُلغي تقدّم دوره — إشعارٌ فعليّ عبر الشبكة، هذا وحده
+    // يستحق after() كي لا يعلّق زر الإلغاء بانتظاره
+    after(async () => { await pushRankUpdatesAfterSelfCancel(supabase, entryId, phone); });
+  }
 
   return ok;
 }
