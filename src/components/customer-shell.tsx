@@ -89,10 +89,15 @@ export function CustomerShell({
             يبقى كما هو لبقية المواضع (لوحة المالك). صنفٌ مستقلّ
             eight-wordmark-text في globals.css — لا eight-wordmark، فذاك
             محدود الارتفاع بمقاس حروف الشعار ويقصّ نصًّا أطول منه.
-            والحجم ١٫٣٥rem بالضبط — ارتفاع مسارات الشعار القديمة نفسه
-            (انظر eight-wordmark)، بطلبٍ صريح: «تباعد الحروف وحجمها نفس
-            اللي السابق». */}
-        <span className="eight-wordmark-text select-none font-display text-[1.35rem] font-bold tracking-tight">
+            الحجم ١٫٣٥rem — ارتفاع مسارات الشعار القديمة نفسه. والتباعد
+            ٠٫٩em: بعد لبسٍ في فهم «نفس السابق» (لم يقصد الحالة المضمومة
+            بل الشعار المتجه الأصلي بلا أي ضمّ، الذي وصفه بحقٍّ بـ«متباعدة»)
+            قِسته فعليًّا — لا خمّنته: أعدت رسم WORD_ONLY_PATH الأصلي بلا
+            transform وقِست عرضه الكلي عند نفس الارتفاع (١٤٣٫٥px)، ثم حللت
+            قيمة tracking التي تُنتج نفس العرض بخطٍّ حقيقي (٠٫٩em ⇐ ١٤٣٫١px،
+            أقرب فرقٍ من كل التجارب). تحقّقٌ بصريٌّ مباشر جنبًا إلى جنب أكّد
+            تطابق الإيقاع، لا مجرد تقارب الرقم. */}
+        <span className="eight-wordmark-text select-none font-display text-[1.35rem] font-bold tracking-[0.9em]">
           EIGHT
         </span>
 
