@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useState } from "react";
-import { Logo } from "@/components/logo";
+import { Logo, Wordmark } from "@/components/logo";
 import { LiveTicketBar } from "@/components/live-ticket-bar";
 import { SharedHeader } from "@/components/page-header";
 import { useLang } from "@/components/lang-provider";
@@ -82,24 +82,14 @@ export function CustomerShell({
           <Logo size={44} />
         </button>
 
-        {/* حرفٌ حقيقيٌّ لا مساراتٌ متجهة — طلبٌ مباشر بعد لقطة مقارنة: أعجبه
-            وزن الخطّ الفعلي (نفس نمط «EIGHT» في الدرج الجانبي: font-display
-            عريض) لا حروف الشعار المتجهة النحيفة. هذا الاستبدال في هيدر
-            العميل وحده، لا في lib/logo.tsx — الشعار المتجه <Wordmark />
-            يبقى كما هو لبقية المواضع (لوحة المالك). صنفٌ مستقلّ
-            eight-wordmark-text في globals.css — لا eight-wordmark، فذاك
-            محدود الارتفاع بمقاس حروف الشعار ويقصّ نصًّا أطول منه.
-            الحجم ١٫٣٥rem — ارتفاع مسارات الشعار القديمة نفسه. والتباعد
-            ٠٫٩em: بعد لبسٍ في فهم «نفس السابق» (لم يقصد الحالة المضمومة
-            بل الشعار المتجه الأصلي بلا أي ضمّ، الذي وصفه بحقٍّ بـ«متباعدة»)
-            قِسته فعليًّا — لا خمّنته: أعدت رسم WORD_ONLY_PATH الأصلي بلا
-            transform وقِست عرضه الكلي عند نفس الارتفاع (١٤٣٫٥px)، ثم حللت
-            قيمة tracking التي تُنتج نفس العرض بخطٍّ حقيقي (٠٫٩em ⇐ ١٤٣٫١px،
-            أقرب فرقٍ من كل التجارب). تحقّقٌ بصريٌّ مباشر جنبًا إلى جنب أكّد
-            تطابق الإيقاع، لا مجرد تقارب الرقم. */}
-        <span className="eight-wordmark-text select-none font-display text-[1.35rem] font-bold tracking-[0.9em]">
-          EIGHT
-        </span>
+        {/* رجوعٌ صريح للشعار المتجه الأصلي: «ما توقعت أفضل، خلني ارجع على
+            قبل اللي هو الأصل» — تجربة الحرف الحقيقي (بأي تباعدٍ جُرِّب)
+            لم تُقنعه. <Wordmark /> نفسها لم تُمسّ طوال هذه التجربة
+            (لا في lib/logo.tsx ولا استعمالها بلوحة المالك)، فرجوعها هنا
+            حرفيّ — بلا حاجة لإعادة بناء. التوسيط +6px في globals.css
+            (.rq-header .eight-wordmark) ما زال قائمًا كما كان، فلا حاجة
+            لمسّه أيضًا — طُلب الانتباه له صراحةً فتأكّدتُ أنه لم يتغيّر. */}
+        <Wordmark className="select-none" />
 
         {search ? (
           <Link href="/search" className="rq-circle" aria-label={tr(lang, "بحث", "Search")}>
