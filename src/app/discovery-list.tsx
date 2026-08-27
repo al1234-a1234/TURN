@@ -139,7 +139,13 @@ function cardState(r: DiscoveryItem, lang: Lang): CardState {
 const CHIP_STYLE: Record<Tone, React.CSSProperties> = {
   // المغلق لا فعل فيه: كبسولةٌ هادئة بحدٍّ لا مساحةٌ مصمتة تنادي
   closed: { background: "var(--surface-2)", color: "var(--brand-d)", border: "1px solid var(--border)" },
-  open: { background: "var(--st-open)", color: "var(--brand-ink)", border: "1px solid transparent" },
+  // كانت --st-open (أخضر) هنا — لون الحالات المشترك في بقية اللوحة، حيث
+  // الأخضر ضروريٌّ يفرّق «لا عائق» عن عنابيّ الهوية المستعمَل في كل مكانٍ
+  // آخر هناك. لكن بهذه القائمة تحديدًا لا تنافس: «مشغول» وحدها عنابيّة،
+  // فالأخضر هنا مجرّد لونٍ غريبٍ عن الهوية بلا داعٍ فعليّ — شكوى مباشرة.
+  // الذهبيّ (--star) نفسه فوقها في زاوية النجمة: يربط العمود بصريًّا
+  // ويبقي «متاح» و«مشغول» متمايزتين (ذهبي/عنابي) دون مغادرة عائلة اللون.
+  open: { background: "var(--star)", color: "var(--brand-ink)", border: "1px solid transparent" },
   busy: { background: "var(--brand-solid)", color: "var(--brand-ink)", border: "1px solid transparent" },
 };
 
@@ -213,8 +219,11 @@ function Card({ r, lang }: { r: DiscoveryItem; lang: Lang }) {
       </div>
 
       {/* الطرف الأيسر: التقييم فوق الحالة — كلاهما حكمٌ على المطعم لا وصفٌ
-          له، وعمودٌ واحد يجمعهما يجعل الصفّ يُقرأ من طرفيه لا من وسطه. */}
-      <div className="flex shrink-0 flex-col items-end gap-1.5">
+          له، وعمودٌ واحد يجمعهما يجعل الصفّ يُقرأ من طرفيه لا من وسطه.
+          self-stretch + justify-between يفصلهما إلى ركني العمود (التقييم
+          أعلى يحاذي الاسم، والكبسولة أسفل تحاذي آخر سطر) بدل تكتّلهما
+          مجتمعين في المنتصف عموديًّا كما كانا — طلبٌ صريح بعد لقطة شاشة. */}
+      <div className="flex shrink-0 flex-col items-end justify-between self-stretch gap-1.5">
         {r.rating ? (
           <span className="flex items-center gap-1 text-[13px] font-semibold tabular-nums text-[color:var(--ink)]">
             <span style={{ color: "var(--star)" }}>★</span>
