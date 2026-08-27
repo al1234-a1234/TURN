@@ -567,6 +567,20 @@ with checks(name, pass) as (
   -- قيد الطاولة الرياضي (كان قائمًا وأثبت التدقيق قيمته — يُحرس من الإسقاط)
   ('w12_no_double_table',       exists(select 1 from pg_constraint
                                  where conname='no_double_booking' and contype='x')),
+  -- ══ 0127: التعافي الذاتي الليلي («يتصلح لحاله وأنا نايم») ══
+  ('w13_service_role_timeout',  (select coalesce(array_to_string(rolconfig, ','), '') like '%statement_timeout=%'
+                                  and coalesce(array_to_string(rolconfig, ','), '') like '%idle_in_transaction_session_timeout=%'
+                                 from pg_roles where rolname='service_role')),
+  ('w13_idle_tx_killed',        (select coalesce(array_to_string(rolconfig, ','), '') like '%idle_in_transaction_session_timeout=%'
+                                 from pg_roles where rolname='authenticator')),
+  ('w13_watchdog_exists',       exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+                                 where n.nspname='public' and p.proname='watchdog_kill_stuck')),
+  ('w13_watchdog_locked',       not has_function_privilege('anon','public.watchdog_kill_stuck()','EXECUTE')
+                               and not has_function_privilege('authenticated','public.watchdog_kill_stuck()','EXECUTE')),
+  ('w13_watchdog_cron_alive',   exists(select 1 from cron.job
+                                 where jobname='watchdog-stuck' and active)),
+  ('w13_pgnet_selfrestart',     (select pg_get_functiondef(oid) like '%worker_restart%'
+                                 from pg_proc where proname='send_platform_alerts')),
   -- (٢٠) مرجع المخطط — البصمة تحرّكت خارج ترحيلات هذا الفرع أيضًا (عمل
   -- موازٍ اكتُشف الليلة: نظام /api/canary، جداول جديدة، ...) — الأرقام هنا
   -- قياسٌ فعليٌّ للواقع الحاليّ لا حسابٌ يدويّ تراكميّ. راجع schema_baseline.md.
@@ -574,8 +588,9 @@ with checks(name, pass) as (
                                 where n.nspname='public' and c.relkind='r') = 31
                                -- 0125: +١ دالة (run_daily_heartbeat) — ١٢٥ صارت ١٢٦
                                -- 0126: +١ دالة (guard_reservation_status_transition) — ١٢٧
+                               -- 0127: +١ دالة (watchdog_kill_stuck) — ١٢٨
                                and (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-                                    where n.nspname='public' and p.prokind='f') = 127
+                                    where n.nspname='public' and p.prokind='f') = 128
                                and (select count(*) from pg_policies where schemaname='public') = 71
                                and (select count(*) from pg_constraint c join pg_class r on r.oid=c.conrelid
                                     join pg_namespace n on n.oid=r.relnamespace
