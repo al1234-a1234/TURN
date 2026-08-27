@@ -89,7 +89,7 @@ function ReceptionLogin() {
             <input
               id="username" required dir="ltr" autoComplete="username" autoFocus
               value={username} onChange={(e) => setUsername(e.target.value)}
-              className="field-input text-left" placeholder="eficto-rec"
+              className="field-input text-left" placeholder="rc4821"
             />
           </div>
           <div>

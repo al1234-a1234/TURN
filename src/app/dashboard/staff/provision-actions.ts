@@ -28,7 +28,7 @@ export async function createStaffAccount(
   const preset = String(formData.get("preset") ?? "reception");
 
   if (!username || !/^[a-z0-9_.-]+$/.test(username)) {
-    return { error: "اسم مستخدم صالح: أحرف إنجليزية صغيرة وأرقام فقط (مثال: eficto-rec)." };
+    return { error: "اسم مستخدم صالح: أحرف إنجليزية صغيرة وأرقام فقط (مثال: rc4821)." };
   }
 
   // قوالب جاهزة بدل ترك المالك يخمّن الصلاحيات
