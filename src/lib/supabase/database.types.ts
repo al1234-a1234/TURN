@@ -1713,6 +1713,10 @@ export type Database = {
           queue_pos: number
         }[]
       }
+      log_client_error: {
+        Args: { p_path: string; p_message: string; p_ua: string }
+        Returns: undefined
+      }
       log_push_sends: { Args: { p_rows: Json }; Returns: number }
       retire_phone_lookup_log: { Args: Record<PropertyKey, never>; Returns: number }
       staff_branch_queue: {

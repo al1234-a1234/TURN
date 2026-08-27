@@ -581,16 +581,45 @@ with checks(name, pass) as (
                                  where jobname='watchdog-stuck' and active)),
   ('w13_pgnet_selfrestart',     (select pg_get_functiondef(oid) like '%worker_restart%'
                                  from pg_proc where proname='send_platform_alerts')),
+  -- ══ 0128/0129: شبكات مجهول المجهول + أتمتة البنود اليدوية ══
+  -- (w14) أخطاء متصفح العميل: الجدول محميّ RLS، الدالة للخادم وحده،
+  --       والمفتاح موصول بالفحص الدوري وحلقة التنبيه معًا
+  ('w14_client_errors_rls',     (select relrowsecurity from pg_class where relname='client_errors')),
+  ('w14_log_err_locked',        not has_function_privilege('anon','public.log_client_error(text,text,text)','EXECUTE')
+                               and not has_function_privilege('authenticated','public.log_client_error(text,text,text)','EXECUTE')
+                               and has_function_privilege('service_role','public.log_client_error(text,text,text)','EXECUTE')),
+  ('w14_client_errors_wired',   (select pg_get_functiondef(oid) like '%client_errors%'
+                                 from pg_proc where proname='check_platform_health')
+                               and (select pg_get_functiondef(oid) like '%client_errors%'
+                                 from pg_proc where proname='send_platform_alerts')),
+  ('w14_log_err_flood_capped',  (select pg_get_functiondef(oid) like '%500%'
+                                 from pg_proc where proname='log_client_error')),
+  -- (w15) النسخة اليومية الداخلية: الدالة والكرون قائمان، وآخر نسخة
+  --       عمرها أقل من ٢٥ ساعة وغير فارغة (لو الكرون مات يسقط الفحص هنا)
+  ('w15_backup_fn_exists',      exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+                                 where n.nspname='public' and p.proname='backup_snapshot_daily')),
+  ('w15_backup_cron_alive',     exists(select 1 from cron.job
+                                 where jobname='backup-snapshot' and active)),
+  ('w15_backup_fresh',          exists(select 1 from backup.snap_log
+                                 where at > now() - interval '25 hours' and total_rows > 0)),
+  -- (w16) مراقب انتهاء النطاق (الانتهاء الحالي 2027-08-01، تحذير قبل ٤٥ يومًا)
+  ('w16_domain_watch_exists',   exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+                                 where n.nspname='public' and p.proname='check_domain_expiry')),
+  ('w16_domain_cron_alive',     exists(select 1 from cron.job
+                                 where jobname='domain-expiry-watch' and active)),
   -- (٢٠) مرجع المخطط — البصمة تحرّكت خارج ترحيلات هذا الفرع أيضًا (عمل
   -- موازٍ اكتُشف الليلة: نظام /api/canary، جداول جديدة، ...) — الأرقام هنا
   -- قياسٌ فعليٌّ للواقع الحاليّ لا حسابٌ يدويّ تراكميّ. راجع schema_baseline.md.
+  -- 0128: +١ جدول (client_errors) — ٣١ صارت ٣٢
   ('q20_schema_no_drift',      (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
-                                where n.nspname='public' and c.relkind='r') = 31
+                                where n.nspname='public' and c.relkind='r') = 32
                                -- 0125: +١ دالة (run_daily_heartbeat) — ١٢٥ صارت ١٢٦
                                -- 0126: +١ دالة (guard_reservation_status_transition) — ١٢٧
                                -- 0127: +١ دالة (watchdog_kill_stuck) — ١٢٨
+                               -- 0128: +٣ دوال (log_client_error، backup_snapshot_daily،
+                               --        check_domain_expiry) — ١٣١
                                and (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-                                    where n.nspname='public' and p.prokind='f') = 128
+                                    where n.nspname='public' and p.prokind='f') = 131
                                and (select count(*) from pg_policies where schemaname='public') = 71
                                and (select count(*) from pg_constraint c join pg_class r on r.oid=c.conrelid
                                     join pg_namespace n on n.oid=r.relnamespace

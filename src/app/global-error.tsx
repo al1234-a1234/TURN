@@ -15,6 +15,18 @@ import { useEffect } from "react";
 export default function GlobalError({ error }: { error: Error & { digest?: string } }) {
   useEffect(() => {
     Sentry.captureException(error);
+    // وبلاغٌ لمنصّتنا أيضًا: هذا يصل تيليجرام المشغّل خلال ٥ دقائق عبر
+    // الفحص الدوري — Sentry يجمع التفاصيل ولا ينبّه أحدًا عندنا بعد.
+    try {
+      fetch("/api/client-error", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: window.location.pathname, message: error?.message ?? "root-crash" }),
+        keepalive: true,
+      }).catch(() => {});
+    } catch {
+      /* الإبلاغ لا يكسر آخر شبكة أمان */
+    }
   }, [error]);
 
   return (
