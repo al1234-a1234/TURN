@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useState } from "react";
-import { Logo, Wordmark } from "@/components/logo";
+import { Logo } from "@/components/logo";
 import { LiveTicketBar } from "@/components/live-ticket-bar";
 import { SharedHeader } from "@/components/page-header";
 import { useLang } from "@/components/lang-provider";
@@ -82,13 +82,16 @@ export function CustomerShell({
           <Logo size={44} />
         </button>
 
-        {/* بلا scale-*: صنف Tailwind `scale` يضبط خاصّية CSS `scale` المستقلّة
-            لا `transform` — فيتراكب فوق `transform: translateX(-50%)` في
-            globals.css بدل أن يُستبدَل بها، ويزيح مركز الكلمة بصريًّا نحو
-            اليمين (قِسته: ~14px عند 0.82 — هذا العطب المُبلَّغ بالضبط، لا
-            وهمٌ بصريّ ولا نسخةٌ قديمة مخبَّأة). لا داعي له أصلًا بعد تكبير
-            الحروف. */}
-        <Wordmark className="select-none" />
+        {/* حرفٌ حقيقيٌّ لا مساراتٌ متجهة — طلبٌ مباشر بعد لقطة مقارنة: أعجبه
+            وزن الخطّ الفعلي (نفس نمط «EIGHT» في الدرج الجانبي: font-display
+            عريض) لا حروف الشعار المتجهة النحيفة. هذا الاستبدال في هيدر
+            العميل وحده، لا في lib/logo.tsx — الشعار المتجه <Wordmark />
+            يبقى كما هو لبقية المواضع (لوحة المالك). صنفٌ مستقلّ
+            eight-wordmark-text في globals.css — لا eight-wordmark، فذاك
+            محدود الارتفاع بمقاس حروف الشعار ويقصّ نصًّا أطول منه. */}
+        <span className="eight-wordmark-text select-none font-display text-[1.7rem] font-bold tracking-tight">
+          EIGHT
+        </span>
 
         {search ? (
           <Link href="/search" className="rq-circle" aria-label={tr(lang, "بحث", "Search")}>

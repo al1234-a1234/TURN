@@ -282,6 +282,22 @@ h1, h2, h3, h4 {
   pointer-events: none;
 }
 
+/* «EIGHT» بحرفٍ حقيقيّ في هيدر العميل وحده — طلبٌ مباشر بعد مقارنة
+   بصريّة: يُفضَّل وزن الخطّ الفعلي على مسارات الشعار المتجهة. صنفٌ
+   مستقلٌّ عن eight-wordmark (تبقى الأخيرة لصفحات المالك بلا تغيير)
+   لأن height الثابت هناك (١٫٣٥rem) يقصّ نصًّا أطول من مقاسه. */
+.eight-wordmark-text {
+  display: block;
+  color: var(--brand-maroon);
+}
+.rq-header .eight-wordmark-text {
+  position: absolute;
+  left: calc(50% + 6px);
+  transform: translateX(-50%);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 /* بطاقة بيضاء نيومورفية */
 .rq-card {
   background: var(--surface);
