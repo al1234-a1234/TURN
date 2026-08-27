@@ -52,7 +52,11 @@ const nextConfig: NextConfig = {
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob:",
+      // معرض الصور في لوحة المالك (ImageUploader) يعرض معاينةً بـ<img src>
+      // مباشرة على رابط Supabase العام — لا عبر next/image كبقية الموقع —
+      // فكانت كل معاينة (شعار/غلاف/أصناف القائمة) تُحجب صامتة، فيظنّ المالك
+      // أن حذف الصورة أو رفعها الجديد «ما تغيّر شيء».
+      "img-src 'self' data: blob: https://nkdfxmjuigslmangzuua.supabase.co",
       "font-src 'self' data:",
       "connect-src 'self' https://nkdfxmjuigslmangzuua.supabase.co wss://nkdfxmjuigslmangzuua.supabase.co",
       "worker-src 'self'",
