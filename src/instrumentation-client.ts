@@ -14,10 +14,14 @@ import { initBotId } from "botid/client/core";
  * هذه أفعالٌ خادميّة (Server Actions) لا نقاط نهاية REST، فالمسار المحمي
  * هو مسار الصفحة نفسها (`/r/*`، `/t/*`) لا مسار الدالّة. مستوى الفحص هنا
  * يجب أن يطابق `checkLevel` في `checkBotId()` بجانب الخادم حرفيًّا.
+ *
+ * ‏`/r/*` بالمستوى الأساسي عمدًا: العميق نداءٌ خارجي يضيف ثوانيَ على
+ * انضمامٍ يريده المشغّل لحظيًّا، وخلفه حدود المعدّل الثلاث في القاعدة.
+ * تأكيد الحضور (`/t/*`) يبقى عميقًا — يجري بصمتٍ ولا أحد ينتظره.
  */
 initBotId({
   protect: [
-    { path: "/r/*", method: "POST", advancedOptions: { checkLevel: "deepAnalysis" } },
+    { path: "/r/*", method: "POST" },
     { path: "/t/*", method: "POST", advancedOptions: { checkLevel: "deepAnalysis" } },
   ],
 });

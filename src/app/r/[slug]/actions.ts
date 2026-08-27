@@ -127,13 +127,15 @@ export async function joinWaitlistGuest(
   if (!fullName) return { ok: false, error: msg(lang, "yourName") };
   if (!phone) return { ok: false, error: msg(lang, "badPhone") };
 
-  // بوّابة البوتات مع قراءتَي الفرع معًا لا تباعًا: فحص deepAnalysis وحده
-  // يستغرق ثوانيَ أحيانًا، وكان العميل يقفها كلّها ثم يقف القراءتين فوقها
-  // («جارٍ التسجيل…» خمس ثوانٍ — شكوى المشغّل نصًّا). القراءتان سقفهما
-  // مقصوصٌ بالقاعدة نفسها، فبوتٌ مكتشَف لا يكسب منهما شيئًا يُكتب —
-  // وقرارُه (البوّابة ثم حدّ العنوان) بترتيبه المحفوظ بعد اكتمالها.
+  // بوّابة البوتات بالمستوى الأساسي لا العميق: deepAnalysis نداءٌ خارجي
+  // لخدمة التحليل كان وحده معظمَ الثواني الثلاث التي يقفها العميل على
+  // «جارٍ التسجيل…» — والمشغّل طلب لحظيًّا. الأساسي يتحقّق من توقيع
+  // عميل BotID محليًّا بلا نداء، وخلفه ثلاث طبقات تبقى كاملة: حدّ
+  // العنوان هنا، وحدود القاعدة (٣/رقم/١٠د و٦٠٠/فرع/د)، وإرجاع القائم
+  // بدل التكرار. (المستوى هنا يطابق protect في instrumentation-client
+  // حرفيًّا — تغييرهما معًا أو لا يصحّ أيّ منهما.)
   const [bot, zone, partySize] = await Promise.all([
-    checkBotId({ advancedOptions: { checkLevel: "deepAnalysis" } }),
+    checkBotId(),
     resolveZone(supabase, branchId, zoneRaw),
     resolvePartySize(supabase, branchId, partyRaw),
   ]);
@@ -178,25 +180,33 @@ export async function joinWaitlistGuest(
 
   const row = Array.isArray(data) ? data[0] : data;
 
-  // بعد الانضمام نداءان مستقلّان — معًا لا تباعًا (نصف زمن الذيل):
-  // المسافة عن الفرع تُحسب على الخادم ولا تُخزَّن الإحداثيات، والترتيب
-  // الحيّ نفسه الذي سيراه الاستطلاع والاستقبال — لا الرقم المخزَّن، وإلا
-  // رأى العميل «5» ثم صارت «2» بعد أول نبضة (رقمان لمفهوم واحد).
+  // الترتيب الحيّ نفسه الذي سيراه الاستطلاع والاستقبال — لا الرقم
+  // المخزَّن، وإلا رأى العميل «5» ثم صارت «2» بعد أول نبضة.
   let livePos: number | undefined;
   let liveTotal: number | undefined;
   if (row?.entry_id) {
-    const [, { data: st }] = await Promise.all([
-      hasCoords
-        ? writer.rpc("set_entry_distance", { p_entry_id: row.entry_id, p_lat: lat, p_lng: lng })
-        : Promise.resolve(null),
-      supabase.rpc("waitlist_ticket_status", { p_entry_id: row.entry_id, p_phone: phone }),
-    ]);
+    const entryId = row.entry_id;
+    // المسافة عن الفرع بعد إرسال الردّ (after): معلومةُ استقبالٍ لا يقف
+    // العميل عليها — تظهر للمضيف خلال لحظة، والتذكرة لا تنتظرها.
+    if (hasCoords) {
+      after(async () => {
+        await writer.rpc("set_entry_distance", { p_entry_id: entryId, p_lat: lat, p_lng: lng });
+      });
+    }
+    const { data: st } = await supabase.rpc("waitlist_ticket_status", {
+      p_entry_id: entryId,
+      p_phone: phone,
+    });
     const t = Array.isArray(st) ? st[0] : st;
     livePos = t?.position ?? undefined;
     liveTotal = t?.total ?? undefined;
   }
 
-  if (slug) revalidatePath(`/r/${slug}`);
+  // إعادة توليد صفحة المطعم بعد الردّ لا داخله: revalidatePath في صلب
+  // الإجراء يجعل الاستجابة نفسها تحمل الصفحة معاد بناؤها — مئات
+  // المللي ثانية يقفها العميل لأجل زائرٍ قادم. والعدّادات الظاهرة تُحدَّث
+  // من المتصفّح حيًّا على كل حال.
+  if (slug) after(() => { try { revalidatePath(`/r/${slug}`); } catch { /* تُصحّحها الزيارة القادمة */ } });
   return {
     ok: true,
     position: livePos ?? row?.queue_pos ?? undefined,
@@ -434,7 +444,10 @@ export async function bookReservationGuest(
 ): Promise<ReserveState> {
   const lang = await getLang();
 
-  const bot = await checkBotId({ advancedOptions: { checkLevel: "deepAnalysis" } });
+  // أساسي لا عميق — كالانضمام: مستوى واحد لكل POST على ‎/r/*‎ (شرط
+  // instrumentation-client)، والعميق كان يضيف ثوانيَ نداءٍ خارجي.
+  // خلفه: حدّ العنوان، وحدود القاعدة، ونافذة التكرار ٩٠ ثانية.
+  const bot = await checkBotId();
   if (bot.isBot) return { ok: false, error: msg(lang, "botBlocked") };
 
   const slug = String(formData.get("slug") ?? "");
@@ -490,7 +503,8 @@ export async function bookReservationGuest(
   const row = (Array.isArray(data) ? data[0] : data) as
     | { reservation_id?: string; table_label?: string; reserved_at?: string }
     | null;
-  if (slug) revalidatePath(`/r/${slug}`);
+  // بعد الردّ لا داخله — كالانضمام: العميل لا يقف على إعادة بناء الصفحة
+  if (slug) after(() => { try { revalidatePath(`/r/${slug}`); } catch { /* تُصحّحها الزيارة القادمة */ } });
   return {
     ok: true,
     table: row?.table_label ?? undefined,
