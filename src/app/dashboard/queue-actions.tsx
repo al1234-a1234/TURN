@@ -14,6 +14,12 @@ function waNumber(phone: string): string {
   return p;
 }
 
+// نفس التطبيع لصيغة tel: — دولية بـ+ عشان تطلب صح بصرف النظر عن إعدادات
+// المنطقة بجهاز الموظّف (رقم محلي "05..." قد يُساء تفسيره على بعض الأجهزة)
+function telHref(phone: string): string {
+  return `tel:+${waNumber(phone)}`;
+}
+
 export function QueueActions({
   id,
   name,
@@ -52,6 +58,19 @@ export function QueueActions({
 
   return (
     <div className="flex shrink-0 items-center gap-1.5">
+      {/* اتصال مباشر — طلب المشغّل: أحيانًا واتساب غير كافٍ (ضيفٌ لا يفتحه فورًا)
+          وأسرع رد فعل هو مكالمة فعلية. tel: يفتح تطبيق الهاتف مباشرة على الجوّال. */}
+      <a
+        href={phone ? telHref(phone) : undefined}
+        aria-disabled={!phone}
+        title={tr(lang, "اتصال مباشر", "Call directly")}
+        className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--hairline)] text-[color:var(--brand-d)] transition hover:bg-[rgba(102,28,10,0.08)] aria-disabled:pointer-events-none aria-disabled:opacity-40"
+        style={{ background: "rgba(102,28,10,0.08)" }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path d="M4.5 4.5c0-1 .8-1.8 1.8-1.8h2c.8 0 1.5.5 1.7 1.3l1 3.2c.2.7 0 1.4-.5 1.9l-1.5 1.4c1 2.1 2.7 3.8 4.8 4.8l1.4-1.5c.5-.5 1.2-.7 1.9-.5l3.2 1c.8.2 1.3.9 1.3 1.7v2c0 1-.8 1.8-1.8 1.8C10.9 20.8 3.2 13.1 4.5 4.5Z" stroke="currentColor" strokeWidth="1.9" strokeLinejoin="round" />
+        </svg>
+      </a>
       <button
         onClick={remind}
         disabled={pending || !phone}
