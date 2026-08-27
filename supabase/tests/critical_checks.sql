@@ -521,6 +521,20 @@ with checks(name, pass) as (
   ('w9_manual_rating_readable', has_column_privilege('anon','public.restaurants','manual_rating','SELECT')),
   ('w9_manual_rating_ranged',   exists(select 1 from pg_constraint
                                  where conname='restaurants_manual_rating_range')),
+  -- ══ 0124: فحوصٌ تشغيلية أعمق (طابور عالق، توقّف انضمامٍ مفاجئ، ضغط
+  --    اتصالات، زمن استجابة) — طلبٌ مباشر بعد أول يومٍ حقيقيّ بمطعمين حيّين.
+  --    استدعاءٌ حيٌّ واحدٌ فقط (كـw5 أعلاه) — الدالّة تُجري حجزًا تجريبيًّا
+  --    فعليًّا فلا نكرّر النداء لكل تأكيد، بل نجمعها في فحصٍ واحد.
+  ('w10_health_deeper_checks_present',
+    (select h ? 'stuck_queue' and h ? 'join_flatline' and h ? 'db_connections'
+            and (h->'homepage'->>'ms') is not null and (h->'restaurant_page'->>'ms') is not null
+     from (select public.check_platform_health() as h) s)),
+  -- سلك الإنذار: لا يكفي أن تُرجع الدالّة المفاتيح — يجب أن send_platform_alerts
+  -- تكون فعليًّا موصولةً بها (قائمة v_checks)، وإلا فحصٌ حيٌّ صامتٌ بلا تنبيه.
+  ('w10_alerts_new_keys_wired', (select pg_get_functiondef(oid) like '%stuck_queue%'
+                                  and pg_get_functiondef(oid) like '%join_flatline%'
+                                  and pg_get_functiondef(oid) like '%db_connections%'
+                                 from pg_proc where proname='send_platform_alerts')),
   -- (٢٠) مرجع المخطط — البصمة تحرّكت خارج ترحيلات هذا الفرع أيضًا (عمل
   -- موازٍ اكتُشف الليلة: نظام /api/canary، جداول جديدة، ...) — الأرقام هنا
   -- قياسٌ فعليٌّ للواقع الحاليّ لا حسابٌ يدويّ تراكميّ. راجع schema_baseline.md.
