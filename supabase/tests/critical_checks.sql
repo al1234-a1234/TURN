@@ -535,13 +535,30 @@ with checks(name, pass) as (
                                   and pg_get_functiondef(oid) like '%join_flatline%'
                                   and pg_get_functiondef(oid) like '%db_connections%'
                                  from pg_proc where proname='send_platform_alerts')),
+  -- ══ 0125: النبضة اليومية — مفتاح الرجل الميت لقناة التنبيه ══
+  -- التنبيه على «قناة التنبيه معطّلة» عبر القناة المعطّلة مستحيلٌ منطقيًّا؛
+  -- الضمان الوحيد رسالة موعدها ثابت يلاحَظ غيابها. هذه الفحوص تحرس وجود
+  -- الآلية لا وصول الرسالة (الوصول يحرسه المشغّل بعينه — هذا جوهر الفكرة).
+  ('w11_heartbeat_fn_exists',   exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+                                 where n.nspname='public' and p.proname='run_daily_heartbeat')),
+  ('w11_heartbeat_locked',      not has_function_privilege('anon','public.run_daily_heartbeat()','EXECUTE')
+                               and not has_function_privilege('authenticated','public.run_daily_heartbeat()','EXECUTE')),
+  ('w11_heartbeat_cron_alive',  exists(select 1 from cron.job
+                                 where jobname='daily-heartbeat' and active)),
+  -- net_queue: المفتاح مبنيٌّ في الفحص وموصولٌ بحلقة التنبيه معًا —
+  -- بلا استدعاءٍ حيٍّ إضافي (w10 أعلاه يستدعي الدالّة فعليًّا ويكفي)
+  ('w11_net_queue_wired',       (select pg_get_functiondef(oid) like '%net_queue%'
+                                 from pg_proc where proname='check_platform_health')
+                               and (select pg_get_functiondef(oid) like '%net_queue%'
+                                 from pg_proc where proname='send_platform_alerts')),
   -- (٢٠) مرجع المخطط — البصمة تحرّكت خارج ترحيلات هذا الفرع أيضًا (عمل
   -- موازٍ اكتُشف الليلة: نظام /api/canary، جداول جديدة، ...) — الأرقام هنا
   -- قياسٌ فعليٌّ للواقع الحاليّ لا حسابٌ يدويّ تراكميّ. راجع schema_baseline.md.
   ('q20_schema_no_drift',      (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
                                 where n.nspname='public' and c.relkind='r') = 31
+                               -- 0125: +١ دالة (run_daily_heartbeat) — ١٢٥ صارت ١٢٦
                                and (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-                                    where n.nspname='public' and p.prokind='f') = 125
+                                    where n.nspname='public' and p.prokind='f') = 126
                                and (select count(*) from pg_policies where schemaname='public') = 71
                                and (select count(*) from pg_constraint c join pg_class r on r.oid=c.conrelid
                                     join pg_namespace n on n.oid=r.relnamespace
