@@ -93,11 +93,20 @@ ROLES
 } > "$OUT/00-prereqs.sql"
 
 echo "▸ الجرد…"
+# عدد فعليّ لا تقديرٌ إحصائيّ: n_live_tup (المُستخدَم سابقًا) قيمةٌ يحدّثها
+# autovacuum دوريًّا فقط، وتنحرف بشدّة عن الواقع في جدولٍ سريع التقلّب مثل
+# waitlist_entries (يُدرَج ويُحذَف باستمرار مع دخول العملاء وجلوسهم وإلغائهم).
+# هذا الانحراف أسقط تحقّق الاسترجاع فعليًّا (رأى العدّاد ٣٢٠ والنسخة ٨٨ —
+# النسخة كانت صحيحة، والعدّاد كان تقديرًا قديمًا). count(*) هنا حقيقيّ.
 psql "$SUPABASE_DB_URL" -At -F',' -o "$OUT/04-rowcounts.csv" <<'SQL'
-select relname, n_live_tup
-from pg_stat_user_tables
-where schemaname = 'public'
-order by n_live_tup desc;
+select c.relname,
+       (xpath('/row/c/text()',
+              query_to_xml(format('select count(*) as c from public.%I', c.relname), false, true, '')
+             ))[1]::text::bigint as cnt
+  from pg_class c
+  join pg_namespace n on n.oid = c.relnamespace
+ where n.nspname = 'public' and c.relkind = 'r'
+ order by cnt desc;
 SQL
 
 for f in 00-prereqs.sql 01-schema.sql 02-data-public.sql 03-data-auth.sql; do

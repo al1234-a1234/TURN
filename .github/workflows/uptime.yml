@@ -59,23 +59,23 @@ jobs:
           # الأسرار تُبقي الملف صالحًا لو تغيّر المشروع يومًا.
           U="${URL:-https://nkdfxmjuigslmangzuua.supabase.co}"
           K="${KEY:-sb_publishable_TID1xCZ38N9D4IhQfhHcqA_q2Andfp3}"
+          OK=""
           for i in 1 2 3 4 5; do
             CODE="$(curl -s -o /tmp/health.json -w '%{http_code}' --max-time 20 \
                      -X POST "$U/rest/v1/rpc/health_snapshot" \
                      -H "apikey: $K" -H "Authorization: Bearer $K" \
                      -H 'Content-Type: application/json' -d '{}' || echo 000)"
             if [ "$CODE" = "200" ]; then
-              echo "✓ القاعدة تنبض (المحاولة $i)"; cat /tmp/health.json; break
+              echo "✓ القاعدة تنبض (المحاولة $i)"; cat /tmp/health.json; OK=1; break
             fi
             echo "المحاولة $i: رمز=$CODE — إعادة بعد 20ث"
             sleep 20
           done
-            if [ "$i" = "5" ]; then
-              echo "::error::قاعدة البيانات لا تستجيب بعد ٥ محاولات (آخر رمز: $CODE)"
-              head -c 400 /tmp/health.json || true
-              exit 1
-            fi
-          done
+          if [ -z "$OK" ]; then
+            echo "::error::قاعدة البيانات لا تستجيب بعد ٥ محاولات (آخر رمز: $CODE)"
+            head -c 400 /tmp/health.json || true
+            exit 1
+          fi
 
       # ── قلم الكتابة: مفتاح الخدمة يعمل فعلًا؟ ──
       #
