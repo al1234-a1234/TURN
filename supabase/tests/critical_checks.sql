@@ -635,6 +635,17 @@ with checks(name, pass) as (
   ('w18_waitlist_cap_wired',    (select pg_get_functiondef(oid) like '%max_waitlist_size%'
                                   and pg_get_functiondef(oid) like '%P0010%'
                                  from pg_proc where proname='join_waitlist_guest')),
+  -- ══ 0135: سياق العميل على بطاقة الاستقبال (VIP/محظور/عدم حضور/ملاحظة) —
+  --    كان مقروءًا فقط من ملفّ العميل يدويًّا، صار يظهر تلقائيًّا لحظة
+  --    الانضمام. الدالّة أُعيد إنشاؤها بـDROP/CREATE (تغيّر شكل الإرجاع)،
+  --    وامتيازات Supabase الافتراضية منحت anon تنفيذها للحظة — اكتُشف حيًّا
+  --    وأُغلق فورًا؛ هذا الفحص يمسك عودته صامتًا مستقبلًا. ══
+  ('w19_reception_context_wired',(select pg_get_functiondef(oid) like '%is_vip%'
+                                   and pg_get_functiondef(oid) like '%no_shows%'
+                                   and pg_get_functiondef(oid) like '%customer_restaurant%'
+                                  from pg_proc where proname='staff_branch_queue')),
+  ('w19_reception_context_locked',(not has_function_privilege('anon','public.staff_branch_queue(uuid)','EXECUTE')
+                                   and has_function_privilege('authenticated','public.staff_branch_queue(uuid)','EXECUTE'))),
   -- (٢٠) مرجع المخطط — البصمة تحرّكت خارج ترحيلات هذا الفرع أيضًا (عمل
   -- موازٍ اكتُشف الليلة: نظام /api/canary، جداول جديدة، ...) — الأرقام هنا
   -- قياسٌ فعليٌّ للواقع الحاليّ لا حسابٌ يدويّ تراكميّ. راجع schema_baseline.md.

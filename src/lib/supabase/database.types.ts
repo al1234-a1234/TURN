@@ -1733,7 +1733,11 @@ export type Database = {
           distance_m: number | null
           full_name: string
           id: string
+          is_blocked: boolean
+          is_vip: boolean
           joined_at: string
+          no_shows: number
+          note: string | null
           party_size: number
           phone: string
           position: number | null

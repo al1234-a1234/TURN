@@ -99,7 +99,16 @@ export default async function ReceptionPage({
 
   // الدالّة تُرجع الاسم والهاتف مسطَّحَين؛ والبطاقات تقرأ `customers` منذ
   // أوّل يوم. فنُعيد التشكيل هنا في سطرٍ واحد بدل تعديل كلّ موضع عرض.
-  const list = (queue ?? []).map((q) => ({ ...q, customers: { full_name: q.full_name, phone: q.phone } }));
+  const list = (queue ?? []).map((q) => ({
+    ...q,
+    customers: { full_name: q.full_name, phone: q.phone },
+    // سياق العميل لحظة دخوله الطابور — فكرة مالك مطعم: كان محجوبًا عن
+    // شاشة الاستقبال، يظهر فقط لمن يفتح ملفّ العميل يدويًّا (0135)
+    isVip: (q as { is_vip?: boolean }).is_vip ?? false,
+    isBlocked: (q as { is_blocked?: boolean }).is_blocked ?? false,
+    noShows: (q as { no_shows?: number }).no_shows ?? 0,
+    note: (q as { note?: string | null }).note ?? null,
+  }));
 
   // شارة الهدية على بطاقة الدور أُزيلت بقرار المالك (تنظيف الملصقات). واعتماد
   // الهدية يبقى كاملًا في صندوق «اعتمد هدية» بالبحث بالرقم — وهو المسار الذي
@@ -164,6 +173,35 @@ export default async function ReceptionPage({
           <p className="mt-0.5 text-xs text-[color:var(--muted)]">
             {toAr(q.party_size)} {tr(lang, "أشخاص", "guests")} · ⏱ {toAr(waited)} {tr(lang, "دقيقة", "min")}{q.status === "notified" ? tr(lang, " · أُشعِر ✓", " · Notified ✓") : ""}
           </p>
+          {/* سياق العميل — يظهر لمن يملك صلاحية «العملاء» فقط: ملاحظة خاصة
+              (حساسية طعام، تفضيل) قد تحمل معلومة شخصية لا تخصّ كل مضيف */}
+          {canViewCustomers && (q.isVip || q.isBlocked || q.noShows > 0 || q.note) && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              {q.isVip && (
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
+                  style={{ background: "var(--brand-solid)", color: "var(--brand-ink)" }}>
+                  ★ {tr(lang, "عميل مميّز", "VIP")}
+                </span>
+              )}
+              {q.isBlocked && (
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
+                  style={{ background: "rgba(192,86,74,0.14)", color: "var(--danger)" }}>
+                  ⚠ {tr(lang, "محظور", "Blocked")}
+                </span>
+              )}
+              {q.noShows > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
+                  style={{ background: "var(--surface-2)", color: "var(--muted)" }}>
+                  {tr(lang, `${toAr(q.noShows)} عدم حضور سابقًا`, `${q.noShows} past no-show${q.noShows > 1 ? "s" : ""}`)}
+                </span>
+              )}
+              {q.note && (
+                <span className="w-full truncate text-[11px] font-bold" style={{ color: "var(--brand-d)" }} title={q.note}>
+                  📝 {q.note}
+                </span>
+              )}
+            </div>
+          )}
           {q.distance_m != null && (
             <span className="mt-1 me-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
               style={{ background: "var(--surface-2)", border: "1px solid rgba(102,28,10,0.14)", color: q.distance_m > 5000 ? "var(--muted)" : "var(--brand-d)" }}>
