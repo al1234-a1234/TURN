@@ -626,6 +626,15 @@ with checks(name, pass) as (
                                and not has_function_privilege('authenticated','public.send_platform_status_digest(boolean)','EXECUTE')),
   ('w17_digest_cron_alive',     exists(select 1 from cron.job
                                  where jobname='operator-status-digest' and active)),
+  -- ══ 0133: سقف حجم الطابور — اختياري، NULL = بلا سقف (السلوك السابق) ══
+  ('w18_waitlist_cap_col',      exists(select 1 from information_schema.columns
+                                 where table_schema='public' and table_name='branch_settings'
+                                   and column_name='max_waitlist_size')),
+  ('w18_waitlist_cap_ranged',   exists(select 1 from pg_constraint
+                                 where conname='branch_settings_max_waitlist_size_range')),
+  ('w18_waitlist_cap_wired',    (select pg_get_functiondef(oid) like '%max_waitlist_size%'
+                                  and pg_get_functiondef(oid) like '%P0010%'
+                                 from pg_proc where proname='join_waitlist_guest')),
   -- (٢٠) مرجع المخطط — البصمة تحرّكت خارج ترحيلات هذا الفرع أيضًا (عمل
   -- موازٍ اكتُشف الليلة: نظام /api/canary، جداول جديدة، ...) — الأرقام هنا
   -- قياسٌ فعليٌّ للواقع الحاليّ لا حسابٌ يدويّ تراكميّ. راجع schema_baseline.md.

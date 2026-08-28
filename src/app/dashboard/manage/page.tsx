@@ -73,7 +73,7 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
   const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
   const [{ data: settings }, { data: analytics }, { data: liveRows }, tableCountRes] = await Promise.all([
     settingsBranch
-      ? supabase.from("branch_settings").select("accepts_waitlist, accepts_reservations, max_party_size, opening_hours, default_duration_min, booking_window_days").eq("branch_id", settingsBranch.id).maybeSingle()
+      ? supabase.from("branch_settings").select("accepts_waitlist, accepts_reservations, max_party_size, max_waitlist_size, opening_hours, default_duration_min, booking_window_days").eq("branch_id", settingsBranch.id).maybeSingle()
       : Promise.resolve({ data: null }),
     branchIds.length
       ? supabase.from("waitlist_entries").select("joined_at, seated_at, zone, status").in("branch_id", branchIds).gte("joined_at", since30)
@@ -374,6 +374,25 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
               <div>
                 <label className="field-label">{tr(lang, "أقصى عدد للمجموعة", "Max party size")}</label>
                 <input name="max_party_size" inputMode="numeric" defaultValue={settings?.max_party_size ?? 20} className="field-input" />
+              </div>
+            </div>
+            {/* سقف حجم الطابور — اختياري بالكامل، فارغ = بلا سقف. طلب مباشر:
+                إيقاف استقبال دخول جدد بعد رقمٍ معيّن كي لا يتراكم طابورٌ لا
+                يستوعبه المطعم، مع بقاء من دخل أصلًا محفوظًا بدوره. */}
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div>
+                <label className="field-label">{tr(lang, "سقف حجم الطابور (اختياري)", "Waitlist size cap (optional)")}</label>
+                <input
+                  name="max_waitlist_size" inputMode="numeric"
+                  defaultValue={settings?.max_waitlist_size ?? ""}
+                  placeholder={tr(lang, "بلا سقف", "No cap")}
+                  className="field-input"
+                />
+                <p className="mt-1 text-xs text-[color:var(--muted)]">
+                  {tr(lang,
+                    "بعد وصول الطابور لهذا العدد يُمنع الانضمام الجديد مؤقتًا حتى يفرغ مكان. اتركه فارغًا لعدم وضع حد.",
+                    "Once the queue reaches this number, new joins pause until a spot frees up. Leave empty for no cap.")}
+                </p>
               </div>
             </div>
             {/* دوامٌ مختلف لبعض الأيام — مطعمٌ يفتح الجمعة عصرًا مثلًا.

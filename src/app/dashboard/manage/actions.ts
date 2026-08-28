@@ -80,6 +80,9 @@ export async function updateBranchSettings(formData: FormData) {
   const wantsReservations = formData.get("accepts_reservations") === "on";
   const maxPartyRaw = String(formData.get("max_party_size") ?? "").trim();
   const maxParty = maxPartyRaw ? Math.max(1, Number(maxPartyRaw)) : 20;
+  // سقف حجم الطابور — فارغٌ يعني بلا سقف (الافتراضي)، لا صفرًا يمنع الجميع
+  const maxWaitRaw = String(formData.get("max_waitlist_size") ?? "").trim();
+  const maxWaitlist = maxWaitRaw ? Math.max(1, Math.round(Number(maxWaitRaw))) : null;
   const open = String(formData.get("open_time") ?? "").trim() || null;
   const close = String(formData.get("close_time") ?? "").trim() || null;
 
@@ -116,6 +119,7 @@ export async function updateBranchSettings(formData: FormData) {
     accepts_waitlist: acceptsWaitlist,
     accepts_reservations: acceptsReservations,
     max_party_size: Number.isFinite(maxParty) ? maxParty : 20,
+    max_waitlist_size: maxWaitlist,
     opening_hours: Object.keys(days).length ? { open, close, days } : { open, close },
   };
 

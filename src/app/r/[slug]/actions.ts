@@ -48,6 +48,13 @@ const MSG = {
     "We're doing quick maintenance — try again shortly. Your place in line is safe.",
   ],
   branchClosed: ["الفرع مغلق حاليًا.", "This branch is closed right now."],
+  // ‏P0010 — سقف حجم الطابور (اختياري، يضبطه المالك). الواجهة تمنع الإرسال
+  // أصلًا حين يمتلئ، فهذا حزامٌ ثانٍ فقط — لعميلٍ فتح النموذج قبل الامتلاء
+  // مباشرة ثم أرسل بعده.
+  queueFull: [
+    "الطابور ممتلئ حاليًا — حاول بعد قليل.",
+    "The queue is full right now — try again shortly.",
+  ],
   slotTaken: [
     "امتلأ هذا الوقت للتوّ — اختر موعدًا آخر.",
     "That time just filled up — pick another.",
@@ -175,6 +182,7 @@ export async function joinWaitlistGuest(
     if (error.code === "P0002") return { ok: false, error: msg(lang, "branchGone") };
     if (error.code === "P0003") return { ok: false, error: msg(lang, "branchClosed") };
     if (error.code === "P0429") return { ok: false, error: msg(lang, "tooMany") };
+    if (error.code === "P0010") return { ok: false, error: msg(lang, "queueFull") };
     return { ok: false, error: msg(lang, "joinFailed") };
   }
 

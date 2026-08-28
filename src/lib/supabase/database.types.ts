@@ -86,6 +86,7 @@ export type Database = {
           has_outside: boolean
           manually_closed: boolean
           max_party_size: number
+          max_waitlist_size: number | null
           notification_channels:
             | Database["public"]["Enums"]["notification_channel"][]
             | null
@@ -106,6 +107,7 @@ export type Database = {
           has_outside?: boolean
           manually_closed?: boolean
           max_party_size?: number
+          max_waitlist_size?: number | null
           notification_channels?:
             | Database["public"]["Enums"]["notification_channel"][]
             | null
@@ -126,6 +128,7 @@ export type Database = {
           has_outside?: boolean
           manually_closed?: boolean
           max_party_size?: number
+          max_waitlist_size?: number | null
           notification_channels?:
             | Database["public"]["Enums"]["notification_channel"][]
             | null

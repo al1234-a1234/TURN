@@ -35,6 +35,8 @@ type Branch = {
   busyNow: boolean;
   /** أقصى عدد أشخاص يقبله الفرع — يضبطه المالك في الإدارة */
   maxParty: number;
+  /** سقف حجم الطابور — يضبطه المالك اختياريًّا؛ null يعني بلا سقف */
+  maxWaitlistSize: number | null;
   photo: string | null;
 };
 
@@ -291,7 +293,7 @@ export function WaitlistForm({
      من الاستقبال، كانت البطاقة تبقى تقول «متاح الآن · خذ دورك» دقيقةً كاملة،
      فيملأ العميل النموذج ثم يُردّ بخطأ «الفرع مغلق حاليًا». نُحدّث الاثنين
      معًا فور الرسم فتعود البطاقة صادقة. */
-  type Live = { total: number; zoneCounts?: Record<string, number>; accepts?: boolean; acceptsReservations?: boolean; closedNow?: boolean; busyNow?: boolean };
+  type Live = { total: number; zoneCounts?: Record<string, number>; accepts?: boolean; acceptsReservations?: boolean; closedNow?: boolean; busyNow?: boolean; maxWaitlistSize?: number | null };
   const [live, setLive] = useState<Record<string, Live>>({});
   useEffect(() => {
     const ids = branches.map((b) => b.id);
@@ -303,7 +305,7 @@ export function WaitlistForm({
       // ولكل قسمٍ عدّاده: العدّاد القديم يعرف عمودَي inside/outside فقط
       sb.rpc("waitlist_counts_by_zone", { p_branch_ids: ids }),
       sb.from("branch_settings")
-        .select("branch_id, accepts_waitlist, accepts_reservations, manually_closed, busy_now, opening_hours")
+        .select("branch_id, accepts_waitlist, accepts_reservations, manually_closed, busy_now, opening_hours, max_waitlist_size")
         .in("branch_id", ids),
     ])
       .then(([counts, byZone, settings]) => {
@@ -325,6 +327,7 @@ export function WaitlistForm({
             acceptsReservations: st.accepts_reservations ?? false,
             busyNow: st.busy_now ?? false,
             closedNow: (st.manually_closed ?? false) || !isWithinOpeningHours(st.opening_hours as { open?: string | null; close?: string | null } | null),
+            maxWaitlistSize: st.max_waitlist_size ?? null,
           };
         }
         setLive(next);
@@ -635,6 +638,32 @@ export function WaitlistForm({
     );
   }
 
+  // امتلأ الطابور — سقفٌ ضبطه المالك (اختياري بالكامل، افتراضيًّا بلا حد).
+  // نمنع الإرسال هنا أيضًا لا في الخادم وحده: عميلٌ يرى «ممتلئ» ويُمنع من
+  // الكتابة أوضح من نموذجٍ يقبل ضغطته ثم يردّه بخطأ بعد التسجيل.
+  const queueFull = branch != null && branch.maxWaitlistSize != null && branch.total >= branch.maxWaitlistSize;
+  if (branch && queueFull) {
+    return (
+      <div className="space-y-3">
+        {multi && (
+          <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
+        )}
+        <div className="rq-card p-7 text-center">
+          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full" style={{ background: "rgba(192,86,74,0.12)", color: "var(--st-closed)" }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M17 20.5v-1.5a4 4 0 00-4-4H8a4 4 0 00-4 4v1.5M10 11a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM19 8v4M21 10h-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </span>
+          <p className="text-lg font-bold text-[color:var(--ink)]">
+            {tr(lang, `الطابور ممتلئ حاليًا (${toAr(branch.maxWaitlistSize ?? 0)})`, `The queue is full right now (${branch.maxWaitlistSize})`)}
+          </p>
+          <p className="mt-1 text-sm text-[color:var(--muted)]">
+            {tr(lang, "حاول بعد قليل — تُفتح المقاعد أول بأول مع جلوس أو مغادرة أشخاص.", "Try again shortly — spots open up as people are seated or leave.")}
+          </p>
+        </div>
+        {reserveSection}
+      </div>
+    );
+  }
+
   // عدّاد القسم: الحيّ إن وصل، وإلا المخبوز في الصفحة (صحيحٌ حتى دقيقة مضت)
   const zoneCountOf = (key: string) => branch?.zoneCounts?.[key] ?? 0;
 
@@ -710,6 +739,14 @@ export function WaitlistForm({
             <span className="ms-1.5 text-xs font-medium text-[color:var(--muted)]">
               {tr(lang, `الحدّ الأعلى ${toAr(maxParty)}`, `Max ${maxParty}`)}
             </span>
+          </p>
+          {/* توضيحٌ مباشر: أفراد المجموعة الواحدة يسجّلون بدخولٍ واحد لا
+              بتسجيل كلٍّ منهم على حدة — التكرار كان يُضاعف عدد المنتظرين
+              ظاهريًّا بينما هم أصلًا قلّة. */}
+          <p className="mb-2.5 text-xs font-semibold" style={{ color: "var(--muted)" }}>
+            {tr(lang,
+              "اختر عدد أفراد مجموعتك كاملة — يسجّل شخصٌ واحد فقط، لا كل فرد على حدة.",
+              "Pick your whole group's size — one person registers for everyone, not each person separately.")}
           </p>
           <div className="rq-rail -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
             {Array.from({ length: maxParty }, (_, i) => i + 1).map((n) => (
