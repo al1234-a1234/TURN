@@ -1348,6 +1348,10 @@ export type Database = {
         Args: { p_branch_id: string; p_reason: string }
         Returns: number
       }
+      telegram_command: {
+        Args: { p_chat_id: string; p_cmd: string; p_arg?: string }
+        Returns: string | null
+      }
       admin_restaurants_list: {
         Args: never
         Returns: {

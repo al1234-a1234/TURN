@@ -650,6 +650,9 @@ with checks(name, pass) as (
   -- موازٍ اكتُشف الليلة: نظام /api/canary، جداول جديدة، ...) — الأرقام هنا
   -- قياسٌ فعليٌّ للواقع الحاليّ لا حسابٌ يدويّ تراكميّ. راجع schema_baseline.md.
   -- 0128: +١ جدول (client_errors) — ٣١ صارت ٣٢
+  ('w20_telegram_cmd_locked',  (not has_function_privilege('anon','public.telegram_command(text,text,text)','EXECUTE')
+                                and not has_function_privilege('authenticated','public.telegram_command(text,text,text)','EXECUTE'))),
+  ('w20_digest_not_flooding',  (select schedule = '0 4,18 * * *' from cron.job where jobname='operator-status-digest')),
   ('q20_schema_no_drift',      (select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace
                                 where n.nspname='public' and c.relkind='r') = 32
                                -- 0125: +١ دالة (run_daily_heartbeat) — ١٢٥ صارت ١٢٦
@@ -658,8 +661,9 @@ with checks(name, pass) as (
                                -- 0128: +٣ دوال (log_client_error، backup_snapshot_daily،
                                --        check_domain_expiry) — ١٣١
                                -- 0132: +٢ دالة (run_critical_checks، send_platform_status_digest) — ١٣٣
+                               -- 0137: +١ دالة (telegram_command) — ١٣٤
                                and (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-                                    where n.nspname='public' and p.prokind='f') = 133
+                                    where n.nspname='public' and p.prokind='f') = 134
                                and (select count(*) from pg_policies where schemaname='public') = 71
                                and (select count(*) from pg_constraint c join pg_class r on r.oid=c.conrelid
                                     join pg_namespace n on n.oid=r.relnamespace
