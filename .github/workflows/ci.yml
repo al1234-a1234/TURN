@@ -62,3 +62,15 @@ jobs:
             exit 1
           fi
           echo "✓ لا مفتاح خدمة تحت المسارات الثلاثة"
+
+      # ── فشل أي خطوة أعلاه يصل تلغرام فورًا، لا بريد GitHub وحده ──
+      - name: تنبيه تلغرام عند الفشل
+        if: failure()
+        env:
+          TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          [ -n "$TOKEN" ] && [ -n "$CHAT_ID" ] || { echo "::notice::TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID غير مضبوطين — تُخطّى التنبيه."; exit 0; }
+          MSG="🔴 حارس الجودة فشل — الفرع ${{ github.ref_name }}"$'\n'"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -s -X POST "https://api.telegram.org/bot$TOKEN/sendMessage" \
+            -d chat_id="$CHAT_ID" --data-urlencode text="$MSG" || true
