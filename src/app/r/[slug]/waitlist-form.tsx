@@ -72,11 +72,16 @@ function ZoneStat({ label, count }: { label: string; count: number }) {
           <p className="mt-1.5 text-lg font-bold leading-tight text-cream-100">{label}</p>
         </>
       ) : (
+        /* بلا انتظار: لا اسمَ قسمٍ إطلاقًا. اسم القسم يجيب «أين أنتظر؟»،
+           ولا سؤالَ حين لا انتظار — فذكره يُبقي الذهن في وضع الطابور بينما
+           الرسالة كلّها أنّه لا طابور. سطران فقط، وبنفس الأبيض. */
         <>
           <p className="text-lg font-bold leading-tight text-cream-100">
             {tr(lang, "لا يوجد انتظار", "No wait")}
           </p>
-          <p className="mt-1 text-sm font-bold leading-tight text-cream-100/85">{label}</p>
+          <p className="mt-1 text-sm font-bold leading-tight text-cream-100">
+            {tr(lang, "تفضّل مباشرة", "Walk right in")}
+          </p>
         </>
       )}
     </div>
