@@ -103,15 +103,21 @@ export function StatusToggle({
       >
         <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
         {paused
-          ? tr(lang, "بدون انتظار — اضغط لإعادة الدور", "No wait — tap to resume queue")
-          : tr(lang, "أوقف الدور (المطعم فاضي)", "Pause queue (restaurant is empty)")}
+          ? tr(lang, "افتح الطابور", "Open the queue")
+          : tr(lang, "الطابور مفتوح — اضغط لإيقافه", "Queue is open — tap to pause")}
       </button>
 
-      {paused && !closed && (
+      {/* الصياغة تتبع الافتراض المقلوب (0150): الطابور مغلقٌ حتى يفتحه
+          الاستقبال عند بداية الازدحام، لا مفتوحٌ حتى يوقفه. */}
+      {!closed && (
         <span className="text-xs font-bold" style={{ color: "var(--muted)" }}>
-          {tr(lang,
-            "الفرع معروضٌ ويستقبل — والداخل يدخل مباشرةً. ومن هو في الطابور الآن يبقى ويُجلَس. ويُلغى تلقائيًّا فجر كل يوم.",
-            "The branch stays visible and open — guests walk right in. Anyone already in the queue stays and gets seated. Clears automatically at dawn.")}
+          {paused
+            ? tr(lang,
+                "الفرع معروض ويستقبل — والداخل يدخل مباشرة.",
+                "The branch stays visible and seating — guests walk right in.")
+            : tr(lang,
+                "يُلغى تلقائيًّا فجر كلّ يوم.",
+                "Clears automatically at dawn.")}
         </span>
       )}
 
