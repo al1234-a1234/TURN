@@ -228,24 +228,35 @@ export async function toggleMenuItem(formData: FormData) {
   revalidateTag("discovery");
 }
 
-export async function addMenuCategory(formData: FormData) {
+/**
+ * حالة نموذجَي القائمة — الصمت لم يعد خيارًا.
+ *
+ * كانت كلّ مسارات الفشل هنا `return;` صامتة: بلا صلاحية، بلا فرع، تصنيف من
+ * فرعٍ آخر، أو خطأ قاعدة — كلّها تُنهي الطلب بلا حرفٍ واحد على الشاشة. فيضغط
+ * المالك «إضافة» فلا يحدث شيء، ويظنّ الزرّ معطوبًا أو الشبكة بطيئة، ويعيد
+ * الضغط. وهو نفس نمط `ops/incidents/2026-08-29-stale-row-press-is-silent.md`.
+ */
+export type MenuFormState = { ok?: true; error?: string } | null;
+
+export async function addMenuCategory(_prev: MenuFormState, formData: FormData): Promise<MenuFormState> {
   const caller = await requirePerm("settings");
-  if (!caller) return;
+  if (!caller) return { error: "لا تملك صلاحية تعديل القائمة — راجع مالك المطعم." };
   const name = String(formData.get("name") ?? "").trim();
-  if (!name) return;
+  if (!name) return { error: "اكتب اسم الفئة." };
   // الترجمة اختيارية: فارغة تعني «اعرض العربية» لا «اعرض فراغًا»
   const name_en = String(formData.get("name_en") ?? "").trim() || null;
   const branchId = await resolveWriteBranch(caller, formData.get("branch_id") as string);
-  if (!branchId) return;
+  if (!branchId) return { error: "اختر فرعًا أولًا من أعلى الصفحة." };
   const { error } = await caller.supabase
     .from("menu_categories")
     .insert({ restaurant_id: caller.restaurantId, branch_id: branchId, name, name_en });
   if (error) {
     console.error("[addMenuCategory]", error.message);
-    return;
+    return { error: `تعذّر حفظ الفئة: ${error.message}` };
   }
   revalidatePath("/dashboard/manage");
   revalidateTag("discovery");
+  return { ok: true };
 }
 
 export async function deleteMenuCategory(id: string) {
@@ -301,26 +312,29 @@ export async function updateMenuItemTranslation(formData: FormData) {
   revalidateTag("discovery");
 }
 
-export async function addMenuItem(formData: FormData) {
+export async function addMenuItem(_prev: MenuFormState, formData: FormData): Promise<MenuFormState> {
   const caller = await requirePerm("settings");
-  if (!caller) return;
+  if (!caller) return { error: "لا تملك صلاحية تعديل القائمة — راجع مالك المطعم." };
   const { supabase, restaurantId: rid } = caller;
   const categoryId = String(formData.get("category_id") ?? "");
   const name = String(formData.get("name") ?? "").trim();
-  if (!categoryId || !name) return;
+  if (!categoryId) return { error: "أضف فئةً أولًا ثم أضف الصنف داخلها." };
+  if (!name) return { error: "اكتب اسم الصنف." };
   const priceRaw = String(formData.get("price") ?? "").trim();
   const price = priceRaw ? Number(priceRaw) : null;
+  // سعرٌ مكتوبٌ خطأً كان يُخزَّن null بصمت فيظهر الصنف بلا سعر
+  if (priceRaw && !Number.isFinite(price)) return { error: "السعر أرقام فقط — مثال: 28.50" };
   const description = String(formData.get("description") ?? "").trim() || null;
   const name_en = String(formData.get("name_en") ?? "").trim() || null;
   const description_en = String(formData.get("description_en") ?? "").trim() || null;
   const image_url = String(formData.get("image_url") ?? "").trim() || null;
   const branchId = await resolveWriteBranch(caller, formData.get("branch_id") as string);
-  if (!branchId) return;
+  if (!branchId) return { error: "اختر فرعًا أولًا من أعلى الصفحة." };
   // التصنيف يأتي من الطلب: نتأكّد أنه من تصنيفات هذا الفرع فعلًا، وإلا صار
   // بالإمكان ربط صنفٍ بتصنيف مطعمٍ آخر — مفتاح أجنبي بلا معنى يفسد القائمة.
   const { data: cat } = await supabase
     .from("menu_categories").select("id").eq("id", categoryId).eq("branch_id", branchId).maybeSingle();
-  if (!cat) return;
+  if (!cat) return { error: "هذه الفئة ليست في الفرع المختار — حدّث الصفحة وحاول ثانيةً." };
   const { error } = await supabase.from("menu_items").insert({
     restaurant_id: rid,
     branch_id: branchId,
@@ -334,10 +348,11 @@ export async function addMenuItem(formData: FormData) {
   });
   if (error) {
     console.error("[addMenuItem]", error.message);
-    return;
+    return { error: `تعذّر حفظ الصنف: ${error.message}` };
   }
   revalidatePath("/dashboard/manage");
   revalidateTag("discovery");
+  return { ok: true };
 }
 
 export async function deleteMenuItem(id: string) {
