@@ -14,30 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      platform_status: {
-        Row: {
-          by_user: string | null
-          only_row: boolean
-          paused: boolean
-          reason: string | null
-          since: string | null
-        }
-        Insert: {
-          by_user?: string | null
-          only_row?: boolean
-          paused?: boolean
-          reason?: string | null
-          since?: string | null
-        }
-        Update: {
-          by_user?: string | null
-          only_row?: boolean
-          paused?: boolean
-          reason?: string | null
-          since?: string | null
-        }
-        Relationships: []
-      }
       admin_audit: {
         Row: {
           action: string
@@ -71,6 +47,57 @@ export type Database = {
         }
         Relationships: []
       }
+      alert_config: {
+        Row: {
+          key: string
+          value: string
+        }
+        Insert: {
+          key: string
+          value: string
+        }
+        Update: {
+          key?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      alert_state: {
+        Row: {
+          check_key: string
+          is_failing: boolean
+          last_changed_at: string
+          last_message: string | null
+        }
+        Insert: {
+          check_key: string
+          is_failing?: boolean
+          last_changed_at?: string
+          last_message?: string | null
+        }
+        Update: {
+          check_key?: string
+          is_failing?: boolean
+          last_changed_at?: string
+          last_message?: string | null
+        }
+        Relationships: []
+      }
+      app_salt: {
+        Row: {
+          id: boolean
+          salt: string
+        }
+        Insert: {
+          id?: boolean
+          salt?: string
+        }
+        Update: {
+          id?: boolean
+          salt?: string
+        }
+        Relationships: []
+      }
       branch_settings: {
         Row: {
           accepts_reservations: boolean
@@ -91,6 +118,7 @@ export type Database = {
             | Database["public"]["Enums"]["notification_channel"][]
             | null
           opening_hours: Json | null
+          queue_paused: boolean
           updated_at: string
         }
         Insert: {
@@ -112,6 +140,7 @@ export type Database = {
             | Database["public"]["Enums"]["notification_channel"][]
             | null
           opening_hours?: Json | null
+          queue_paused?: boolean
           updated_at?: string
         }
         Update: {
@@ -133,6 +162,7 @@ export type Database = {
             | Database["public"]["Enums"]["notification_channel"][]
             | null
           opening_hours?: Json | null
+          queue_paused?: boolean
           updated_at?: string
         }
         Relationships: [
@@ -241,6 +271,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      client_errors: {
+        Row: {
+          at: string
+          id: number
+          message: string | null
+          path: string | null
+          ua: string | null
+        }
+        Insert: {
+          at?: string
+          id?: never
+          message?: string | null
+          path?: string | null
+          ua?: string | null
+        }
+        Update: {
+          at?: string
+          id?: never
+          message?: string | null
+          path?: string | null
+          ua?: string | null
+        }
+        Relationships: []
       }
       customer_restaurant: {
         Row: {
@@ -537,7 +591,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
-          name_en: string | null
+          name_en?: string | null
           restaurant_id: string
           sort_order?: number
         }
@@ -573,11 +627,11 @@ export type Database = {
           category_id: string
           created_at: string
           description: string | null
+          description_en: string | null
           id: string
           image_url: string | null
           is_available: boolean
           name: string
-          description_en: string | null
           name_en: string | null
           price: number | null
           restaurant_id: string
@@ -589,12 +643,12 @@ export type Database = {
           category_id: string
           created_at?: string
           description?: string | null
+          description_en?: string | null
           id?: string
           image_url?: string | null
           is_available?: boolean
           name: string
-          description_en: string | null
-          name_en: string | null
+          name_en?: string | null
           price?: number | null
           restaurant_id: string
           sort_order?: number
@@ -605,11 +659,11 @@ export type Database = {
           category_id?: string
           created_at?: string
           description?: string | null
+          description_en?: string | null
           id?: string
           image_url?: string | null
           is_available?: boolean
           name?: string
-          description_en?: string | null
           name_en?: string | null
           price?: number | null
           restaurant_id?: string
@@ -735,6 +789,33 @@ export type Database = {
           },
         ]
       }
+      phone_lookup_log: {
+        Row: {
+          at: string
+          endpoint: string
+          id: number
+          ip_hash: string | null
+          phone_hash: string
+          result_count: number
+        }
+        Insert: {
+          at?: string
+          endpoint: string
+          id?: number
+          ip_hash?: string | null
+          phone_hash: string
+          result_count?: number
+        }
+        Update: {
+          at?: string
+          endpoint?: string
+          id?: number
+          ip_hash?: string | null
+          phone_hash?: string
+          result_count?: number
+        }
+        Relationships: []
+      }
       platform_admins: {
         Row: {
           created_at: string
@@ -747,6 +828,30 @@ export type Database = {
         Update: {
           created_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      platform_status: {
+        Row: {
+          by_user: string | null
+          only_row: boolean
+          paused: boolean
+          reason: string | null
+          since: string | null
+        }
+        Insert: {
+          by_user?: string | null
+          only_row?: boolean
+          paused?: boolean
+          reason?: string | null
+          since?: string | null
+        }
+        Update: {
+          by_user?: string | null
+          only_row?: boolean
+          paused?: boolean
+          reason?: string | null
+          since?: string | null
         }
         Relationships: []
       }
@@ -1335,44 +1440,6 @@ export type Database = {
           total: number
         }[]
       }
-      service_role_probe: { Args: never; Returns: boolean }
-      set_platform_pause: {
-        Args: { p_paused: boolean; p_reason?: string }
-        Returns: boolean
-      }
-      set_restaurant_pause: {
-        Args: { p_restaurant_id: string; p_paused: boolean; p_reason?: string }
-        Returns: boolean
-      }
-      staff_clear_branch_queue: {
-        Args: { p_branch_id: string; p_reason: string }
-        Returns: number
-      }
-      telegram_command: {
-        Args: { p_chat_id: string; p_cmd: string; p_arg?: string }
-        Returns: string | null
-      }
-      admin_restaurants_list: {
-        Args: never
-        Returns: {
-          created_at: string
-          id: string
-          is_active: boolean
-          is_canary: boolean
-          name: string
-          owner_phone: string | null
-          owner_username: string | null
-          slug: string
-        }[]
-      }
-      admin_delete_restaurant: {
-        Args: { p_restaurant_id: string }
-        Returns: undefined
-      }
-      admin_set_restaurant_canary: {
-        Args: { p_restaurant_id: string; p_canary: boolean }
-        Returns: undefined
-      }
       admin_create_restaurant: {
         Args: {
           p_address?: string
@@ -1388,6 +1455,30 @@ export type Database = {
           slug: string
         }[]
       }
+      admin_delete_restaurant: {
+        Args: { p_restaurant_id: string }
+        Returns: undefined
+      }
+      admin_restaurants_list: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          is_active: boolean
+          is_canary: boolean
+          name: string
+          owner_phone: string
+          owner_username: string
+          slug: string
+        }[]
+      }
+      admin_set_restaurant_canary: {
+        Args: { p_canary: boolean; p_restaurant_id: string }
+        Returns: undefined
+      }
+      alert_closed_branch_with_waiters: { Args: never; Returns: undefined }
+      alert_visual_integrity: { Args: never; Returns: undefined }
+      backup_snapshot_daily: { Args: never; Returns: number }
       book_reservation_guest: {
         Args: {
           p_branch_id: string
@@ -1415,6 +1506,11 @@ export type Database = {
         Args: { p_hours: Json; p_now?: string }
         Returns: boolean
       }
+      branch_open_hours_on: {
+        Args: { p_dow: number; p_hours: Json }
+        Returns: number
+      }
+      bytea_to_text: { Args: { data: string }; Returns: string }
       caller_branch_id: { Args: { rest_id: string }; Returns: string }
       can_access_branch: { Args: { b_id: string }; Returns: boolean }
       cancel_by_ticket: { Args: { p_entry_id: string }; Returns: boolean }
@@ -1426,10 +1522,13 @@ export type Database = {
         Args: { p_entry_id: string; p_phone: string }
         Returns: boolean
       }
+      check_domain_expiry: { Args: never; Returns: undefined }
+      check_platform_health: { Args: never; Returns: Json }
       check_rate: {
         Args: { p_key: string; p_max: number; p_window: string }
         Returns: boolean
       }
+      check_visual_integrity: { Args: never; Returns: Json }
       claim_restaurant: { Args: { p_code: string }; Returns: string }
       confirm_attendance: { Args: { p_entry_id: string }; Returns: boolean }
       create_restaurant_with_branch: {
@@ -1512,24 +1611,161 @@ export type Database = {
         }
         Returns: number
       }
-      guest_status_by_phone: {
-        Args: { p_phone: string; p_ip?: string }
-        Returns: {
-          at: string
-          id: string | null
-          kind: string
-          party_size: number
-          position: number | null
-          status: string
-          venue_name: string | null
-          venue_slug: string | null
-        }[]
-      }
+      guest_status_by_phone:
+        | {
+            Args: { p_phone: string }
+            Returns: {
+              at: string
+              kind: string
+              party_size: number
+              position: number
+              status: string
+            }[]
+          }
+        | {
+            Args: { p_ip: string; p_phone: string }
+            Returns: {
+              at: string
+              id: string
+              kind: string
+              party_size: number
+              position: number
+              status: string
+              venue_name: string
+              venue_slug: string
+            }[]
+          }
       has_feature: {
         Args: { p_module: string; rest_id: string }
         Returns: boolean
       }
       health_snapshot: { Args: never; Returns: Json }
+      hours_have_bad_window: { Args: { p_hours: Json }; Returns: boolean }
+      http: {
+        Args: { request: Database["public"]["CompositeTypes"]["http_request"] }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+        SetofOptions: {
+          from: "http_request"
+          to: "http_response"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      http_delete:
+        | {
+            Args: { uri: string }
+            Returns: Database["public"]["CompositeTypes"]["http_response"]
+            SetofOptions: {
+              from: "*"
+              to: "http_response"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: { content: string; content_type: string; uri: string }
+            Returns: Database["public"]["CompositeTypes"]["http_response"]
+            SetofOptions: {
+              from: "*"
+              to: "http_response"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+      http_get:
+        | {
+            Args: { uri: string }
+            Returns: Database["public"]["CompositeTypes"]["http_response"]
+            SetofOptions: {
+              from: "*"
+              to: "http_response"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: { data: Json; uri: string }
+            Returns: Database["public"]["CompositeTypes"]["http_response"]
+            SetofOptions: {
+              from: "*"
+              to: "http_response"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+      http_head: {
+        Args: { uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+        SetofOptions: {
+          from: "*"
+          to: "http_response"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      http_header: {
+        Args: { field: string; value: string }
+        Returns: Database["public"]["CompositeTypes"]["http_header"]
+        SetofOptions: {
+          from: "*"
+          to: "http_header"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      http_list_curlopt: {
+        Args: never
+        Returns: {
+          curlopt: string
+          value: string
+        }[]
+      }
+      http_patch: {
+        Args: { content: string; content_type: string; uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+        SetofOptions: {
+          from: "*"
+          to: "http_response"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      http_post:
+        | {
+            Args: { content: string; content_type: string; uri: string }
+            Returns: Database["public"]["CompositeTypes"]["http_response"]
+            SetofOptions: {
+              from: "*"
+              to: "http_response"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+        | {
+            Args: { data: Json; uri: string }
+            Returns: Database["public"]["CompositeTypes"]["http_response"]
+            SetofOptions: {
+              from: "*"
+              to: "http_response"
+              isOneToOne: true
+              isSetofReturn: false
+            }
+          }
+      http_put: {
+        Args: { content: string; content_type: string; uri: string }
+        Returns: Database["public"]["CompositeTypes"]["http_response"]
+        SetofOptions: {
+          from: "*"
+          to: "http_response"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      http_reset_curlopt: { Args: never; Returns: boolean }
+      http_set_curlopt: {
+        Args: { curlopt: string; value: string }
+        Returns: boolean
+      }
       is_brand_manager: { Args: { rest_id: string }; Returns: boolean }
       is_manager_of: { Args: { rest_id: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
@@ -1547,6 +1783,11 @@ export type Database = {
           queue_pos: number
         }[]
       }
+      log_client_error: {
+        Args: { p_message: string; p_path: string; p_ua: string }
+        Returns: undefined
+      }
+      log_push_sends: { Args: { p_rows: Json }; Returns: number }
       my_branch_ids: { Args: never; Returns: string[] }
       my_branch_ids_for: { Args: { p_perm: string }; Returns: string[] }
       my_managed_branch_ids: { Args: never; Returns: string[] }
@@ -1569,6 +1810,7 @@ export type Database = {
         }[]
       }
       norm_phone_input: { Args: { p: string }; Returns: string }
+      notify_telegram: { Args: { p_message: string }; Returns: undefined }
       pick_table_for: {
         Args: {
           p_at: string
@@ -1645,29 +1887,55 @@ export type Database = {
       }
       restaurant_of_branch: { Args: { b_id: string }; Returns: string }
       retire_dormant_customers: { Args: { p_months?: number }; Returns: number }
-      rewards_by_phone: {
-        Args: { p_phone: string; p_ip?: string }
-        Returns: {
-          armed_at: string | null
-          created_at: string
-          description: string | null
-          expires_at: string | null
-          id: string
-          kind: string
-          redeemed_at: string | null
-          status: string
-          title: string
-          value: number | null
-          value_kind: string | null
-        }[]
-      }
+      retire_phone_lookup_log: { Args: never; Returns: number }
+      rewards_by_phone:
+        | {
+            Args: { p_phone: string }
+            Returns: {
+              armed_at: string
+              created_at: string
+              description: string
+              expires_at: string
+              id: string
+              kind: string
+              redeemed_at: string
+              status: string
+              title: string
+              value: number
+              value_kind: string
+            }[]
+          }
+        | {
+            Args: { p_ip: string; p_phone: string }
+            Returns: {
+              armed_at: string
+              created_at: string
+              description: string
+              expires_at: string
+              id: string
+              kind: string
+              redeemed_at: string
+              status: string
+              title: string
+              value: number
+              value_kind: string
+            }[]
+          }
       rollup_all_daily_stats: { Args: { p_date: string }; Returns: number }
       rollup_daily_stats: {
         Args: { p_branch_id: string; p_date: string }
         Returns: undefined
       }
       run_auto_winback: { Args: never; Returns: number }
+      run_critical_checks: {
+        Args: never
+        Returns: {
+          name: string
+          pass: boolean
+        }[]
+      }
       run_daily_digest: { Args: never; Returns: number }
+      run_daily_heartbeat: { Args: never; Returns: undefined }
       run_retention: { Args: never; Returns: undefined }
       run_weekly_digest: { Args: never; Returns: number }
       save_push_subscription: {
@@ -1686,6 +1954,16 @@ export type Database = {
           customer_id: string
         }[]
       }
+      send_platform_alerts: { Args: never; Returns: undefined }
+      send_platform_status_digest: {
+        Args: { p_full?: boolean }
+        Returns: undefined
+      }
+      service_role_probe: { Args: never; Returns: boolean }
+      set_branch_queue_paused: {
+        Args: { p_branch_id: string; p_paused: boolean }
+        Returns: boolean
+      }
       set_branch_status: {
         Args: {
           p_branch_id: string
@@ -1696,6 +1974,14 @@ export type Database = {
       }
       set_entry_distance: {
         Args: { p_entry_id: string; p_lat: number; p_lng: number }
+        Returns: boolean
+      }
+      set_platform_pause: {
+        Args: { p_paused: boolean; p_reason?: string }
+        Returns: boolean
+      }
+      set_restaurant_pause: {
+        Args: { p_paused: boolean; p_reason?: string; p_restaurant_id: string }
         Returns: boolean
       }
       set_reward_armed: {
@@ -1723,33 +2009,31 @@ export type Database = {
           queue_pos: number
         }[]
       }
-      log_client_error: {
-        Args: { p_path: string; p_message: string; p_ua: string }
-        Returns: undefined
-      }
-      log_push_sends: { Args: { p_rows: Json }; Returns: number }
-      retire_phone_lookup_log: { Args: Record<PropertyKey, never>; Returns: number }
       staff_branch_queue: {
         Args: { p_branch_id: string }
         Returns: {
-          confirmed_at: string | null
+          confirmed_at: string
           customer_id: string
-          distance_m: number | null
+          distance_m: number
           full_name: string
           id: string
           is_blocked: boolean
           is_vip: boolean
           joined_at: string
           no_shows: number
-          note: string | null
+          note: string
           party_size: number
           phone: string
-          position: number | null
+          position: number
           status: Database["public"]["Enums"]["waitlist_status"]
           zone: string
         }[]
       }
       staff_can_read_customer: { Args: { cust_id: string }; Returns: boolean }
+      staff_clear_branch_queue: {
+        Args: { p_branch_id: string; p_reason: string }
+        Returns: number
+      }
       staff_has_perm: {
         Args: { p_perm: string; rest_id: string }
         Returns: boolean
@@ -1779,6 +2063,11 @@ export type Database = {
         }
         Returns: Json
       }
+      telegram_command: {
+        Args: { p_arg?: string; p_chat_id: string; p_cmd: string }
+        Returns: string
+      }
+      text_to_bytea: { Args: { data: string }; Returns: string }
       tv_queue: {
         Args: { p_branch_id: string }
         Returns: {
@@ -1793,6 +2082,20 @@ export type Database = {
           zone: string
         }[]
       }
+      urlencode:
+        | { Args: { data: Json }; Returns: string }
+        | {
+            Args: { string: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.urlencode(string => bytea), public.urlencode(string => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
+        | {
+            Args: { string: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.urlencode(string => bytea), public.urlencode(string => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
       valid_branch_zone: {
         Args: { p_branch_id: string; p_zone: string }
         Returns: string
@@ -1843,6 +2146,7 @@ export type Database = {
           total: number
         }[]
       }
+      watchdog_kill_stuck: { Args: never; Returns: number }
     }
     Enums: {
       notification_channel: "sms" | "whatsapp" | "push" | "email"
@@ -1864,7 +2168,23 @@ export type Database = {
         | "expired"
     }
     CompositeTypes: {
-      [_ in never]: never
+      http_header: {
+        field: string | null
+        value: string | null
+      }
+      http_request: {
+        method: unknown
+        uri: string | null
+        headers: Database["public"]["CompositeTypes"]["http_header"][] | null
+        content_type: string | null
+        content: string | null
+      }
+      http_response: {
+        status: number | null
+        content_type: string | null
+        headers: Database["public"]["CompositeTypes"]["http_header"][] | null
+        content: string | null
+      }
     }
   }
 }
