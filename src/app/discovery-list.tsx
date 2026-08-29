@@ -113,7 +113,10 @@ function cardState(r: DiscoveryItem, lang: Lang): CardState {
     return {
       chip: tr(lang, "فيه طابور", "In queue"),
       tone: "busy",
-      parts: r.zones.slice(0, 3).map((z) => tr(lang, `${toAr(z.waiting)} ${z.name}`, `${z.waiting} ${z.name}`)),
+      // النوع أوّلًا ثم العدد. كان «١ داخلي» — ومع قسمٍ سمّاه المالك «داخلي 1»
+      // (وهو واقعٌ في الإنتاج) يصير «١ داخلي 1»: رقمان يحيطان بالكلمة، لا
+      // شيء يميّز العدّاد من جزء الاسم. والحلّ الكامل تصحيح الاسم في القاعدة.
+      parts: r.zones.slice(0, 3).map((z) => tr(lang, `${z.name} ${toAr(z.waiting)}`, `${z.name} ${z.waiting}`)),
     };
   }
 

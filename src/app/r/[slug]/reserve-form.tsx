@@ -151,11 +151,10 @@ export function ReserveForm({
 
       {/* ١) كم شخص — يسبق الوقت لأنه يحدّد أيّ الطاولات تصلح */}
       <div className="rq-card p-4">
-        <p className="field-label mb-2">
-          {tr(lang, "كم شخص؟", "How many people?")}
-          <span className="ms-1.5 text-xs font-medium text-[color:var(--muted)]">
-            {tr(lang, `الحدّ الأعلى ${toAr(maxParty)}`, `Max ${maxParty}`)}
-          </span>
+        {/* الأزرار المعروضة هي الحدّ نفسه — فذكر «الحدّ الأعلى» حشو. */}
+        <p className="field-label mb-2">{tr(lang, "عدد الأشخاص", "Number of people")}</p>
+        <p className="mb-2.5 text-xs font-semibold" style={{ color: "var(--muted)" }}>
+          {tr(lang, "يحجز شخص واحد عن المجموعة", "One person books for the whole group")}
         </p>
         <div className="rq-rail -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
           {Array.from({ length: Math.max(1, maxParty) }, (_, i) => i + 1).map((n) => (
@@ -273,10 +272,6 @@ export function ReserveForm({
         <div className="rq-card space-y-4 p-5 reveal">
           <div className="text-right">
             <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "بياناتك وينتهي الحجز", "Your details and you're booked")}</p>
-            <span className="mt-1 inline-flex items-center gap-1.5 text-[12.5px] font-semibold" style={{ color: "var(--st-open)" }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              {tr(lang, "بلا حساب ولا كلمة مرور", "No account, no password")}
-            </span>
           </div>
           <div>
             <label htmlFor="rsv_name" className="field-label">{tr(lang, "الاسم", "Name")}</label>
