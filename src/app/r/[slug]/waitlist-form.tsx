@@ -33,6 +33,8 @@ type Branch = {
   acceptsReservations: boolean;
   closedNow: boolean;
   busyNow: boolean;
+  /** مفتوحٌ بلا طابور: يُعرض ويُزار ويقبل الحجز، ولا يقبل دورًا جديدًا. */
+  queuePaused?: boolean;
   /** أقصى عدد أشخاص يقبله الفرع — يضبطه المالك في الإدارة */
   maxParty: number;
   /** سقف حجم الطابور — يضبطه المالك اختياريًّا؛ null يعني بلا سقف */
@@ -321,7 +323,7 @@ export function WaitlistForm({
      من الاستقبال، كانت البطاقة تبقى تقول «متاح الآن · خذ دورك» دقيقةً كاملة،
      فيملأ العميل النموذج ثم يُردّ بخطأ «الفرع مغلق حاليًا». نُحدّث الاثنين
      معًا فور الرسم فتعود البطاقة صادقة. */
-  type Live = { total: number; zoneCounts?: Record<string, number>; accepts?: boolean; acceptsReservations?: boolean; closedNow?: boolean; busyNow?: boolean; maxWaitlistSize?: number | null };
+  type Live = { total: number; zoneCounts?: Record<string, number>; accepts?: boolean; acceptsReservations?: boolean; closedNow?: boolean; busyNow?: boolean; queuePaused?: boolean; maxWaitlistSize?: number | null };
   const [live, setLive] = useState<Record<string, Live>>({});
   useEffect(() => {
     const ids = branches.map((b) => b.id);
@@ -333,7 +335,7 @@ export function WaitlistForm({
       // ولكل قسمٍ عدّاده: العدّاد القديم يعرف عمودَي inside/outside فقط
       sb.rpc("waitlist_counts_by_zone", { p_branch_ids: ids }),
       sb.from("branch_settings")
-        .select("branch_id, accepts_waitlist, accepts_reservations, manually_closed, busy_now, opening_hours, max_waitlist_size")
+        .select("branch_id, accepts_waitlist, accepts_reservations, manually_closed, busy_now, queue_paused, opening_hours, max_waitlist_size")
         .in("branch_id", ids),
     ])
       .then(([counts, byZone, settings]) => {
@@ -354,6 +356,7 @@ export function WaitlistForm({
             accepts: st.accepts_waitlist ?? true,
             acceptsReservations: st.accepts_reservations ?? false,
             busyNow: st.busy_now ?? false,
+            queuePaused: st.queue_paused ?? false,
             closedNow: (st.manually_closed ?? false) || !isWithinOpeningHours(st.opening_hours as { open?: string | null; close?: string | null } | null),
             maxWaitlistSize: st.max_waitlist_size ?? null,
           };
@@ -660,6 +663,37 @@ export function WaitlistForm({
           </span>
           <p className="text-lg font-bold text-[color:var(--ink)]">{tr(lang, "هذا الفرع يستقبل مباشرة — بلا حجز دور", "This branch welcomes walk-ins — no queue needed")}</p>
           <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "تفضّل مباشرة — طاولتك جاهزة.", "Just come in — your table is ready.")}</p>
+        </div>
+        {reserveSection}
+      </div>
+    );
+  }
+
+  // «مفتوح بلا طابور» — المطعم فاضٍ فلا معنى لدورٍ رقمه ١.
+  //
+  // يسبق فحص الامتلاء عمدًا: الفرع الموقوف طابورُه ليس ممتلئًا، ورسالة
+  // «ممتلئ» هنا تقول عكس الحقيقة تمامًا.
+  //
+  // ونمنع الإرسال في الواجهة **مع** الحارس في القاعدة (P0011) لا بدلًا منه:
+  // الإخفاء وحده يتخطّاه نداءٌ مباشر، والقاعدة وحدها تعني نموذجًا يقبل
+  // الضغطة ثم يردّها بخطأ بعد أن كتب العميل اسمه ورقمه.
+  if (branch && branch.queuePaused) {
+    return (
+      <div className="space-y-3">
+        {multi && (
+          <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
+        )}
+        <div className="rq-card p-7 text-center">
+          <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full text-cream-100" style={{ background: "var(--brand-solid)" }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </span>
+          <p className="text-lg font-bold text-[color:var(--ink)]">
+            {tr(lang, "لا يوجد انتظار", "No wait")}
+          </p>
+          <p className="mt-1 text-sm text-[color:var(--muted)]">
+            {tr(lang, "المطعم مفتوح ويستقبل الآن — تفضّل مباشرةً بلا حجز دور.",
+                      "The restaurant is open and seating now — just walk in, no queue needed.")}
+          </p>
         </div>
         {reserveSection}
       </div>

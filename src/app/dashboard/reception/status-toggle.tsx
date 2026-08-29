@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { setBranchStatus } from "./status-actions";
+import { setBranchQueuePaused, setBranchStatus } from "./status-actions";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 
@@ -15,18 +15,31 @@ export function StatusToggle({
   closedNow,
   busyNow,
   closedByHours,
+  queuePaused = false,
 }: {
   branchId: string;
   closedNow: boolean;
   busyNow: boolean;
   /** الفرع مغلق حاليًا حسب أوقات الدوام المضبوطة (لا يدويًّا) — إعلامي فقط. */
   closedByHours: boolean;
+  /** مفتوحٌ بلا طابور: يُعرض ويُزار، ولا يقبل دورًا جديدًا. */
+  queuePaused?: boolean;
 }) {
   const lang = useLang();
   const [closed, setClosed] = useState(closedNow);
   const [busy, setBusy] = useState(busyNow);
+  const [paused, setPaused] = useState(queuePaused);
   const [err, setErr] = useState(false);
   const [pending, start] = useTransition();
+
+  function togglePaused() {
+    const prev = paused;
+    setPaused(!prev);
+    start(async () => {
+      const ok = await setBranchQueuePaused(branchId, !prev);
+      if (!ok) { setPaused(prev); setErr(true); } else setErr(false);
+    });
+  }
 
   function toggle(nextClosed: boolean, nextBusy: boolean) {
     const prev = { closed, busy };
@@ -76,6 +89,31 @@ export function StatusToggle({
         <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
         {busy ? tr(lang, "مزدحم الآن — اضغط للإلغاء", "Busy now — tap to clear") : tr(lang, "علّم الفرع مزدحمًا الآن", "Mark branch busy now")}
       </button>
+
+      {/* «بدون انتظار» — مفتوحٌ ويستقبل، بلا دور. يختفي حين يكون الفرع مقفلًا
+          أصلًا: لا معنى لإيقاف طابورٍ في فرعٍ لا يُرى. */}
+      <button
+        type="button"
+        role="switch"
+        aria-checked={paused}
+        disabled={pending || closed}
+        onClick={togglePaused}
+        className="flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold transition disabled:opacity-60"
+        style={{ background: "var(--brand-solid)", color: "var(--brand-ink)" }}
+      >
+        <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
+        {paused
+          ? tr(lang, "بدون انتظار — اضغط لإعادة الدور", "No wait — tap to resume queue")
+          : tr(lang, "أوقف الدور (المطعم فاضي)", "Pause queue (restaurant is empty)")}
+      </button>
+
+      {paused && !closed && (
+        <span className="text-xs font-bold" style={{ color: "var(--muted)" }}>
+          {tr(lang,
+            "الفرع معروضٌ ويستقبل — والداخل يدخل مباشرةً. ومن هو في الطابور الآن يبقى ويُجلَس. ويُلغى تلقائيًّا فجر كل يوم.",
+            "The branch stays visible and open — guests walk right in. Anyone already in the queue stays and gets seated. Clears automatically at dawn.")}
+        </span>
+      )}
 
       {!closed && closedByHours && (
         <span className="text-xs font-bold" style={{ color: "var(--muted)" }}>

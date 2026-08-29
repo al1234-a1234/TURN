@@ -68,6 +68,7 @@ export default async function Home() {
         b,
         total: c?.total ?? 0,
         accepts: s?.accepts_waitlist ?? true,
+        paused: s?.queue_paused ?? false,
         closed: (s?.manually_closed ?? false) || !isWithinOpeningHours(s?.opening_hours ?? null),
       };
     });
@@ -96,7 +97,10 @@ export default async function Home() {
       logo_url: r.logo_url,
       cuisine: r.cuisine,
       cuisine_en: r.cuisine_en,
-      waiting: best?.total ?? 0,
+      // فرعٌ موقوفٌ طابورُه: صفرٌ دائمًا مهما بقي فيه من واقفين.
+      // بلا هذا تقول البطاقة «فيه طابور ٣» ويدخل العميل فيجد «لا يوجد
+      // انتظار» — تناقضٌ بين شاشتين، وهو أسوأ من أيّ الرقمين وحده.
+      waiting: best?.paused ? 0 : (best?.total ?? 0),
       accepts: best?.accepts ?? true,
       closedNow: open.length === 0,
       rating,
