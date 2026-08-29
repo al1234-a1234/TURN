@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useActionState, useState, useTransition } from "react";
 import Image from "next/image";
 import { ImageUploader } from "@/components/image-uploader";
 import { tr } from "@/lib/i18n";
@@ -38,16 +38,29 @@ export function MenuManager({
   items: Item[];
 }) {
   const lang = useLang();
+  const [catState, catAction] = useActionState(addMenuCategory, null);
   return (
     <div className="space-y-4">
-      <form action={addMenuCategory} className="soft-card flex items-end gap-3 p-4">
+      <form action={catAction} className="soft-card p-4">
         <input type="hidden" name="branch_id" value={branchId} />
-        <div className="flex-1">
-          <label className="field-label">{tr(lang, "إضافة فئة جديدة", "Add new category")}</label>
-          <input name="name" required placeholder={tr(lang, "مثال: المقبلات الباردة", "e.g. Cold appetizers")} className="field-input" />
-          <input name="name_en" dir="ltr" placeholder={tr(lang, "بالإنجليزية (اختياري)", "In English (optional)")} className="field-input mt-2" />
+        <div className="flex items-end gap-3">
+          <div className="flex-1">
+            <label className="field-label">{tr(lang, "إضافة فئة جديدة", "Add new category")}</label>
+            {/* الفئة ليست طبقًا — والخلط بينهما كلّف المالك قائمةً فارغة:
+                أُنشئ «سيزر سلط» فئةً ثمّ استُغرب أنّها بلا صورة ولا سعر. */}
+            <p className="mb-1.5 text-xs font-semibold" style={{ color: "var(--muted)" }}>
+              {tr(lang,
+                "الفئة مجموعةٌ تضمّ أطباقًا (مقبّلات، مشاوي…) — وليست طبقًا. الأطباق تُضاف داخلها بزرّ «+ صنف».",
+                "A category groups dishes (Appetizers, Grills…) — it is not a dish. Add dishes inside it with “+ Item”.")}
+            </p>
+            <input name="name" required placeholder={tr(lang, "مثال: المقبلات الباردة", "e.g. Cold appetizers")} className="field-input" />
+            <input name="name_en" dir="ltr" placeholder={tr(lang, "بالإنجليزية (اختياري)", "In English (optional)")} className="field-input mt-2" />
+          </div>
+          <button className="btn btn-primary shrink-0 px-5">{tr(lang, "إضافة", "Add")}</button>
         </div>
-        <button className="btn btn-primary shrink-0 px-5">{tr(lang, "إضافة", "Add")}</button>
+        {catState?.error && (
+          <p className="mt-2 text-xs font-bold" style={{ color: "var(--danger)" }}>{catState.error}</p>
+        )}
       </form>
 
       {categories.length === 0 ? (
@@ -84,6 +97,7 @@ function CategoryBlock({
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
   const [translating, setTranslating] = useState(false);
+  const [itemState, itemAction] = useActionState(addMenuItem, null);
 
   return (
     <div className="soft-card p-4">
@@ -139,7 +153,7 @@ function CategoryBlock({
       )}
 
       {open && (
-        <form action={addMenuItem} className="mt-4 space-y-3 rounded-2xl bg-sand-100 p-4 ">
+        <form action={itemAction} className="mt-4 space-y-3 rounded-2xl bg-sand-100 p-4 ">
             <input type="hidden" name="branch_id" value={branchId} />
           <input type="hidden" name="category_id" value={category.id} />
           <ImageUploader restaurantId={restaurantId} name="image_url" label={tr(lang, "صورة الصنف", "Item image")} />
@@ -150,6 +164,9 @@ function CategoryBlock({
           </div>
           <textarea name="description" rows={2} placeholder={tr(lang, "الوصف (اختياري)", "Description (optional)")} className="field-input" />
           <textarea name="description_en" rows={2} dir="ltr" placeholder={tr(lang, "الوصف بالإنجليزية (اختياري)", "English description (optional)")} className="field-input" />
+          {itemState?.error && (
+            <p className="text-xs font-bold" style={{ color: "var(--danger)" }}>{itemState.error}</p>
+          )}
           <button className="btn btn-primary w-full">{tr(lang, "إضافة الصنف", "Add item")}</button>
         </form>
       )}

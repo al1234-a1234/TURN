@@ -40,40 +40,68 @@ type Branch = {
   photo: string | null;
 };
 
+/**
+ * بطاقة عدّاد القسم — سطران لا ثلاثة.
+ *
+ * كانت: رقمٌ كبير، ثم اسم القسم، ثم «بالطابور». ثلاثة أسطرٍ لمعلومةٍ واحدة،
+ * والسطر الثالث لا يضيف شيئًا: الرقم فوق قسمٍ مسمّى **هو** الطابور.
+ *
+ * وصفرٌ معروضًا كرقمٍ كبير أسوأ من زائد: عينُ العميل تلتقط الرقم قبل الكلمة،
+ * فيقرأ «٠» لحظةً كأنّها عدّادٌ ما، ثم يصحّح نفسه. فالصفر يُستبدل بجملته:
+ * «لا يوجد انتظار» — وهي الرسالة المقصودة أصلًا.
+ */
 function ZoneStat({ label, count }: { label: string; count: number }) {
   const lang = useLang();
   const busy = count > 0;
   return (
     <div
-      className="rounded-3xl p-4 text-center"
+      className="flex min-h-[104px] flex-col items-center justify-center rounded-3xl p-4 text-center"
       style={
         busy
           ? { background: "var(--brand-solid)", boxShadow: "0 14px 26px -16px rgba(102,28,10,0.72)" }
           : { background: "var(--brand-solid)" }
       }
     >
-      <p className="font-display text-3xl font-bold text-cream-100">
-        {busy ? toAr(count) : "0"}
-      </p>
-      <p className="mt-1 text-xs font-bold text-cream-100/90">{label}</p>
-      <p className="mt-0.5 text-[11px] font-bold text-cream-100">
-        {busy ? tr(lang, "بالطابور", "In queue") : tr(lang, "متاح الآن", "Available now")}
-      </p>
+      {busy ? (
+        <>
+          <p className="font-display text-3xl font-bold leading-none text-cream-100">{toAr(count)}</p>
+          {/* نفس اللون، وأصغر قليلًا لا كثيرًا: التباين يأتي من عرض خطّ الرقم
+              لا من تصغير الكلمة حتى تكاد تختفي. */}
+          <p className="mt-1.5 text-lg font-bold leading-tight text-cream-100">{label}</p>
+        </>
+      ) : (
+        <>
+          <p className="text-lg font-bold leading-tight text-cream-100">
+            {tr(lang, "لا يوجد انتظار", "No wait")}
+          </p>
+          <p className="mt-1 text-sm font-bold leading-tight text-cream-100/85">{label}</p>
+        </>
+      )}
     </div>
   );
 }
 
 /**
- * سطر توزيع الأقسام على بطاقة الفرع — «٣ داخلي · ٢ خارجي» بأسماء المالك.
+ * سطر توزيع الأقسام على بطاقة الفرع — «داخلي ٣ · خارجي ٢» بأسماء المالك.
  *
  * يُعرض ما فيه منتظرون فقط، وثلاثةٌ كحدٍّ أعلى كي لا يفيض السطر عن البطاقة.
+ *
+ * ── لماذا النوع أوّلًا والرقم بعده ──
+ * كان «٣ داخلي». وحين يسمّي المالك قسمه «داخلي 1» — وهو واقعٌ في الإنتاج —
+ * يصير السطر «١ داخلي 1»: رقمان يحيطان بالكلمة، أحدهما عدّاد والآخر جزءٌ من
+ * الاسم، ولا شيء يميّزهما. فبتقديم النوع يصير «داخلي 1 · ١» ويبقى الالتباس
+ * أخفّ لكنّه قائم.
+ *
+ * **والحلّ الكامل في البيانات لا هنا:** الاسم نفسه يجب أن يكون «داخلي».
+ * وهذا الترتيب يقلّل الضرر ولا يدّعي إصلاحه — وقصّ الأرقام من أسماء الأقسام
+ * برمجيًّا مرفوض: مالكٌ يسمّي قسمه «قاعة ٢» يقصدها.
  */
 function zoneLine(b: Branch, lang: "ar" | "en"): string {
   const parts = (b.zones ?? [])
     .map((z) => ({ name: zoneLabel(z, lang), n: b.zoneCounts?.[z.key] ?? 0 }))
     .filter((z) => z.n > 0)
     .slice(0, 3)
-    .map((z) => `${toAr(z.n)} ${z.name}`);
+    .map((z) => `${z.name} ${toAr(z.n)}`);
   return parts.join(" · ");
 }
 
@@ -691,11 +719,14 @@ export function WaitlistForm({
       {/* رأس الفرع المختار + تغيير الفرع */}
       {branchHead}
 
+      {/* الازدحام: قالبٌ عنابيّ كبقيّة القوالب لا شريطٌ عريضٌ فوقها.
+          والنصّ مختصر — «قد يطول الانتظار قليلًا» تحصيلُ حاصلٍ بعد كلمة
+          «مزدحم»، وكانت تمطّ الشريط سطرين على شاشة الجوّال. */}
       {branch?.busyNow && (
-        <p className="flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold text-cream-100"
+        <p className="flex items-center justify-center gap-2 rounded-3xl p-4 text-center text-lg font-bold text-cream-100"
            style={{ background: "var(--brand-solid)" }}>
-          <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
-          {tr(lang, "الفرع مزدحم الآن — قد يطول الانتظار قليلًا", "The branch is busy now — expect a slightly longer wait")}
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-white/90" />
+          {tr(lang, "المطعم مزدحم الآن", "The restaurant is busy now")}
         </p>
       )}
 
@@ -734,19 +765,13 @@ export function WaitlistForm({
       {/* عدد الأشخاص — محدودٌ بسقف الفرع، فلا يختار العميل رقمًا يُرفض بعده */}
       {maxParty > 1 && (
         <div className="rq-card p-4">
-          <p className="field-label mb-2">
-            {tr(lang, "كم شخص؟", "How many people?")}
-            <span className="ms-1.5 text-xs font-medium text-[color:var(--muted)]">
-              {tr(lang, `الحدّ الأعلى ${toAr(maxParty)}`, `Max ${maxParty}`)}
-            </span>
-          </p>
-          {/* توضيحٌ مباشر: أفراد المجموعة الواحدة يسجّلون بدخولٍ واحد لا
-              بتسجيل كلٍّ منهم على حدة — التكرار كان يُضاعف عدد المنتظرين
-              ظاهريًّا بينما هم أصلًا قلّة. */}
+          {/* «الحدّ الأعلى ٦» حُذف: الأزرار المعروضة هي الحدّ نفسه — لا يستطيع
+              العميل اختيار أكثر، فذكره حشوٌ يشغل السطر. */}
+          <p className="field-label mb-2">{tr(lang, "عدد الأشخاص", "Number of people")}</p>
+          {/* جملةٌ واحدة: التكرار كان يُضاعف عدد المنتظرين ظاهريًّا حين يسجّل
+              كلُّ فردٍ من المجموعة نفسه على حدة. */}
           <p className="mb-2.5 text-xs font-semibold" style={{ color: "var(--muted)" }}>
-            {tr(lang,
-              "اختر عدد أفراد مجموعتك كاملة — يسجّل شخصٌ واحد فقط، لا كل فرد على حدة.",
-              "Pick your whole group's size — one person registers for everyone, not each person separately.")}
+            {tr(lang, "يحجز شخص واحد عن المجموعة", "One person books for the whole group")}
           </p>
           <div className="rq-rail -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
             {Array.from({ length: maxParty }, (_, i) => i + 1).map((n) => (
@@ -773,12 +798,6 @@ export function WaitlistForm({
       <div className="rq-card space-y-4 p-5">
         <div className="text-right">
           <p className="font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "سجّل بياناتك وخذ دورك", "Enter your details and take your turn")}</p>
-          {/* طمأنةٌ لا حالة — والكبسولة المُشبَعة تجعلها تنافس عنوان البطاقة
-              فوقها. نصٌّ أخضر: الأخضر عندنا يعني «لا عائق». */}
-          <span className="mt-1 inline-flex items-center gap-1.5 text-[12.5px] font-semibold" style={{ color: "var(--st-open)" }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            {tr(lang, "بلا حساب ولا كلمة مرور", "No account, no password")}
-          </span>
         </div>
         <div>
           <label htmlFor="full_name" className="field-label">{tr(lang, "الاسم", "Name")}</label>
