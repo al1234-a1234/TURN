@@ -11,13 +11,35 @@ import { createClient } from "@/lib/supabase/client";
  * ولا نعيد الريندر إلا عند تغيّر فعلي في الطابور — خفض الحمل ~٩٠٪.
  * نفس ضمانات التذكرة: إيقاف عند الخمول، تنظيف كامل، تباعد عند الفشل.
  */
-export function AutoRefresh({ branchId, intervalMs = 10_000 }: { branchId: string; intervalMs?: number }) {
+export function AutoRefresh({
+  branchId,
+  intervalMs = 10_000,
+  initialVersion = null,
+}: {
+  branchId: string;
+  intervalMs?: number;
+  /**
+   * بصمة الطابور لحظةَ التصيير على الخادم.
+   *
+   * ── العطب الذي تُصلحه ──
+   * كان خطّ الأساس يُبنى من **أوّل نبضة في المتصفّح** لا ممّا رُسم فعلًا:
+   * `if (lastVersion !== null && …)` تعني أنّ النبضة الأولى تسجّل وتصمت.
+   * فتغييرٌ يقع بين التصيير والنبضة الأولى يُدفن في خطّ الأساس **ولا يظهر
+   * أبدًا** حتى يقع تغييرٌ آخر — وقد لا يقع في فرعٍ هادئ.
+   *
+   * وهذا يفسّر تفاوت المثبَّت عن المتصفّح: التبويب يُطرد فيعيد التصيير
+   * ويهرب من العطب، أمّا المثبَّت فيبقى حيًّا أيّامًا عالقًا فيه.
+   *
+   * الآن يبدأ المستطلِع من نسخة الخادم، فأوّل نبضة تكشف أيّ فارق.
+   */
+  initialVersion?: string | null;
+}) {
   const router = useRouter();
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
     let fails = 0;
-    let lastVersion: string | null = null;
+    let lastVersion: string | null = initialVersion;
     const supabase = createClient();
 
     const clear = () => { if (timer) { clearTimeout(timer); timer = null; } };
@@ -42,7 +64,12 @@ export function AutoRefresh({ branchId, intervalMs = 10_000 }: { branchId: strin
     const onVis = () => {
       if (typeof document === "undefined") return;
       if (document.hidden) clear();
-      else { lastVersion = null; router.refresh(); schedule(intervalMs); } // عودة من الخمول → مزامنة فورية
+      else {
+        // عودة من الخمول → مزامنة فوريّة. ولا نُصفّر خطّ الأساس: تصفيره يُعيد
+        // العطب نفسه (النبضة التالية تسجّل وتصمت). نستطلع فورًا بدل الانتظار.
+        router.refresh();
+        schedule(0);
+      }
     };
 
     document.addEventListener("visibilitychange", onVis);
@@ -52,7 +79,7 @@ export function AutoRefresh({ branchId, intervalMs = 10_000 }: { branchId: strin
       clear();
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, [router, branchId, intervalMs]);
+  }, [router, branchId, intervalMs, initialVersion]);
 
   return null;
 }

@@ -59,7 +59,7 @@ export default async function ReceptionPage({
   const soonFrom = new Date(Date.now() - 60 * 60e3).toISOString();
   const soonTo = new Date(Date.now() + 4 * 3600e3).toISOString();
 
-  const [queueRes, todayRes, statusRes, resvRes, zoneRes] = activeBranch
+  const [queueRes, todayRes, statusRes, resvRes, zoneRes, versionRes] = activeBranch
     ? await Promise.all([
         // نداءٌ واحد بدل انضمامٍ تحرسه سياسةُ `customers` صفًّا صفًّا: كانت
         // الحراسة تنادي دالّةً أمنيّة لكلّ منتظر، فبلغت القراءة ٢٥٠ مللي على
@@ -83,8 +83,12 @@ export default async function ReceptionPage({
         // فوق يعتمد على نتيجتها). الآن تسافر معهنّ في نفس الدفعة.
         supabase.from("branch_zones").select("id, key, name, name_en, sort_order, is_active")
           .eq("branch_id", activeBranch.id).order("sort_order"),
+        // بصمة الطابور **لحظة هذا التصيير**. بدونها كان المستطلِع في المتصفّح
+        // يبني خطّ أساسه من أوّل نبضة له لا ممّا رُسم فعلًا، فيبتلع كلّ تغييرٍ
+        // وقع بين التصيير والنبضة الأولى ولا يعرضه أبدًا. تكلفتها ٠٫٦٨ م.ث.
+        supabase.rpc("queue_version", { p_branch_id: activeBranch.id }),
       ])
-    : [{ data: [], error: null }, { count: 0, error: null }, { data: null, error: null }, { data: [], error: null }, { data: [], error: null }];
+    : [{ data: [], error: null }, { count: 0, error: null }, { data: null, error: null }, { data: [], error: null }, { data: [], error: null }, { data: null, error: null }];
 
   // أخطر كذبة في الشاشة: طابور فارغ. الموظّف يقرأه «لا أحد ينتظر» فيتوقّف عن
   // المناداة والناس واقفون. عند فشل الجلب نقول تعذّر التحميل ولا نرسم طابورًا.
@@ -246,7 +250,13 @@ export default async function ReceptionPage({
       {/* ٤ث لا ١٠: الاستقبال والعميل طرفا نفس الطابور، وكان أحدهما يرى تحرّك
           الآخر بعد عشر ثوانٍ — يُقرأ «بطيء ويكاد يعلّق». النبضة خفيفة (رقمٌ
           واحد مفهرس) فتكرارها لا يكلّف القاعدة شيئًا يُذكر. */}
-      {activeBranch && <AutoRefresh branchId={activeBranch.id} intervalMs={4_000} />}
+      {activeBranch && (
+        <AutoRefresh
+          branchId={activeBranch.id}
+          intervalMs={4_000}
+          initialVersion={versionRes?.data == null ? null : String(versionRes.data)}
+        />
+      )}
 
       <div className="mb-5 hidden items-center justify-between lg:flex">
         <div>
