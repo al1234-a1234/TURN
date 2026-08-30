@@ -7,6 +7,7 @@ import { saveLinks } from "./actions";
 import { GalleryManager } from "./gallery-manager";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
+import { ScreenGuide } from "@/components/screen-guide";
 
 export default async function ContentPage({ searchParams }: { searchParams: Promise<{ branch?: string }> }) {
   const lang = await getLang();
@@ -49,6 +50,17 @@ export default async function ContentPage({ searchParams }: { searchParams: Prom
         <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "المحتوى والروابط", "Content & Links")}</h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "روابط مطعمك العامة على الخرائط ومنصات التواصل", "Your restaurant's public links on maps and social platforms")}</p>
       </div>
+
+      <ScreenGuide
+        lang={lang}
+        anchor="owner"
+        className="mb-5"
+        lines={[
+          tr(lang, "روابطك العامة: الخرائط وإنستقرام وسناب وواتساب وغيرها.", "Your public links: Maps, Instagram, Snapchat, WhatsApp and more."),
+          tr(lang, "معرض صور الفرع — رفعٌ وترتيبٌ وحذف.", "The branch photo gallery — upload, reorder and remove."),
+          tr(lang, "الروابط للعلامة كلّها، والصور لكلّ فرعٍ على حدة.", "Links are brand-wide; photos belong to each branch on its own."),
+        ]}
+      />
 
       <section className="soft-card p-5">
         <h2 className="mb-1 font-display text-lg font-bold text-[color:var(--ink)]">{tr(lang, "الروابط العامة", "Public links")}</h2>

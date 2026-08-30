@@ -7,6 +7,7 @@ import { DeleteRestaurantButton } from "./delete-restaurant-button";
 import { LangToggle } from "@/components/lang-toggle";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
+import { ScreenGuide } from "@/components/screen-guide";
 
 export default async function AdminPage() {
   const lang = await getLang();
@@ -56,6 +57,15 @@ export default async function AdminPage() {
       </header>
 
       <main className="mx-auto -mt-4 w-full max-w-3xl flex-1 space-y-8 px-5 pb-12">
+        <ScreenGuide
+          lang={lang}
+          anchor="owner"
+          lines={[
+            tr(lang, "هذه شاشة فريق «دور» وحده — لا يصل إليها المالك.", "This is the Turn team's screen only — owners cannot reach it."),
+            tr(lang, "أنشئ مطعمًا وحساب مالكه، أو افتح باقته ووحداته.", "Create a restaurant and its owner account, or open its plan and modules."),
+            tr(lang, "إيقاف المنصّة يمنع الانضمام والحجز الجديد فقط — ومن في الطابور يُجلَس.", "Pausing the platform blocks only new joins and bookings — whoever is queued still gets seated."),
+          ]}
+        />
         {/* المقود أوّلًا: ساعة الطوارئ ليست ساعة تمرير الصفحة بحثًا عن زرّ */}
         <section>
           <h2 className="mb-3 font-serif text-xl font-bold text-[color:var(--ink)]">

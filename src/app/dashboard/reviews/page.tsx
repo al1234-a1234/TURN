@@ -5,6 +5,7 @@ import { ReviewPublishToggle } from "./review-toggle";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
+import { ScreenGuide } from "@/components/screen-guide";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Review = Database["public"]["Tables"]["reviews"]["Row"] & {
@@ -47,6 +48,15 @@ export default async function ReviewsPage() {
 
   return (
     <div className="space-y-6">
+        <ScreenGuide
+          lang={lang}
+          anchor="owner"
+          lines={[
+            tr(lang, "كلّ التقييمات والتعليقات، ومتوسّطك وتوزيع النجوم.", "Every rating and comment, your average, and the star spread."),
+            tr(lang, "انشر أيّ تقييمٍ أو أخفِه عن صفحتك العامة بمفتاحٍ واحد.", "Publish any review or hide it from your public page with one switch."),
+            tr(lang, "مع التوجيه الذكيّ: ٤ نجومٍ فأكثر تُدعى لقوقل، والأقلّ يصلك هنا.", "With smart routing on: 4★ and above are invited to Google, lower feedback reaches you here."),
+          ]}
+        />
         {/* ملخّص التقييم */}
         <section className="soft-card p-5">
           <div className="flex items-center gap-5">

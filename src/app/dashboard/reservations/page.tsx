@@ -4,6 +4,7 @@ import { resolveBranchScope } from "../branch-scope";
 import { BranchPicker } from "../branch-picker";
 import { staffHasPermission } from "@/lib/features";
 import { getLang } from "@/lib/i18n-server";
+import { ScreenGuide } from "@/components/screen-guide";
 import { tr } from "@/lib/i18n";
 import { toAr } from "@/lib/format";
 import { riyadhDayStart } from "@/lib/dates";
@@ -101,6 +102,17 @@ export default async function ReservationsPage({ searchParams }: { searchParams:
         <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "الحجوزات", "Reservations")}</h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "احجز طاولات مسبقًا وأدِر حضور العملاء", "Book tables ahead and manage arrivals")}</p>
       </div>
+
+      <ScreenGuide
+        lang={lang}
+        anchor="owner"
+        className="mb-5"
+        lines={[
+          tr(lang, "احجز طاولةً مسبقًا وأدِر حضور من حجز.", "Book a table ahead and manage who arrives."),
+          tr(lang, "لكل حجزٍ حالة: بانتظار، مؤكّد، جلس، مكتمل، ملغى، لم يحضر.", "Each booking has a state: pending, confirmed, seated, completed, cancelled, no-show."),
+          tr(lang, "حجزٌ بلا طاولة يظهر موسومًا — عيّنها يدويًّا عند الحضور.", "A booking with no table is flagged — assign one by hand on arrival."),
+        ]}
+      />
 
       {scope.multi && activeBranch && <BranchPicker branches={scope.branches} activeId={activeBranch.id} />}
 

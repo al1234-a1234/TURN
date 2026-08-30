@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { BulkForm } from "./bulk-form";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
+import { ScreenGuide } from "@/components/screen-guide";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,15 @@ export default async function BulkPage() {
       </header>
 
       <main className="mx-auto -mt-4 w-full max-w-3xl flex-1 space-y-4 px-5 pb-12">
+        <ScreenGuide
+          lang={lang}
+          anchor="owner"
+          lines={[
+            tr(lang, "شاشة فريق «دور» وحده — إدخال عدّة مطاعمَ دفعةً واحدة.", "The Turn team's screen only — onboard several restaurants in one pass."),
+            tr(lang, "كلّ مطعمٍ يخرج جاهزًا للطابور فورًا بحساب مالكه.", "Each restaurant comes out queue-ready at once, with its owner account."),
+            tr(lang, "الشعار والمنيو والطاولات تُترك للمالك يضيفها لاحقًا.", "Logo, menu and tables are deliberately left for the owner to add later."),
+          ]}
+        />
         <div className="soft-card p-4 text-sm text-[color:var(--muted)]">
           {tr(
             lang,
