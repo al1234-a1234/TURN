@@ -158,25 +158,9 @@ export async function updateBranchSettings(formData: FormData) {
 }
 
 // ---------- الفروع والمواقع ----------
-export async function addBranch(formData: FormData) {
-  const caller = await requirePerm("settings");
-  if (!caller) return;
-  const { supabase, restaurantId: rid } = caller;
-  // فتح فرع جديد قرار مالك العلامة — المربوط بفرع لا يفتح فروعًا (RLS يمنعه أيضًا)
-  if (caller.branchId) return;
-  const name = String(formData.get("name") ?? "").trim();
-  if (!name) return;
-  const city = String(formData.get("city") ?? "").trim() || null;
-  const address = String(formData.get("address") ?? "").trim() || null;
-  const { error } = await supabase.from("branches").insert({ restaurant_id: rid, name, city, address });
-  if (error) {
-    console.error("[addBranch]", error.message);
-    return;
-  }
-  revalidatePath("/dashboard/manage");
-  revalidateTag("discovery");
-  revalidatePath("/dashboard");
-}
+// إنشاء فرعٍ جديد لم يعد هنا: صار حصرًا في /admin/[id] (صلاحية المنصّة لا
+// المطعم). كانت addBranch هنا، وحارسها الوحيد caller.branchId — يمنع حسابًا
+// مربوطًا بفرعٍ واحد، ولا يمنع صاحب المطعم نفسه. راجع ops/incidents/ للحادثة.
 
 export async function deleteBranch(formData: FormData) {
   const caller = await requirePerm("settings");
