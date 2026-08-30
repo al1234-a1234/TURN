@@ -28,9 +28,14 @@ import type { ReactNode } from "react";
 const TRACK = "relative h-7 w-12 shrink-0 rounded-full transition";
 const KNOB = "absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-[color:var(--surface)] shadow transition-all";
 
-function trackStyle(on: boolean) {
+/** نبرة اللون حين يشتغل المفتاح. «danger» لمفتاحٍ اشتغالُه حالةُ تنبيهٍ لا
+ *  حالةٌ طبيعيّة — كإيقاف الانضمام: أحمرُ مشتعلٌ يُرى قبل أن يُقرأ. */
+type Tone = "brand" | "danger";
+
+function trackStyle(on: boolean, tone: Tone = "brand") {
+  const onColor = tone === "danger" ? "var(--st-closed)" : "var(--brand-solid)";
   return {
-    background: on ? "var(--brand-solid)" : "var(--surface-2)",
+    background: on ? onColor : "var(--surface-2)",
     border: "1px solid var(--border)",
   };
 }
@@ -76,6 +81,7 @@ export function ToggleSwitch({
   hint,
   disabled = false,
   srLabel,
+  tone = "brand",
 }: {
   on: boolean;
   onToggle: () => void;
@@ -84,6 +90,8 @@ export function ToggleSwitch({
   disabled?: boolean;
   /** اسمٌ للقارئ الصوتيّ حين لا يكفي العنوان المرئيّ. */
   srLabel?: string;
+  /** لون الاشتغال — «danger» حين يكون اشتغالُه تنبيهًا لا حالةً طبيعيّة. */
+  tone?: Tone;
 }) {
   return (
     <Shell
@@ -98,7 +106,7 @@ export function ToggleSwitch({
           disabled={disabled}
           onClick={onToggle}
           className={`${TRACK} disabled:cursor-not-allowed disabled:opacity-50`}
-          style={trackStyle(on)}
+          style={trackStyle(on, tone)}
         >
           <span className={KNOB} style={knobStyle(on)} />
         </button>
