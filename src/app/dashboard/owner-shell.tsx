@@ -28,7 +28,8 @@ export type OwnerNavKey =
   | "tables"
   | "content"
   | "reports"
-  | "manage";
+  | "manage"
+  | "guide";
 
 type NavDef = {
   key: OwnerNavKey;
@@ -53,6 +54,10 @@ const NAV: NavDef[] = [
   { key: "content", ar: "المحتوى والروابط", en: "Content & Links", href: "/dashboard/content", icon: "🔗", perm: "settings" },
   { key: "reports", ar: "التقارير", en: "Reports", href: "/dashboard/reports", icon: "📈", module: "analytics", perm: "analytics" },
   { key: "manage", ar: "الإدارة والتحليلات", en: "Management & Analytics", href: "/dashboard/manage", icon: "⚙️", perm: "settings" },
+  // الدليل بلا `perm` ولا `module`: من يدخل اللوحة أصلًا يحتاج أن يعرف ماذا
+  // تفعل أزرارُها. وحصرُه خلف صلاحيّة يحجبه عن المضيف — وهو أوّل من كُتب له.
+  // والصفحة نفسها تعرض دليل المالك لمن يملك صلاحيّة الإعدادات وحده.
+  { key: "guide", ar: "الدليل", en: "Guide", href: "/dashboard/guide", icon: "❓" },
 ];
 
 /**
