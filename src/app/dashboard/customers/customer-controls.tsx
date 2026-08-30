@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { SwitchTrack } from "@/components/toggle-switch";
 import { updateCustomerProfile } from "./actions";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
@@ -51,10 +52,9 @@ export function CustomerControls({
               role="switch"
               aria-checked={vip}
               onClick={() => setVip((v) => !v)}
-              className="relative h-7 w-12 shrink-0 rounded-full transition"
-              style={{ background: vip ? "var(--brand-solid)" : "var(--surface-2)", border: "1px solid var(--border)" }}
+              className="shrink-0"
             >
-              <span className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-[color:var(--surface)] shadow transition-all" style={{ insetInlineStart: vip ? "1.55rem" : "0.2rem" }} />
+              <SwitchTrack on={vip} />
             </button>
           </div>
 

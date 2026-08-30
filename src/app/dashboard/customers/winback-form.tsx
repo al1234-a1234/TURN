@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { SwitchTrack } from "@/components/toggle-switch";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 import { toAr } from "@/lib/format";
@@ -48,13 +49,9 @@ export function WinbackForm({
           aria-checked={on}
           aria-label={tr(lang, "تفعيل الاسترجاع التلقائي", "Enable automatic win-back")}
           onClick={() => setOn((v) => !v)}
-          className="relative h-7 w-14 shrink-0 rounded-full transition-colors"
-          style={{ background: on ? "var(--brand-solid)" : "var(--surface-2)" }}
+          className="shrink-0"
         >
-          <span
-            className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-[color:var(--surface)] shadow transition-all"
-            style={{ insetInlineStart: on ? "1.95rem" : "0.2rem" }}
-          />
+          <SwitchTrack on={on} />
         </button>
       </div>
       <input type="hidden" name="is_active" value={on ? "1" : "0"} />
