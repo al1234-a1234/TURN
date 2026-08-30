@@ -140,14 +140,19 @@ export function clearBooking(id: string) {
   if (next.length !== list.length) write(BOOKINGS_KEY, next);
 }
 
-/** يوم الرياض للطابع الزمني — حدود اليوم عندنا رياضية لا UTC. */
-function riyadhDay(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-CA", { timeZone: "Asia/Riyadh" });
-}
+/**
+ * عمر الدور الذي نعدّه حيًّا — نفس نافذة `expire_stale_waitlist` في القاعدة
+ * (٨ ساعات). لا «يوم تقويميّ»: من انضمّ ١١:٥٠ مساءً ثمّ حدّث الصفحة ١٢:٠٥
+ * كان يفقد تذكرته على جهازه بينما دورُه ما زال قائمًا في الطابور — الجلسة
+ * واحدة والساعة عبرت منتصف الليل وحدها. اليوم التشغيليّ لا التقويميّ.
+ */
+const TURN_TTL_MS = 8 * 3600_000;
 
-/** آخر دور محفوظ لمطعم بعينه اليوم (للاسترجاع بعد الريلود). */
+/** آخر دور محفوظ لمطعم بعينه في الجلسة الجارية (للاسترجاع بعد الريلود). */
 export function lastTurnFor(slug: string): TurnRecord | null {
-  const today = riyadhDay(new Date().toISOString());
-  const rec = getTurns().find((t) => t.slug === slug && riyadhDay(t.at) === today && t.entryId);
+  const now = Date.now();
+  const rec = getTurns().find(
+    (t) => t.slug === slug && t.entryId && now - new Date(t.at).getTime() < TURN_TTL_MS,
+  );
   return rec ?? null;
 }
