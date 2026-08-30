@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { tr, type Lang } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
-import { guideMode, guideSeenKey, type GuideBranch } from "@/lib/guide-mode";
+import { guideMode, guideSeenKey, shouldAutoOpen, type GuideBranch } from "@/lib/guide-mode";
 
 /**
  * دليل العميل — غطاءٌ سفليّ يظهر مرّةً واحدةً لكلّ مطعم.
@@ -20,6 +20,11 @@ import { guideMode, guideSeenKey, type GuideBranch } from "@/lib/guide-mode";
  *    كي يبدو للعميل امتدادًا لما رآه لا شاشةً غريبة.
  * ٣) ثلاثة أسطر لا أكثر، وزرّ إغلاقٍ كبير: العميل واقفٌ في المطعم ويريد أن
  *    يخلّص بثوانٍ. فالتنبيهات مطويّةٌ افتراضيًّا — من احتاجها فتحها.
+ *
+ * ٤) تحديثٌ لاحق: المالك طلب شرحًا مبسّطًا لا مختصرًا — فصار لكلّ خطوةٍ سطرُ
+ *    عنوانٍ وسطرُ تفصيلٍ واحد («ماذا يحدث بعدها؟»)، وضمن ذلك توضيحٌ صريح أنّ
+ *    تسجيلًا واحدًا يكفي المجموعة كاملة. يبقى الغطاء ثلاث خطواتٍ كحدٍّ أقصى
+ *    ويُقرأ في ثوانٍ — لا صفحة.
  */
 export function GuideSheet({ slug, branches }: { slug: string; branches: readonly GuideBranch[] }) {
   const lang = useLang();
@@ -31,15 +36,17 @@ export function GuideSheet({ slug, branches }: { slug: string; branches: readonl
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    let seen = true;
+    // القرار نفسه (هل نفتح؟) نقيٌّ ومختبَرٌ في shouldAutoOpen — هنا فقط
+    // القراءة الفعلية من التخزين، وهي وحدها ما يحتاج متصفّحًا حقيقيًّا.
+    let autoOpen = false;
     try {
-      seen = window.localStorage.getItem(guideSeenKey(slug)) === "1";
+      autoOpen = shouldAutoOpen(window.localStorage.getItem(guideSeenKey(slug)));
     } catch {
       // تصفّحٌ خاصّ أو تخزينٌ محجوب: نعتبره «رآه» فلا نُلحّ على من لا نستطيع
       // أن نتذكّر له شيئًا — غطاءٌ يظهر في كلّ زيارة أسوأ من غطاءٍ لا يظهر.
-      seen = true;
+      autoOpen = false;
     }
-    setOpen(!seen);
+    setOpen(autoOpen);
     setReady(true);
   }, [slug]);
 
@@ -93,19 +100,58 @@ function Sheet({
     if (apple) setOs("ios");
   }, []);
 
-  const steps: string[] =
+  // كلّ خطوة: عنوانها، وسطرٌ واحدٌ يقول ماذا يحدث بعدها — لا تكثيفًا في سطرٍ
+  // واحد. والمالك طلب صراحةً توضيح أنّ تسجيلًا واحدًا يكفي المجموعة كاملة،
+  // فذاك في تفصيل خطوة التسجيل نفسها لا سطرٍ منفصل يطيل الغطاء.
+  const steps: { title: string; detail?: string }[] =
     mode === "waitlist"
       ? [
-          tr(lang, "سجّل اسمك ورقمك.", "Enter your name and number."),
-          tr(lang, "تابع دورك تلقائيًّا.", "Track your turn automatically."),
+          {
+            title: tr(lang, "سجّل اسمك ورقمك", "Enter your name and number"),
+            detail: tr(
+              lang,
+              "تسجيلٌ واحدٌ يكفي مجموعتك كاملة — لا حاجة أن يسجّل كلّ فرد.",
+              "One registration covers your whole group — no need for everyone to sign up.",
+            ),
+          },
+          {
+            title: tr(lang, "تابع دورك تلقائيًّا", "Track your turn automatically"),
+            detail: tr(
+              lang,
+              "الشاشة تتحدّث نفسها أوّلًا بأوّل، وتصلك تنبيهاتٌ إن فعّلتها بالأسفل.",
+              "The screen updates itself — turn on alerts below to get notified too.",
+            ),
+          },
         ]
       : mode === "reservations"
         ? [
-            tr(lang, "اختر عدد الأشخاص.", "Choose your party size."),
-            tr(lang, "سجّل اسمك ورقمك.", "Enter your name and number."),
-            tr(lang, "تابع حجزك تلقائيًّا.", "Track your booking automatically."),
+            {
+              title: tr(lang, "اختر عدد الأشخاص", "Choose your party size"),
+              detail: tr(lang, "العدد يشمل مجموعتك كاملة.", "The number covers your whole group."),
+            },
+            {
+              title: tr(lang, "سجّل اسمك ورقمك", "Enter your name and number"),
+              detail: tr(
+                lang,
+                "تسجيلٌ واحدٌ يكفي عن المجموعة كلّها — لا حاجة أن يسجّل كلّ فرد.",
+                "One registration covers the whole group — no need for everyone to sign up.",
+              ),
+            },
+            {
+              title: tr(lang, "تابع حجزك تلقائيًّا", "Track your booking automatically"),
+              detail: tr(
+                lang,
+                "الشاشة تتحدّث نفسها أوّلًا بأوّل، وتصلك تنبيهاتٌ إن فعّلتها بالأسفل.",
+                "The screen updates itself — turn on alerts below to get notified too.",
+              ),
+            },
           ]
-        : [tr(lang, "هذا المطعم يستقبل مباشرةً — ادخل بلا دورٍ ولا حجز.", "This restaurant is walk-in — just come in.")];
+        : [
+            {
+              title: tr(lang, "هذا المطعم يستقبل مباشرةً", "This restaurant is walk-in"),
+              detail: tr(lang, "ادخل بلا دورٍ ولا حجز.", "Just come in — no turn, no booking."),
+            },
+          ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-end" role="dialog" aria-modal>
@@ -122,18 +168,23 @@ function Sheet({
           {tr(lang, "كيف يعمل؟", "How it works")}
         </p>
 
-        <ol className="mt-3 space-y-2">
+        <ol className="mt-3 space-y-3">
           {steps.map((s, i) => (
-            <li key={s} className="flex items-center gap-3">
+            <li key={s.title} className="flex items-start gap-3">
               {steps.length > 1 && (
                 <span
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-cream-100"
+                  className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-cream-100"
                   style={{ background: "var(--brand-solid)" }}
                 >
                   {i + 1}
                 </span>
               )}
-              <span className="text-sm font-semibold text-[color:var(--ink)]">{s}</span>
+              <span className="flex flex-col">
+                <span className="text-sm font-semibold text-[color:var(--ink)]">{s.title}</span>
+                {s.detail && (
+                  <span className="text-xs font-medium text-[color:var(--muted)]">{s.detail}</span>
+                )}
+              </span>
             </li>
           ))}
         </ol>

@@ -9,7 +9,7 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { guideMode, guideSeenKey } from "../src/lib/guide-mode.ts";
+import { guideMode, guideSeenKey, shouldAutoOpen } from "../src/lib/guide-mode.ts";
 
 const W = { accepts: true, acceptsReservations: false };
 const R = { accepts: false, acceptsReservations: true };
@@ -53,4 +53,18 @@ test("«غير محدّد» ليس «متاحًا»: القيمة true وحده�
 test("مفتاح التخزين مربوطٌ بالمطعم: دليلُ مطعمٍ لا يُسكت دليلَ غيره", () => {
   assert.notEqual(guideSeenKey("eficto"), guideSeenKey("pizza-peel"));
   assert.match(guideSeenKey("eficto"), /eficto/);
+});
+
+test("shouldAutoOpen: أوّل زيارة (لا قيمة مخزّنة) ⇒ يفتح", () => {
+  assert.equal(shouldAutoOpen(null), true);
+});
+
+test("shouldAutoOpen: زيارةٌ رأته فعلًا ⇒ لا يفتح", () => {
+  assert.equal(shouldAutoOpen("1"), false);
+});
+
+test("shouldAutoOpen: قيمةٌ غريبة أو من مفتاحٍ قديم ⇒ يفتح لا يُخفي — الشكّ لصالح الظهور", () => {
+  assert.equal(shouldAutoOpen("true"), true);
+  assert.equal(shouldAutoOpen(""), true);
+  assert.equal(shouldAutoOpen("0"), true);
 });

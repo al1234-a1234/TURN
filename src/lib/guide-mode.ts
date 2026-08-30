@@ -32,3 +32,18 @@ export function guideMode(branches: readonly GuideBranch[]): GuideMode {
 export function guideSeenKey(slug: string): string {
   return `turn.guide.v1.${slug}`;
 }
+
+/**
+ * هل يُفتح الغطاء تلقائيًّا، بناءً على ما وجدناه فعلًا في التخزين؟
+ *
+ * ── ولماذا مستخرَجةٌ إلى دالّةٍ نقيّة ──
+ * كانت هذه المقارنة (`=== "1"`) سطرًا داخل `useEffect` في `guide-sheet.tsx`،
+ * فلا اختبار عليها إلا بمتصفّحٍ حقيقيّ — ولا متصفّح في بيئة الاختبار هنا.
+ * والقرار نفسه بسيطٌ ونقيّ (مُدخَلٌ واحد، مُخرَجٌ منطقيّ)، فعُزل ليصير
+ * مختبَرًا: أوّل زيارةٍ (`null`) تفتح، وزيارةٌ رأته (`"1"`) لا تفتح، وأيّ
+ * قيمةٍ أخرى — تالفة أو من نسخةٍ قديمة من المفتاح — **تفتح لا تُخفي**؛
+ * الشكّ يميل نحو إظهار الدليل، لا كتمه.
+ */
+export function shouldAutoOpen(storedValue: string | null): boolean {
+  return storedValue !== "1";
+}
