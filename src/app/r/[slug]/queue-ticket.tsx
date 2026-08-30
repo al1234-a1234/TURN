@@ -4,7 +4,12 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { cancelWaitlistGuest, savePushSubscription } from "./actions";
 import { clearLiveTicketCache } from "@/components/live-ticket-bar";
 import { createClient } from "@/lib/supabase/client";
-import { pushSupport, subscribeToPush, type PushSupport } from "@/lib/push-client";
+import {
+  activePushSubscription,
+  pushSupport,
+  subscribeToPush,
+  type PushSupport,
+} from "@/lib/push-client";
 import { IconArrowGo } from "@/components/icons";
 import { toAr, peopleAhead } from "@/lib/format";
 import { tr } from "@/lib/i18n";
@@ -111,17 +116,13 @@ export function QueueTicket({
 
     (async () => {
       try {
-        const reg = await navigator.serviceWorker.getRegistration();
-        const sub = await reg?.pushManager.getSubscription();
+        // كانت تقرأ `getSubscription()` مباشرةً فتحفظ اشتراكًا مسمومًا بمفتاحٍ
+        // قديم وتُظهر «مفعّل». الآن تمرّ بفحص المفتاح: يُفسخ المسموم ويُنشأ
+        // سليمٌ محلَّه — بلا نافذةٍ ولا خطوةٍ على العميل، فالإذن ممنوحٌ سلفًا.
+        const sub = await activePushSubscription();
         if (!sub) return;
-        const j = sub.toJSON() as { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
-        if (!j.endpoint || !j.keys?.p256dh || !j.keys?.auth) return;
         // upsert على endpoint ⇒ يُعاد توجيه الاشتراك لعميل هذا الدور
-        const ok = await savePushSubscription(entryId, phone, {
-          endpoint: j.endpoint,
-          p256dh: j.keys.p256dh,
-          auth: j.keys.auth,
-        });
+        const ok = await savePushSubscription(entryId, phone, sub);
         setPushOn(ok);
       } catch {
         /* تجاهُل: الإشعارات لا تُعطّل الطابور */

@@ -100,6 +100,27 @@ async function finishBatch(supabase: SupabaseClient<Database>, batch: Batch): Pr
   }
 }
 
+/**
+ * اشتراكٌ لا رجعة فيه ⇒ يُحذف صفُّه.
+ *
+ * `404/410` هما الميتة المعلنة (أُلغي التصريح أو حُذف التطبيق). وأُضيف
+ * إليهما `VapidPkHashMismatch`: جهازٌ اشترك بمفتاح VAPID قديم، فترفض آبل
+ * توقيعنا بالجديد — رفضًا **دائمًا** لا عارضًا. وترجعه بـ`400`، فكان يفلت
+ * من التنظيف: اثنا عشر رفضًا متتاليًا في الإنتاج على صفٍّ واحد.
+ *
+ * ولماذا على نصّ السبب لا على الرمز `400`: الأربعمئة سلّةُ «طلبٌ خاطئ» —
+ * حمولةٌ فاسدة أو رأسٌ ناقص يقع فيها أيضًا. فحذفُ كلّ `400` يعني أنّ خطأً
+ * واحدًا عندنا يمسح اشتراكات المنصّة كلّها في دفعةٍ واحدة. النصّ يخصّ
+ * المفتاح وحده، فهو المِعيار.
+ *
+ * (لجوجل صياغةٌ مقابلة لهذه الحالة لم تظهر لنا في الإنتاج قطّ — ولا نحذف
+ *  على صياغةٍ لم نرها. تُضاف يوم يظهر سطرها في `notifications`.)
+ */
+function isDeadSubscription(code: number | undefined, body: string): boolean {
+  if (code === 404 || code === 410) return true;
+  return body.includes("VapidPkHashMismatch");
+}
+
 /** إرسال دفعة واحدة لاشتراك، مع تعليم الاشتراك الميّت. يعيد true إن نجح. */
 async function sendOne(
   supabase: SupabaseClient<Database>,
@@ -117,17 +138,18 @@ async function sendOne(
     return true;
   } catch (err) {
     const code = (err as { statusCode?: number })?.statusCode;
+    const reason = `${(err as { body?: string })?.body ?? (err as Error)?.message ?? ""}`;
     batch?.log.push({
       endpoint: sub.endpoint,
       template,
       delivered: false,
-      error: `${code ?? "?"}: ${(err as { body?: string })?.body ?? (err as Error)?.message ?? ""}`.slice(0, 300),
+      error: `${code ?? "?"}: ${reason}`.slice(0, 300),
     });
-    // 404/410 = اشتراك ميّت (أُلغي التصريح أو حُذف التطبيق) → يُنظَّف بعد التسجيل.
+    // اشتراكٌ ميّت → يُنظَّف بعد التسجيل (انظر `isDeadSubscription`).
     // ملاحظة: `delete_dead_push_subscription` محجوبة عن `anon`. فمسار الضيف
     // كان ينظّف بلا صلاحية، فيفشل بصمت وتتراكم الاشتراكات الميّتة إلى الأبد.
     // يعمل الآن لأن مسارات الضيف تمرّ عميل الخدمة إلى هنا.
-    if (code === 404 || code === 410) {
+    if (isDeadSubscription(code, reason)) {
       if (batch) batch.dead.push(sub.endpoint);
       else await supabase.rpc("delete_dead_push_subscription", { p_endpoint: sub.endpoint });
     }
