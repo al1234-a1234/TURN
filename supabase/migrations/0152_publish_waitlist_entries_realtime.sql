@@ -59,7 +59,12 @@ begin
   select pg_get_functiondef(p.oid) into v_def
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
    where n.nspname='public' and p.proname='run_critical_checks';
-  if v_def is null then raise exception 'run_critical_checks غير موجودة'; end if;
+  -- على المحاكاة لا وجود لـrun_critical_checks — نتخطّى إضافة الفحص بلا فشل،
+  -- فالنشر (الكتلة الأولى) هو ما يُختبر هناك، والفحص يُضاف على الإنتاج وحده.
+  if v_def is null then
+    raise notice 'run_critical_checks غير موجودة (محاكاة) — تخطّي إضافة w29';
+    return;
+  end if;
 
   if position('w29_waitlist_published_realtime' in v_def) = 0 then
     v_def := replace(v_def, E'    (\'q20_schema_no_drift\',',
