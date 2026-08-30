@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ToggleField } from "@/components/toggle-switch";
 import { redirect } from "next/navigation";
 import { IconPin } from "@/components/icons";
 import { ImageUploader } from "@/components/image-uploader";
@@ -291,31 +292,24 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
           </p>
           <form action={updateBranchSettings} className="space-y-4">
             {settingsBranch && <input type="hidden" name="branch_id" value={settingsBranch.id} />}
-            <label className="flex items-center justify-between rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
-              <span>
-                <span className="block font-bold text-[color:var(--ink)]">{tr(lang, "استقبال قائمة الانتظار", "Accept waitlist")}</span>
-                <span className="text-xs text-[color:var(--muted)]">{tr(lang, "أوقفها لإغلاق الطابور مؤقتًا أمام العملاء", "Turn off to temporarily close the queue to customers")}</span>
-              </span>
-              <input type="checkbox" name="accepts_waitlist" defaultChecked={settings?.accepts_waitlist ?? true} className="h-6 w-6 accent-[var(--brand-solid)]" />
-            </label>
+            <ToggleField
+              name="accepts_waitlist"
+              defaultChecked={settings?.accepts_waitlist ?? true}
+              title={tr(lang, "استقبال قائمة الانتظار", "Accept waitlist")}
+              hint={tr(lang, "أوقفها لإغلاق الطابور مؤقتًا أمام العملاء", "Turn off to temporarily close the queue to customers")}
+            />
             {/* الحجوزات: كتلةٌ واحدة — المفتاح ومدّة الجلسة ونافذة الحجز.
                 مدّة الجلسة هي ما يحرّر الطاولة للحجز التالي، ونافذة الحجز هي
                 أبعد يومٍ يُقبل. الاثنان يقرّران أيّ الأوقات تُعرض على العميل،
                 فمكانهما تحت المفتاح لا في زاويةٍ أخرى من الصفحة. */}
             <div className="rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
-              <label className="flex items-center justify-between gap-3">
-                <span>
-                  <span className="block font-bold text-[color:var(--ink)]">{tr(lang, "استقبال الحجوزات", "Accept reservations")}</span>
-                  <span className="text-xs text-[color:var(--muted)]">{tr(lang, "فعّل الحجز المسبق للطاولات — منفصل عن طابور الحضور", "Enable advance table booking — separate from the walk-in queue")}</span>
-                </span>
-                <input
-                  type="checkbox"
-                  name="accepts_reservations"
-                  defaultChecked={(settings?.accepts_reservations ?? false) && tableCount > 0}
-                  disabled={tableCount === 0}
-                  className="h-6 w-6 accent-[var(--brand-solid)] disabled:opacity-40"
-                />
-              </label>
+              <ToggleField
+                name="accepts_reservations"
+                defaultChecked={(settings?.accepts_reservations ?? false) && tableCount > 0}
+                disabled={tableCount === 0}
+                title={tr(lang, "استقبال الحجوزات", "Accept reservations")}
+                hint={tr(lang, "فعّل الحجز المسبق للطاولات — منفصل عن طابور الحضور", "Enable advance table booking — separate from the walk-in queue")}
+              />
 
               {/* حارس: الحجز يعيّن طاولةً بعينها. فرعٌ بلا طاولات كان يقبل
                   حجوزاتٍ لا تحجز شيئًا — والمالك لا يعرف أنه امتلأ. */}
