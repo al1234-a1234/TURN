@@ -3,6 +3,7 @@ import webpush from "web-push";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isDeadSubscription } from "@/lib/push-dead";
 
 /**
  * إرسال إشعارات الدفع (Web Push) للعميل — يصل والتطبيق مُغلق.
@@ -98,27 +99,6 @@ async function finishBatch(supabase: SupabaseClient<Database>, batch: Batch): Pr
       /* التنظيف يُعاد في المحاولة القادمة */
     }
   }
-}
-
-/**
- * اشتراكٌ لا رجعة فيه ⇒ يُحذف صفُّه.
- *
- * `404/410` هما الميتة المعلنة (أُلغي التصريح أو حُذف التطبيق). وأُضيف
- * إليهما `VapidPkHashMismatch`: جهازٌ اشترك بمفتاح VAPID قديم، فترفض آبل
- * توقيعنا بالجديد — رفضًا **دائمًا** لا عارضًا. وترجعه بـ`400`، فكان يفلت
- * من التنظيف: اثنا عشر رفضًا متتاليًا في الإنتاج على صفٍّ واحد.
- *
- * ولماذا على نصّ السبب لا على الرمز `400`: الأربعمئة سلّةُ «طلبٌ خاطئ» —
- * حمولةٌ فاسدة أو رأسٌ ناقص يقع فيها أيضًا. فحذفُ كلّ `400` يعني أنّ خطأً
- * واحدًا عندنا يمسح اشتراكات المنصّة كلّها في دفعةٍ واحدة. النصّ يخصّ
- * المفتاح وحده، فهو المِعيار.
- *
- * (لجوجل صياغةٌ مقابلة لهذه الحالة لم تظهر لنا في الإنتاج قطّ — ولا نحذف
- *  على صياغةٍ لم نرها. تُضاف يوم يظهر سطرها في `notifications`.)
- */
-function isDeadSubscription(code: number | undefined, body: string): boolean {
-  if (code === 404 || code === 410) return true;
-  return body.includes("VapidPkHashMismatch");
 }
 
 /** إرسال دفعة واحدة لاشتراك، مع تعليم الاشتراك الميّت. يعيد true إن نجح. */
