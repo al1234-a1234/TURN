@@ -337,7 +337,13 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                         {branchName.get(v.branch_id) ?? tr(lang, "فرع", "Branch")} · {zoneLabel(v.zone, zoneNames, lang)} ·{" "}
                         {tr(lang, `${toAr(v.party_size)} أشخاص`, `${toAr(v.party_size)} guests`)}
                         {v.seated_at ? tr(lang, ` · جلس ${fmtTime(v.seated_at, lang)}`, ` · Seated ${fmtTime(v.seated_at, lang)}`) : ""}
-                        {v.confirmed_at ? tr(lang, " · أكّد الحضور ✓", " · Confirmed ✓") : ""}
+                        {/* التأكيد يُعرض فقط لزيارةٍ لم تنتهِ بـ«لم يحضر»: عميلٌ أكّد ثمّ
+                            ألغى بعدها بلحظة كان يظهر هنا «أكّد الحضور ✓» على زيارةٍ ملغاة،
+                            فيقرأها الموظّف كأنّه أكّد ولم يأتِ — ظلمٌ لمن فعل الصواب.
+                            الترحيل 0161 يمسح العلَم عند الإلغاء، وهذا يحمي السجلّ القديم أيضًا. */}
+                        {v.confirmed_at && !["cancelled", "expired", "no_show"].includes(v.status)
+                          ? tr(lang, " · أكّد الحضور ✓", " · Confirmed ✓")
+                          : ""}
                         {v.distance_m != null
                           ? (v.distance_m >= 1000
                               ? tr(lang, ` · كان يبعد ${(v.distance_m / 1000).toFixed(1)} كم`, ` · was ${(v.distance_m / 1000).toFixed(1)} km away`)
