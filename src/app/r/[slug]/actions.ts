@@ -9,6 +9,7 @@ import { pushRankUpdatesAfterSelfCancel } from "@/lib/push";
 import { getLang } from "@/lib/i18n-server";
 import { allowByIp } from "@/lib/ip-guard";
 import { checkBotId } from "botid/server";
+import { joinErrorMessage, genericJoinError } from "@/lib/join-errors";
 import type { Lang } from "@/lib/i18n";
 
 /**
@@ -107,6 +108,8 @@ function msg(lang: Lang, key: keyof typeof MSG): string {
 export type WaitlistState = {
   ok: boolean;
   error?: string;
+  /** رمز الرفض من القاعدة — للواجهة كي تفرّق بين «أُغلق» و«امتلأ» و«موقوف». */
+  code?: string;
   position?: number;
   total?: number;
   entryId?: string;
@@ -174,19 +177,27 @@ export async function joinWaitlistGuest(
     p_zone: zone,
   });
 
+  // كانت سلسلةَ `if` تعالج خمسةً من سبعةِ رموزٍ ترفعها الدالّة، فيسقط
+  // P0011 (الطابور موقوف — وهو افتراض كلّ فرعٍ جديد منذ أمس) و22023 في
+  // جملةٍ عامّة. المصدر الآن واحدٌ ومُختبَر: `src/lib/join-errors.ts`.
   if (error) {
-    if (error.code === "P0001") {
-      return { ok: false, error: msg(lang, "noWaitlist") };
-    }
-    if (error.code === "P0432") return { ok: false, error: msg(lang, "maintenance") };
-    if (error.code === "P0002") return { ok: false, error: msg(lang, "branchGone") };
-    if (error.code === "P0003") return { ok: false, error: msg(lang, "branchClosed") };
-    if (error.code === "P0429") return { ok: false, error: msg(lang, "tooMany") };
-    if (error.code === "P0010") return { ok: false, error: msg(lang, "queueFull") };
-    return { ok: false, error: msg(lang, "joinFailed") };
+    return {
+      ok: false,
+      code: error.code,
+      error: joinErrorMessage(error.code, lang) ?? genericJoinError(lang),
+    };
   }
 
   const row = Array.isArray(data) ? data[0] : data;
+
+  // نجاحٌ بلا تذكرة = صمتٌ يلبس ثوب نجاح. لو عادت الدالّة بصفرِ صفوفٍ أو
+  // بصفٍّ فارغ (سباقٌ نادر: الصفّ المتعارض يخرج من الطابور بين فشل الإدراج
+  // واستعادته)، لكانت `ok: true` تعرض تذكرةً بلا `entryId` — لا رقمَ فيها
+  // ولا استطلاعَ لها، أي شاشةٌ ميّتة لا تقول للعميل شيئًا. نردّ خطأً صريحًا.
+  if (!row?.entry_id) {
+    console.error("[join] نجاحٌ بلا صفّ:", branchId, JSON.stringify(data));
+    return { ok: false, error: genericJoinError(lang) };
+  }
 
   // الترتيب الحيّ نفسه الذي سيراه الاستطلاع والاستقبال — لا الرقم
   // المخزَّن، وإلا رأى العميل «5» ثم صارت «2» بعد أول نبضة.
