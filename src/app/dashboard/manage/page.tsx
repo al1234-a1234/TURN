@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { IconPin } from "@/components/icons";
 import { ImageUploader } from "@/components/image-uploader";
-import { updateRestaurantInfo, updateBranchSettings, addBranch, deleteBranch } from "./actions";
+import { updateRestaurantInfo, updateBranchSettings, deleteBranch } from "./actions";
 import { MenuManager } from "./menu-manager";
 import { loadOwner } from "../owner-context";
 import { resolveBranchScope, NO_BRANCH } from "../branch-scope";
@@ -268,16 +268,15 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
               </li>
             ))}
           </ul>
-          {/* فتح فرع جديد قرار علامة — لا نعرض نموذجًا يفشل صامتًا على الفرانشايز */}
+          {/* فتح فرعٍ جديد صار صلاحية المنصّة وحدها (/admin) لا صلاحية المطعم —
+              راجع الحادثة: حساب Pizza peel أنشأ ٨ فروعًا مكرّرة معطّلة بضغطاتٍ
+              متتالية على هذا الزرّ بالضبط، ولم يكن شيءٌ يمنعه أو حتى يُبطئه. */}
           {isBrandLevel && (
-            <form action={addBranch} className="space-y-3 rounded-2xl border p-4" style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <input name="name" required placeholder={tr(lang, "اسم الفرع", "Branch name")} className="field-input" />
-                <input name="city" placeholder={tr(lang, "المدينة", "City")} className="field-input" />
-                <input name="address" placeholder={tr(lang, "العنوان", "Address")} className="field-input" />
-              </div>
-              <button className="btn btn-secondary w-full">{tr(lang, "+ إضافة فرع", "+ Add branch")}</button>
-            </form>
+            <p className="rounded-2xl border border-dashed p-4 text-xs font-bold text-[color:var(--muted)]" style={{ borderColor: "var(--border)" }}>
+              {tr(lang,
+                "فتح فرعٍ جديد صار من صلاحية فريق «إيت» وحده — تواصل معنا لإضافة فرع.",
+                "Opening a new branch is now handled by the EIGHT team only — contact us to add one.")}
+            </p>
           )}
         </section>
 
