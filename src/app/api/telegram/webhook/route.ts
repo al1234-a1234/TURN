@@ -103,6 +103,36 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
+  // زرّ «طبّق» — سقف طابور Pizza peel. دالّةٌ مستقلّة (0157) تتحقّق من
+  // هويّة المُرسِل بنفسها بنفس نمط telegram_command أدناه.
+  if (text.trim() === "طبّق") {
+    const { data: applyReply, error: applyError } = await db.rpc(
+      "telegram_apply_pizza_peel_waitlist_cap",
+      { p_chat_id: String(chatId) },
+    );
+    if (!applyError && applyReply === null) {
+      return NextResponse.json({ ok: true });
+    }
+    const applyBody =
+      applyError || typeof applyReply !== "string"
+        ? "⚠️ تعذّر التنفيذ: " + (applyError?.message ?? "خطأ غير معروف")
+        : applyReply;
+    try {
+      await fetch(`${TELEGRAM_API}/bot${token}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: applyBody,
+          reply_markup: { remove_keyboard: true },
+        }),
+      });
+    } catch {
+      /* فشل الردّ لا يُعاد */
+    }
+    return NextResponse.json({ ok: true });
+  }
+
   // زرّ «طبّق الاثنين» — قفل صلاحية إنشاء الفروع + حذف الفروع المكرّرة.
   // دالّةٌ مستقلّة (0158) تتحقّق من هويّة المُرسِل بنفسها بنفس نمط
   // telegram_command أدناه، فلا مسارٌ آخر لتنفيذها.
