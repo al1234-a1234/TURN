@@ -84,6 +84,55 @@ export async function POST(req: Request) {
 
   const { cmd, arg } = parse(text);
 
+  // زرّ «لا الآن» — ردٌّ محايدٌ بلا أيّ نداءٍ للقاعدة. لا قرارًا معلّقًا
+  // يُسجَّل، فالصمت هنا هو الأصل: لم يتغيّر شيء.
+  if (text.trim() === "لا الآن") {
+    try {
+      await fetch(`${TELEGRAM_API}/bot${token}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: "تمام، لم يتغيّر شيء.",
+          reply_markup: { remove_keyboard: true },
+        }),
+      });
+    } catch {
+      /* فشل الردّ لا يُعاد */
+    }
+    return NextResponse.json({ ok: true });
+  }
+
+  // زرّ «طبّق» — سقف طابور Pizza peel. دالّةٌ مستقلّة (0157) تتحقّق من
+  // هويّة المُرسِل بنفسها بنفس نمط telegram_command أدناه.
+  if (text.trim() === "طبّق") {
+    const { data: applyReply, error: applyError } = await db.rpc(
+      "telegram_apply_pizza_peel_waitlist_cap",
+      { p_chat_id: String(chatId) },
+    );
+    if (!applyError && applyReply === null) {
+      return NextResponse.json({ ok: true });
+    }
+    const applyBody =
+      applyError || typeof applyReply !== "string"
+        ? "⚠️ تعذّر التنفيذ: " + (applyError?.message ?? "خطأ غير معروف")
+        : applyReply;
+    try {
+      await fetch(`${TELEGRAM_API}/bot${token}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: applyBody,
+          reply_markup: { remove_keyboard: true },
+        }),
+      });
+    } catch {
+      /* فشل الردّ لا يُعاد */
+    }
+    return NextResponse.json({ ok: true });
+  }
+
   // (٢) و(٣) في نداءٍ واحد: القاعدة تتحقّق من هويّة المُرسِل بنفسها ثم
   // تُنفّذ وتصوغ الردّ. وتُرجع NULL لغير المالك — فلا نردّ على الغريب أصلًا،
   // ولا يعرف من طرق البابَ أهو موجودٌ أم لا.

@@ -2063,6 +2063,10 @@ export type Database = {
         }
         Returns: Json
       }
+      telegram_apply_pizza_peel_waitlist_cap: {
+        Args: { p_chat_id: string }
+        Returns: string
+      }
       telegram_command: {
         Args: { p_arg?: string; p_chat_id: string; p_cmd: string }
         Returns: string
