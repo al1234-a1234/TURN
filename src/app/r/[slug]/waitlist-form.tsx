@@ -598,6 +598,24 @@ export function WaitlistForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.ok, state.entryId]);
 
+  /**
+   * نتيجةُ آخر إرسال — تُرسَم في **كلّ** فرعٍ من فروع العرض، لا في النموذج وحده.
+   *
+   * ── العطب الذي تُصلحه ──
+   * كانت تُرسم داخل `<form>` فقط. وبين ضغطة العميل وعودة الجواب يمرّ الاستطلاع
+   * الحيّ (كلّ ١٥ث) فيقلب `closedNow` أو يبلغ السقفَ، فيسبق أحدُ الـ`return`
+   * أعلاه ويُزيل النموذجَ **ومعه خانةُ الخطأ**. فيعود الجوابُ إلى شجرةٍ لا
+   * مكان فيه: ضغطةٌ بلا خطأ وبلا نجاح — وهو بالضبط ما شكا منه المشغّل.
+   *
+   * والنافذة ليست نادرة وقتَ الإغلاق: القلب يقع مرّةً واحدةً على كلّ من
+   * كان مُرسِلًا في تلك اللحظة دفعةً واحدة.
+   */
+  const answer = state.error ? (
+    <p className="rounded-2xl border border-[rgba(200,70,70,0.3)] bg-[rgba(200,70,70,0.06)] px-4 py-3 text-sm font-medium text-[color:var(--danger)]">
+      {state.error}
+    </p>
+  ) : null;
+
   // الفرع مغلقٌ الآن؟ — للفرع المختار، وإلّا فحين تُغلق كل الفروع (تذكرةٌ
   // مسترجَعة قد تصل بلا فرعٍ مختار). التذكرة تحتاجها كي لا تَعِد بتنبيهٍ
   // لن يأتي: القاعدة تُنهي الطابور بعد الإغلاق، لكنها تمرّ كل ربع ساعة.
@@ -675,6 +693,7 @@ export function WaitlistForm({
   if (branch && branch.closedNow) {
     return (
       <div className="space-y-3">
+        {answer}
         {multi && (
           <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
         )}
@@ -698,6 +717,7 @@ export function WaitlistForm({
   if (branch && !branch.accepts) {
     return (
       <div className="space-y-3">
+        {answer}
         {multi && (
           <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
         )}
@@ -724,6 +744,7 @@ export function WaitlistForm({
   if (branch && branch.queuePaused) {
     return (
       <div className="space-y-3">
+        {answer}
         {multi && (
           <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
         )}
@@ -751,6 +772,7 @@ export function WaitlistForm({
   if (branch && queueFull) {
     return (
       <div className="space-y-3">
+        {answer}
         {multi && (
           <button type="button" onClick={() => setBranchId("")} className="text-sm font-bold text-[color:var(--brand-d)]">← {tr(lang, "فرع آخر", "Another branch")}</button>
         )}
@@ -899,11 +921,7 @@ export function WaitlistForm({
         </div>
       </div>
 
-      {state.error && (
-        <p className="rounded-2xl border border-[rgba(200,70,70,0.3)] bg-[rgba(200,70,70,0.06)] px-4 py-3 text-sm font-medium text-[color:var(--danger)]">
-          {state.error}
-        </p>
-      )}
+      {answer}
 
       {/* رسالة الرفض/التعذّر — اعتذار قصير، والحل: نفس زر «خذ دورك الآن»
           يعيد إظهار نافذة السماح الأصلية (كروم/سفاري) مع كل ضغطة */}
