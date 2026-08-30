@@ -47,3 +47,31 @@ export async function setBranchQueuePaused(branchId: string, paused: boolean): P
   revalidatePath("/r/[slug]", "page");
   return true;
 }
+
+/**
+ * «إيقاف الانضمام مؤقّتًا» — الحالة الثالثة، منفصلةٌ تمامًا عن الاثنتين فوق.
+ *
+ * وُلدت من تشغيل Pizza peel الأوّل: امتلأ الطابور، ولم يكن ثمّ زرٌّ يوقف
+ * الجديد وحده. queue_paused يقول للعميل «تفضّل مباشرة» (كارثيّ و٣٧ ينتظرون)،
+ * والسقف العدديّ يعيد الفتح تلقائيًّا فور نزول العدد (فكلّ تجليسٍ يفتح البابَ
+ * لجديد). فاضطرّ الفريق لإيقاف التجليس ساعتين.
+ *
+ * الإيقاف هنا يمنع كلّ جديدٍ فورًا بصرف النظر عن العدد، ولا يُلغى تلقائيًّا،
+ * ويعرض للعميل نفس رسالة السقف «الطابور ممتلئ حاليًا». من في الطابور لا
+ * يتأثّر: يبقى، يُخدم، يستعيد تذكرته. وصلاحيته `waitlist` كأخواته — قرارٌ
+ * تشغيليّ لحظيّ على الباب.
+ */
+export async function setBranchJoinFrozen(branchId: string, frozen: boolean): Promise<boolean> {
+  const caller = await requirePerm("waitlist");
+  if (!caller) return false;
+  const { data, error } = await caller.supabase.rpc("set_branch_join_frozen", {
+    p_branch_id: branchId,
+    p_frozen: frozen,
+  });
+  // `false` = «لا حقّ لك على هذا الفرع» — لا تُبتلع كي لا تكذب الواجهة.
+  if (error || data !== true) return false;
+  revalidatePath("/dashboard/reception");
+  revalidateTag("discovery");
+  revalidatePath("/r/[slug]", "page");
+  return true;
+}

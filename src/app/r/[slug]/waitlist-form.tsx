@@ -35,6 +35,8 @@ type Branch = {
   busyNow: boolean;
   /** مفتوحٌ بلا طابور: يُعرض ويُزار ويقبل الحجز، ولا يقبل دورًا جديدًا. */
   queuePaused?: boolean;
+  /** إيقاف الانضمام المؤقّت — يُعرض للعميل كطابورٍ ممتلئ، بصرف النظر عن العدد. */
+  joinFrozen?: boolean;
   /** أقصى عدد أشخاص يقبله الفرع — يضبطه المالك في الإدارة */
   maxParty: number;
   /** سقف حجم الطابور — يضبطه المالك اختياريًّا؛ null يعني بلا سقف */
@@ -341,7 +343,7 @@ export function WaitlistForm({
      من الاستقبال، كانت البطاقة تبقى تقول «متاح الآن · خذ دورك» دقيقةً كاملة،
      فيملأ العميل النموذج ثم يُردّ بخطأ «الفرع مغلق حاليًا». نُحدّث الاثنين
      معًا فور الرسم فتعود البطاقة صادقة. */
-  type Live = { total: number; zoneCounts?: Record<string, number>; accepts?: boolean; acceptsReservations?: boolean; closedNow?: boolean; busyNow?: boolean; queuePaused?: boolean; maxWaitlistSize?: number | null };
+  type Live = { total: number; zoneCounts?: Record<string, number>; accepts?: boolean; acceptsReservations?: boolean; closedNow?: boolean; busyNow?: boolean; queuePaused?: boolean; joinFrozen?: boolean; maxWaitlistSize?: number | null };
   const [live, setLive] = useState<Record<string, Live>>({});
   useEffect(() => {
     const ids = branches.map((b) => b.id);
@@ -356,7 +358,7 @@ export function WaitlistForm({
       // ولكل قسمٍ عدّاده: العدّاد القديم يعرف عمودَي inside/outside فقط
       sb.rpc("waitlist_counts_by_zone", { p_branch_ids: ids }),
       sb.from("branch_settings")
-        .select("branch_id, accepts_waitlist, accepts_reservations, manually_closed, busy_now, queue_paused, opening_hours, max_waitlist_size")
+        .select("branch_id, accepts_waitlist, accepts_reservations, manually_closed, busy_now, queue_paused, join_frozen, opening_hours, max_waitlist_size")
         .in("branch_id", ids),
     ])
       .then(([counts, byZone, settings]) => {
@@ -378,6 +380,7 @@ export function WaitlistForm({
             acceptsReservations: st.accepts_reservations ?? false,
             busyNow: st.busy_now ?? false,
             queuePaused: st.queue_paused ?? false,
+            joinFrozen: st.join_frozen ?? false,
             closedNow: (st.manually_closed ?? false) || !isWithinOpeningHours(st.opening_hours as { open?: string | null; close?: string | null } | null),
             maxWaitlistSize: st.max_waitlist_size ?? null,
           };
@@ -733,15 +736,24 @@ export function WaitlistForm({
     );
   }
 
+  // امتلاء الطابور — بسببين يُعرضان للعميل بنفس الرسالة حرفيًّا:
+  //   • سقف المالك العدديّ (max_waitlist_size) — يُفتح تلقائيًّا مع نزول العدد.
+  //   • إيقاف الانضمام اليدويّ (join_frozen، الحالة الثالثة) — لا يُفتح إلا يدويًّا،
+  //     بصرف النظر عن العدد. يطابق حارس القاعدة (P0010) نفسه.
+  // العدد يُعرض في العنوان للسقف العدديّ وحده؛ المجمّد يُعرض بلا رقمٍ (فهو ليس
+  // «٤٠/٤٠» بل إيقافٌ يدويّ)، والرسالة الأساس واحدة: «الطابور ممتلئ حاليًا».
+  const atNumericCap = branch != null && branch.maxWaitlistSize != null && branch.total >= branch.maxWaitlistSize;
+  const queueFull = branch != null && (branch.joinFrozen === true || atNumericCap);
+
   // «مفتوح بلا طابور» — المطعم فاضٍ فلا معنى لدورٍ رقمه ١.
   //
-  // يسبق فحص الامتلاء عمدًا: الفرع الموقوف طابورُه ليس ممتلئًا، ورسالة
-  // «ممتلئ» هنا تقول عكس الحقيقة تمامًا.
+  // يخضع للامتلاء عمدًا (`&& !queueFull`): فرعٌ مجمّدٌ أو ممتلئٌ ليس فرعًا
+  // يُدخِل مباشرةً — ورسالة «تفضّل مباشرة» تناقض «ممتلئ» في اللحظة نفسها.
   //
   // ونمنع الإرسال في الواجهة **مع** الحارس في القاعدة (P0011) لا بدلًا منه:
   // الإخفاء وحده يتخطّاه نداءٌ مباشر، والقاعدة وحدها تعني نموذجًا يقبل
   // الضغطة ثم يردّها بخطأ بعد أن كتب العميل اسمه ورقمه.
-  if (branch && branch.queuePaused) {
+  if (branch && branch.queuePaused && !queueFull) {
     return (
       <div className="space-y-3">
         {answer}
@@ -765,10 +777,9 @@ export function WaitlistForm({
     );
   }
 
-  // امتلأ الطابور — سقفٌ ضبطه المالك (اختياري بالكامل، افتراضيًّا بلا حد).
-  // نمنع الإرسال هنا أيضًا لا في الخادم وحده: عميلٌ يرى «ممتلئ» ويُمنع من
-  // الكتابة أوضح من نموذجٍ يقبل ضغطته ثم يردّه بخطأ بعد التسجيل.
-  const queueFull = branch != null && branch.maxWaitlistSize != null && branch.total >= branch.maxWaitlistSize;
+  // امتلأ الطابور — سقفًا عدديًّا أو إيقافًا يدويًّا (حُسبت `queueFull` أعلى،
+  // قبل «بلا طابور»). نمنع الإرسال هنا أيضًا لا في الخادم وحده: عميلٌ يرى
+  // «ممتلئ» ويُمنع من الكتابة أوضح من نموذجٍ يقبل ضغطته ثم يردّه بخطأ.
   if (branch && queueFull) {
     return (
       <div className="space-y-3">
@@ -781,7 +792,9 @@ export function WaitlistForm({
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M17 20.5v-1.5a4 4 0 00-4-4H8a4 4 0 00-4 4v1.5M10 11a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM19 8v4M21 10h-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </span>
           <p className="text-lg font-bold text-[color:var(--ink)]">
-            {tr(lang, `الطابور ممتلئ حاليًا (${toAr(branch.maxWaitlistSize ?? 0)})`, `The queue is full right now (${branch.maxWaitlistSize})`)}
+            {atNumericCap
+              ? tr(lang, `الطابور ممتلئ حاليًا (${toAr(branch.maxWaitlistSize ?? 0)})`, `The queue is full right now (${branch.maxWaitlistSize})`)
+              : tr(lang, "الطابور ممتلئ حاليًا", "The queue is full right now")}
           </p>
           <p className="mt-1 text-sm text-[color:var(--muted)]">
             {tr(lang, "حاول بعد قليل — تُفتح المقاعد أول بأول مع جلوس أو مغادرة أشخاص.", "Try again shortly — spots open up as people are seated or leave.")}

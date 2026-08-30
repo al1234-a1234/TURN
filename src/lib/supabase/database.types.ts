@@ -118,6 +118,7 @@ export type Database = {
             | Database["public"]["Enums"]["notification_channel"][]
             | null
           opening_hours: Json | null
+          join_frozen: boolean
           queue_paused: boolean
           updated_at: string
         }
@@ -140,6 +141,7 @@ export type Database = {
             | Database["public"]["Enums"]["notification_channel"][]
             | null
           opening_hours?: Json | null
+          join_frozen?: boolean
           queue_paused?: boolean
           updated_at?: string
         }
@@ -162,6 +164,7 @@ export type Database = {
             | Database["public"]["Enums"]["notification_channel"][]
             | null
           opening_hours?: Json | null
+          join_frozen?: boolean
           queue_paused?: boolean
           updated_at?: string
         }
@@ -1960,6 +1963,10 @@ export type Database = {
         Returns: undefined
       }
       service_role_probe: { Args: never; Returns: boolean }
+      set_branch_join_frozen: {
+        Args: { p_branch_id: string; p_frozen: boolean }
+        Returns: boolean
+      }
       set_branch_queue_paused: {
         Args: { p_branch_id: string; p_paused: boolean }
         Returns: boolean

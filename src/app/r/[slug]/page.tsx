@@ -60,7 +60,7 @@ export default async function RestaurantPublicPage({
 
   // الفروع أولًا: القائمة والصور صارت لكل فرع على حدة (فرانشايز)
   const { data: branches } = await supabase
-    .from("branches").select("id, name, city, address, branch_settings(accepts_waitlist, accepts_reservations, manually_closed, busy_now, queue_paused, opening_hours, max_party_size, max_waitlist_size), branch_zones(key, name, name_en, sort_order, is_active)")
+    .from("branches").select("id, name, city, address, branch_settings(accepts_waitlist, accepts_reservations, manually_closed, busy_now, queue_paused, join_frozen, opening_hours, max_party_size, max_waitlist_size), branch_zones(key, name, name_en, sort_order, is_active)")
     .eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at");
   // منيو الفرع الأول وحده يُولَّد مسبقًا. قراءة `?branch=` هنا كانت تُجبر
   // Next على توليد الصفحة عند كل طلب — أي أن كل مسحة باركود تدفع ثمن ميزةٍ
@@ -114,7 +114,7 @@ export default async function RestaurantPublicPage({
   const withCounts = branchList.map((b) => {
     const c = countOf.get(b.id);
     const bs = Array.isArray(b.branch_settings) ? b.branch_settings[0] : b.branch_settings;
-    const settings = bs as { accepts_waitlist?: boolean; accepts_reservations?: boolean; manually_closed?: boolean; busy_now?: boolean; queue_paused?: boolean; opening_hours?: { open?: string; close?: string } | null; max_party_size?: number; max_waitlist_size?: number | null } | null;
+    const settings = bs as { accepts_waitlist?: boolean; accepts_reservations?: boolean; manually_closed?: boolean; busy_now?: boolean; queue_paused?: boolean; join_frozen?: boolean; opening_hours?: { open?: string; close?: string } | null; max_party_size?: number; max_waitlist_size?: number | null } | null;
     // أقسام الفرع الفعّالة بأسماء المالك، بترتيبه
     const zoneRows = ((b as { branch_zones?: { key: string; name: string; name_en: string | null; sort_order: number; is_active: boolean }[] }).branch_zones ?? [])
       .filter((z) => z.is_active)
@@ -133,6 +133,8 @@ export default async function RestaurantPublicPage({
       closedNow: (settings?.manually_closed ?? false) || !isWithinOpeningHours(settings?.opening_hours ?? null),
       busyNow: settings?.busy_now ?? false,
       queuePaused: settings?.queue_paused ?? false,
+      // إيقاف الانضمام المؤقّت — يُعرض للعميل كطابورٍ ممتلئ (نفس المسار)
+      joinFrozen: settings?.join_frozen ?? false,
       // سقف المالك — يحدّ خيارات العميل بدل أن يُرفض بعد الإرسال
       maxParty: Math.max(1, Number(settings?.max_party_size ?? 20)),
       // سقف حجم الطابور — يضبطه المالك اختياريًّا؛ null يعني بلا سقف
