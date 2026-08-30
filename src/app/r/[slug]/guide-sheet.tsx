@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { tr, type Lang } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
-import { guideMode, guideSeenKey, shouldAutoOpen, type GuideBranch } from "@/lib/guide-mode";
+import { guideMode, guideSeenKey, hasZoneChoice, shouldAutoOpen, type GuideBranch } from "@/lib/guide-mode";
 
 /**
  * دليل العميل — غطاءٌ سفليّ يظهر مرّةً واحدةً لكلّ مطعم.
@@ -100,26 +100,43 @@ function Sheet({
     if (apple) setOs("ios");
   }, []);
 
-  // كلّ خطوة: عنوانها، وسطرٌ واحدٌ يقول ماذا يحدث بعدها — لا تكثيفًا في سطرٍ
-  // واحد. والمالك طلب صراحةً توضيح أنّ تسجيلًا واحدًا يكفي المجموعة كاملة،
-  // فذاك في تفصيل خطوة التسجيل نفسها لا سطرٍ منفصل يطيل الغطاء.
+  // خطوة القسم مشروطة: تظهر فقط حين يوجد اختيارٌ فعليّ ليُختار. وفرعٌ بقسمٍ
+  // واحد لا يعرض على العميل أزرار أقسامٍ أصلًا، فتُحذف الخطوة كاملةً بدل أن
+  // تظهر فارغة — والترقيم يُعاد تسلسله تلقائيًّا لأنّه مشتقٌّ من الفهرس.
+  const zoneStep = hasZoneChoice(branches)
+    ? [
+        {
+          title: tr(lang, "اختر القسم", "Choose the area"),
+          detail: tr(
+            lang,
+            "لو الفرع قسم واحد بس، تُحذف هذه الخطوة تلقائيًا، لا تظهر فارغة.",
+            "If a branch has only one area, this step is removed automatically — it never shows up empty.",
+          ),
+        },
+      ]
+    : [];
+
+  // كلّ خطوة: عنوانها، وسطرٌ واحدٌ يقول ماذا يحدث بعدها. والخطوات نفسها حدّدها
+  // المالك حرفيًّا لوضع الانتظار، ووضعُ الحجز يتبع نفس المنطق: عدد، ثمّ قسمٌ
+  // إن وُجد اختيار، ثمّ التسجيل الذي يحمل معه ما يحدث بعده.
   const steps: { title: string; detail?: string }[] =
     mode === "waitlist"
       ? [
           {
-            title: tr(lang, "سجّل اسمك ورقمك", "Enter your name and number"),
+            title: tr(lang, "حدّد عدد أفراد مجموعتك", "Choose your party size"),
             detail: tr(
               lang,
-              "تسجيلٌ واحدٌ يكفي مجموعتك كاملة — لا حاجة أن يسجّل كلّ فرد.",
-              "One registration covers your whole group — no need for everyone to sign up.",
+              "شخص واحد فقط يسجّل عن المجموعة كاملة، ما يحتاج كل فرد يسجّل لحاله.",
+              "Only one person registers for the whole group — no need for everyone to sign up.",
             ),
           },
+          ...zoneStep,
           {
-            title: tr(lang, "تابع دورك تلقائيًّا", "Track your turn automatically"),
+            title: tr(lang, "اكتب اسمك ورقم جوالك وانضم", "Enter your name and mobile, then join"),
             detail: tr(
               lang,
-              "الشاشة تتحدّث نفسها أوّلًا بأوّل، وتصلك تنبيهاتٌ إن فعّلتها بالأسفل.",
-              "The screen updates itself — turn on alerts below to get notified too.",
+              "دورك يتحدّث تلقائيًا، وتقدر تفعّل تنبيهات جوالك من الأسفل.",
+              "Your turn updates automatically, and you can switch on phone alerts below.",
             ),
           },
         ]
@@ -127,22 +144,19 @@ function Sheet({
         ? [
             {
               title: tr(lang, "اختر عدد الأشخاص", "Choose your party size"),
-              detail: tr(lang, "العدد يشمل مجموعتك كاملة.", "The number covers your whole group."),
-            },
-            {
-              title: tr(lang, "سجّل اسمك ورقمك", "Enter your name and number"),
               detail: tr(
                 lang,
-                "تسجيلٌ واحدٌ يكفي عن المجموعة كلّها — لا حاجة أن يسجّل كلّ فرد.",
-                "One registration covers the whole group — no need for everyone to sign up.",
+                "العدد يشمل مجموعتك كاملة — شخص واحد يكفي المجموعة، ما يحتاج كل فرد يسجّل لحاله.",
+                "The number covers your whole group — one person is enough, no need for everyone to sign up.",
               ),
             },
+            ...zoneStep,
             {
-              title: tr(lang, "تابع حجزك تلقائيًّا", "Track your booking automatically"),
+              title: tr(lang, "اكتب اسمك ورقم جوالك واحجز", "Enter your name and mobile, then book"),
               detail: tr(
                 lang,
-                "الشاشة تتحدّث نفسها أوّلًا بأوّل، وتصلك تنبيهاتٌ إن فعّلتها بالأسفل.",
-                "The screen updates itself — turn on alerts below to get notified too.",
+                "حجزك يتحدّث تلقائيًا، وتقدر تفعّل تنبيهات جوالك من الأسفل.",
+                "Your booking updates automatically, and you can switch on phone alerts below.",
               ),
             },
           ]

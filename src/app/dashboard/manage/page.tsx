@@ -14,6 +14,7 @@ import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 import { riyadhDayStart, riyadhDayKey, riyadhWeekday, riyadhHour } from "@/lib/dates";
 import { staffHasPermission } from "@/lib/features";
+import { ScreenGuide } from "@/components/screen-guide";
 
 const LIVE_ZONE_TONES = ["var(--st-full)", "var(--brand)", "var(--st-open)", "var(--brand-d)", "var(--muted)"];
 
@@ -153,6 +154,16 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
       {scope.multi && scope.active && (
         <BranchPicker branches={scope.branches} activeId={scope.active.id} />
       )}
+
+      <ScreenGuide
+        lang={lang}
+        anchor="owner"
+        lines={[
+          tr(lang, "ساعات الدوام لكل يوم — الفرع يفتح ويقفل بها تلقائيًّا.", "Opening hours per day — the branch opens and closes by them automatically."),
+          tr(lang, "هل يستقبل الفرع طابورًا أو حجوزات، وسقف الطابور وأكبر مجموعة.", "Whether the branch takes a queue or bookings, plus queue cap and max party size."),
+          tr(lang, "القائمة والأسعار، وأرقام آخر ٣٠ يومًا في الأعلى.", "Menu and prices, with the last 30 days' figures above."),
+        ]}
+      />
         {/* ===== التحليلات — للفرع المختار ===== */}
         {scope.multi && settingsBranch && (
           <p className="px-1 text-xs font-bold text-[color:var(--muted)]">

@@ -9,7 +9,7 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { guideMode, guideSeenKey, shouldAutoOpen } from "../src/lib/guide-mode.ts";
+import { guideMode, guideSeenKey, hasZoneChoice, shouldAutoOpen } from "../src/lib/guide-mode.ts";
 
 const W = { accepts: true, acceptsReservations: false };
 const R = { accepts: false, acceptsReservations: true };
@@ -67,4 +67,31 @@ test("shouldAutoOpen: قيمةٌ غريبة أو من مفتاحٍ قديم ⇒ 
   assert.equal(shouldAutoOpen("true"), true);
   assert.equal(shouldAutoOpen(""), true);
   assert.equal(shouldAutoOpen("0"), true);
+});
+
+/**
+ * خطوة «اختر القسم» مشروطة — والحارس هنا يمنع أن تعود فتظهر لفرعٍ بقسمٍ واحد،
+ * فتطلب من العميل اختيارًا لا وجود له في النموذج أمامه.
+ */
+const Z2 = { accepts: true, zones: [{ key: "inside" }, { key: "outside" }] };
+const Z1 = { accepts: true, zones: [{ key: "inside" }] };
+const Z0 = { accepts: true, zones: [] };
+
+test("قسمان أو أكثر ⇒ خطوة القسم تظهر", () => {
+  assert.equal(hasZoneChoice([Z2]), true);
+});
+
+test("قسمٌ واحد ⇒ تُحذف الخطوة، لا تظهر فارغة", () => {
+  assert.equal(hasZoneChoice([Z1]), false);
+});
+
+test("بلا أقسام أصلًا أو بحقلٍ غائب ⇒ لا خطوة (ولا انهيار)", () => {
+  assert.equal(hasZoneChoice([Z0]), false);
+  assert.equal(hasZoneChoice([{ accepts: true }]), false);
+  assert.equal(hasZoneChoice([]), false);
+});
+
+test("فروعٌ متعدّدة: يكفي فرعٌ واحدٌ فيه اختيار — الغطاء يخصّ المطعم لا فرعًا", () => {
+  assert.equal(hasZoneChoice([Z1, Z2]), true);
+  assert.equal(hasZoneChoice([Z1, Z1]), false);
 });
