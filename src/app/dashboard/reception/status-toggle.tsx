@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { setBranchQueuePaused, setBranchStatus } from "./status-actions";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
+import { ToggleSwitch } from "@/components/toggle-switch";
 
 /**
  * تحكّم تشغيلي سريع بحالة الفرع — للاستقبال والمالك معًا، بلا حاجة لصلاحية
@@ -55,84 +56,50 @@ export function StatusToggle({
   }
 
   return (
-    <div className="soft-card mb-5 flex flex-wrap items-center gap-2.5 p-3.5">
-      <button
-        type="button"
-        role="switch"
-        aria-checked={closed}
+    <div className="soft-card mb-5 grid gap-2.5 p-3.5 sm:grid-cols-2 lg:grid-cols-3">
+      {/* ── الشكل موحّد، والمنطق كما هو حرفيًّا ──
+          اتّجاه المفتاح يتبع ما يفهمه المضيف لا ما يخزّنه العمود: «الفرع
+          مفتوح» و«الطابور مفتوح» مشتغلٌ حين يكون مفتوحًا (فالمطفأ يعني
+          توقّفًا)، و«مزدحم الآن» مشتغلٌ حين تكون اللافتة معروضة. والمعالجات
+          هي هي: toggle وtogglePaused بلا حرفٍ واحد تغيّر. */}
+      <ToggleSwitch
+        on={!closed}
         disabled={pending}
-        onClick={() => toggle(!closed, closed ? busy : false)}
-        className="flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold transition disabled:opacity-60"
-        style={
+        onToggle={() => toggle(!closed, closed ? busy : false)}
+        title={tr(lang, "الفرع مفتوح", "Branch is open")}
+        hint={
           closed
-            ? { background: "var(--brand-solid)", color: "var(--brand-ink)" }
-            : { background: "var(--brand-solid)", color: "var(--brand-ink)" }
+            ? tr(lang, "مغلق يدويًّا — أمان النسيان: يُفتح تلقائيًّا فجر كل يوم", "Manually closed — forget-safe: reopens automatically at dawn")
+            : closedByHours
+              ? tr(lang, "⏱ خارج أوقات الدوام المضبوطة — يظهر للعميل مغلقًا تلقائيًا", "⏱ Outside configured hours — customers see it as closed automatically")
+              : tr(lang, "أطفئه ليُغلق الفرع فورًا أمام العملاء.", "Turn it off to close the branch to guests right away.")
         }
-      >
-        <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
-        {closed ? tr(lang, "الفرع مُغلق يدويًا — اضغط للفتح", "Manually closed — tap to reopen") : tr(lang, "أغلق الفرع الآن", "Close branch now")}
-      </button>
+      />
 
-      <button
-        type="button"
-        role="switch"
-        aria-checked={busy}
-        disabled={pending || closed}
-        onClick={() => toggle(closed, !busy)}
-        className="flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold transition disabled:opacity-60"
-        style={
-          busy
-            ? { background: "var(--brand-solid)", color: "var(--brand-ink)" }
-            : { background: "var(--brand-solid)", color: "var(--brand-ink)" }
-        }
-      >
-        <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
-        {busy ? tr(lang, "مزدحم الآن — اضغط للإلغاء", "Busy now — tap to clear") : tr(lang, "علّم الفرع مزدحمًا الآن", "Mark branch busy now")}
-      </button>
-
-      {/* «بدون انتظار» — مفتوحٌ ويستقبل، بلا دور. يختفي حين يكون الفرع مقفلًا
+      {/* «بدون انتظار» — مفتوحٌ ويستقبل، بلا دور. يُعطَّل حين يكون الفرع مقفلًا
           أصلًا: لا معنى لإيقاف طابورٍ في فرعٍ لا يُرى. */}
-      <button
-        type="button"
-        role="switch"
-        aria-checked={paused}
+      <ToggleSwitch
+        on={!paused}
         disabled={pending || closed}
-        onClick={togglePaused}
-        className="flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-sm font-extrabold transition disabled:opacity-60"
-        style={{ background: "var(--brand-solid)", color: "var(--brand-ink)" }}
-      >
-        <span className="h-2.5 w-2.5 rounded-full bg-white/90" />
-        {paused
-          ? tr(lang, "افتح الطابور", "Open the queue")
-          : tr(lang, "الطابور مفتوح — اضغط لإيقافه", "Queue is open — tap to pause")}
-      </button>
+        onToggle={togglePaused}
+        title={tr(lang, "الطابور مفتوح", "Queue is open")}
+        hint={
+          paused
+            ? tr(lang, "الفرع معروض ويستقبل — والداخل يدخل مباشرة.", "The branch stays visible and seating — guests walk right in.")
+            : tr(lang, "يُلغى تلقائيًّا فجر كلّ يوم.", "Clears automatically at dawn.")
+        }
+      />
 
-      {/* الصياغة تتبع الافتراض المقلوب (0150): الطابور مغلقٌ حتى يفتحه
-          الاستقبال عند بداية الازدحام، لا مفتوحٌ حتى يوقفه. */}
-      {!closed && (
-        <span className="text-xs font-bold" style={{ color: "var(--muted)" }}>
-          {paused
-            ? tr(lang,
-                "الفرع معروض ويستقبل — والداخل يدخل مباشرة.",
-                "The branch stays visible and seating — guests walk right in.")
-            : tr(lang,
-                "يُلغى تلقائيًّا فجر كلّ يوم.",
-                "Clears automatically at dawn.")}
-        </span>
-      )}
+      <ToggleSwitch
+        on={busy}
+        disabled={pending || closed}
+        onToggle={() => toggle(closed, !busy)}
+        title={tr(lang, "مزدحم الآن", "Busy now")}
+        hint={tr(lang, "لافتةٌ للعميل فقط — لا تمنع دورًا ولا تُغلق شيئًا.", "A label for guests only — it blocks nothing.")}
+      />
 
-      {!closed && closedByHours && (
-        <span className="text-xs font-bold" style={{ color: "var(--muted)" }}>
-          {tr(lang, "⏱ خارج أوقات الدوام المضبوطة — يظهر للعميل مغلقًا تلقائيًا", "⏱ Outside configured hours — customers see it as closed automatically")}
-        </span>
-      )}
-      {closed && (
-        <span className="text-xs font-bold" style={{ color: "var(--muted)" }}>
-          {tr(lang, "أمان النسيان: يُفتح تلقائيًّا فجر كل يوم", "Forget-safe: reopens automatically at dawn daily")}
-        </span>
-      )}
       {err && (
-        <span className="text-xs font-extrabold text-[color:var(--danger)]">
+        <span className="text-xs font-extrabold text-[color:var(--danger)] sm:col-span-2 lg:col-span-3">
           {tr(lang, "تعذّر الحفظ — حدّث الصفحة وحاول ثانية", "Couldn't save — refresh and retry")}
         </span>
       )}
