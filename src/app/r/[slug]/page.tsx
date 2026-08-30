@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getRestaurantMeta, getBranchContent, getBranchStripPhotos, getRestaurantReviews, publicRead } from "@/lib/supabase/public-cache";
 import { SharedHeader } from "@/components/page-header";
 import { WaitlistForm } from "./waitlist-form";
+import { GuideSheet } from "./guide-sheet";
 import { RestaurantTabs } from "./restaurant-tabs";
 import { ShareButton } from "./share-button";
 import { ReviewForm } from "./review-form";
@@ -164,8 +165,14 @@ export default async function RestaurantPublicPage({
     <WaitlistForm slug={slug} branches={withCounts} logo={restaurant.logo_url} restaurantName={restaurant.name} restaurantLogo={restaurant.logo_url} />
   );
 
+  /* دليل العميل — مكوّنٌ مستقلٌّ تمامًا، لا يلمس النموذج ولا منطقه. يقرّر
+     وضعَه من نفس حقلَي الإعداد اللذين يقرّران أيّ زرٍّ يظهر (`accepts` و
+     `acceptsReservations`)، فلا مصدرَ حقيقةٍ ثانيًا. */
+  const guide = hasBranches ? <GuideSheet slug={slug} branches={withCounts} /> : null;
+
   return (
     <div className="flex min-h-full flex-1 flex-col">
+      {guide}
       {/* هيدر المطعم — نفس هيدر الرئيسية حرفيًّا (SharedHeader): الارتفاع واللون
           والانحناءات مصدر واحد. شعار دور بنفس مقاسه وموضعه بالرئيسية تمامًا
           (زاوية الصفّ العلوي)، وشعار المطعم يتجاوز الحافة السفلية (overlap). */}
