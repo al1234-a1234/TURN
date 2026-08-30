@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
  * عمدًا لا يكشف أرقامًا تجارية ولا أسماء — فقط حيّ/ميت وزمن القاعدة.
  * وعميل Supabase يُنشأ هنا بلا جلسات (nodeFetch مباشر) — لا كوكيز ولا حالة.
  */
-export async function GET() {
+export async function GET(req: Request) {
   const started = Date.now();
   let db: "ok" | "fail" = "fail";
   // العين العميقة: هل الوظائف الليلية حية؟ (0049 — تتساهل يومًا كاملًا
@@ -77,7 +77,25 @@ export async function GET() {
     probe_error = e instanceof Error ? e.message.slice(0, 200) : "unknown";
   }
 
-  const body = { ok: db === "ok", db, writer, key_kind, url_set, probe_error, cron_fresh, db_ms: Date.now() - started };
+  // مراجعةٌ عدائيّة (٣٠/٨) وجدت أنّ `probe_error` (رسالة خطأ القاعدة الحرفيّة)
+  // و`key_kind` (يؤكّد أنّ مفتاح الخدمة صالحٌ فعلًا) كانا يُرسَلان لأيّ زائرٍ
+  // غير موثَّق — هذا المسار خارج middleware عمدًا (تعليق أعلاه). ليست قيمة
+  // سرٍّ مسرَّبة، لكنّها معلومةُ استطلاعٍ داخليّةٌ لا داعي لعلنيّتها. فالتفصيل
+  // الكامل الآن يُطبَع للسجلّ الخادميّ فقط ويظهر في الاستجابة حصرًا حين يحمل
+  // الطالب نفس سرّ `CANARY_SECRET` في ترويسة `x-canary-key` (نمط `/api/canary`
+  // بالضبط) — والراصد الخارجي العادي لا يحتاج غير `ok`/`db`/`writer`/`cron_fresh`.
+  if (probe_error) console.error("[health] probe_error:", probe_error, "key_kind:", key_kind);
+  const debugSecret = process.env.CANARY_SECRET ?? "";
+  const isDebugCaller = Boolean(debugSecret) && req.headers.get("x-canary-key") === debugSecret;
+
+  const body = {
+    ok: db === "ok",
+    db,
+    writer,
+    cron_fresh,
+    db_ms: Date.now() - started,
+    ...(isDebugCaller ? { key_kind, url_set, probe_error } : {}),
+  };
   // 503 عند سقوط القاعدة وحدها. وقد جعلتُ غياب قلم الكتابة يُسقطها أيضًا،
   // ثم تراجعت: ما دامت دوالّ الكتابة ممنوحةً للضيف (0093 متراجَعٌ عنه)
   // فالعميل يأخذ دوره والموقع قائم — وإعلانُه ساقطًا كذبٌ يعلّم صاحبه
