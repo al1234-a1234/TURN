@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { tr, type Lang } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
-import { guideMode, guideSeenKey, type GuideBranch } from "@/lib/guide-mode";
+import { guideMode, guideSeenKey, hasZoneChoice, shouldAutoOpen, type GuideBranch } from "@/lib/guide-mode";
 
 /**
  * دليل العميل — غطاءٌ سفليّ يظهر مرّةً واحدةً لكلّ مطعم.
@@ -20,6 +20,11 @@ import { guideMode, guideSeenKey, type GuideBranch } from "@/lib/guide-mode";
  *    كي يبدو للعميل امتدادًا لما رآه لا شاشةً غريبة.
  * ٣) ثلاثة أسطر لا أكثر، وزرّ إغلاقٍ كبير: العميل واقفٌ في المطعم ويريد أن
  *    يخلّص بثوانٍ. فالتنبيهات مطويّةٌ افتراضيًّا — من احتاجها فتحها.
+ *
+ * ٤) تحديثٌ لاحق: المالك طلب شرحًا مبسّطًا لا مختصرًا — فصار لكلّ خطوةٍ سطرُ
+ *    عنوانٍ وسطرُ تفصيلٍ واحد («ماذا يحدث بعدها؟»)، وضمن ذلك توضيحٌ صريح أنّ
+ *    تسجيلًا واحدًا يكفي المجموعة كاملة. يبقى الغطاء ثلاث خطواتٍ كحدٍّ أقصى
+ *    ويُقرأ في ثوانٍ — لا صفحة.
  */
 export function GuideSheet({ slug, branches }: { slug: string; branches: readonly GuideBranch[] }) {
   const lang = useLang();
@@ -31,15 +36,17 @@ export function GuideSheet({ slug, branches }: { slug: string; branches: readonl
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    let seen = true;
+    // القرار نفسه (هل نفتح؟) نقيٌّ ومختبَرٌ في shouldAutoOpen — هنا فقط
+    // القراءة الفعلية من التخزين، وهي وحدها ما يحتاج متصفّحًا حقيقيًّا.
+    let autoOpen = false;
     try {
-      seen = window.localStorage.getItem(guideSeenKey(slug)) === "1";
+      autoOpen = shouldAutoOpen(window.localStorage.getItem(guideSeenKey(slug)));
     } catch {
       // تصفّحٌ خاصّ أو تخزينٌ محجوب: نعتبره «رآه» فلا نُلحّ على من لا نستطيع
       // أن نتذكّر له شيئًا — غطاءٌ يظهر في كلّ زيارة أسوأ من غطاءٍ لا يظهر.
-      seen = true;
+      autoOpen = false;
     }
-    setOpen(!seen);
+    setOpen(autoOpen);
     setReady(true);
   }, [slug]);
 
@@ -93,19 +100,72 @@ function Sheet({
     if (apple) setOs("ios");
   }, []);
 
-  const steps: string[] =
+  // خطوة القسم مشروطة: تظهر فقط حين يوجد اختيارٌ فعليّ ليُختار. وفرعٌ بقسمٍ
+  // واحد لا يعرض على العميل أزرار أقسامٍ أصلًا، فتُحذف الخطوة كاملةً بدل أن
+  // تظهر فارغة — والترقيم يُعاد تسلسله تلقائيًّا لأنّه مشتقٌّ من الفهرس.
+  const zoneStep = hasZoneChoice(branches)
+    ? [
+        {
+          title: tr(lang, "اختر القسم", "Choose the area"),
+          detail: tr(
+            lang,
+            "لو الفرع قسم واحد بس، تُحذف هذه الخطوة تلقائيًا، لا تظهر فارغة.",
+            "If a branch has only one area, this step is removed automatically — it never shows up empty.",
+          ),
+        },
+      ]
+    : [];
+
+  // كلّ خطوة: عنوانها، وسطرٌ واحدٌ يقول ماذا يحدث بعدها. والخطوات نفسها حدّدها
+  // المالك حرفيًّا لوضع الانتظار، ووضعُ الحجز يتبع نفس المنطق: عدد، ثمّ قسمٌ
+  // إن وُجد اختيار، ثمّ التسجيل الذي يحمل معه ما يحدث بعده.
+  const steps: { title: string; detail?: string }[] =
     mode === "waitlist"
       ? [
-          tr(lang, "سجّل اسمك ورقمك.", "Enter your name and number."),
-          tr(lang, "تابع دورك تلقائيًّا.", "Track your turn automatically."),
+          {
+            title: tr(lang, "حدّد عدد أفراد مجموعتك", "Choose your party size"),
+            detail: tr(
+              lang,
+              "شخص واحد فقط يسجّل عن المجموعة كاملة، ما يحتاج كل فرد يسجّل لحاله.",
+              "Only one person registers for the whole group — no need for everyone to sign up.",
+            ),
+          },
+          ...zoneStep,
+          {
+            title: tr(lang, "اكتب اسمك ورقم جوالك وانضم", "Enter your name and mobile, then join"),
+            detail: tr(
+              lang,
+              "دورك يتحدّث تلقائيًا، وتقدر تفعّل تنبيهات جوالك من الأسفل.",
+              "Your turn updates automatically, and you can switch on phone alerts below.",
+            ),
+          },
         ]
       : mode === "reservations"
         ? [
-            tr(lang, "اختر عدد الأشخاص.", "Choose your party size."),
-            tr(lang, "سجّل اسمك ورقمك.", "Enter your name and number."),
-            tr(lang, "تابع حجزك تلقائيًّا.", "Track your booking automatically."),
+            {
+              title: tr(lang, "اختر عدد الأشخاص", "Choose your party size"),
+              detail: tr(
+                lang,
+                "العدد يشمل مجموعتك كاملة — شخص واحد يكفي المجموعة، ما يحتاج كل فرد يسجّل لحاله.",
+                "The number covers your whole group — one person is enough, no need for everyone to sign up.",
+              ),
+            },
+            ...zoneStep,
+            {
+              title: tr(lang, "اكتب اسمك ورقم جوالك واحجز", "Enter your name and mobile, then book"),
+              detail: tr(
+                lang,
+                "حجزك يتحدّث تلقائيًا، وتقدر تفعّل تنبيهات جوالك من الأسفل.",
+                "Your booking updates automatically, and you can switch on phone alerts below.",
+              ),
+            },
           ]
-        : [tr(lang, "هذا المطعم يستقبل مباشرةً — ادخل بلا دورٍ ولا حجز.", "This restaurant is walk-in — just come in.")];
+        : [
+            {
+              title: tr(lang, "هذا المطعم يستقبل مباشرةً", "This restaurant is walk-in"),
+              detail: tr(lang, "ادخل بلا دورٍ ولا حجز.", "Just come in — no turn, no booking."),
+            },
+          ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-end" role="dialog" aria-modal>
@@ -122,18 +182,23 @@ function Sheet({
           {tr(lang, "كيف يعمل؟", "How it works")}
         </p>
 
-        <ol className="mt-3 space-y-2">
+        <ol className="mt-3 space-y-3">
           {steps.map((s, i) => (
-            <li key={s} className="flex items-center gap-3">
+            <li key={s.title} className="flex items-start gap-3">
               {steps.length > 1 && (
                 <span
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-cream-100"
+                  className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-cream-100"
                   style={{ background: "var(--brand-solid)" }}
                 >
                   {i + 1}
                 </span>
               )}
-              <span className="text-sm font-semibold text-[color:var(--ink)]">{s}</span>
+              <span className="flex flex-col">
+                <span className="text-sm font-semibold text-[color:var(--ink)]">{s.title}</span>
+                {s.detail && (
+                  <span className="text-xs font-medium text-[color:var(--muted)]">{s.detail}</span>
+                )}
+              </span>
             </li>
           ))}
         </ol>

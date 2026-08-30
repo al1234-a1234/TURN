@@ -6,6 +6,7 @@ import { ModuleToggles, type ModuleRow } from "./module-toggles";
 import { addBranchAdmin } from "./actions";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
+import { ScreenGuide } from "@/components/screen-guide";
 
 export default async function RestaurantFeaturesPage({
   params,
@@ -69,6 +70,17 @@ export default async function RestaurantFeaturesPage({
       </header>
 
       <main className="mx-auto -mt-6 w-full max-w-3xl flex-1 space-y-6 px-5 pb-12">
+        {/* خارج الترويسة الداكنة عمدًا: نصّ `soft-card` غامقٌ على خلفيّةٍ فاتحة،
+            فداخل الترويسة يصير فاتحًا على فاتح. */}
+        <ScreenGuide
+          lang={lang}
+          anchor="owner"
+          lines={[
+            tr(lang, "كل مفتاح هنا يفتح وحدةً كاملة لهذا المطعم أو يقفلها.", "Each switch here opens or closes a whole module for this restaurant."),
+            tr(lang, "المالك لا يرى في لوحته إلا الوحدات المفتوحة من هنا.", "The owner only sees the modules switched on here."),
+            tr(lang, "هذه شاشة فريق «دور» وحده — لا يصل إليها المالك.", "This is the Turn team's screen only — owners cannot reach it."),
+          ]}
+        />
         <div className="soft-card flex items-center justify-between p-4">
           <div>
             <p className="font-bold text-[color:var(--ink)]">{tr(lang, "الموديولات المُفعّلة", "Enabled modules")}</p>

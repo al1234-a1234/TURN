@@ -14,6 +14,7 @@ import { tr, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 import { riyadhDayStart, isWithinOpeningHours } from "@/lib/dates";
 import { zoneLabel } from "@/lib/zones";
+import { ScreenGuide } from "@/components/screen-guide";
 
 /** الأقسام مفتوحة العدد، فاللون يدور بدل أن يُثبَّت لاثنين. */
 const ZONE_TONES = ["var(--brand-d)", "var(--brand)", "var(--st-open)", "var(--st-full)"];
@@ -277,6 +278,19 @@ export default async function ReceptionPage({
           </a>
         )}
       </div>
+
+      {/* خارج ترويسة `lg:` عمدًا: المضيف يعمل على جوّاله لا على سطح مكتب،
+          فشرحٌ يظهر للشاشات الكبيرة وحدها يغيب عمّن يحتاجه فعلًا. */}
+      <ScreenGuide
+        lang={lang}
+        anchor="reception"
+        className="mb-5"
+        lines={[
+          tr(lang, "نبّه من جاء دوره، ثمّ أجلسه أو احذفه من الطابور.", "Notify whoever's turn it is, then seat them or remove them."),
+          tr(lang, "أضف من وصل بلا تسجيل بزرّ «واصل الآن».", "Add someone who arrived without signing up using “Walk-in”."),
+          tr(lang, "أوقف الطابور مؤقّتًا أو أغلق الفرع من مفتاح الحالة.", "Pause the queue or close the branch from the status switch."),
+        ]}
+      />
 
       {/* تبويبات الفروع — كل فرع قسم مستقل تمامًا */}
       {multi && activeBranch && (

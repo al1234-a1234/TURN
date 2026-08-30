@@ -18,7 +18,16 @@
  */
 export type GuideMode = "waitlist" | "reservations" | "walkin";
 
-export type GuideBranch = { accepts?: boolean; acceptsReservations?: boolean };
+export type GuideBranch = {
+  accepts?: boolean;
+  acceptsReservations?: boolean;
+  /**
+   * أقسام الفرع النشِطة (داخلي/خارجي…) — تصل جاهزةً من `page.tsx` مفلترةً على
+   * `is_active`. لا مصدر حقيقةٍ جديد: هي نفس القائمة التي يبني بها النموذج
+   * أزرار اختيار القسم، فما يراه الدليل هو ما سيراه العميل في النموذج حرفيًّا.
+   */
+  zones?: readonly { key: string }[];
+};
 
 export function guideMode(branches: readonly GuideBranch[]): GuideMode {
   const anyWaitlist = branches.some((b) => b.accepts === true);
@@ -28,7 +37,36 @@ export function guideMode(branches: readonly GuideBranch[]): GuideMode {
   return "walkin";
 }
 
+/**
+ * هل تظهر خطوة «اختر القسم» أصلًا؟
+ *
+ * تظهر فقط إن كان في المطعم فرعٌ واحدٌ على الأقلّ فيه أكثر من قسمٍ نشِط. وفرعٌ
+ * بقسمٍ واحد (أو بلا أقسام) لا يعرض على العميل اختيارًا أصلًا، فخطوةٌ تشرح
+ * اختيارًا غير موجود تُربك لا تُرشد — **تُحذف الخطوة كاملةً، ولا تظهر فارغة**.
+ *
+ * و«أيُّ فرع» لا «كلُّ فرع» — لنفس سبب `guideMode` أعلاه: الغطاء يخصّ المطعم
+ * ويظهر قبل أن يختار العميل فرعه.
+ */
+export function hasZoneChoice(branches: readonly GuideBranch[]): boolean {
+  return branches.some((b) => (b.zones?.length ?? 0) > 1);
+}
+
 /** مفتاح التخزين المحلّي — مربوطٌ بالمطعم وحده: دليلُ مطعمٍ لا يُسكت دليلَ غيره. */
 export function guideSeenKey(slug: string): string {
   return `turn.guide.v1.${slug}`;
+}
+
+/**
+ * هل يُفتح الغطاء تلقائيًّا، بناءً على ما وجدناه فعلًا في التخزين؟
+ *
+ * ── ولماذا مستخرَجةٌ إلى دالّةٍ نقيّة ──
+ * كانت هذه المقارنة (`=== "1"`) سطرًا داخل `useEffect` في `guide-sheet.tsx`،
+ * فلا اختبار عليها إلا بمتصفّحٍ حقيقيّ — ولا متصفّح في بيئة الاختبار هنا.
+ * والقرار نفسه بسيطٌ ونقيّ (مُدخَلٌ واحد، مُخرَجٌ منطقيّ)، فعُزل ليصير
+ * مختبَرًا: أوّل زيارةٍ (`null`) تفتح، وزيارةٌ رأته (`"1"`) لا تفتح، وأيّ
+ * قيمةٍ أخرى — تالفة أو من نسخةٍ قديمة من المفتاح — **تفتح لا تُخفي**؛
+ * الشكّ يميل نحو إظهار الدليل، لا كتمه.
+ */
+export function shouldAutoOpen(storedValue: string | null): boolean {
+  return storedValue !== "1";
 }

@@ -10,6 +10,7 @@ import {
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 import type { Database } from "@/lib/supabase/database.types";
+import { ScreenGuide } from "@/components/screen-guide";
 
 type StaffRow = {
   id: string;
@@ -88,6 +89,17 @@ export default async function StaffPage() {
         <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "الموظفون والصلاحيات", "Staff & permissions")}</h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "افتح لكل موظف ما تريده بالضبط — تحكّم كامل ومرن", "Grant each staff member exactly what you want — full, flexible control")}</p>
       </div>
+
+      <ScreenGuide
+        lang={lang}
+        anchor="owner"
+        className="mb-5"
+        lines={[
+          tr(lang, "افتح لكل موظف الشاشات التي يحتاجها فقط.", "Give each employee only the screens they need."),
+          tr(lang, "الصلاحية المغلقة تُخفي الشاشة كاملةً عن صاحبها.", "A closed permission hides that screen entirely from them."),
+          tr(lang, "أنشئ رمز دخولٍ للموظّف من هنا، أو صفّره إن ضاع.", "Create a staff login code here, or reset it if lost."),
+        ]}
+      />
 
       <div className="space-y-4">
         {team.map((m) => {
