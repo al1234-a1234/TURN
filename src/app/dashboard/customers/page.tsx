@@ -10,6 +10,7 @@ import { toAr, normalizePhone } from "@/lib/format";
 import { daysAgoLabel } from "@/lib/dates";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
+import { ScreenGuide } from "@/components/screen-guide";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Profile = Database["public"]["Tables"]["customer_restaurant"]["Row"] & {
@@ -128,6 +129,15 @@ export default async function CustomersPage({
 
   return (
     <div className="space-y-6">
+        <ScreenGuide
+          lang={lang}
+          anchor="owner"
+          lines={[
+            tr(lang, "ابحث بالاسم أو الرقم، وصفِّ عملاءك بشرائح جاهزة.", "Search by name or number, and filter customers by ready-made segments."),
+            tr(lang, "أرسل هديّةً أو خصمًا لشريحةٍ كاملة — والعدد يظهر قبل الإرسال.", "Send a gift or discount to a whole segment — the reach shows before you send."),
+            tr(lang, "هديّة الاسترجاع تعمل وحدها ليلًا لمن غاب مدّةً تحدّدها.", "The win-back gift runs nightly on its own for whoever has been away as long as you set."),
+          ]}
+        />
         <div className="grid grid-cols-3 gap-3">
           <Kpi label={tr(lang, "عملاؤك", "Your customers")} value={toAr(segCounts.all)} tone="var(--brand-d)" />
           <Kpi label={tr(lang, "مميّزون (VIP)", "VIPs")} value={toAr(vips)} tone="var(--st-open)" />

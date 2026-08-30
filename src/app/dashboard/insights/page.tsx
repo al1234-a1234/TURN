@@ -2,6 +2,7 @@ import Link from "next/link";
 import { loadOwner } from "../owner-context";
 import { DismissInsight } from "../dismiss-insight";
 import { getLang } from "@/lib/i18n-server";
+import { ScreenGuide } from "@/components/screen-guide";
 import { tr } from "@/lib/i18n";
 import { fmtDateTime } from "@/lib/dates";
 
@@ -70,6 +71,15 @@ export default async function InsightsPage() {
           {tr(lang, "ملخّصاتك اليومية ومن انصرف قبل دوره.", "Your daily digests and who walked away before their turn.")}
         </p>
       </div>
+      <ScreenGuide
+        lang={lang}
+        anchor="owner"
+        lines={[
+          tr(lang, "الرؤى والتنبيهات التي يكتبها النظام لك تلقائيًّا.", "The insights and alerts the system writes for you automatically."),
+          tr(lang, "غير المقروء أعلى، والسابق تحته باهتًا.", "Unread sits on top; earlier ones below it, dimmed."),
+          tr(lang, "من انصرف قبل دوره تفتح ملفّه من السطر مباشرةً.", "For someone who walked away before their turn, open their file straight from the row."),
+        ]}
+      />
 
       {rows.length === 0 ? (
         <div className="soft-card p-10 text-center">

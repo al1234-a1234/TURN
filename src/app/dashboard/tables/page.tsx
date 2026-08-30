@@ -4,6 +4,7 @@ import { resolveBranchScope } from "../branch-scope";
 import { BranchPicker } from "../branch-picker";
 import { staffHasPermission } from "@/lib/features";
 import { getLang } from "@/lib/i18n-server";
+import { ScreenGuide } from "@/components/screen-guide";
 import { tr } from "@/lib/i18n";
 import { toAr } from "@/lib/format";
 import { addTable, deleteTable } from "./actions";
@@ -82,6 +83,17 @@ export default async function TablesPage({ searchParams }: { searchParams: Promi
         <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "الطاولات", "Tables")}</h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, "عرّف أقسام مطعمك وطاولاتها وسعاتها", "Define your restaurant's areas, tables and seats")}</p>
       </div>
+
+      <ScreenGuide
+        lang={lang}
+        anchor="owner"
+        className="mb-5"
+        lines={[
+          tr(lang, "عرّف أقسام الفرع وطاولاته وسعة كلّ طاولة.", "Define the branch's areas, its tables, and each table's seats."),
+          tr(lang, "قسمٌ مطفأ لا يستقبل طاولاتٍ جديدة، ويبقى ظاهرًا ما دام فيه طاولات.", "A switched-off area takes no new tables, and stays visible while it still holds some."),
+          tr(lang, "الطاولات لفرعٍ واحد لا تختلط — اختر الفرع أوّلًا.", "Tables belong to one branch and never mix — pick the branch first."),
+        ]}
+      />
 
       {scope.multi && scope.active && <BranchPicker branches={scope.branches} activeId={scope.active.id} />}
 

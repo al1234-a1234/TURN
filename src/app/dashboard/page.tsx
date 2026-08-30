@@ -7,6 +7,7 @@ import { ColumnChart, SplitBars, ChartCard } from "./manage/charts";
 import { toAr } from "@/lib/format";
 import { tr, pct, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
+import { ScreenGuide } from "@/components/screen-guide";
 import { riyadhDayStart, riyadhDayKey, riyadhWeekday, riyadhHour } from "@/lib/dates";
 
 const AR_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
@@ -137,6 +138,17 @@ export default async function OverviewPage() {
         <h1 className="font-display text-3xl font-bold text-[color:var(--ink)]">{tr(lang, "لوحة التحكم", "Dashboard")}</h1>
         <p className="mt-1 text-sm text-[color:var(--muted)]">{tr(lang, `نظرة شاملة على أداء ${restaurant.name}`, `An overview of ${restaurant.name}'s performance`)}</p>
       </div>
+
+      <ScreenGuide
+        lang={lang}
+        anchor="owner"
+        className="mb-6"
+        lines={[
+          tr(lang, "أرقام مطعمك الآن وآخر ٣٠ يومًا في شاشة واحدة.", "Your restaurant's numbers now and over 30 days, on one screen."),
+          tr(lang, "تنبيهات حمراء تظهر وحدها: طابور مزدحم، تقييم نازل، تغيّب مرتفع.", "Red alerts appear on their own: a crowded queue, a falling rating, high no-shows."),
+          tr(lang, "زرّ «الطابور الآن» ينقلك مباشرةً لشاشة الاستقبال.", "The “Queue now” button takes you straight to the reception screen."),
+        ]}
+      />
 
       {/* تنبيهات */}
       {alerts.length > 0 && (

@@ -9,6 +9,7 @@ import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { toAr, money } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
+import { ScreenGuide } from "@/components/screen-guide";
 
 type CustomerRow = {
   id: string;
@@ -185,6 +186,15 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
 
   return (
     <div className="space-y-6">
+        <ScreenGuide
+          lang={lang}
+          anchor="owner"
+          lines={[
+            tr(lang, "ملفّ عميلٍ واحد: زياراته وحجوزاته وتقييماته.", "One customer's file: their visits, bookings and reviews."),
+            tr(lang, "امنحه هديّةً أو خصمًا، أو اعتمد مكافأةً قائمة أو اسحبها.", "Grant a gift or discount, or redeem an existing reward or revoke it."),
+            tr(lang, "عدد الزيارات والتغيّب و«عميلٌ منذ» في أعلى الصفحة.", "Visit count, no-shows and “customer since” sit at the top."),
+          ]}
+        />
         <Link href="/dashboard/customers" className="inline-flex text-sm font-bold text-brand-700">
           {tr(lang, "← العملاء", "← Customers")}
         </Link>

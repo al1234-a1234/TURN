@@ -10,6 +10,7 @@ import { isModuleOn, staffHasPermission } from "@/lib/features";
 import { toAr } from "@/lib/format";
 import { tr, pct, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
+import { ScreenGuide } from "@/components/screen-guide";
 import { riyadhDayStart, riyadhHour, riyadhDayKey, riyadhWeekday } from "@/lib/dates";
 
 const AR_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
@@ -286,6 +287,16 @@ export default async function ReportsPage({
           <PrintButton />
         </div>
       </div>
+      <ScreenGuide
+        lang={lang}
+        anchor="owner"
+        className="mb-6 print:hidden"
+        lines={[
+          tr(lang, "تقرير أداءٍ لفترةٍ تختارها: يوم أو أسبوع أو شهر أو سنة.", "A performance report for a period you pick: day, week, month or year."),
+          tr(lang, "«طباعة / حفظ PDF» يُخرج التقرير جاهزًا للمشاركة.", "“Print / Save PDF” turns the report into something you can share."),
+          tr(lang, "عشرة أرقامٍ مع رسوم الفترة والأقسام وساعات الذروة.", "Ten figures, plus the period, area and peak-hour charts."),
+        ]}
+      />
 
       {/* المؤشرات */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
