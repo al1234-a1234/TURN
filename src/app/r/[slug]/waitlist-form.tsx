@@ -112,6 +112,19 @@ function zoneLine(b: Branch, lang: "ar" | "en"): string {
   return parts.join(" · ");
 }
 
+/**
+ * فترة تحديث عدّادات صفحة العميل.
+ *
+ * كانت الجلبة **مرّةً واحدة عند الفتح ولا تتكرّر أبدًا**: يفتح العميل الصفحة
+ * فيرى «داخلي ٣»، ويبقى عشر دقائق والرقم مجمّد كما هو. وهذا وحده يفسّر
+ * انطباع «المنافس لحظيّ ونحن بطيئون» — لم نكن بطيئين، كنّا واقفين.
+ *
+ * وخمس عشرة ثانية لا أربع كالاستقبال: العميل يقرأ رقمًا استرشاديًّا ليقرّر
+ * أيجيء أم لا، والمضيف يدير طابورًا حيًّا. ولأنّ زوّار صفحة المطعم أضعافُ
+ * المضيفين، فكلّ ثانيةٍ تُقتطع هنا تُضرب في عددهم.
+ */
+const LIVE_POLL_MS = 15_000;
+
 /** بطاقة فرع كصورة كبيرة داخل شريط أفقي منزلق (نمط ريكيو) — بهويتنا. */
 function BranchSlide({ b, logo, onSelect }: { b: Branch; logo?: string | null; onSelect: () => void }) {
   const lang = useLang();
@@ -334,8 +347,11 @@ export function WaitlistForm({
     const ids = branches.map((b) => b.id);
     if (!ids.length) return;
     let alive = true;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let fails = 0;
     const sb = createClient();
-    Promise.all([
+
+    const load = () => Promise.all([
       sb.rpc("waitlist_counts_for", { p_branch_ids: ids }),
       // ولكل قسمٍ عدّاده: العدّاد القديم يعرف عمودَي inside/outside فقط
       sb.rpc("waitlist_counts_by_zone", { p_branch_ids: ids }),
@@ -367,10 +383,33 @@ export function WaitlistForm({
           };
         }
         setLive(next);
+        fails = 0;
+        schedule(LIVE_POLL_MS);
       })
-      // فشلٌ عابر يُبقي المخبوز — وهو صحيحٌ حتى دقيقة مضت، لا خطأ
-      .catch(() => {});
-    return () => { alive = false; };
+      // فشلٌ عابر يُبقي المخبوز — وهو صحيحٌ حتى دقيقة مضت، لا خطأ.
+      // ونتباعد بدل أن نصمت: انقطاعٌ لحظيّ لا يجوز أن يجمّد العدّاد للأبد.
+      .catch(() => {
+        if (!alive) return;
+        fails = Math.min(fails + 1, 4);
+        schedule(Math.min(LIVE_POLL_MS * 2 ** fails, 60_000));
+      });
+
+    const schedule = (ms: number) => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => { if (!document.hidden) load(); else schedule(ms); }, ms);
+    };
+
+    // العودة من الخمول: العدّاد الذي غاب دقيقةً كاذبٌ — نجلبه فورًا.
+    const onVis = () => { if (!document.hidden) load(); };
+    document.addEventListener("visibilitychange", onVis);
+
+    load();
+
+    return () => {
+      alive = false;
+      if (timer) clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVis);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
