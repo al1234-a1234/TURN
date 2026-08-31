@@ -43,6 +43,7 @@ function periodLabel(p: Period, lang: Lang): string {
 }
 
 type WaitRow = {
+  id: string;
   joined_at: string;
   seated_at: string | null;
   status: string;
@@ -67,6 +68,10 @@ export default async function ReportsPage({
   if (!isModuleOn(modules, "analytics") || !staffHasPermission(role, permissions, "analytics")) redirect("/dashboard");
 
   const canCustomers = staffHasPermission(role, permissions, "customers");
+  // تفصيل الإلغاء يقرأ queue_events، وسياسته تشترط صلاحية «الطابور» لا
+  // «التحليلات». من يملك التقارير دون الطابور كان سيقرأ صفرًا يفهمه
+  // «لا أحد ألغى» — فنسأل قبل الجلب، كما نفعل مع أرقام العملاء أعلاه.
+  const canWaitlist = staffHasPermission(role, permissions, "waitlist");
 
   const { data: branches } = await supabase
     .from("branches")
@@ -107,7 +112,7 @@ export default async function ReportsPage({
     branchIds.length
       ? supabase
           .from("waitlist_entries")
-          .select("joined_at, seated_at, status, zone, party_size")
+          .select("id, joined_at, seated_at, status, zone, party_size")
           .in("branch_id", branchIds)
           .gte("joined_at", since)
       : Promise.resolve({ data: [] as WaitRow[] }),
@@ -140,6 +145,32 @@ export default async function ReportsPage({
     .map((r) => (new Date(r.seated_at as string).getTime() - new Date(r.joined_at).getTime()) / 60000)
     .filter((n) => n >= 0 && n < 600);
   const avgWait = waits.length ? Math.round(waits.reduce((a, b) => a + b, 0) / waits.length) : 0;
+
+  // ===== تفصيل الإلغاء: من الاستقبال أم من العميل؟ =====
+  // القاعدة لا تحمل عمودًا يميّز «من ألغى» في waitlist_entries. المميّز
+  // الوحيد هو queue_events.actor = auth.uid() لحظة التغيّر: موظّفٌ مسجَّل
+  // الدخول ⇒ معرّفه، وضيفٌ يلغي من تذكرته ⇒ لا جلسة ⇒ NULL.
+  //
+  // لكنّ السجلّ بدأ يوم تفعيله لا يوم افتتاح المطعم، فما قبله لا مصدر له.
+  // ولا نوزّع المجهول على المعلوم: نعرضه بندًا ثالثًا صريحًا «غير مسجَّل»،
+  // لأن رقمًا ناقصًا يُقرأ كاملًا أسوأ من رقمٍ يقول عن نفسه إنه ناقص.
+  const cancelledIds = rows.filter((r) => r.status === "cancelled").map((r) => r.id);
+  const { data: cancelEvents } = canWaitlist && cancelledIds.length
+    ? await supabase
+        .from("queue_events")
+        .select("entry_id, actor")
+        .eq("kind", "cancelled")
+        .in("entry_id", cancelledIds)
+    : { data: [] as { entry_id: string; actor: string | null }[] };
+
+  // الصفّ قد يُلغى ويُرجَع ويُلغى ثانيةً — فالحدث الواحد لكل صفّ لا أكثر.
+  const cancelSource = new Map<string, boolean>();
+  for (const e of (cancelEvents ?? []) as { entry_id: string; actor: string | null }[]) {
+    if (!cancelSource.has(e.entry_id)) cancelSource.set(e.entry_id, e.actor !== null);
+  }
+  const cancelByStaff = [...cancelSource.values()].filter(Boolean).length;
+  const cancelBySelf = cancelSource.size - cancelByStaff;
+  const cancelUnlogged = Math.max(0, cancel - cancelSource.size);
 
   const partySizes = seated.map((r) => r.party_size).filter((n) => n > 0);
   const avgParty = partySizes.length
@@ -312,9 +343,41 @@ export default async function ReportsPage({
         <Kpi label={tr(lang, "عملاء عائدون", "Returning Customers")}
              value={canCustomers ? pct(toAr(returningPct), lang) : tr(lang, "لا صلاحية", "No access")}
              tone="var(--st-open)" tint="rgba(63,125,93,0.10)" />
-        <Kpi label={tr(lang, "نسبة التغيّب", "No-show Rate")} value={pct(toAr(noShowRate), lang)} tone={noShowRate >= 20 ? "var(--st-closed)" : "var(--muted)"} tint="var(--surface-2)" />
+        <Kpi label={tr(lang, "نسبة التغيّب", "No-show Rate")} value={pct(toAr(noShowRate), lang)} tone={noShowRate >= 20 ? "var(--st-closed)" : "var(--muted)"} tint="var(--surface-2)"
+             hint={tr(lang, "يتطلّب تفعيل زرّ «لم يحضر» في الاستقبال", "Needs the “No-show” button in reception")} />
         <Kpi label={tr(lang, "نسبة الإلغاء", "Cancel Rate")} value={pct(toAr(cancelRate), lang)} tone={cancelRate >= 20 ? "var(--st-closed)" : "var(--muted)"} tint="var(--surface-2)" />
       </div>
+
+      {/* تفصيل الإلغاء — إضافةٌ بجانب الأرقام أعلاه، لا بديلٌ عنها */}
+      {cancel > 0 ? (
+        <section className="soft-card mt-6 p-5">
+          <h2 className="mb-1 flex items-center gap-2 font-display text-lg font-bold text-[color:var(--ink)]">
+            <span className="h-4 w-1.5 rounded-full" style={{ background: "var(--brand-solid)" }} />
+            {tr(lang, "من أين جاء الإلغاء؟", "Where did cancellations come from?")}
+          </h2>
+          <p className="mb-4 text-xs text-[color:var(--muted)]">
+            {tr(lang, `من إجمالي ${toAr(cancel)} إلغاءً في هذه الفترة.`, `Out of ${toAr(cancel)} cancellations this period.`)}
+          </p>
+          {!canWaitlist ? (
+            <p className="py-4 text-center text-sm text-[color:var(--muted)]">
+              {tr(lang, "يتطلّب صلاحية «الطابور».", "Requires the “Queue” permission.")}
+            </p>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <Kpi label={tr(lang, "أزالها الاستقبال", "Removed by reception")}
+                   value={`${toAr(cancelByStaff)} · ${pct(toAr(cancel ? Math.round((cancelByStaff / cancel) * 100) : 0), lang)}`}
+                   tone="var(--brand-d)" tint="rgba(120,30,12,0.05)" />
+              <Kpi label={tr(lang, "ألغاها العميل بنفسه", "Cancelled by the guest")}
+                   value={`${toAr(cancelBySelf)} · ${pct(toAr(cancel ? Math.round((cancelBySelf / cancel) * 100) : 0), lang)}`}
+                   tone="var(--st-open)" tint="rgba(63,125,93,0.10)" />
+              <Kpi label={tr(lang, "غير مسجَّل", "Not recorded")}
+                   value={`${toAr(cancelUnlogged)} · ${pct(toAr(cancel ? Math.round((cancelUnlogged / cancel) * 100) : 0), lang)}`}
+                   tone="var(--muted)" tint="var(--surface-2)"
+                   hint={tr(lang, "إلغاءاتٌ سبقت تفعيل سجلّ الحركة", "Cancellations predating the activity log")} />
+            </div>
+          )}
+        </section>
+      ) : null}
 
       {/* رسوم */}
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
@@ -355,11 +418,13 @@ export default async function ReportsPage({
   );
 }
 
-function Kpi({ label, value, tone, tint }: { label: string; value: string; tone: string; tint: string }) {
+function Kpi({ label, value, tone, tint, hint }: { label: string; value: string; tone: string; tint: string; hint?: string }) {
   return (
     <div className="rounded-2xl p-4 text-center" style={{ background: tint, border: "1px solid var(--border)" }}>
       <p className="font-display text-2xl font-bold leading-none lg:text-[1.75rem]" style={{ color: tone }}>{value}</p>
       <p className="mt-1.5 text-[11px] font-bold text-[color:var(--muted)]">{label}</p>
+      {/* صفرٌ بلا تفسيرٍ يُقرأ نجاحًا. التلميح يقول لماذا هو صفر. */}
+      {hint ? <p className="mt-1 text-[10px] leading-tight text-[color:var(--muted)] opacity-80">{hint}</p> : null}
     </div>
   );
 }
