@@ -1498,6 +1498,21 @@ export type Database = {
           table_label: string
         }[]
       }
+      branch_day_log: {
+        Args: { p_branch_id: string; p_limit?: number }
+        Returns: {
+          event_id: string
+          entry_id: string | null
+          kind: string
+          zone: string | null
+          from_rank: number | null
+          to_rank: number | null
+          at: string
+          customer_name: string | null
+          actor_name: string | null
+          restorable: boolean
+        }[]
+      }
       branch_busy_hours: {
         Args: { p_branch_id: string }
         Returns: {
@@ -1930,6 +1945,10 @@ export type Database = {
         Returns: undefined
       }
       run_auto_winback: { Args: never; Returns: number }
+      restore_queue_entry: {
+        Args: { p_entry_id: string }
+        Returns: string
+      }
       run_critical_checks: {
         Args: never
         Returns: {

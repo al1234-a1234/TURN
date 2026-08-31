@@ -130,6 +130,11 @@ begin
   insert into public.reservations(branch_id, customer_id, party_size, reserved_at, status)
     values (br_b, cu_b, 2, now() + interval '2 days', 'confirmed') returning id into rs_b;
 
+  -- سجلّ حركة الطابور لـ«ب» (0169). يُزرع صراحةً كي لا يكون «صفر» الفحص
+  -- تاليًا مجرّد غيابِ بيانات: الشاهد أدناه يتحقّق من وجوده أوّلًا.
+  insert into public.queue_events(branch_id, entry_id, customer_id, kind, zone, from_rank)
+    values (br_b, wl_b, cu_b, 'cancelled', 'inside', 1);
+
   insert into public.customer_restaurant(restaurant_id, customer_id) values (r_b, cu_b);
   insert into public.customer_rewards(restaurant_id, customer_id, title) values (r_b, cu_b, 'هديّة ب');
   insert into public.customer_segments(restaurant_id, name) values (r_b, 'شريحة ب');
@@ -165,6 +170,7 @@ begin
     from (
       select 'عملاء' t,   count(*) n from public.customers where id = cu_b
       union all select 'طابور',    count(*) from public.waitlist_entries where branch_id = br_b
+      union all select 'سجلّ',     count(*) from public.queue_events where branch_id = br_b
       union all select 'حجوزات',   count(*) from public.reservations where branch_id = br_b
       union all select 'طاقم',     count(*) from public.staff where restaurant_id = r_b
       union all select 'هدايا',    count(*) from public.customer_rewards where restaurant_id = r_b
@@ -189,6 +195,8 @@ begin
     format('select count(*) from public.customers where id = %L', cu_b));
   perform pg_temp.expect_none('ضيف', 'طابور «ب»',
     format('select count(*) from public.waitlist_entries where branch_id = %L', br_b));
+  perform pg_temp.expect_none('ضيف', 'سجلّ طابور «ب»',
+    format('select count(*) from public.queue_events where branch_id = %L', br_b));
   perform pg_temp.expect_none('ضيف', 'حجوزات «ب»',
     format('select count(*) from public.reservations where branch_id = %L', br_b));
   perform pg_temp.expect_none('ضيف', 'طاقم «ب»',
@@ -248,6 +256,8 @@ begin
     format('select count(*) from public.customers where id = %L', cu_b));
   perform pg_temp.expect_none('مضيف أ', 'طابور «ب»',
     format('select count(*) from public.waitlist_entries where branch_id = %L', br_b));
+  perform pg_temp.expect_none('مضيف أ', 'سجلّ طابور «ب»',
+    format('select count(*) from public.queue_events where branch_id = %L', br_b));
   perform pg_temp.expect_none('مضيف أ', 'حجوزات «ب»',
     format('select count(*) from public.reservations where branch_id = %L', br_b));
   perform pg_temp.expect_none('مضيف أ', 'طاقم «ب»',
@@ -299,6 +309,8 @@ begin
     format('select count(*) from public.customers where id = %L', cu_b));
   perform pg_temp.expect_none('مالك أ', 'طابور «ب»',
     format('select count(*) from public.waitlist_entries where branch_id = %L', br_b));
+  perform pg_temp.expect_none('مالك أ', 'سجلّ طابور «ب»',
+    format('select count(*) from public.queue_events where branch_id = %L', br_b));
   perform pg_temp.expect_none('مالك أ', 'حجوزات «ب»',
     format('select count(*) from public.reservations where branch_id = %L', br_b));
   perform pg_temp.expect_none('مالك أ', 'طاقم «ب»',

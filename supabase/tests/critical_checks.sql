@@ -667,7 +667,32 @@ with checks(name, pass) as (
                                and (select count(*) from pg_policies where schemaname='public') = 71
                                and (select count(*) from pg_constraint c join pg_class r on r.oid=c.conrelid
                                     join pg_namespace n on n.oid=r.relnamespace
-                                    where n.nspname='public' and c.contype='f') = 40)
+                                    where n.nspname='public' and c.contype='f') = 40),
+
+  -- ══ 0169: سجلّ اليوم + الإرجاع ══
+  -- كلّ حارسٍ منها أُثبت عمليًّا أنّه يسقط بزرع الخلل ثمّ يعود بعد التراجع.
+  ('w41_queue_log_trigger',    (select count(*)=1 from pg_trigger t
+                                 join pg_class c on c.oid=t.tgrelid
+                                where c.relname='waitlist_entries'
+                                  and t.tgname='trg_log_queue_event' and t.tgenabled='O')),
+  -- عزل الفروع في السجلّ: RLS مفعّل وسياسة القراءة تمرّ من my_branch_ids
+  ('w42_queue_events_rls',     (select relrowsecurity from pg_class where oid='public.queue_events'::regclass)
+                               and exists(select 1 from pg_policies
+                                where schemaname='public' and tablename='queue_events'
+                                  and cmd='SELECT' and qual like '%my_branch_ids%')),
+  -- المخرج الذي يفتقده admin_audit: دالّة تقليم، ولا صفوف أقدم من ٣٥ يومًا
+  ('w43_queue_events_prunable',exists(select 1 from pg_proc
+                                where proname='prune_queue_events' and pronamespace='public'::regnamespace)
+                               and not exists(select 1 from public.queue_events
+                                where at < now() - interval '35 days')),
+  -- قرار الصلاحية مفروضٌ داخل الدالّة لا في الواجهة (إخفاء الزرّ ليس حماية)
+  ('w44_restore_manager_only', (select pg_get_functiondef(oid) like '%my_managed_branch_ids%'
+                                 from pg_proc where proname='restore_queue_entry'
+                                   and pronamespace='public'::regnamespace)),
+  -- ولا سياسة كتابةٍ للمستخدم على السجلّ إطلاقًا (الكتابة من التريغر وحده)
+  ('w45_queue_events_readonly',(select count(*)=0 from pg_policies
+                                where schemaname='public' and tablename='queue_events'
+                                  and cmd in ('INSERT','UPDATE','DELETE')))
 )
 select name, pass,
   case when pass then '✓' else '✗ FAIL' end as mark

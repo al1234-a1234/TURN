@@ -6,6 +6,7 @@ import { RewardBox } from "./reward-box";
 import { AutoRefresh } from "./auto-refresh";
 import { BranchTabs } from "./branch-tabs";
 import { StatusToggle } from "./status-toggle";
+import { DayLog, type DayLogRow } from "./day-log";
 import { ReservationActions } from "../reservations/reservation-actions";
 import { loadOwner, scopeBranchIds } from "../owner-context";
 import { staffHasPermission } from "@/lib/features";
@@ -60,7 +61,7 @@ export default async function ReceptionPage({
   const soonFrom = new Date(Date.now() - 60 * 60e3).toISOString();
   const soonTo = new Date(Date.now() + 4 * 3600e3).toISOString();
 
-  const [queueRes, todayRes, statusRes, resvRes, zoneRes, versionRes] = activeBranch
+  const [queueRes, todayRes, statusRes, resvRes, zoneRes, versionRes, dayLogRes] = activeBranch
     ? await Promise.all([
         // نداءٌ واحد بدل انضمامٍ تحرسه سياسةُ `customers` صفًّا صفًّا: كانت
         // الحراسة تنادي دالّةً أمنيّة لكلّ منتظر، فبلغت القراءة ٢٥٠ مللي على
@@ -88,8 +89,13 @@ export default async function ReceptionPage({
         // يبني خطّ أساسه من أوّل نبضة له لا ممّا رُسم فعلًا، فيبتلع كلّ تغييرٍ
         // وقع بين التصيير والنبضة الأولى ولا يعرضه أبدًا. تكلفتها ٠٫٦٨ م.ث.
         supabase.rpc("queue_version", { p_branch_id: activeBranch.id }),
+        // سجلّ اليوم يسافر مع الدفعة نفسها — لا رحلةً سابعة زيادةً على كل
+        // تحميل، ولا N+1: نداءٌ واحد يعيد الحركة كاملةً بأسمائها ومنفّذيها.
+        // ونافذته متدحرجة (٨ ساعات) لا تاريخٌ تقويميّ — عطل «اليوم التقويميّ»
+        // وقع مرّتين في هذا المشروع (0165، 0166) ولا يُكرَّر في جدولٍ جديد.
+        supabase.rpc("branch_day_log", { p_branch_id: activeBranch.id, p_limit: 50 }),
       ])
-    : [{ data: [], error: null }, { count: 0, error: null }, { data: null, error: null }, { data: [], error: null }, { data: [], error: null }, { data: null, error: null }];
+    : [{ data: [], error: null }, { count: 0, error: null }, { data: null, error: null }, { data: [], error: null }, { data: [], error: null }, { data: null, error: null }, { data: [], error: null }];
 
   // أخطر كذبة في الشاشة: طابور فارغ. الموظّف يقرأه «لا أحد ينتظر» فيتوقّف عن
   // المناداة والناس واقفون. عند فشل الجلب نقول تعذّر التحميل ولا نرسم طابورًا.
@@ -400,6 +406,9 @@ export default async function ReceptionPage({
           {other.length > 0 && (
             <div className="mt-6"><ZoneColumn title={tr(lang, "غير محدّد", "Unspecified")} rows={other} tone="var(--muted)" /></div>
           )}
+
+          {/* سجلّ اليوم أسفل الطابور — شاشة التصحيح التي يعيش فيها زرّ الإرجاع */}
+          <DayLog rows={(dayLogRes?.data ?? []) as DayLogRow[]} />
         </>
       ) : (
         <div className="soft-card py-12 text-center text-sm text-[color:var(--muted)]">
