@@ -685,8 +685,11 @@ with checks(name, pass) as (
                                 where proname='prune_queue_events' and pronamespace='public'::regnamespace)
                                and not exists(select 1 from public.queue_events
                                 where at < now() - interval '35 days')),
-  -- قرار الصلاحية مفروضٌ داخل الدالّة لا في الواجهة (إخفاء الزرّ ليس حماية)
-  ('w44_restore_manager_only', (select pg_get_functiondef(oid) like '%my_managed_branch_ids%'
+  -- قرار الصلاحية مفروضٌ داخل الدالّة لا في الواجهة (إخفاء الزرّ ليس حماية).
+  -- والقيمة المحروسة هي قرار المالك: صلاحية waitlist العاديّة — ويسقط الفحص
+  -- إن عاد أحدٌ إلى my_managed_branch_ids صامتًا.
+  ('w44_restore_waitlist_perm',(select pg_get_functiondef(oid) like '%my_branch_ids_for%'
+                                 and pg_get_functiondef(oid) not like '%my_managed_branch_ids%'
                                  from pg_proc where proname='restore_queue_entry'
                                    and pronamespace='public'::regnamespace)),
   -- ولا سياسة كتابةٍ للمستخدم على السجلّ إطلاقًا (الكتابة من التريغر وحده)
