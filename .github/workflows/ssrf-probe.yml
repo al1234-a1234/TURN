@@ -1,0 +1,51 @@
+# مسبار CRITICAL-1 — هل تُنفَّذ public.http_get من anon عبر PostgREST فعلًا؟
+#
+# سؤالٌ واحد بقي مفتوحًا من تدقيق ٢٠٢٦-٠٩-٠١: أثبتنا داخل القاعدة أنّ دور
+# anon يصل libcurl (خطأ «Protocol not supported» من libcurl نفسه)، لكنّ
+# القفزة الأخيرة — نداء HTTPS حقيقيّ على /rest/v1/rpc — لم تُختبر: وكيل
+# الخروج في بيئة العميل يحجب *.supabase.co، وجهاز المالك بلا طرفيّة.
+# فنُطلقها من عدّاء GitHub بدل التخمين.
+#
+# الأمان:
+#   • workflow_dispatch وحده — لا push ولا schedule ولا cron.
+#   • المفتاح المستعمل هو المفتاح العلنيّ (publishable) الذي يُشحن أصلًا في
+#     حزمة المتصفّح وفي .env.production المتتبَّع — لا سرّ هنا. ولا يُذكر في
+#     هذا الملفّ مفتاحُ خدمة ولا رمز تلغرام ولا أيّ سرٍّ آخر.
+#   • المسبار قراءةٌ فقط: طلبٌ خارجيّ واحد إلى example.com، بلا كتابة ولا أثر.
+#   • الملفّ على فرع العمل لا على main، فلا يُطلق نشرًا إنتاجيًّا (دفعات
+#     الفرع تُنتج معاينات target=null كما ثبت عمليًّا).
+
+name: SSRF probe (CRITICAL-1)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: المسبار — public.http_get عبر PostgREST بدور anon
+        run: |
+          echo "=============== PRIMARY PROBE ==============="
+          curl -sS -w '\nHTTP_STATUS:%{http_code}\n' \
+            -X POST 'https://nkdfxmjuigslmangzuua.supabase.co/rest/v1/rpc/http_get' \
+            -H 'apikey: sb_publishable_TID1xCZ38N9D4IhQfhHcqA_q2Andfp3' \
+            -H 'Content-Type: application/json' \
+            -d '{"uri":"https://example.com"}'
+          echo "============= END PRIMARY PROBE ============="
+
+      - name: ضابطٌ للتفسير — دالّةٌ معروفةُ الانكشاف بنفس المفتاح
+        if: always()
+        run: |
+          # يفرّق بين «http_get غير مكشوفة» و«المفتاح/الذاكرة المؤقّتة معطّلة»:
+          # tv_queue مكشوفةٌ لـanon بالتصميم (شاشة التلفاز).
+          echo "=============== CONTROL ==============="
+          curl -sS -w '\nHTTP_STATUS:%{http_code}\n' \
+            -X POST 'https://nkdfxmjuigslmangzuua.supabase.co/rest/v1/rpc/tv_queue' \
+            -H 'apikey: sb_publishable_TID1xCZ38N9D4IhQfhHcqA_q2Andfp3' \
+            -H 'Content-Type: application/json' \
+            -d '{"p_branch_id":"00000000-0000-0000-0000-000000000000"}'
+          echo "============= END CONTROL ============="
