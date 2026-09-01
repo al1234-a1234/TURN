@@ -37,6 +37,8 @@ type Branch = {
   queuePaused?: boolean;
   /** إيقاف الانضمام المؤقّت — يُعرض للعميل كطابورٍ ممتلئ، بصرف النظر عن العدد. */
   joinFrozen?: boolean;
+  /** سبب الإيقاف اليدويّ — يحدّد أيّ الصيغتين يقرأ الضيف. */
+  joinFrozenReason?: "done_today" | "temporary" | null;
   /** أقصى عدد أشخاص يقبله الفرع — يضبطه المالك في الإدارة */
   maxParty: number;
   /** سقف حجم الطابور — يضبطه المالك اختياريًّا؛ null يعني بلا سقف */
@@ -343,7 +345,7 @@ export function WaitlistForm({
      من الاستقبال، كانت البطاقة تبقى تقول «متاح الآن · خذ دورك» دقيقةً كاملة،
      فيملأ العميل النموذج ثم يُردّ بخطأ «الفرع مغلق حاليًا». نُحدّث الاثنين
      معًا فور الرسم فتعود البطاقة صادقة. */
-  type Live = { total: number; zoneCounts?: Record<string, number>; accepts?: boolean; acceptsReservations?: boolean; closedNow?: boolean; busyNow?: boolean; queuePaused?: boolean; joinFrozen?: boolean; maxWaitlistSize?: number | null };
+  type Live = { total: number; zoneCounts?: Record<string, number>; accepts?: boolean; acceptsReservations?: boolean; closedNow?: boolean; busyNow?: boolean; queuePaused?: boolean; joinFrozen?: boolean; joinFrozenReason?: "done_today" | "temporary" | null; maxWaitlistSize?: number | null };
   const [live, setLive] = useState<Record<string, Live>>({});
   useEffect(() => {
     const ids = branches.map((b) => b.id);
@@ -358,7 +360,7 @@ export function WaitlistForm({
       // ولكل قسمٍ عدّاده: العدّاد القديم يعرف عمودَي inside/outside فقط
       sb.rpc("waitlist_counts_by_zone", { p_branch_ids: ids }),
       sb.from("branch_settings")
-        .select("branch_id, accepts_waitlist, accepts_reservations, manually_closed, busy_now, queue_paused, join_frozen, opening_hours, max_waitlist_size")
+        .select("branch_id, accepts_waitlist, accepts_reservations, manually_closed, busy_now, queue_paused, join_frozen, join_frozen_reason, opening_hours, max_waitlist_size")
         .in("branch_id", ids),
     ])
       .then(([counts, byZone, settings]) => {
@@ -381,6 +383,9 @@ export function WaitlistForm({
             busyNow: st.busy_now ?? false,
             queuePaused: st.queue_paused ?? false,
             joinFrozen: st.join_frozen ?? false,
+            joinFrozenReason: st.join_frozen_reason === "done_today" ? "done_today"
+                            : st.join_frozen_reason === "temporary"  ? "temporary"
+                            : null,
             closedNow: (st.manually_closed ?? false) || !isWithinOpeningHours(st.opening_hours as { open?: string | null; close?: string | null } | null),
             maxWaitlistSize: st.max_waitlist_size ?? null,
           };
@@ -791,13 +796,27 @@ export function WaitlistForm({
           <span className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full" style={{ background: "rgba(192,86,74,0.12)", color: "var(--st-closed)" }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M17 20.5v-1.5a4 4 0 00-4-4H8a4 4 0 00-4 4v1.5M10 11a3.5 3.5 0 100-7 3.5 3.5 0 000 7zM19 8v4M21 10h-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </span>
+          {/* صيغتان لا واحدة، والفرق بينهما ما يفعله الضيف بعد قراءتها:
+              «اكتملت حجوزات اليوم» تصرفه لغدٍ مرتاحًا، و«مزدحمٌ حاليًا» تُبقيه
+              يجرّب بعد دقائق. ورسالةٌ واحدة لهما كانت تُضيّع نصف الضيوف في
+              انتظارٍ بلا فائدة والنصف الآخر بانصرافٍ بلا داعٍ.
+
+              و«اكتملت اليوم» وحدها تأتي من قرارٍ صريحٍ في الاستقبال. وكلّ ما
+              عداها — الازدحام المؤقّت، والسقف العدديّ التلقائيّ الذي يُفتح
+              وحده مع نزول العدد، وأيّ سببٍ مجهول — يقرأ الثانية: فهي الصادقة
+              حين يكون المكان قد يُفتح بعد لحظات.
+
+              وبلا رقمٍ في الحالتين: «٤٠/٤٠» يقرؤه الضيف تحدّيًا لا اعتذارًا،
+              ولا يملك به حيلة. */}
           <p className="text-lg font-bold text-[color:var(--ink)]">
-            {atNumericCap
-              ? tr(lang, `الطابور ممتلئ حاليًا (${toAr(branch.maxWaitlistSize ?? 0)})`, `The queue is full right now (${branch.maxWaitlistSize})`)
-              : tr(lang, "الطابور ممتلئ حاليًا", "The queue is full right now")}
+            {branch.joinFrozenReason === "done_today"
+              ? tr(lang, "اكتملت حجوزات اليوم", "Today's bookings are full")
+              : tr(lang, "المطعم مزدحمٌ حاليًا", "We're busy right now")}
           </p>
           <p className="mt-1 text-sm text-[color:var(--muted)]">
-            {tr(lang, "حاول بعد قليل — تُفتح المقاعد أول بأول مع جلوس أو مغادرة أشخاص.", "Try again shortly — spots open up as people are seated or leave.")}
+            {branch.joinFrozenReason === "done_today"
+              ? tr(lang, "نتشرّف بزيارتكم غدًا لامتلاء المطعم", "We'd be honoured to host you tomorrow — we're fully booked today")
+              : tr(lang, "جرّب بعد لحظاتٍ — الأعداد تتغيّر بسرعة", "Try again in a moment — numbers change quickly")}
           </p>
         </div>
         {reserveSection}

@@ -145,6 +145,7 @@ export type Database = {
           has_inside: boolean
           has_outside: boolean
           join_frozen: boolean
+          join_frozen_reason: string | null
           manually_closed: boolean
           max_party_size: number
           max_waitlist_size: number | null
@@ -168,6 +169,7 @@ export type Database = {
           has_inside?: boolean
           has_outside?: boolean
           join_frozen?: boolean
+          join_frozen_reason?: string | null
           manually_closed?: boolean
           max_party_size?: number
           max_waitlist_size?: number | null
@@ -191,6 +193,7 @@ export type Database = {
           has_inside?: boolean
           has_outside?: boolean
           join_frozen?: boolean
+          join_frozen_reason?: string | null
           manually_closed?: boolean
           max_party_size?: number
           max_waitlist_size?: number | null
@@ -2080,7 +2083,7 @@ export type Database = {
       }
       service_role_probe: { Args: never; Returns: boolean }
       set_branch_join_frozen: {
-        Args: { p_branch_id: string; p_frozen: boolean }
+        Args: { p_branch_id: string; p_frozen: boolean; p_reason?: string | null }
         Returns: boolean
       }
       set_branch_queue_paused: {
