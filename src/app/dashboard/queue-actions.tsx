@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { updateWaitlistStatus } from "./waitlist-actions";
+import { SwapButton } from "./reception/swap-selection";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 
@@ -26,12 +27,16 @@ export function QueueActions({
   phone,
   restaurant,
   position,
+  zone,
 }: {
   id: string;
   name: string;
   phone: string;
   restaurant: string;
   position: number | null;
+  /** قسم الدور — يلزم زرَّ التبديل ليمنع الاختيار عبر قسمين. اختياريّ:
+   *  بدونه (أو خارج شاشة الاستقبال) لا يُعرض الزرّ أصلًا. */
+  zone?: string | null;
 }) {
   const lang = useLang();
   const [pending, start] = useTransition();
@@ -58,6 +63,9 @@ export function QueueActions({
 
   return (
     <div className="flex shrink-0 items-center gap-1.5">
+      {/* تبديل الموضع مع دورٍ آخر — يظهر داخل شاشة الاستقبال وحدها (المزوّد
+          موجودٌ هناك فقط)، وبنفس مقاس بقيّة أزرار البطاقة */}
+      <SwapButton id={id} zone={zone ?? null} rank={position ?? 0} />
       {/* اتصال مباشر — طلب المشغّل: أحيانًا واتساب غير كافٍ (ضيفٌ لا يفتحه فورًا)
           وأسرع رد فعل هو مكالمة فعلية. tel: يفتح تطبيق الهاتف مباشرة على الجوّال. */}
       <a
