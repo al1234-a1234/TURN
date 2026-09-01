@@ -71,7 +71,7 @@ export default async function ReceptionPage({
         supabase.rpc("staff_branch_queue", { p_branch_id: activeBranch.id }),
         supabase.from("waitlist_entries").select("id", { count: "exact", head: true })
           .eq("branch_id", activeBranch.id).eq("status", "seated").gte("seated_at", startToday),
-        supabase.from("branch_settings").select("manually_closed, busy_now, queue_paused, join_frozen, opening_hours, accepts_reservations").eq("branch_id", activeBranch.id).maybeSingle(),
+        supabase.from("branch_settings").select("manually_closed, busy_now, queue_paused, join_frozen, join_frozen_reason, opening_hours, accepts_reservations").eq("branch_id", activeBranch.id).maybeSingle(),
         supabase
           .from("reservations")
           .select("id, reserved_at, party_size, status, notes, customers(full_name, phone), tables(label, zone)")
@@ -138,7 +138,7 @@ export default async function ReceptionPage({
   const other = list.filter((q) => !zones.some((z) => z.key === q.zone));
   const activeZones = zones.filter((z) => z.is_active);
   const servedToday = todayRes?.count ?? 0;
-  const status = statusRes?.data as { manually_closed: boolean; busy_now: boolean; queue_paused?: boolean; join_frozen?: boolean; opening_hours: { open?: string; close?: string } | null; accepts_reservations?: boolean } | null;
+  const status = statusRes?.data as { manually_closed: boolean; busy_now: boolean; queue_paused?: boolean; join_frozen?: boolean; join_frozen_reason?: "done_today" | "temporary" | null; opening_hours: { open?: string; close?: string } | null; accepts_reservations?: boolean } | null;
   const closedByHours = status ? !isWithinOpeningHours(status.opening_hours) : false;
 
   // فشل جلب الحجوزات لا يُفرغ الشاشة، لكنه لا يُقرأ «لا حجوزات» أيضًا
@@ -312,6 +312,7 @@ export default async function ReceptionPage({
               busyNow={status.busy_now}
               queuePaused={status.queue_paused ?? false}
               joinFrozen={status.join_frozen ?? false}
+              joinFrozenReason={status.join_frozen_reason ?? null}
               closedByHours={closedByHours}
             />
           )}

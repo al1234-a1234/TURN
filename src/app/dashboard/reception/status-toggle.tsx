@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { setBranchJoinFrozen, setBranchQueuePaused, setBranchStatus } from "./status-actions";
+import { setBranchJoinFrozen, setBranchQueuePaused, setBranchStatus, type JoinFrozenReason } from "./status-actions";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 import { ToggleSwitch } from "@/components/toggle-switch";
@@ -18,6 +18,7 @@ export function StatusToggle({
   closedByHours,
   queuePaused = false,
   joinFrozen = false,
+  joinFrozenReason = null,
 }: {
   branchId: string;
   closedNow: boolean;
@@ -26,14 +27,17 @@ export function StatusToggle({
   closedByHours: boolean;
   /** مفتوحٌ بلا طابور: يُعرض ويُزار، ولا يقبل دورًا جديدًا. */
   queuePaused?: boolean;
-  /** إيقاف الانضمام المؤقّت: يمنع كلّ جديدٍ ويريه «الطابور ممتلئ»، بلا لمس القائمين. */
+  /** إيقاف الانضمام المؤقّت: يمنع كلّ جديدٍ ويريه «ممتلئ»، بلا لمس القائمين. */
   joinFrozen?: boolean;
+  /** أيّ رسالةٍ يقرؤها الضيف: اكتمل اليوم، أم ازدحامٌ عابر. */
+  joinFrozenReason?: JoinFrozenReason | null;
 }) {
   const lang = useLang();
   const [closed, setClosed] = useState(closedNow);
   const [busy, setBusy] = useState(busyNow);
   const [paused, setPaused] = useState(queuePaused);
   const [frozen, setFrozen] = useState(joinFrozen);
+  const [reason, setReason] = useState<JoinFrozenReason | null>(joinFrozenReason);
   const [err, setErr] = useState(false);
   const [pending, start] = useTransition();
 
@@ -46,12 +50,22 @@ export function StatusToggle({
     });
   }
 
-  function toggleFrozen() {
-    const prev = frozen;
-    setFrozen(!prev);
+  /** إيقافٌ بسببٍ مسمّى — السبب هو ما يقرؤه الضيف، فلا يُترك للتخمين. */
+  function freezeWith(next: JoinFrozenReason) {
+    const prev = { frozen, reason };
+    setFrozen(true); setReason(next);
     start(async () => {
-      const ok = await setBranchJoinFrozen(branchId, !prev);
-      if (!ok) { setFrozen(prev); setErr(true); } else setErr(false);
+      const ok = await setBranchJoinFrozen(branchId, true, next);
+      if (!ok) { setFrozen(prev.frozen); setReason(prev.reason); setErr(true); } else setErr(false);
+    });
+  }
+
+  function unfreeze() {
+    const prev = { frozen, reason };
+    setFrozen(false); setReason(null);
+    start(async () => {
+      const ok = await setBranchJoinFrozen(branchId, false);
+      if (!ok) { setFrozen(prev.frozen); setReason(prev.reason); setErr(true); } else setErr(false);
     });
   }
 
@@ -117,36 +131,56 @@ export function StatusToggle({
           أخويه — فيُرى قبل أن يُقرأ. يمنع الجديد ويُريه «الطابور ممتلئ»، ولا
           يمسّ من في الطابور، ولا يُفتح تلقائيًّا. يُعطَّل حين يكون الفرع مقفلًا
           أصلًا (لا انضمام في فرعٍ لا يُرى). */}
-      <div className="sm:col-span-2 lg:col-span-3">
-        <ToggleSwitch
-          on={frozen}
-          tone="danger"
-          disabled={pending || closed}
-          onToggle={toggleFrozen}
-          title={tr(lang, "إيقاف الانضمام الجديد", "Stop new sign-ups")}
-          hint={
-            frozen
-              ? tr(lang,
-                  "موقوف يدويًّا — العميل الجديد يرى «الطابور ممتلئ حاليًا». من في الطابور يبقى ويُخدم. لا يُفتح تلقائيًّا؛ أطفئه لتعيد القبول.",
-                  "Stopped manually — new guests see “The queue is full right now.” Those already in line stay and are served. It won't reopen on its own; turn it off to accept again.")
-              : tr(lang,
-                  "الفرع يقبل أدوارًا جديدة. شغّله لإيقاف الانضمام فورًا مع بقاء من في الطابور — بلا تأثيرٍ على من ينتظر.",
-                  "The branch is accepting new sign-ups. Turn it on to stop new joins at once while everyone already in line stays.")
-          }
-        />
-      </div>
-
-      {frozen && (
-        <div
-          className="flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-extrabold sm:col-span-2 lg:col-span-3"
-          style={{ background: "rgba(192,86,74,0.12)", color: "var(--st-closed)" }}
-        >
-          <span aria-hidden>⛔</span>
-          <span>
-            {tr(lang,
-              "الانضمام موقوف الآن — العملاء الجدد يرون «الطابور ممتلئ حاليًا». لن يُفتح تلقائيًّا.",
-              "Sign-ups are stopped — new guests see “The queue is full right now.” It won't reopen automatically.")}
-          </span>
+      {/* ── الحالة الثالثة: إيقافٌ بسببٍ مسمّى ──
+          صار الزرّ خيارين لأنّ السببين يقولان للضيف شيئين متعاكسين: «اكتمل
+          اليوم» تصرفه لغدٍ، و«مزدحمٌ مؤقّتًا» تُبقيه يجرّب بعد دقائق. ورسالةٌ
+          واحدة لهما كانت تُضيّع نصف الضيوف في الانتظار والنصف الآخر بالانصراف.
+          المفتاح الواحد لا يحمل سببًا — فصار الاختيار صريحًا عند الضغط. */}
+      {!frozen ? (
+        <div className="grid gap-2.5 sm:col-span-2 sm:grid-cols-2 lg:col-span-3">
+          <button
+            type="button"
+            disabled={pending || closed}
+            onClick={() => freezeWith("done_today")}
+            className="rounded-2xl px-4 py-3.5 text-start text-sm font-extrabold transition disabled:opacity-50"
+            style={{ background: "rgba(192,86,74,0.12)", color: "var(--st-closed)", border: "1px solid var(--border)" }}
+          >
+            <span className="block">{tr(lang, "أوقف: اكتملت اليوم", "Stop: done for today")}</span>
+            <span className="mt-1 block text-[11px] font-bold opacity-80">
+              {tr(lang, "يقرأ الضيف: «اكتملت حجوزات اليوم»", "Guest reads: “Today's bookings are full”")}
+            </span>
+          </button>
+          <button
+            type="button"
+            disabled={pending || closed}
+            onClick={() => freezeWith("temporary")}
+            className="rounded-2xl px-4 py-3.5 text-start text-sm font-extrabold transition disabled:opacity-50"
+            style={{ background: "rgba(169,114,30,0.12)", color: "var(--st-full)", border: "1px solid var(--border)" }}
+          >
+            <span className="block">{tr(lang, "أوقف: مزدحمٌ مؤقّتًا", "Stop: busy right now")}</span>
+            <span className="mt-1 block text-[11px] font-bold opacity-80">
+              {tr(lang, "يقرأ الضيف: «المطعم مزدحمٌ حاليًا»", "Guest reads: “We're busy right now”")}
+            </span>
+          </button>
+        </div>
+      ) : (
+        <div className="sm:col-span-2 lg:col-span-3">
+          <ToggleSwitch
+            on
+            tone="danger"
+            disabled={pending}
+            onToggle={unfreeze}
+            title={tr(lang, "الانضمام موقوف", "Sign-ups stopped")}
+            hint={
+              reason === "done_today"
+                ? tr(lang,
+                    "الضيف الجديد يقرأ: «اكتملت حجوزات اليوم». من في الطابور يبقى ويُخدم. لا يُفتح تلقائيًّا؛ أطفئه لتعيد القبول.",
+                    "New guests read: “Today's bookings are full.” Those already in line stay and are served. It won't reopen on its own; turn it off to accept again.")
+                : tr(lang,
+                    "الضيف الجديد يقرأ: «المطعم مزدحمٌ حاليًا». من في الطابور يبقى ويُخدم. لا يُفتح تلقائيًّا؛ أطفئه لتعيد القبول.",
+                    "New guests read: “We're busy right now.” Those already in line stay and are served. It won't reopen on its own; turn it off to accept again.")
+            }
+          />
         </div>
       )}
 

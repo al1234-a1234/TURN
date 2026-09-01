@@ -62,6 +62,39 @@ export type Database = {
         }
         Relationships: []
       }
+      alert_outbox: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: number
+          last_error: string | null
+          message: string
+          request_id: number | null
+          settled_at: string | null
+          status: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: never
+          last_error?: string | null
+          message: string
+          request_id?: number | null
+          settled_at?: string | null
+          status?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: never
+          last_error?: string | null
+          message?: string
+          request_id?: number | null
+          settled_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       alert_state: {
         Row: {
           check_key: string
@@ -111,6 +144,8 @@ export type Database = {
           grace_period_min: number
           has_inside: boolean
           has_outside: boolean
+          join_frozen: boolean
+          join_frozen_reason: string | null
           manually_closed: boolean
           max_party_size: number
           max_waitlist_size: number | null
@@ -118,7 +153,6 @@ export type Database = {
             | Database["public"]["Enums"]["notification_channel"][]
             | null
           opening_hours: Json | null
-          join_frozen: boolean
           queue_paused: boolean
           updated_at: string
         }
@@ -134,6 +168,8 @@ export type Database = {
           grace_period_min?: number
           has_inside?: boolean
           has_outside?: boolean
+          join_frozen?: boolean
+          join_frozen_reason?: string | null
           manually_closed?: boolean
           max_party_size?: number
           max_waitlist_size?: number | null
@@ -141,7 +177,6 @@ export type Database = {
             | Database["public"]["Enums"]["notification_channel"][]
             | null
           opening_hours?: Json | null
-          join_frozen?: boolean
           queue_paused?: boolean
           updated_at?: string
         }
@@ -157,6 +192,8 @@ export type Database = {
           grace_period_min?: number
           has_inside?: boolean
           has_outside?: boolean
+          join_frozen?: boolean
+          join_frozen_reason?: string | null
           manually_closed?: boolean
           max_party_size?: number
           max_waitlist_size?: number | null
@@ -164,7 +201,6 @@ export type Database = {
             | Database["public"]["Enums"]["notification_channel"][]
             | null
           opening_hours?: Json | null
-          join_frozen?: boolean
           queue_paused?: boolean
           updated_at?: string
         }
@@ -896,6 +932,70 @@ export type Database = {
           },
         ]
       }
+      queue_events: {
+        Row: {
+          actor: string | null
+          at: string
+          branch_id: string
+          customer_id: string | null
+          detail: Json
+          entry_id: string | null
+          from_rank: number | null
+          id: string
+          kind: string
+          to_rank: number | null
+          zone: string | null
+        }
+        Insert: {
+          actor?: string | null
+          at?: string
+          branch_id: string
+          customer_id?: string | null
+          detail?: Json
+          entry_id?: string | null
+          from_rank?: number | null
+          id?: string
+          kind: string
+          to_rank?: number | null
+          zone?: string | null
+        }
+        Update: {
+          actor?: string | null
+          at?: string
+          branch_id?: string
+          customer_id?: string | null
+          detail?: Json
+          entry_id?: string | null
+          from_rank?: number | null
+          id?: string
+          kind?: string
+          to_rank?: number | null
+          zone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "queue_events_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "queue_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "queue_events_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "waitlist_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rate_limits: {
         Row: {
           count: number
@@ -1480,6 +1580,8 @@ export type Database = {
         Returns: undefined
       }
       alert_closed_branch_with_waiters: { Args: never; Returns: undefined }
+      alert_peak_join_stall: { Args: never; Returns: undefined }
+      alert_position_duplicates: { Args: never; Returns: undefined }
       alert_visual_integrity: { Args: never; Returns: undefined }
       backup_snapshot_daily: { Args: never; Returns: number }
       book_reservation_guest: {
@@ -1498,26 +1600,26 @@ export type Database = {
           table_label: string
         }[]
       }
-      branch_day_log: {
-        Args: { p_branch_id: string; p_limit?: number }
-        Returns: {
-          event_id: string
-          entry_id: string | null
-          kind: string
-          zone: string | null
-          from_rank: number | null
-          to_rank: number | null
-          at: string
-          customer_name: string | null
-          actor_name: string | null
-          restorable: boolean
-        }[]
-      }
       branch_busy_hours: {
         Args: { p_branch_id: string }
         Returns: {
           hour_riyadh: number
           joins: number
+        }[]
+      }
+      branch_day_log: {
+        Args: { p_branch_id: string; p_limit?: number }
+        Returns: {
+          actor_name: string
+          at: string
+          customer_name: string
+          entry_id: string
+          event_id: string
+          from_rank: number
+          kind: string
+          restorable: boolean
+          to_rank: number
+          zone: string
         }[]
       }
       branch_open_by_hours: {
@@ -1839,6 +1941,7 @@ export type Database = {
         }
         Returns: string
       }
+      prune_queue_events: { Args: never; Returns: number }
       push_subs_for_entry: {
         Args: { p_entry_id: string }
         Returns: {
@@ -1904,6 +2007,7 @@ export type Database = {
         }[]
       }
       restaurant_of_branch: { Args: { b_id: string }; Returns: string }
+      restore_queue_entry: { Args: { p_entry_id: string }; Returns: string }
       retire_dormant_customers: { Args: { p_months?: number }; Returns: number }
       retire_phone_lookup_log: { Args: never; Returns: number }
       rewards_by_phone:
@@ -1945,10 +2049,6 @@ export type Database = {
         Returns: undefined
       }
       run_auto_winback: { Args: never; Returns: number }
-      restore_queue_entry: {
-        Args: { p_entry_id: string }
-        Returns: string
-      }
       run_critical_checks: {
         Args: never
         Returns: {
@@ -1983,7 +2083,7 @@ export type Database = {
       }
       service_role_probe: { Args: never; Returns: boolean }
       set_branch_join_frozen: {
-        Args: { p_branch_id: string; p_frozen: boolean }
+        Args: { p_branch_id: string; p_frozen: boolean; p_reason?: string | null }
         Returns: boolean
       }
       set_branch_queue_paused: {
@@ -2089,6 +2189,7 @@ export type Database = {
         }
         Returns: Json
       }
+      sweep_alert_outbox: { Args: never; Returns: number }
       telegram_apply_branch_lockdown_cleanup: {
         Args: { p_chat_id: string }
         Returns: string

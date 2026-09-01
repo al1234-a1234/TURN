@@ -61,12 +61,22 @@ export async function setBranchQueuePaused(branchId: string, paused: boolean): P
  * يتأثّر: يبقى، يُخدم، يستعيد تذكرته. وصلاحيته `waitlist` كأخواته — قرارٌ
  * تشغيليّ لحظيّ على الباب.
  */
-export async function setBranchJoinFrozen(branchId: string, frozen: boolean): Promise<boolean> {
+export type JoinFrozenReason = "done_today" | "temporary";
+
+export async function setBranchJoinFrozen(
+  branchId: string,
+  frozen: boolean,
+  reason?: JoinFrozenReason,
+): Promise<boolean> {
   const caller = await requirePerm("waitlist");
   if (!caller) return false;
+  // السبب يغيّر ما يقرؤه الضيف لا أكثر: «اكتملت حجوزات اليوم» تعني لا تنتظر
+  // وتعال غدًا، و«المطعم مزدحمٌ حاليًا» تعني انتظر لحظات. والقاعدة تُسقط أيّ
+  // قيمةٍ غير معروفة إلى NULL فتصير الرسالة الثانية — الآمنة في الحالتين.
   const { data, error } = await caller.supabase.rpc("set_branch_join_frozen", {
     p_branch_id: branchId,
     p_frozen: frozen,
+    p_reason: frozen ? (reason ?? null) : null,
   });
   // `false` = «لا حقّ لك على هذا الفرع» — لا تُبتلع كي لا تكذب الواجهة.
   if (error || data !== true) return false;
