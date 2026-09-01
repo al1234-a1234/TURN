@@ -15,6 +15,7 @@ import { tr, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 import { riyadhDayStart, isWithinOpeningHours } from "@/lib/dates";
 import { zoneLabel } from "@/lib/zones";
+import { SwapSelectionProvider, SwapError } from "./swap-selection";
 import { ScreenGuide } from "@/components/screen-guide";
 
 /** الأقسام مفتوحة العدد، فاللون يدور بدل أن يُثبَّت لاثنين. */
@@ -229,7 +230,7 @@ export default async function ReceptionPage({
             </span>
           )}
         </div>
-        <QueueActions id={q.id} name={cust?.full_name ?? tr(lang, "عميلنا", "our guest")} phone={cust?.phone ?? ""} restaurant={restaurant.name} position={rank} />
+        <QueueActions id={q.id} name={cust?.full_name ?? tr(lang, "عميلنا", "our guest")} phone={cust?.phone ?? ""} restaurant={restaurant.name} position={rank} zone={q.zone} />
       </li>
     );
   };
@@ -394,19 +395,25 @@ export default async function ReceptionPage({
             zones={activeZones.map((z) => ({ key: z.key, name: z.name, nameEn: z.name_en }))}
           />
 
-          <div className={shownZones.length > 1 ? "grid gap-6 sm:grid-cols-2" : "grid gap-6"}>
-            {shownZones.map((z, i) => (
-              <ZoneColumn
-                key={z.id}
-                title={zoneLabel({ key: z.key, name: z.name, nameEn: z.name_en }, lang)}
-                rows={rowsOf(z.key)}
-                tone={ZONE_TONES[i % ZONE_TONES.length]}
-              />
-            ))}
-          </div>
-          {other.length > 0 && (
-            <div className="mt-6"><ZoneColumn title={tr(lang, "غير محدّد", "Unspecified")} rows={other} tone="var(--muted)" /></div>
-          )}
+          {/* مزوّد اختيار التبديل يلفّ أعمدة الطابور وحدها: زرّ التبديل داخل
+              البطاقة لا يظهر إلّا تحته، فلا يتسرّب إلى شاشةٍ أخرى. ولا يغيّر
+              شيئًا في التخطيط — مزوّدُ سياقٍ بلا عنصرٍ مرئيّ. */}
+          <SwapSelectionProvider>
+            <SwapError />
+            <div className={shownZones.length > 1 ? "grid gap-6 sm:grid-cols-2" : "grid gap-6"}>
+              {shownZones.map((z, i) => (
+                <ZoneColumn
+                  key={z.id}
+                  title={zoneLabel({ key: z.key, name: z.name, nameEn: z.name_en }, lang)}
+                  rows={rowsOf(z.key)}
+                  tone={ZONE_TONES[i % ZONE_TONES.length]}
+                />
+              ))}
+            </div>
+            {other.length > 0 && (
+              <div className="mt-6"><ZoneColumn title={tr(lang, "غير محدّد", "Unspecified")} rows={other} tone="var(--muted)" /></div>
+            )}
+          </SwapSelectionProvider>
 
           {/* سجلّ اليوم أسفل الطابور — شاشة التصحيح التي يعيش فيها زرّ الإرجاع */}
           <DayLog rows={(dayLogRes?.data ?? []) as DayLogRow[]} />
