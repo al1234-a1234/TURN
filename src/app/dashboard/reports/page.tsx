@@ -7,6 +7,7 @@ const REPORT_ZONE_TONES = ["var(--st-full)", "var(--brand)", "var(--st-open)", "
 import { ColumnChart, SplitBars, ChartCard } from "../manage/charts";
 import { PrintButton } from "./print-button";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
+import { waitStats } from "@/lib/wait-stats";
 import { toAr } from "@/lib/format";
 import { tr, pct, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
@@ -147,10 +148,8 @@ export default async function ReportsPage({
   const noShowRate = closed ? Math.round((noShow / closed) * 100) : 0;
   const cancelRate = closed ? Math.round((cancel / closed) * 100) : 0;
 
-  const waits = seated
-    .map((r) => (new Date(r.seated_at as string).getTime() - new Date(r.joined_at).getTime()) / 60000)
-    .filter((n) => n >= 0 && n < 600);
-  const avgWait = waits.length ? Math.round(waits.reduce((a, b) => a + b, 0) / waits.length) : 0;
+  // التعريف والسقف في `@/lib/wait-stats` — موضعٌ واحد لثلاث شاشات
+  const wait = waitStats(seated);
 
   // ===== تفصيل الإلغاء: من الاستقبال أم من العميل؟ =====
   // القاعدة لا تحمل عمودًا يميّز «من ألغى» في waitlist_entries. المميّز
@@ -363,7 +362,15 @@ export default async function ReportsPage({
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label={tr(lang, "خدمناهم", "Served")} value={toAr(served)} tone="var(--brand)" tint="rgba(120,30,12,0.08)" />
         <Kpi label={tr(lang, "انضموا للطابور", "Joined")} value={toAr(joined)} tone="var(--brand-d)" tint="rgba(120,30,12,0.05)" />
-        <Kpi label={tr(lang, "متوسط الانتظار", "Average Wait")} value={`${toAr(avgWait)} ${tr(lang, "د", "min")}`} tone="var(--st-full)" tint="rgba(169,114,30,0.10)" />
+        {/* الاسم يقول ما يُقاس فعلًا، والوسيط يكشف الالتواء — وتقرير تلغرام
+            (0176) يعرض الاثنين منذ إنشائه، فهذا توحيدٌ معه لا اختراع. */}
+        <Kpi label={tr(lang, "من الانضمام حتى التجليس", "Join → seated")}
+             value={`${toAr(wait.avg)} ${tr(lang, "د", "min")}`}
+             tone="var(--st-full)" tint="rgba(169,114,30,0.10)"
+             hint={wait.n
+               ? tr(lang, `الوسيط ${toAr(wait.median)} د · يشمل زمن تسجيل الاستقبال`,
+                          `Median ${wait.median} min · includes reception's logging time`)
+               : tr(lang, "لا تجليس مسجَّل في هذه الفترة", "No seatings in this period")} />
         <Kpi label={tr(lang, "متوسط المجموعة", "Average Party")} value={toAr(avgParty)} tone="var(--brand-d)" tint="rgba(120,30,12,0.05)" />
         <Kpi label={tr(lang, "أكثر الساعات ازدحامًا", "Busiest Hour")} value={busiestLabel} tone="var(--st-full)" tint="rgba(169,114,30,0.10)" />
         <Kpi label={tr(lang, "متوسط التقييم", "Average Rating")} value={ratings.length ? `★ ${toAr(avgRating)}` : "—"} tone="var(--star)" tint="rgba(120,30,12,0.06)" />
