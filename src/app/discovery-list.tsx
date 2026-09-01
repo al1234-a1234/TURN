@@ -173,16 +173,23 @@ function Card({ r, lang }: { r: DiscoveryItem; lang: Lang }) {
       className="rq-row flex items-center gap-[13px] px-4 py-[13px]"
     >
       {/* البلاطة بيضاء بحدٍّ شعرة: الشعار يضعه صاحب المطعم، فلا نصبغه بلوننا.
-          و٦٤ لا ٧٢: عند ٧٢ يتجاوز ارتفاعُ البلاطة كتلةَ الأسطر الثلاثة فيبقى
-          فراغٌ ميّت أسفل النصّ، والصفّ يُقرأ غير مستوٍ.
+          ٧٢ لا ٦٤: طلب المالك بلاطةً أكبر شوي («أكبر شوي» — درجةٌ لا قفزة).
+          وهذا هو المقاس الذي وثّق تعليقٌ سابقٌ هنا رفضَه («عند ٧٢ يتجاوز
+          ارتفاعُ البلاطة كتلةَ الأسطر الثلاثة فيبقى فراغٌ ميّت أسفل النصّ»)
+          — أُبقيه موثَّقًا هنا لأنّ الحساب الذي بُني عليه ما زال صحيحًا
+          بأحجام الخطّ الحاليّة: بطاقةٌ هادئة (اسمٌ+فروع+مطبخ، بلا طابور)
+          نصُّها ≈٦٤px فتتجاوزه البلاطة بنحو ١٠px. وفي المقابل بطاقةٌ
+          مزدحمة (+سطر توزيع الطابور) نصُّها ≈٨٥px فتقترب البلاطة منه. لم
+          يُختبر بصريًّا من هذه الجلسة — طلبٌ صريح من المالك تجاوز الرفض
+          السابق، فلينظر بنفسه بعد النشر.
           والانحناء ١٢ لا دائرة: جُرِّبت الدائرة هنا فرآها المشغّل «غير جيدة»
           وطلب إرجاعها صراحةً — البلاطة المربّعة أهدأ داخل صفٍّ انحناؤه ١٤. */}
       <span
-        className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-[12px] bg-white text-2xl font-bold"
+        className="grid h-[72px] w-[72px] shrink-0 place-items-center overflow-hidden rounded-[12px] bg-white text-2xl font-bold"
         style={{ border: "1px solid var(--border)", color: "var(--brand-solid)" }}
       >
         {r.logo_url ? (
-          <SmartImage src={r.logo_url} fallbackText={r.name} alt="" width={64} height={64} sizes="64px" className="h-full w-full object-cover" />
+          <SmartImage src={r.logo_url} fallbackText={r.name} alt="" width={72} height={72} sizes="72px" className="h-full w-full object-cover" />
         ) : (
           initial
         )}
