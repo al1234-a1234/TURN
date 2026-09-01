@@ -70,6 +70,11 @@ export default async function Home() {
         accepts: s?.accepts_waitlist ?? true,
         paused: s?.queue_paused ?? false,
         closed: (s?.manually_closed ?? false) || !isWithinOpeningHours(s?.opening_hours ?? null),
+        frozen: s?.join_frozen ?? false,
+        // القاعدة تُسقط أيّ قيمةٍ غير معروفة إلى NULL، والاستقبال لا يكتب
+        // غيرهما — لكن القراءة تبقى دفاعية: ما ليس «اكتملت اليوم» يقع على
+        // الرسالة الثانية، وهي الآمنة في الحالتين (status-actions.ts:73).
+        frozenReason: s?.join_frozen_reason === "done_today" ? ("done_today" as const) : ("temporary" as const),
       };
     });
     const open = decorated.filter((d) => !d.closed);
@@ -103,6 +108,20 @@ export default async function Home() {
       waiting: best?.paused ? 0 : (best?.total ?? 0),
       accepts: best?.accepts ?? true,
       closedNow: open.length === 0,
+      // إيقاف الانضمام يُسطَّح على المطعم بنفس قاعدة الإغلاق أعلاه
+      // (`open.length === 0`): البطاقة تمثّل المطعم لا فرعًا بعينه، فلا تقول
+      // «اكتملت حجوزات اليوم» ما دام فرعٌ مفتوحٌ واحد يقبل الجديد — ذلك يصرف
+      // العميل عن مطعمٍ يستقبله. ومتى أُوقف كلُّ المفتوحين صار الخبر صادقًا
+      // عن الجميع. ولا يُقرأ من `best` وحده: `best` يُختار بأقصر طابور، وقد
+      // يقع على المُوقَف بينما جاره يقبل.
+      //
+      // واختلاف السببين بين فرعين يقع على «مزدحمٌ حاليًا»: هي الأضعف ادّعاءً
+      // (انتظر لحظات) بينما «اكتملت اليوم» تصرف العميل ليومه كلّه — ولا يصحّ
+      // أن يُصرف بقرار فرعٍ واحدٍ من فرعين.
+      frozenReason:
+        open.length > 0 && open.every((d) => d.frozen)
+          ? (open.every((d) => d.frozenReason === "done_today") ? "done_today" as const : "temporary" as const)
+          : null,
       rating,
       branchCount: (r.branches ?? []).length,
       // توزيع الأقسام لمطعم الفرع الواحد فقط.

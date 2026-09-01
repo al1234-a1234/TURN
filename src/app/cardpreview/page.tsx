@@ -16,23 +16,37 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 const DEMO: DiscoveryItem[] = [
   { id: "1", name: "Eficto", slug: "eficto", logo_url: null, cuisine: "إيطالي", cuisine_en: "Italian",
-    waiting: 0, accepts: true, closedNow: false, rating: "4.4", branchCount: 2, zones: [] },
+    waiting: 0, accepts: true, closedNow: false, rating: "4.4", branchCount: 2, zones: [], frozenReason: null },
   { id: "2", name: "طواحين الرياض", slug: "x2", logo_url: null, cuisine: "شعبي", cuisine_en: "Traditional",
-    waiting: 0, accepts: true, closedNow: false, rating: "4.7", branchCount: 4, zones: [] },
+    waiting: 0, accepts: true, closedNow: false, rating: "4.7", branchCount: 4, zones: [], frozenReason: null },
   { id: "3", name: "برجرايزر", slug: "x3", logo_url: null, cuisine: "برجر", cuisine_en: "Burgers",
-    waiting: 0, accepts: false, closedNow: false, rating: "4.2", branchCount: 1, zones: [] },
+    waiting: 0, accepts: false, closedNow: false, rating: "4.2", branchCount: 1, zones: [], frozenReason: null },
   { id: "4", name: "مقهى الرصيف", slug: "x4", logo_url: null, cuisine: "قهوة", cuisine_en: "Coffee",
-    waiting: 0, accepts: true, closedNow: false, rating: null, branchCount: 1, zones: [] },
+    waiting: 0, accepts: true, closedNow: false, rating: null, branchCount: 1, zones: [], frozenReason: null },
   { id: "5", name: "نجد الأصيل", slug: "x5", logo_url: null, cuisine: "سعودي", cuisine_en: "Saudi",
-    waiting: 10, accepts: true, closedNow: false, rating: "4.9", branchCount: 3, zones: [] },
+    waiting: 10, accepts: true, closedNow: false, rating: "4.9", branchCount: 3, zones: [], frozenReason: null },
   { id: "6", name: "سوشي بار", slug: "x6", logo_url: null, cuisine: "ياباني", cuisine_en: "Japanese",
-    waiting: 12, accepts: true, closedNow: false, rating: "4.5", branchCount: 2, zones: [] },
+    waiting: 12, accepts: true, closedNow: false, rating: "4.5", branchCount: 2, zones: [], frozenReason: null },
   { id: "7", name: "مشاوي الخليج", slug: "x7", logo_url: null, cuisine: "مشاوي", cuisine_en: "Grills",
-    waiting: 4, accepts: true, closedNow: false, rating: "4.1", branchCount: 2, zones: [] },
+    waiting: 4, accepts: true, closedNow: false, rating: "4.1", branchCount: 2, zones: [], frozenReason: null },
   { id: "8", name: "فطائر أم سعد", slug: "x8", logo_url: null, cuisine: "فطائر", cuisine_en: "Pastries",
-    waiting: 0, accepts: true, closedNow: true, rating: "4.6", branchCount: 1, zones: [] },
+    waiting: 0, accepts: true, closedNow: true, rating: "4.6", branchCount: 1, zones: [], frozenReason: null },
   { id: "9", name: "حلويات النخيل", slug: "x9", logo_url: null, cuisine: "حلويات", cuisine_en: "Desserts",
-    waiting: 0, accepts: true, closedNow: true, rating: "4.3", branchCount: 5, zones: [] },
+    waiting: 0, accepts: true, closedNow: true, rating: "4.3", branchCount: 5, zones: [], frozenReason: null },
+
+  // الحالات الأربع لإيقاف الانضمام — أطول نصَّي كبسولةٍ في القائمة كلّها،
+  // فهنا يُرى عرضُهما فعليًّا بجانب الاسم قبل أن يراهما زبون.
+  { id: "10", name: "بيتزا بيل", slug: "x10", logo_url: null, cuisine: "بيتزا", cuisine_en: "Pizza",
+    waiting: 9, accepts: true, closedNow: false, rating: "4.8", branchCount: 1, zones: [], frozenReason: "done_today" },
+  { id: "11", name: "مطعم البيك الشعبي الكبير", slug: "x11", logo_url: null, cuisine: "دجاج", cuisine_en: "Chicken",
+    waiting: 6, accepts: true, closedNow: false, rating: "4.0", branchCount: 1, zones: [], frozenReason: "temporary" },
+  // موقوفٌ وطابورُه صفر: يقع في قسم «متاح الآن» والكبسولة تقول «اكتملت» —
+  // التناقض الموثَّق في التقرير. مُبقًى في المعاينة كي يُرى لا كي يُنسى.
+  { id: "12", name: "ركن الشام", slug: "x12", logo_url: null, cuisine: "شامي", cuisine_en: "Levantine",
+    waiting: 0, accepts: true, closedNow: false, rating: "4.5", branchCount: 1, zones: [], frozenReason: "done_today" },
+  // مغلقٌ **و**موقوف: يجب أن يظهر «مغلق الآن» وحده — إثبات قرار الأولوية.
+  { id: "13", name: "كافيه الدرعية", slug: "x13", logo_url: null, cuisine: "قهوة", cuisine_en: "Coffee",
+    waiting: 0, accepts: true, closedNow: true, rating: "4.2", branchCount: 1, zones: [], frozenReason: "temporary" },
 ];
 
 export default function CardPreviewPage() {

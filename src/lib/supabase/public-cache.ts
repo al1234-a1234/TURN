@@ -32,8 +32,8 @@ export type DiscoveryRestaurant = {
   branches: {
     id: string; city: string | null; lat: number | null; lng: number | null; is_active: boolean;
     branch_settings:
-      | { accepts_waitlist: boolean; manually_closed: boolean; busy_now: boolean; queue_paused?: boolean; opening_hours: { open?: string; close?: string } | null }
-      | { accepts_waitlist: boolean; manually_closed: boolean; busy_now: boolean; queue_paused?: boolean; opening_hours: { open?: string; close?: string } | null }[]
+      | { accepts_waitlist: boolean; manually_closed: boolean; busy_now: boolean; queue_paused?: boolean; join_frozen?: boolean; join_frozen_reason?: string | null; opening_hours: { open?: string; close?: string } | null }
+      | { accepts_waitlist: boolean; manually_closed: boolean; busy_now: boolean; queue_paused?: boolean; join_frozen?: boolean; join_frozen_reason?: string | null; opening_hours: { open?: string; close?: string } | null }[]
       | null;
   }[];
 };
@@ -50,7 +50,7 @@ export const getDiscovery = unstable_cache(
     const sb = anon();
     const { data: restaurants, error } = await sb
       .from("restaurants")
-      .select("id, name, slug, logo_url, cover_url, cuisine, cuisine_en, manual_rating, branches(id, city, lat, lng, is_active, branch_settings(accepts_waitlist, manually_closed, busy_now, queue_paused, opening_hours))")
+      .select("id, name, slug, logo_url, cover_url, cuisine, cuisine_en, manual_rating, branches(id, city, lat, lng, is_active, branch_settings(accepts_waitlist, manually_closed, busy_now, queue_paused, join_frozen, join_frozen_reason, opening_hours))")
       .eq("is_active", true)
       .eq("is_canary", false)
       .order("created_at", { ascending: false })
@@ -86,7 +86,10 @@ export const getDiscovery = unstable_cache(
     }
     return { list, ratings };
   },
-  ["discovery-v5"],
+  // ‏v6: أُضيف `join_frozen(_reason)` للاستعلام. المفتاح يُرقَّم مع كل تغيير
+  // شكلٍ لأن مدخلات `unstable_cache` تعيش عبر النشرات: بلا ترقيمٍ يبقى الحقل
+  // الجديد `undefined` في المدخل الدافئ حتى ينتهي تقادمه (٣٠ث) بعد النشر.
+  ["discovery-v6"],
   { revalidate: 30, tags: ["discovery"] },
 );
 
