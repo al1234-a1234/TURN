@@ -9,6 +9,7 @@ import { tr, pct, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 import { ScreenGuide } from "@/components/screen-guide";
 import { riyadhDayStart, riyadhDayKey, riyadhWeekday, riyadhHour } from "@/lib/dates";
+import { waitStats } from "@/lib/wait-stats";
 
 const AR_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 const EN_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -81,10 +82,9 @@ export default async function OverviewPage() {
   const noShowRate = closed ? Math.round((noShow30 / closed) * 100) : 0;
   const seatedToday = seated.filter((r) => new Date(r.seated_at as string) >= startToday).length;
 
-  const waits = seated
-    .map((r) => (new Date(r.seated_at as string).getTime() - new Date(r.joined_at).getTime()) / 60000)
-    .filter((n) => n >= 0 && n < 600);
-  const avgWait = waits.length ? Math.round(waits.reduce((a, b) => a + b, 0) / waits.length) : 0;
+  // التعريف والسقف في `@/lib/wait-stats` — موضعٌ واحد لثلاث شاشات، فلا
+  // ينحرف أحدها عن الآخر كما انحرف `rollup_daily_stats` قبل ٠٢٠٠.
+  const wait = waitStats(seated);
 
   const partySizes = seated.map((r) => r.party_size).filter((n) => n > 0);
   const avgParty = partySizes.length ? Math.round((partySizes.reduce((a, b) => a + b, 0) / partySizes.length) * 10) / 10 : 0;
@@ -182,7 +182,17 @@ export default async function OverviewPage() {
       {/* المؤشرات (8) */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label={tr(lang, "متوسط التقييم", "Average Rating")} value={ratings.length ? `★ ${toAr(avgRating)}` : "—"} tone="var(--star)" tint="rgba(120,30,12,0.06)" />
-        <Kpi label={tr(lang, "متوسط الانتظار", "Average Wait")} value={`${toAr(avgWait)} ${tr(lang, "د", "min")}`} tone="var(--st-full)" tint="rgba(169,114,30,0.10)" />
+        {/* الاسم يقول ما يُقاس: الفارق بين الانضمام وضغط الاستقبال زرَّ «جلس».
+            و«متوسط الانتظار» كان يُقرأ «كم ينتظر ضيفي» وهو ليس ذلك.
+            والوسيط بجانبه يكشف الالتواء: متوسّطٌ ضعفَ الوسيط يعني ذيلًا طويلًا
+            لا تجربةً نمطيّة. */}
+        <Kpi label={tr(lang, "من الانضمام حتى التجليس", "Join → seated")}
+             value={`${toAr(wait.avg)} ${tr(lang, "د", "min")}`}
+             tone="var(--st-full)" tint="rgba(169,114,30,0.10)"
+             hint={wait.n
+               ? tr(lang, `الوسيط ${toAr(wait.median)} د · يشمل زمن تسجيل الاستقبال`,
+                          `Median ${wait.median} min · includes reception's logging time`)
+               : tr(lang, "لا تجليس مسجَّل بعد", "No seatings recorded yet")} />
         <Kpi label={tr(lang, "جالسون اليوم", "Seated Today")} value={toAr(seatedToday)} tone="var(--st-open)" tint="rgba(63,125,93,0.10)" />
         {canCustomers && <Kpi label={tr(lang, "إجمالي العملاء", "Total Customers")} value={toAr(totalCustomers)} tone="var(--brand-d)" tint="rgba(120,30,12,0.05)" />}
         <Kpi label={tr(lang, "خدمناهم (30 يوم)", "Served (30 days)")} value={toAr(served30)} tone="var(--brand)" tint="rgba(120,30,12,0.08)" />
@@ -276,11 +286,13 @@ export default async function OverviewPage() {
   );
 }
 
-function Kpi({ label, value, tone, tint }: { label: string; value: string; tone: string; tint: string }) {
+function Kpi({ label, value, tone, tint, hint }: { label: string; value: string; tone: string; tint: string; hint?: string }) {
   return (
     <div className="rounded-2xl p-4 text-center" style={{ background: tint, border: "1px solid var(--border)" }}>
       <p className="font-display text-2xl font-bold leading-none lg:text-[1.75rem]" style={{ color: tone }}>{value}</p>
       <p className="mt-1.5 text-[11px] font-bold text-[color:var(--muted)]">{label}</p>
+      {/* بنفس صيغة `hint` في تقارير الأداء: رقمٌ بلا سياقه يُقرأ خطأً */}
+      {hint ? <p className="mt-1 text-[10px] leading-tight text-[color:var(--muted)] opacity-80">{hint}</p> : null}
     </div>
   );
 }

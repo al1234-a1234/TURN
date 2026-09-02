@@ -7,11 +7,12 @@ const REPORT_ZONE_TONES = ["var(--st-full)", "var(--brand)", "var(--st-open)", "
 import { ColumnChart, SplitBars, ChartCard } from "../manage/charts";
 import { PrintButton } from "./print-button";
 import { isModuleOn, staffHasPermission } from "@/lib/features";
+import { waitStats } from "@/lib/wait-stats";
 import { toAr } from "@/lib/format";
 import { tr, pct, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 import { ScreenGuide } from "@/components/screen-guide";
-import { riyadhDayStart, riyadhHour, riyadhDayKey, riyadhWeekday } from "@/lib/dates";
+import { riyadhHour, riyadhDayKey, riyadhWeekday, riyadhISODate, fmtDate } from "@/lib/dates";
 
 const AR_DAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 const EN_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -26,8 +27,8 @@ function hourLabel(h: number, lang: Lang): string {
   return `${toAr(h - 12)} ${tr(lang, "م", "PM")}`;
 }
 
-const PERIODS = ["day", "week", "month", "year"] as const;
-type Period = (typeof PERIODS)[number];
+import { PERIODS, type Period, resolveAnchor, reportWindow } from "./window";
+import { PeriodNav } from "./period-nav";
 
 function periodLabel(p: Period, lang: Lang): string {
   switch (p) {
@@ -54,10 +55,17 @@ type WaitRow = {
 export default async function ReportsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<{ period?: string; date?: string }>;
 }) {
-  const { period: periodParam } = await searchParams;
+  const { period: periodParam, date: dateParam } = await searchParams;
   const period: Period = PERIODS.includes(periodParam as Period) ? (periodParam as Period) : "month";
+
+  // مرساة التقرير: آخر يومٍ في النافذة. كانت الصفحة تحسب نوافذها من
+  // `Date.now()` مباشرة، فلا سبيل للمالك إلى أمس ولا إلى أسبوعٍ مضى —
+  // «عالق على اليوم» كما وصفه. المرساة تجعل النافذة قابلة للتحريك بلا
+  // تغيير طولها.
+  const todayKey = riyadhISODate();
+  const anchor = resolveAnchor(dateParam, todayKey);
 
   const lang = await getLang();
   const load = await loadOwner();
@@ -81,17 +89,13 @@ export default async function ReportsPage({
   const branchIds = scopeBranchIds(load.ctx, (branches ?? []).map((b) => b.id));
 
   // ===== نافذة الفترة =====
+  //
+  // النافذة الآن محاذيةٌ لليوم ومنتهيةٌ عند المرساة، بدل نافذةٍ متدحرجة
+  // معلّقة بـ`Date.now()`. فائدتان: التنقّل صار ممكنًا أصلًا، والأرقام
+  // صارت تطابق الرسم تحتها — كان رسمُ «الأسبوع» يعرض ٧ أيامٍ كاملة بينما
+  // تعدّ المؤشّرات فوقه ١٦٨ ساعةً متدحرجة، فيختلف مجموع الأعمدة عن الرقم.
   const now = new Date();
-  const startToday = riyadhDayStart();
-  const sinceDate =
-    period === "day"
-      ? startToday
-      : period === "week"
-        ? new Date(Date.now() - 7 * 864e5)
-        : period === "month"
-          ? new Date(Date.now() - 30 * 864e5)
-          : new Date(Date.now() - 365 * 864e5);
-  const since = sinceDate.toISOString();
+  const { anchorStart, anchorEnd, sinceDate, since, until } = reportWindow(period, anchor);
 
   const { data: zoneRows } = branchIds.length
     ? await supabase.from("branch_zones").select("key, name").in("branch_id", branchIds).order("sort_order")
@@ -115,6 +119,9 @@ export default async function ReportsPage({
           .select("id, joined_at, seated_at, status, zone, party_size")
           .in("branch_id", branchIds)
           .gte("joined_at", since)
+          // الحدّ الأعلى جديد: بلا فالنافذة مفتوحةٌ إلى الأبد ويصير
+          // «أمس» هو «أمس وما بعده» — أي نفس رقم اليوم.
+          .lt("joined_at", until)
       : Promise.resolve({ data: [] as WaitRow[] }),
   ]);
 
@@ -141,10 +148,8 @@ export default async function ReportsPage({
   const noShowRate = closed ? Math.round((noShow / closed) * 100) : 0;
   const cancelRate = closed ? Math.round((cancel / closed) * 100) : 0;
 
-  const waits = seated
-    .map((r) => (new Date(r.seated_at as string).getTime() - new Date(r.joined_at).getTime()) / 60000)
-    .filter((n) => n >= 0 && n < 600);
-  const avgWait = waits.length ? Math.round(waits.reduce((a, b) => a + b, 0) / waits.length) : 0;
+  // التعريف والسقف في `@/lib/wait-stats` — موضعٌ واحد لثلاث شاشات
+  const wait = waitStats(seated);
 
   // ===== تفصيل الإلغاء: من الاستقبال أم من العميل؟ =====
   // القاعدة لا تحمل عمودًا يميّز «من ألغى» في waitlist_entries. المميّز
@@ -225,7 +230,9 @@ export default async function ReportsPage({
     breakdownTitle = tr(lang, "المخدومون حسب الساعة", "Served by hour");
   } else if (period === "week") {
     const dayBuckets = Array.from({ length: 7 }, (_, i) => {
-      const d = riyadhDayStart(6 - i);
+      // ‏٦-i يومًا قبل المرساة، لا قبل اليوم — وإلّا بقي الرسم على هذا
+      // الأسبوع بينما المؤشّرات فوقه تعدّ أسبوعًا مضى.
+      const d = new Date(anchorStart.getTime() - (6 - i) * 864e5);
       return {
         key: riyadhDayKey(d),
         label: tr(lang, AR_DAYS[riyadhWeekday(d)], EN_DAYS[riyadhWeekday(d)]),
@@ -245,7 +252,7 @@ export default async function ReportsPage({
       value: 0,
     }));
     for (const r of seated) {
-      const daysAgo = Math.floor((now.getTime() - new Date(r.seated_at as string).getTime()) / 864e5);
+      const daysAgo = Math.floor((anchorEnd.getTime() - new Date(r.seated_at as string).getTime()) / 864e5);
       const idx = 3 - Math.min(3, Math.max(0, Math.floor(daysAgo / 7)));
       weekBuckets[idx].value += 1;
     }
@@ -257,7 +264,7 @@ export default async function ReportsPage({
       const r = new Date(d.getTime() + 3 * 3600_000);
       return `${r.getUTCFullYear()}-${r.getUTCMonth()}`;
     };
-    const nowR = new Date(now.getTime() + 3 * 3600_000);
+    const nowR = new Date(anchorStart.getTime() + 3 * 3600_000);
     const monthBuckets = Array.from({ length: 12 }, (_, i) => {
       const m = new Date(Date.UTC(nowR.getUTCFullYear(), nowR.getUTCMonth() - (11 - i), 1));
       return {
@@ -276,6 +283,17 @@ export default async function ReportsPage({
   }
 
   const pLabel = periodLabel(period, lang);
+
+  // خطوة التنقّل نفسها صارت داخل `PeriodNav`؛ يبقى هنا ما تحتاجه الصفحة:
+  // رابطُ تبديل الفترة (يحمل المرساة معه) وعنوانُ النافذة للرأس المطبوع.
+  const hrefFor = (p: Period, d: string) => `/dashboard/reports?period=${p}${d === todayKey ? "" : `&date=${d}`}`;
+
+  // عنوان النافذة: يومٌ واحد يُسمّى بيومه، وما طال يُكتب مدًى «من — إلى».
+  const windowLabel =
+    period === "day"
+      ? fmtDate(anchorStart.toISOString(), lang)
+      : `${fmtDate(sinceDate.toISOString(), lang)} — ${fmtDate(anchorStart.toISOString(), lang)}`;
+
   const generatedAt = now.toLocaleDateString(lang === "en" ? "en-US" : "ar-SA", {
     timeZone: "Asia/Riyadh",
     year: "numeric",
@@ -292,7 +310,9 @@ export default async function ReportsPage({
           return (
             <Link
               key={p}
-              href={`/dashboard/reports?period=${p}`}
+              // المرساة تُحمَل مع تبديل الفترة: من «يوم ١٢ أغسطس» إلى
+              // «أسبوع» يعني الأسبوع المنتهي بذلك اليوم، لا أسبوع اليوم.
+              href={hrefFor(p, anchor)}
               data-active={on}
               className="rounded-2xl px-4 py-2.5 text-sm font-bold transition data-[active=true]:text-cream-100"
               style={on ? { background: "var(--brand-solid)" } : { background: "var(--surface)", border: "1px solid var(--border)", color: "var(--muted)" }}
@@ -303,6 +323,8 @@ export default async function ReportsPage({
         })}
       </div>
 
+      <PeriodNav lang={lang} period={period} anchor={anchor} todayKey={todayKey} />
+
       {/* رأس التقرير */}
       <div className="soft-card mb-6 flex flex-col gap-4 p-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -310,7 +332,13 @@ export default async function ReportsPage({
             {tr(lang, `تقرير الأداء — ${pLabel}`, `Performance report — ${pLabel}`)}
           </p>
           <h1 className="mt-1.5 font-display text-3xl font-bold text-[color:var(--ink)]">{restaurant.name}</h1>
-          <p className="mt-1 text-sm text-[color:var(--muted)]">
+          {/* المدى في الرأس لا في شريط التنقّل وحده: الشريط `print:hidden`،
+              فكان التقرير المطبوع لأمسٍ يخرج مطابقًا لتقرير اليوم بلا ما
+              يميّزهما — ورقتان متطابقتان لفترتين مختلفتين. */}
+          <p className="mt-1 text-sm font-bold text-[color:var(--brand-d)]">
+            {tr(lang, `الفترة: ${windowLabel}`, `Period: ${windowLabel}`)}
+          </p>
+          <p className="mt-0.5 text-sm text-[color:var(--muted)]">
             {tr(lang, `صدر بتاريخ ${generatedAt}`, `Generated on ${generatedAt}`)}
           </p>
         </div>
@@ -324,6 +352,7 @@ export default async function ReportsPage({
         className="mb-6 print:hidden"
         lines={[
           tr(lang, "تقرير أداءٍ لفترةٍ تختارها: يوم أو أسبوع أو شهر أو سنة.", "A performance report for a period you pick: day, week, month or year."),
+          tr(lang, "بالسهمين تتنقّل بين الفترات، وبحقل التاريخ تقفز إلى يومٍ بعينه.", "The arrows step between periods; the date field jumps straight to a day."),
           tr(lang, "«طباعة / حفظ PDF» يُخرج التقرير جاهزًا للمشاركة.", "“Print / Save PDF” turns the report into something you can share."),
           tr(lang, "عشرة أرقامٍ مع رسوم الفترة والأقسام وساعات الذروة.", "Ten figures, plus the period, area and peak-hour charts."),
         ]}
@@ -333,7 +362,15 @@ export default async function ReportsPage({
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi label={tr(lang, "خدمناهم", "Served")} value={toAr(served)} tone="var(--brand)" tint="rgba(120,30,12,0.08)" />
         <Kpi label={tr(lang, "انضموا للطابور", "Joined")} value={toAr(joined)} tone="var(--brand-d)" tint="rgba(120,30,12,0.05)" />
-        <Kpi label={tr(lang, "متوسط الانتظار", "Average Wait")} value={`${toAr(avgWait)} ${tr(lang, "د", "min")}`} tone="var(--st-full)" tint="rgba(169,114,30,0.10)" />
+        {/* الاسم يقول ما يُقاس فعلًا، والوسيط يكشف الالتواء — وتقرير تلغرام
+            (0176) يعرض الاثنين منذ إنشائه، فهذا توحيدٌ معه لا اختراع. */}
+        <Kpi label={tr(lang, "من الانضمام حتى التجليس", "Join → seated")}
+             value={`${toAr(wait.avg)} ${tr(lang, "د", "min")}`}
+             tone="var(--st-full)" tint="rgba(169,114,30,0.10)"
+             hint={wait.n
+               ? tr(lang, `الوسيط ${toAr(wait.median)} د · يشمل زمن تسجيل الاستقبال`,
+                          `Median ${wait.median} min · includes reception's logging time`)
+               : tr(lang, "لا تجليس مسجَّل في هذه الفترة", "No seatings in this period")} />
         <Kpi label={tr(lang, "متوسط المجموعة", "Average Party")} value={toAr(avgParty)} tone="var(--brand-d)" tint="rgba(120,30,12,0.05)" />
         <Kpi label={tr(lang, "أكثر الساعات ازدحامًا", "Busiest Hour")} value={busiestLabel} tone="var(--st-full)" tint="rgba(169,114,30,0.10)" />
         <Kpi label={tr(lang, "متوسط التقييم", "Average Rating")} value={ratings.length ? `★ ${toAr(avgRating)}` : "—"} tone="var(--star)" tint="rgba(120,30,12,0.06)" />

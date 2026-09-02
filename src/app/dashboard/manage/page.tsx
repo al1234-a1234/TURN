@@ -9,6 +9,7 @@ import { loadOwner } from "../owner-context";
 import { resolveBranchScope, NO_BRANCH } from "../branch-scope";
 import { BranchPicker } from "../branch-picker";
 import { ColumnChart, SplitBars, ChartCard } from "./charts";
+import { waitStats } from "@/lib/wait-stats";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
@@ -142,10 +143,9 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
 
   // مؤشرات
   const served30 = seated.length;
-  const waits = seated
-    .map((r) => (r.seated_at ? (new Date(r.seated_at).getTime() - new Date(r.joined_at).getTime()) / 60000 : null))
-    .filter((n): n is number => n != null && n >= 0 && n < 600); // نفس سقف الشواذ في اللوحة والتقارير
-  const avgWait = waits.length ? Math.round(waits.reduce((a, b) => a + b, 0) / waits.length) : 0;
+  // التعريف والسقف في `@/lib/wait-stats` — كان مكرَّرًا حرفيًّا هنا وفي
+  // اللوحة والتقارير، وتكرارُ التعريف هو ما يسمح بانحرافه.
+  const wait = waitStats(seated);
 
   const inputDark = "rounded-2xl border p-3";
 
@@ -172,7 +172,13 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
         )}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Kpi label={tr(lang, "خدمناهم (30 يوم)", "Served (30 days)")} value={toAr(served30)} tone="var(--brand)" />
-          <Kpi label={tr(lang, "متوسط الانتظار", "Avg. wait")} value={`${toAr(avgWait)} ${tr(lang, "د", "min")}`} tone="var(--brand-d)" />
+          <Kpi label={tr(lang, "من الانضمام حتى التجليس", "Join → seated")}
+               value={`${toAr(wait.avg)} ${tr(lang, "د", "min")}`}
+               tone="var(--brand-d)"
+               hint={wait.n
+                 ? tr(lang, `الوسيط ${toAr(wait.median)} د · يشمل زمن تسجيل الاستقبال`,
+                            `Median ${wait.median} min · includes reception's logging time`)
+                 : tr(lang, "لا تجليس مسجَّل بعد", "No seatings recorded yet")} />
           <Kpi label={tr(lang, "بالطابور الآن", "In queue now")} value={toAr(waiting.length)} tone="var(--brand-d)" />
           <Kpi label={tr(lang, "التقييم", "Rating")} value={avgRating ?? tr(lang, "—", "—")} tone="var(--star)" />
         </div>
@@ -438,11 +444,13 @@ export default async function ManagePage({ searchParams }: { searchParams: Promi
   );
 }
 
-function Kpi({ label, value, tone }: { label: string; value: string; tone: string }) {
+function Kpi({ label, value, tone, hint }: { label: string; value: string; tone: string; hint?: string }) {
   return (
     <div className="soft-card p-4 text-center">
       <p className="font-display text-2xl font-bold leading-none" style={{ color: tone }}>{value}</p>
       <p className="mt-1.5 text-[11px] font-bold text-[color:var(--muted)]">{label}</p>
+      {/* بنفس صيغة `hint` في تقارير الأداء: رقمٌ بلا سياقه يُقرأ خطأً */}
+      {hint ? <p className="mt-1 text-[10px] leading-tight text-[color:var(--muted)] opacity-80">{hint}</p> : null}
     </div>
   );
 }
