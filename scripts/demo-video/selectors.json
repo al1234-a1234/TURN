@@ -1,0 +1,32 @@
+{
+  "_ملاحظة": "كل محدِّدٍ هنا مستخرَجٌ من الشيفرة الفعليّة، والسطر المرجعيّ بجانبه. إن تغيّرت واجهةٌ لاحقًا، عدِّل هنا وحده — capture.mjs لا يحوي محدِّدًا مكتوبًا بداخله.",
+
+  "reception": {
+    "addToggle":   { "role": "button", "name": "إضافة عميل للطابور", "_src": "dashboard/reception/walkin-form.tsx:~42" },
+    "fullName":    { "css": "input[name='full_name']",  "_src": "walkin-form.tsx:57" },
+    "phone":       { "css": "input[name='phone']",      "_src": "walkin-form.tsx:58" },
+    "partySize":   { "css": "input[name='party_size']", "_src": "walkin-form.tsx:61" },
+    "zone":        { "css": "[name='zone']",            "_src": "walkin-form.tsx:63,70" },
+    "submit":      { "css": "form button[type='submit']" },
+    "seat":        { "role": "button", "name": "جلوس",             "_src": "dashboard/queue-actions.tsx:102" },
+    "remove":      { "role": "button", "name": "إزالة",            "_src": "dashboard/queue-actions.tsx:109" },
+    "swapPick":    { "role": "button", "name": "اختر للتبديل",     "_src": "reception/swap-selection.tsx:83" },
+    "swapApply":   { "role": "button", "name": "بدّل مع المختار",  "_src": "reception/swap-selection.tsx:82" },
+    "queueRow":    { "css": "ul li" }
+  },
+
+  "partners": {
+    "_ملاحظة": "الدخول في /partners لا /login (وهذا مجرّد redirect). الحقول لم أستطع قراءتها من الشيفرة لأنّ الصفحة عميلٌ تفاعليّ — شغّل discover.mjs مرّةً وثبّتها هنا.",
+    "identifier": { "css": "input[type='email'], input[name='email'], input[name='identifier']" },
+    "password":   { "css": "input[type='password']" },
+    "submit":     { "css": "button[type='submit']" }
+  },
+
+  "customer": {
+    "_ملاحظة": "نموذج الانضمام داخل صفحة المطعم. شغّل discover.mjs لتثبيت النصوص إن اختلفت.",
+    "joinOpen":  { "css": "button:has-text('انضم'), button:has-text('خذ دورك'), button:has-text('احجز')" },
+    "fullName":  { "css": "input[name='full_name'], input[name='name']" },
+    "phone":     { "css": "input[name='phone'], input[type='tel']" },
+    "submit":    { "css": "form button[type='submit']" }
+  }
+}
