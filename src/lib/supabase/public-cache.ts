@@ -152,7 +152,12 @@ export const getBranchContent = unstable_cache(
     };
   },
   ["branch-content-v1"],
-  { revalidate: 60, tags: ["discovery"] },
+  // ‏٣٠٠ث لا ٦٠: هذا أسكن ما في المشروع — منيو وصورٌ لا تتغيّر إلّا حين
+  // يعدّلها المالك بيده، وتعديلُه يُبطل الوسم `discovery` فورًا من
+  // ‏content/actions.ts وgallery-actions.ts. فالتقادم الزمنيّ هنا شبكةُ
+  // أمانٍ خلف إبطالٍ صريح، لا الآلية التي يعتمد عليها العرض. وتكبيره
+  // يقصّ إعادة التوليد إلى الخُمس بلا أن يرى الضيف منيو أمس.
+  { revalidate: 300, tags: ["discovery"] },
 );
 
 /**
