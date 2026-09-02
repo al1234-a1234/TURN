@@ -318,11 +318,27 @@ export function DiscoveryList({ items }: { items: DiscoveryItem[] }) {
   // الطابور أصلًا — كلاهما يعني «ادخل على طول» للعميل) · فيه طابور الآن ·
   // مغلق حاليًا (يدويًا من الاستقبال أو خارج أوقات الدوام) — يظهر أخيرًا فقط
   // للتصفّح، بلا دعوة لأخذ دور.
+  //
+  // والموقوف انضمامُه لا يدخل «متاح الآن» أبدًا مهما كان طابوره فارغًا:
+  // كانت الكبسولة تقول «اكتملت حجوزات اليوم» وعنوانُ القسم فوقها يقول «متاح
+  // الآن» — سطران متناقضان في صفٍّ واحد. والكبسولة نفسها كانت سليمة (فرعُ
+  // الإيقاف في cardState يسبق «متاح الآن»)، فالعطب كان في التجميع وحده.
+  //
+  // ومتى يقع؟ حين يوقف الاستقبال الانضمام ثمّ يُجلس كلّ من في الطابور. وهو
+  // نادر — الإيقاف يصاحبه طابورٌ ممتلئ عادةً فيقع الصفّ في «فيه طابور» أصلًا
+  // — لكنّ ندرته لا تجعله مقبولًا: «متاح الآن» دعوةٌ للحضور، والموقوف يردّ
+  // من يحضر.
   const groups = useMemo(() => {
     const open = filtered.filter((r) => !r.closedNow);
     const closed = filtered.filter((r) => r.closedNow);
-    const available = open.filter((r) => r.waiting === 0);
-    const queued = open.filter((r) => r.waiting > 0).sort((a, b) => a.waiting - b.waiting);
+    const available = open.filter((r) => r.waiting === 0 && !r.frozenReason);
+    const queued = open
+      .filter((r) => r.waiting > 0 || r.frozenReason)
+      // الموقوف آخر القسم: لا يُؤخَذ فيه دورٌ الآن، فلا يتصدّر قائمةً
+      // عنوانُها «فيه طابور» ورقمُه صفر. وما عداه بأقصر طابورٍ أوّلًا.
+      .sort((a, b) =>
+        Number(Boolean(a.frozenReason)) - Number(Boolean(b.frozenReason)) || a.waiting - b.waiting,
+      );
     // متاح: الأعلى تقييمًا أولًا
     available.sort((a, b) => Number(b.rating ?? 0) - Number(a.rating ?? 0));
     return [

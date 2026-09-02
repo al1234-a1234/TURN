@@ -10,9 +10,14 @@ import { getBranchContent } from "@/lib/supabase/public-cache";
  * تُولَّد مسبقًا بمنيو الفرع الأول، والتبديل وحده يمرّ من هنا.
  *
  * لا سرّ هنا: هذه بيانات عامة يراها كل من يفتح صفحة المطعم. والدالة تقرأ
- * بمفتاح المجهول خلف RLS كما تفعل الصفحة، وكاشها ٦٠ث هو نفسه.
+ * بمفتاح المجهول خلف RLS كما تفعل الصفحة، وكاشها ٣٠٠ث هو نفسه.
+ *
+ * والثلاثة مرفوعةٌ معًا (٦٠ ← ٣٠٠): تقادم المسار، وs-maxage، وكاش الدالّة
+ * في public-cache.ts. ورفع الدالّة وحدها كان يترك المسار يُعيد التوليد كل
+ * ٦٠ث — فتُوفَّر قراءةُ القاعدة ولا يُوفَّر توليدُ الصفحة. والمحتوى منيو
+ * وصورٌ لا تتغيّر إلّا بيد المالك، وتعديلُه يُبطل وسم `discovery` فورًا.
  */
-export const revalidate = 60;
+export const revalidate = 300;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -24,7 +29,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   try {
     const content = await getBranchContent(id);
     return NextResponse.json(content, {
-      headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" },
+      headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" },
     });
   } catch (err) {
     // الدالة ترمي عمدًا كي لا يُخزَّن «فرعٌ بلا قائمة» كذبًا — نردّ 503 فيعيد
