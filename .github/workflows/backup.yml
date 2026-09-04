@@ -187,13 +187,13 @@ jobs:
           PGHOST: 127.0.0.1
           PGPORT: "5433"
           PGUSER: postgres
-          PGDATABASE: restore_test
+          PGDATABASE: postgres
         run: |
           set -Eeuo pipefail
           DIR="$VERIFY_DIR"
 
           docker run -d --name scratch \
-            -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=restore_test \
+            -e POSTGRES_PASSWORD=postgres \
             -p 5433:5432 supabase/postgres:17.6.1.165 >/dev/null
 
           # صورة Supabase (كصورة postgres الرسمية) تُعيد تشغيل الخادم مرّةً
@@ -213,16 +213,13 @@ jobs:
             || { echo "::error::القاعدة المؤقّتة لم تصبح جاهزة للاتصال الفعليّ خلال ٨٠ث"; docker logs scratch | tail -50; docker rm -f scratch >/dev/null; exit 1; }
           psql -Atc 'select version()' | head -1
 
-          # صورة Supabase لا تمنح postgres صلاحية CREATE على القاعدة التي
-          # يُنشئها POSTGRES_DB تلقائيًا (نموذجها متعدد الأدوار كالإنتاج
-          # نفسه) — فأوّل أمر بـ00-prereqs.sql («permission denied for
-          # database») يفشل قبل أن يبدأ شيء. الحلّ: ننشئ القاعدة بأنفسنا
-          # ونملكها لـpostgres صراحةً بدل الاعتماد على تهيئة الصورة الضمنيّة.
-          # كل استدعاء -c بجملتين مفصولتين بفاصلة منقوطة يُرسَل برسالة
-          # استعلامٍ واحدة فيُغلّف ضمنيًّا بمعاملة — وDROP/CREATE DATABASE
-          # يرفضان العمل داخل أي معاملة. استدعاءان منفصلان إذًا لا واحد.
-          PGDATABASE=postgres psql -v ON_ERROR_STOP=1 -c "drop database if exists restore_test;"
-          PGDATABASE=postgres psql -v ON_ERROR_STOP=1 -c "create database restore_test owner postgres;"
+          # لا قاعدة مخصّصة (restore_test) — postgres في صورة Supabase ليس
+          # سوبريوزر بالمعنى الكامل (نموذجها متعدد الأدوار كالإنتاج نفسه)،
+          # فلا يملك أي قاعدةٍ يُنشئها POSTGRES_DB تلقائيًا ولا يقدر على
+          # DROP/CREATE لقاعدةٍ لا يملكها («permission denied»، ثمّ «must be
+          # owner» — جُرّبا فعليًا وفشلا). الاسترجاع هنا داخل قاعدة
+          # postgres الافتراضية نفسها التي ينشئها initdb ويملكها هذا الدور
+          # حتمًا — بلا حاجة لإنشاء أو حذف أي شيء.
 
           # المتطلّبات تأتي مع النسخة نفسها الآن (00-prereqs.sql): الامتدادات
           # والأدوار التي تعتمد عليها البنية. لا يُخترع شيءٌ هنا.
