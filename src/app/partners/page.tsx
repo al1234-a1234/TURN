@@ -7,6 +7,7 @@ import { Logo } from "@/components/logo";
 import { LangToggle } from "@/components/lang-toggle";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
+import { checkLoginRate } from "@/lib/login-rate-limit";
 
 export default function PartnersPage() {
   return (
@@ -49,14 +50,20 @@ function PartnersLogin() {
     await supabase.auth.resetPasswordForEmail(user, {
       redirectTo: `${window.location.origin}/reset`,
     });
-    // نفس الرسالة وُجد الحساب أو لا — لا نكشف أي الإيميلات مسجَّلة عندنا
-    setResetMsg(tr(lang, "إن كان الإيميل مسجَّلًا عندنا وصلك رابط تعيين كلمة مرور جديدة — افحص الوارد والمزعج.", "If this email is registered, a reset link is on its way — check your inbox and spam."));
+    // نفس الرسالة وُجد الحساب أو لا — لا نكشف أي الإيميلات مسجّلة عندنا
+    setResetMsg(tr(lang, "إن كان الإيميل مسجّلًا عندنا وصلك رابط تعيين كلمة مرور جديدة — افحص الوارد والمزعج.", "If this email is registered, a reset link is on its way — check your inbox and spam."));
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    if (!(await checkLoginRate())) {
+      setError(tr(lang, "محاولات كثيرة — انتظر دقائق ثم حاول مجددًا.", "Too many attempts — wait a few minutes and try again."));
+      setLoading(false);
+      return;
+    }
 
     const rid = restaurantId.trim().toLowerCase();
     const user = username.trim().toLowerCase();

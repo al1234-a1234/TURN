@@ -7,6 +7,7 @@ import { Logo } from "@/components/logo";
 import { LangToggle } from "@/components/lang-toggle";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
+import { checkLoginRate } from "@/lib/login-rate-limit";
 
 export default function ReceptionLoginPage() {
   return (
@@ -29,6 +30,12 @@ function ReceptionLogin() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    if (!(await checkLoginRate())) {
+      setError(tr(lang, "محاولات كثيرة — انتظر دقائق ثم حاول مجددًا.", "Too many attempts — wait a few minutes and try again."));
+      setLoading(false);
+      return;
+    }
 
     const user = username.trim().toLowerCase();
     const email = user.includes("@") ? user : `${user}@turn.app`;
