@@ -351,7 +351,39 @@ h1, h2, h3, h4 {
 @keyframes reveal { from { opacity: 0; } to { opacity: 1; } }
 .reveal { animation: reveal 0.18s ease-out both; }
 @keyframes turn-pulse { 0% { transform: scale(0.9); opacity: 0.5; } 70% { transform: scale(1.25); opacity: 0; } 100% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce){ *{ animation: none !important; } }
+
+/* ═══ انتقال الصفحة: قائمة المطاعم ← صفحة المطعم ═══
+   fade + انزلاقٌ رأسيّ خفيف (٨px، ٢٢٠ملث) عبر View Transitions API
+   الأصليّة بالمتصفّح — يُشغَّل من src/lib/use-view-transition-nav.ts، لا
+   من هنا. رأسيّ لا أفقيّ عمدًا: الموقع RTL بالكامل (html dir="rtl")،
+   وانزلاقٌ أفقيّ يحتاج انعكاس اتّجاهٍ يصعب التأكّد من صحّته بصريًّا دون
+   معاينة حيّة على الإنتاج — والرأسيّ محايدٌ عن اتّجاه القراءة فيبقى
+   صحيحًا بلا شرط. ولا اسم انتقالٍ (`view-transition-name`) على أي عنصر
+   — لا الشعار ولا غيره — فينتقل `root` وحده ككتلةٍ واحدة، بلا عناصر
+   مشتركة ولا حركة مركّبة. */
+::view-transition-old(root) {
+  animation: rq-page-out 220ms ease-out both;
+}
+::view-transition-new(root) {
+  animation: rq-page-in 220ms ease-out both;
+}
+@keyframes rq-page-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-8px); }
+}
+@keyframes rq-page-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation: none !important; }
+  /* شبه-عناصر الانتقال تعيش خارج شجرة DOM العاديّة — `*` لا يشملها،
+     فتحتاج قاعدةً صريحة كي تُعطَّل هي الأخرى تحت تفضيل تقليل الحركة. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation: none !important; }
+}
 
 @layer components {
   /* زر أساسي أخضر عريض (بديل الزر البنفسجي) */
