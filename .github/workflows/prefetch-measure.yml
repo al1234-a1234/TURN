@@ -1,0 +1,47 @@
+name: قياس أداء الانتقال (يدويّ فقط)
+
+# workflow_dispatch وحده — لا push ولا schedule. قراءة فقط على الإنتاج:
+# تصفّح صفحات عامّة (GET) عبر Playwright، صفر انضمام لطابور، صفر إرسال
+# نموذج، صفر لمس بيانات. انظر scripts/prefetch-measure/measure.mjs.
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "رابط الموقع المستهدف"
+        required: false
+        default: "https://ei8ht.app"
+      runs:
+        description: "عدد المحاولات"
+        required: false
+        default: "10"
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: تثبيت Playwright
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+
+      - name: تشغيل قياس التنقّل — قراءة فقط، بلا لمس بيانات
+        working-directory: scripts/prefetch-measure
+        env:
+          BASE_URL: ${{ github.event.inputs.base_url }}
+          RUNS: ${{ github.event.inputs.runs }}
+        run: node measure.mjs
+
+      - name: رفع تقرير القياس
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prefetch-report
+          path: scripts/prefetch-measure/prefetch-report.json
+          if-no-files-found: warn
