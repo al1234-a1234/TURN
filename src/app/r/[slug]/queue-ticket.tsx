@@ -10,6 +10,7 @@ import {
   subscribeToPush,
   type PushSupport,
 } from "@/lib/push-client";
+import { readLastKnownPosition, writeLastKnownPosition } from "@/lib/ticket-delay";
 import { IconArrowGo } from "@/components/icons";
 import { toAr, peopleAhead } from "@/lib/format";
 import { tr } from "@/lib/i18n";
@@ -18,12 +19,12 @@ import { useLang } from "@/components/lang-provider";
 const TERMINAL = new Set(["seated", "cancelled", "expired", "no_show"]);
 
 // الوتيرة المتدرّجة حسب موقع العميل (عدد من أمامه)
-// مع عشوائية ±٢٠٪: ذروة الخليج متزامنة (٧–١٠ مساء بنفس الساعة تقريبًا)،
+// مع عشوائية ±۲۰٪: ذروة الخليج متزامنة (۷–۱۰ مساء بنفس الساعة تقريبًا)،
 // وبلا jitter كل من انضم بنفس اللحظة يسأل بنفس اللحظة فتضرب الخادمَ موجاتٌ
 // متطابقة بدل تيار منتظم — نفس عدد الطلبات، لكن توزيعها هو الفرق.
 function intervalFor(ahead: number): number {
   // ضُيّقت اليوم: الاستقبال يجلس/يزيل والعميل يرى ذلك بعد ثوانٍ معدودة لا
-  // نصف دقيقة — «التصاق» طرفي نفس الطابور ببعض هو المطلوب، لا مجرّد تحديثٍ
+  // نصف دقيقة — «التصاق» طرفي نفس الطابور ببعض هو المطلوب، لا مجرد تحديثٍ
   // نهائي. النداء خفيف (عدّاد مفهرس) فمضاعفة تكراره لا تُحسّ في القاعدة.
   const base = ahead <= 2 ? 4_000    // ضمن أول ٣
              : ahead <= 9 ? 10_000   // من ٤ إلى ١٠
@@ -64,7 +65,7 @@ export function QueueTicket({
 }) {
   const lang = useLang();
   const [pending, start] = useTransition();
-  // مسار المسجّل يمرّر التذكرة بلا onGone — الزر كان يموت؛ إعادة التحميل مخرج دائم
+  // مسار المسجّل يمرّر التذكرة بلا onGone — الزر كان يموت، إعادة التحميل مخرج دائم
   const goneOr = () => { if (onGone) onGone(); else if (typeof window !== "undefined") window.location.reload(); };
 
   // حالة حيّة (تُحدَّث بالاستطلاع) — pos هو الترتيب الحيّ = عدد من أمامك + 1
@@ -74,13 +75,17 @@ export function QueueTicket({
   const [liveTotal, setLiveTotal] = useState<number>(total);
   // مسترجَعة من التخزين تبدأ بأصفار — لا نعرض «أنت التالي» الكاذبة قبل أول نبضة
   const [hasLive, setHasLive] = useState(!restored);
+  // تراجع الموضع (رقمٌ أكبر ممّا كان) — عادةً بسبب تبديل الاستقبال لدورين.
+  // تظهر لاستطلاعٍ واحد فقط: تُعاد حسابها كل تِكّة بمقارنة القيمة المخزّنة
+  // بالقيمة الجديدة، فتختفي تلقائيًّا في التِكّة التالية ما لم يتكرّر التراجع.
+  const [delayed, setDelayed] = useState(false);
 
   // آخر إشعار أُطلق (منعًا للتكرار): 'notified' | 'next' | 'seated'
   const alertedRef = useRef<string>("");
 
   // إشعار المتصفّح (banner فوق) — يظهر لحظة ينبّهك المطعم أو يجي دورك.
-  // ملاحظة: يعمل والصفحة مفتوحة (أو عند العودة إليها)؛ الإشعار في الخلفية التامّة
-  // يحتاج Web Push (service worker + خادم) — خطوة لاحقة إن رغبت.
+  // ملاحظة: يعمل والصفحة مفتوحة (أو عند العودة إليها)؛ الإشعار في الخلفيّة التامّة
+  // يحتاج Web Push (service worker + خادم) — خطوةٌ لاحقةٌ إن رغبت.
   function fireAlert(key: string, title: string, body: string) {
     if (alertedRef.current === key) return;
     alertedRef.current = key;
@@ -93,16 +98,16 @@ export function QueueTicket({
     }
   }
 
-  // حالة إشعارات الدفع: تُفعَّل بضغطة من العميل (المتصفّحات تشترط إيماءة)
+  // حالة إشعارات الدفع: تُفعّل بضغطة من العميل (المتصفّحات تشترط إيماءة)
   const [pushOn, setPushOn] = useState(false);
   const [actErr, setActErr] = useState<string | null>(null);
   const [pushBusy, setPushBusy] = useState(false);
   const [canPush, setCanPush] = useState(false);
   // ولماذا لا يستطيع؟ — الصمت هنا كان أسوأ عيبٍ في المنتج: على آيفون في
   // تبويب سفاري لا يوجد `PushManager`، فكان الزرّ لا يُرسم أصلًا. فالعميل
-  // يأخذ دوره ولا يرى ذكرًا للتنبيه، ثم يقفل جوّاله فيتوقّف حتى الاستطلاع،
+  // يأخذ دوره ولا يرى ذكرًا للتنبيه، ثم يقفل جوّاله فيتوقف حتى الاستطلاع،
   // فلا يصله شيء — **ولا يعلم أنّه لن يصله شيء**. فيمشي واثقًا فيفوته دوره،
-  // ويلوم المطعم. وعدٌ صامتٌ لا يُوفى أسوأ من لا وعد.
+  // ويلوم المطعم. وعدٌصامتٌ لا يُوفى أسوأ من لا وعد.
   const [support, setSupport] = useState<PushSupport | null>(null);
 
   // الجهاز قد يكون مشتركًا من دورٍ سابق، لكن الاشتراك في القاعدة مربوط بعميل ذلك
@@ -118,7 +123,7 @@ export function QueueTicket({
       try {
         // كانت تقرأ `getSubscription()` مباشرةً فتحفظ اشتراكًا مسمومًا بمفتاحٍ
         // قديم وتُظهر «مفعّل». الآن تمرّ بفحص المفتاح: يُفسخ المسموم ويُنشأ
-        // سليمٌ محلَّه — بلا نافذةٍ ولا خطوةٍ على العميل، فالإذن ممنوحٌ سلفًا.
+        // سليمٌ محلّه — بلا نافذةٍ ولا خطوةٍ على العميل، فالإذن ممنوحٌ سلفًا.
         const sub = await activePushSubscription();
         if (!sub) return;
         // upsert على endpoint ⇒ يُعاد توجيه الاشتراك لعميل هذا الدور
@@ -169,11 +174,17 @@ export function QueueTicket({
         fails = 0;
         setHasLive(true);
         setStatus(row.status);
+        // تراجع الموضع: تُقارَن القيمة المخزّنة محليًا بالقيمة الجديدة —
+        // لا الحالة بالذاكرة وحدها، فتُكتشف حتى لو غاب العميل عن الصفحة
+        // لحظة التبديل ثم عاد إليها لاحقًا.
+        const prevKnownPos = readLastKnownPosition(entryId);
+        setDelayed(prevKnownPos != null && row.position > prevKnownPos);
+        writeLastKnownPosition(entryId, row.position);
         setPos(row.position);
         setAhead(row.ahead);
         setLiveTotal(row.total ?? 0);
 
-        // إشعار العميل (banner فوق) عند اللحظات المهمّة — مرّة واحدة لكل حالة
+        // إشعار العميل (banner فوق) عند اللحظات المهمّة — مرّةً واحدةً لكل حالة
         if (row.status === "seated") {
           fireAlert("seated", tr(lang, "تفضّل، دورك جاهز 🎉", "You're up 🎉"), tr(lang, `توجّه إلى الاستقبال في ${venue}.`, `Head to reception at ${venue}.`));
         } else if (row.status === "notified") {
@@ -208,7 +219,7 @@ export function QueueTicket({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entryId, phone, restaurantName, lang]);
 
-  // شاشةٌ صاحية لمن لا تصله التنبيهات.
+  // شاشةٌ صاحية لمن لا تصلها التنبيهات.
   //
   // من لا يملك دفعًا (آيفون في تبويب، أو رفض الإذن) فحبله الوحيد هذه الصفحة —
   // والاستطلاع يتوقّف عمدًا حين تُخفى. فإن نامت الشاشة انقطع كل شيء بلا
@@ -251,9 +262,9 @@ export function QueueTicket({
   // الانضمام قبل أن تُعرض له «تم إلغاء دورك» أسفل — وإن كان الفرع مقفولًا أو
   // ممتلئًا رأى «مغلق»/«ممتلئ». هذا هو عطل «ضاع الأثر».
   //
-  // والحالات النهائية الأربع لكلٍّ منها بطاقتها الصريحة أدناه، وفي كلٍّ منها
+  // والحالات النهائية الأربع لكلّ منها بطاقتها الصريحة أدناه، وفي كلّ منها
   // زرّ «خذ دورًا جديدًا» — فالمخرج موجودٌ بضغطةٍ منه، لا بقذفٍ لا يفهمه.
-  // فبقي الطرد التلقائيّ لحالةٍ واحدة: أن يختفي الصفّ إطلاقًا (‏!row في
+  // فبقي الطرد التلقائيّ لحالةٍ واحدة: أن يختفي الصفّ إطلاقًا (‌!row في
   // الاستطلاع أعلاه) — وهناك لا رسالة تُعرض أصلًا.
 
   /** المخرج من أي حالة نهائية — كان غيابه يمنع أخذ دور جديد نهائيًّا */
@@ -274,7 +285,7 @@ export function QueueTicket({
     return (
       <div className="rq-card flex flex-col items-center gap-3 p-8 text-center">
         <span className="flex h-16 w-16 items-center justify-center rounded-full text-3xl text-cream-100" style={{ background: "var(--brand-solid)" }}>✓</span>
-        <p className="text-lg font-extrabold text-[color:var(--ink)]">{tr(lang, "تم إلغاء دورك", "Your turn was cancelled")}</p>
+        <p className="text-lg font-extrabold text-[color:var(--ink)]">{tr(lang, "انتهى دورك — نتشرف بزيارتك مرة ثانية", "Your turn has ended — we'd love to see you again")}</p>
         <p className="text-sm text-[color:var(--muted)]">{tr(lang, "تقدر تأخذ دورك من جديد وقت ما تحب.", "You can take a new turn whenever you like.")}</p>
         <RestartButton />
       </div>
@@ -296,7 +307,7 @@ export function QueueTicket({
     return (
       <div className="rq-card flex flex-col items-center gap-3 p-8 text-center">
         {/* سهمٌ أبيض على دائرة عنابية بهويتنا — بدل 🎉 الذي لا يحمل معنى
-            «توجّه إلى الاستقبال»، وأزلنا «بالهناء والشفاء»: الضيف لم يُجلَس
+            «توجّه إلى الاستقبال»، وأزلنا «بالهناء والشفاء»: الضيف لم يُجلس
             بعد فضلًا عن أن يأكل — طلب المشغّل بعد رؤيتها حيّة */}
         <span className="flex h-16 w-16 items-center justify-center rounded-full text-cream-100" style={{ background: "var(--brand-solid)" }}><IconArrowGo size={28} /></span>
         <p className="font-display text-2xl font-extrabold text-[color:var(--ink)]">{tr(lang, "تفضّل، دورك جاهز", "You're up — please come in")}</p>
@@ -314,6 +325,16 @@ export function QueueTicket({
 
   return (
     <div className="rq-card flex flex-col items-center gap-5 p-8 text-center">
+      {/* تراجع الموضع (رقمٌ أكبر ممّا كان — عادةً تبديلٌ من الاستقبال) —
+          تظهر استطلاعًا واحدًا فقط ثم تختفي (انظر تعليل `delayed` أعلاه). */}
+      {delayed && (
+        <p
+          className="w-full rounded-2xl px-4 py-3 text-sm font-bold"
+          style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--brand-d)" }}
+        >
+          {tr(lang, "دورك تغيّر بسبب تأخّرك عن الحضور", "Your turn changed because you weren't there when called")}
+        </p>
+      )}
       {/* دائرة الرقم مع حلقة تقدّم ونبض حيّ */}
       <div className="relative flex h-44 w-44 items-center justify-center">
         <span
@@ -457,9 +478,9 @@ export function QueueTicket({
             if (await cancelWaitlistGuest(entryId, phone)) {
               setActErr(null);
               setStatus("cancelled");
-              // كان الشريط المتنقّل يعرض «دورك — ترتيبك ١» دقيقةً كاملة بعد
+              // كان الشريط المتنقّل يعرض «دورك — ترتيبك ١» دقيقةً كاملةً بعد
               // الإلغاء (كاش الجلسة لم يكن يُمسح من هذا الزر تحديدًا) —
-              // شكوى المشغّل: «ألغيت وخرجت ولا يزال الموقع كاتب إني حاجز».
+              // شكوى المشغّل: «ألغيت وخرجت ولا يزال الموقع كاتبًا إني حاجزٌ».
               clearLiveTicketCache();
               onCancelled?.();
             }
