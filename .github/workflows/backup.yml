@@ -213,6 +213,14 @@ jobs:
             || { echo "::error::القاعدة المؤقّتة لم تصبح جاهزة للاتصال الفعليّ خلال ٨٠ث"; docker logs scratch | tail -50; docker rm -f scratch >/dev/null; exit 1; }
           psql -Atc 'select version()' | head -1
 
+          # صورة Supabase لا تمنح postgres صلاحية CREATE على القاعدة التي
+          # يُنشئها POSTGRES_DB تلقائيًا (نموذجها متعدد الأدوار كالإنتاج
+          # نفسه) — فأوّل أمر بـ00-prereqs.sql («permission denied for
+          # database») يفشل قبل أن يبدأ شيء. الحلّ: ننشئ القاعدة بأنفسنا
+          # ونملكها لـpostgres صراحةً بدل الاعتماد على تهيئة الصورة الضمنيّة.
+          PGDATABASE=postgres psql -v ON_ERROR_STOP=1 -c \
+            "drop database if exists restore_test; create database restore_test owner postgres;"
+
           # المتطلّبات تأتي مع النسخة نفسها الآن (00-prereqs.sql): الامتدادات
           # والأدوار التي تعتمد عليها البنية. لا يُخترع شيءٌ هنا.
           echo "════════ المتطلّبات المسبقة ════════"
