@@ -218,8 +218,11 @@ jobs:
           # نفسه) — فأوّل أمر بـ00-prereqs.sql («permission denied for
           # database») يفشل قبل أن يبدأ شيء. الحلّ: ننشئ القاعدة بأنفسنا
           # ونملكها لـpostgres صراحةً بدل الاعتماد على تهيئة الصورة الضمنيّة.
-          PGDATABASE=postgres psql -v ON_ERROR_STOP=1 -c \
-            "drop database if exists restore_test; create database restore_test owner postgres;"
+          # كل استدعاء -c بجملتين مفصولتين بفاصلة منقوطة يُرسَل برسالة
+          # استعلامٍ واحدة فيُغلّف ضمنيًّا بمعاملة — وDROP/CREATE DATABASE
+          # يرفضان العمل داخل أي معاملة. استدعاءان منفصلان إذًا لا واحد.
+          PGDATABASE=postgres psql -v ON_ERROR_STOP=1 -c "drop database if exists restore_test;"
+          PGDATABASE=postgres psql -v ON_ERROR_STOP=1 -c "create database restore_test owner postgres;"
 
           # المتطلّبات تأتي مع النسخة نفسها الآن (00-prereqs.sql): الامتدادات
           # والأدوار التي تعتمد عليها البنية. لا يُخترع شيءٌ هنا.
