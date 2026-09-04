@@ -74,6 +74,6 @@ test("عميل الخدمة يحمل server-only ولا يستعمل بادئة 
   assert.doesNotMatch(
     src,
     /NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY|NEXT_PUBLIC_SERVICE/,
-    "بادئة NEXT_PUBLIC تحقن المفتاح في حزمة المتصفّح", "",
+    "بادئة NEXT_PUBLIC تحقن المفتاح في حزمة المتصفّح",
   );
 });
