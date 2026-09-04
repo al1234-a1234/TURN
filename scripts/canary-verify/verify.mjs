@@ -2,6 +2,13 @@
 // يقرأ فقط بيانات طُعم مزروعة سلفًا في مستأجر "طُعم-اختبار-يدوي" (منفصل عن
 // أي مسبار آليّ). يطبع نصّ الصفحة الفعليّ من متصفّح حقيقيّ + لقطات شاشة —
 // إثباتٌ مقيسٌ لا افتراضٌ، بنفس أسلوب measure.mjs السابق في هذه الجلسة.
+//
+// الجولة الأولى (run 33834169025) أثبتت نصّ الإلغاء لكن فوّتت لحظة ظهور
+// البانر: فحصي كان كل ١٠ث بنفس وتيرة استطلاع العميل (١٠ث أيضًا)، فتقفّلا
+// معًا على نفس التوقيت تقريبًا — فحصي كان يقع غالبًا لحظة ظهور البانر أو
+// اختفائه بالضبط، لا في منتصف نافذته المرئية. هذه النسخة تفحص كل ٢ث بدل
+// ١٠ث — أقصر بكثير من دورة استطلاع العميل — لضمان التقاط النافذة المرئية
+// (~١٠ث) بصرف النظر عن أي تزامن صدفة.
 
 import { chromium } from "playwright";
 import { writeFileSync, mkdirSync } from "node:fs";
@@ -54,23 +61,33 @@ async function main() {
   await page.screenshot({ path: `${OUT}/02-baseline.png`, fullPage: true });
   writeFileSync(`${OUT}/02-baseline.txt`, baseline.bodyText, "utf8");
 
-  // ٣) نافذة مراقبة طويلة (٣ دقائق، كل ١٠ث) — تكفي لالتقاط لحظة التبديل
-  //    اليدويّ لموضع الطُّعم من الجلسة الأخرى (SQL مباشر يطابق أثر
-  //    swap_queue_positions حرفيًّا)، ثمّ التقاط اختفاء البانر التلقائيّ
-  //    بعد أوّل استطلاعٍ تالٍ لظهوره.
-  log("== TEST 3: watching for delay banner (~3 min window) ==");
-  const CHECKS = 18;
-  const INTERVAL_MS = 10_000;
+  // ٣) نافذة مراقبة كثيفة (٤ دقائق، كل ٢ث = ١٢٠ فحصًا) — أقصر بكثير من
+  //    دورة استطلاع العميل (١٠ث) كي لا تتقفّل الفحوص على توقيت الاستطلاع
+  //    نفسه كما حدث بالجولة الأولى. تطبع فقط عند تغيّر الحالة + نبضة كل
+  //    ١٠ فحوص كإثبات حياة.
+  log("== TEST 3: watching for delay banner (~4 min window, every 2s) ==");
+  const CHECKS = 120;
+  const INTERVAL_MS = 2_000;
+  let lastBanner = false;
   let sawBanner = false;
   let sawBannerClearAfter = false;
+  let shotCount = 0;
   for (let i = 1; i <= CHECKS; i++) {
     await page.waitForTimeout(INTERVAL_MS);
     const state = await readTicketState(page);
-    log(`CHECK ${i}/${CHECKS} t=+${i * 10}s hasDelayBanner=${state.hasDelayBanner}`);
+    if (state.hasDelayBanner !== lastBanner) {
+      log(`CHANGE ${i}/${CHECKS} t=+${i * 2}s hasDelayBanner: ${lastBanner} -> ${state.hasDelayBanner}`);
+      lastBanner = state.hasDelayBanner;
+    } else if (i % 10 === 0) {
+      log(`HEARTBEAT ${i}/${CHECKS} t=+${i * 2}s hasDelayBanner=${state.hasDelayBanner}`);
+    }
     if (state.hasDelayBanner) {
       sawBanner = true;
-      await page.screenshot({ path: `${OUT}/03-banner-check${i}.png`, fullPage: true });
-      writeFileSync(`${OUT}/03-banner-check${i}.txt`, state.bodyText, "utf8");
+      if (shotCount < 3) {
+        shotCount++;
+        await page.screenshot({ path: `${OUT}/03-banner-check${i}.png`, fullPage: true });
+        writeFileSync(`${OUT}/03-banner-check${i}.txt`, state.bodyText, "utf8");
+      }
     } else if (sawBanner) {
       sawBannerClearAfter = true;
     }
