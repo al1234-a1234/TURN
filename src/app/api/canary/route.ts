@@ -16,10 +16,10 @@ export const dynamic = "force-dynamic";
  * يُلغي. بنفس الكود الذي يستعمله العميل (`guestWriter` ثم الدوالّ نفسها)
  * — لا بنسخةٍ مبسّطة منه، وإلّا اختبرنا اختبارنا لا تطبيقنا.
  *
- * ويمرّ على مستأجرٍ صناعيّ (`is_canary`) مستثنًى من الدليل والبحث: صفٌّ
+ * ويمرّ على مستأجرٍ صناعيّ (`is_canary`) مستثنًى من الدليل والبحث: صفٌّ
  * وهميّ كلّ ربع ساعة في طابور مطعمٍ حقيقيّ يجعل المضيف يرى أشباحًا.
  *
- * وسرٌّ لا لأنّ فيه ما يُخفى، بل لأنّ مسارًا يكتب في القاعدة بلا مفتاح
+ * وسرٌّ لا لأنّ فيه ما يُخفى، بل لأنّ مسارًا يكتب في القاعدة بلا مفتاح
  * هو باب إغراقٍ مفتوح: مئة ألف نداءٍ تعني مئة ألف صفّ.
  */
 type Step = { step: string; ms: number; ok: boolean; detail?: string };
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
   }
   const given = req.headers.get("x-canary-key") ?? "";
   // مقارنةٌ بسيطة تكفي هنا: السرّ عشوائيّ طويل، ولا يُسرّب التوقيتُ منه
-  // ما يُختصر به التخمين عمليًّا عبر الشبكة.
+  // ما يُختصر به التخمين عمليًا عبر الشبكة.
   if (given !== secret) {
     return NextResponse.json({ ok: false, error: "forbidden" }, { status: 403 });
   }
@@ -61,7 +61,7 @@ export async function GET(req: Request) {
     const tail = String(Date.now() % 100_000).padStart(5, "0");
     const phone = `0590${tail}`;
 
-    // (٢) الانضمام — المسار الكاتب كاملًا
+    // (٢) الانضمام — المسار الكاتب كاملاً
     t = Date.now();
     const { data: joined, error: jErr } = await db.rpc("join_waitlist_guest", {
       p_branch_id: branch.id,
@@ -103,6 +103,7 @@ export async function GET(req: Request) {
   } catch (e) {
     // فشلَ النبض في منتصفه؟ لا نترك صفًّا حيًّا خلفنا. ومحاولةٌ واحدةٌ
     // صامتة: إن فشل التنظيف أيضًا فالكرون يُنهي الصفّ خلال ربع ساعة.
+    console.error("[api/canary]", e instanceof Error ? e.message : e, "steps:", JSON.stringify(steps));
     if (entryId) {
       try {
         const db = await guestWriter();
