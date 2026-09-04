@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 import { IconHourglass, IconSparkle } from "@/components/icons";
 import { confirmAttendance, cancelByTicket } from "./actions";
 import { createClient } from "@/lib/supabase/client";
+import { readLastKnownPosition, writeLastKnownPosition } from "@/lib/ticket-delay";
 import { toAr, peopleAhead } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
@@ -26,13 +27,18 @@ type Row = {
   slug: string;
 };
 
-/** تذكرة العميل من رابط واتساب — بلا بيانات شخصية، وفيها زر «أكّد حضوري». */
+/** تذكرة العميل من رابط واتساب — بلا بيانات شخصيّة، وفيها زر «أكّد حضوري». */
 export function TicketView({ entryId, initial }: { entryId: string; initial: Row }) {
   const lang = useLang();
   const [row, setRow] = useState<Row>(initial);
   const [askCancel, setAskCancel] = useState(false);
   const [actErr, setActErr] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  // تراجع الموضع (رقمٌ أكبر ممّا كان — عادةً تبديلٌ من الاستقبال) — تظهر
+  // استطلاعًا واحدًا فقط ثم تختفي؛ نفس منطق queue-ticket.tsx ونفس مفتاح
+  // التخزين (qpos:<entryId>)، فتذكرةٌ واحدة تُقارَن بنفس الأساس بغضّ النظر
+  // عن أيّ الصفحتين فتحها العميل.
+  const [delayed, setDelayed] = useState(false);
 
   // عطل الشبكة العابر يختلف عن «الصف اختفى» — الأول كان يجمّد التذكرة على
   // رقم قديم إلى الأبد (لحظة واي فاي سيئة داخل المطعم = لا يعرف أن دوره حان).
@@ -42,6 +48,9 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
     if (error) return { kind: "err" };
     const r = (Array.isArray(data) ? data[0] : data) as Row | undefined;
     if (!r) return { kind: "gone" };
+    const prevKnownPos = readLastKnownPosition(entryId);
+    setDelayed(prevKnownPos != null && r.position > prevKnownPos);
+    writeLastKnownPosition(entryId, r.position);
     setRow(r);
     return { kind: "ok", row: r };
   }, [entryId]);
@@ -74,7 +83,21 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
     );
   }
 
-  if (TERMINAL.has(row.status)) {
+  // ملغى: نصٌّ مستقلّ عن «منتهي الصلاحية»/«لم يحضر» — كانا يشتركان بعبارةٍ
+  // عامّة واحدة («انتهى هذا الدور»)، وفُصلا هنا عمدًا كي يحمل الإلغاء
+  // صياغته الخاصّة (نفس نصّ /r/[slug]/queue-ticket.tsx) بلا مسّ الحالتين
+  // الأخريين.
+  if (row.status === "cancelled") {
+    return (
+      <div className="rq-card flex flex-col items-center gap-3 p-8 text-center">
+        <span className="flex h-16 w-16 items-center justify-center rounded-full text-cream-100" style={{ background: "var(--brand-solid)" }}><IconHourglass size={26} /></span>
+        <p className="text-lg font-extrabold text-[color:var(--ink)]">{tr(lang, "انتهى دورك — نتشرف بزيارتك مرة ثانية", "Your turn has ended — we'd love to see you again")}</p>
+        <a href={`/r/${row.slug}`} className="rq-btn-soft mt-2 inline-flex">{tr(lang, "خذ دورًا جديدًا", "Take a new turn")}</a>
+      </div>
+    );
+  }
+
+  if (row.status === "expired" || row.status === "no_show") {
     return (
       <div className="rq-card flex flex-col items-center gap-3 p-8 text-center">
         <span className="flex h-16 w-16 items-center justify-center rounded-full text-cream-100" style={{ background: "var(--brand-solid)" }}><IconHourglass size={26} /></span>
@@ -86,6 +109,15 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
 
   return (
     <div className="rq-card flex flex-col items-center gap-5 p-8 text-center">
+      {/* تراجع الموضع — تظهر استطلاعًا واحدًا فقط (انظر تعليل `delayed` أعلاه) */}
+      {delayed && (
+        <p
+          className="w-full rounded-2xl px-4 py-3 text-sm font-bold"
+          style={{ background: "var(--surface-2)", border: "1px solid var(--border)", color: "var(--brand-d)" }}
+        >
+          {tr(lang, "دورك تغيّر بسبب تأخّرك عن الحضور", "Your turn changed because you weren't there when called")}
+        </p>
+      )}
       <div className="flex flex-col items-center">
         <span className="font-display text-6xl font-bold leading-none text-brand-700">{toAr(row.position)}</span>
         <span className="mt-1 text-xs font-bold tracking-widest text-[color:var(--muted)]">{tr(lang, "رقم دورك", "Your turn number")}</span>
@@ -122,7 +154,7 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
           </button>
         )}
 
-        {/* الإلغاء بخطوتين — كي لا تُلغى بلمسة عابرة */}
+        {/* الإلغاء بخطوتين — كي لا تُلغى بلمسةٍ عابرة */}
         {!askCancel ? (
           <button
             type="button"
