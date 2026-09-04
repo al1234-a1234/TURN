@@ -20,6 +20,15 @@ export async function uploadMedia(formData: FormData): Promise<UploadResult> {
   const prefix = String(formData.get("prefix") ?? "img").replace(/[^a-z0-9_-]/gi, "").slice(0, 32) || "img";
   if (!(file instanceof File) || !restaurantId) return { error: "طلب غير مكتمل" };
 
+  // حزامٌ ثانٍ دفاعيّ فقط: RLS التخزين هو الحكم الفعلي على المسار (media)،
+  // لكن نتحقّق هنا أيضًا أن الجلسة تخصّ موظّفًا/مديرًا في restaurantId
+  // المُرسل تحديدًا — لا مطعمٍ آخر يملكه المستخدم نفسه بحسابٍ مختلف.
+  const [{ data: hasPerm }, { data: isManager }] = await Promise.all([
+    supabase.rpc("staff_has_perm", { rest_id: restaurantId, p_perm: "settings" }),
+    supabase.rpc("is_manager_of", { rest_id: restaurantId }),
+  ]);
+  if (!hasPerm && !isManager) return { error: "لا تملك صلاحية الرفع لهذا المطعم" };
+
   const MIME_EXT: Record<string, string> = {
     "image/jpeg": "jpg",
     "image/png": "png",
