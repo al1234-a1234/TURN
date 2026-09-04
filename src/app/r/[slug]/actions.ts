@@ -143,7 +143,7 @@ export async function joinWaitlistGuest(
   // عميل BotID محليًّا بلا نداء، وخلفه ثلاث طبقات تبقى كاملة: حدّ
   // العنوان هنا، وحدود القاعدة (٣/رقم/١٠د و٦٠٠/فرع/د)، وإرجاع القائم
   // بدل التكرار. (المستوى هنا يطابق protect في instrumentation-client
-  // حرفيًّا — تغييرهما معًا أو لا يصحّ أيّ منهما.)
+  // حرفيًّا — تغييرهما معًا أو لا يصحّ أيّهما.)
   const [bot, zone, partySize] = await Promise.all([
     checkBotId(),
     resolveZone(supabase, branchId, zoneRaw),
@@ -181,6 +181,7 @@ export async function joinWaitlistGuest(
   // P0011 (الطابور موقوف — وهو افتراض كلّ فرعٍ جديد منذ أمس) و22023 في
   // جملةٍ عامّة. المصدر الآن واحدٌ ومُختبَر: `src/lib/join-errors.ts`.
   if (error) {
+    console.error("[joinWaitlistGuest]", error.code, error.message);
     return {
       ok: false,
       code: error.code,
@@ -212,10 +213,11 @@ export async function joinWaitlistGuest(
         await writer.rpc("set_entry_distance", { p_entry_id: entryId, p_lat: lat, p_lng: lng });
       });
     }
-    const { data: st } = await supabase.rpc("waitlist_ticket_status", {
+    const { data: st, error: stErr } = await supabase.rpc("waitlist_ticket_status", {
       p_entry_id: entryId,
       p_phone: phone,
     });
+    if (stErr) console.error("[joinWaitlistGuest] waitlist_ticket_status", entryId, stErr.code, stErr.message);
     const t = Array.isArray(st) ? st[0] : st;
     livePos = t?.position ?? undefined;
     liveTotal = t?.total ?? undefined;

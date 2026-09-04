@@ -171,7 +171,8 @@ export async function pushQueueRankUpdates(
     await finishBatch(supabase, batch);
 
     return sent;
-  } catch {
+  } catch (err) {
+    console.error("[pushQueueRankUpdates]", branchId, err);
     return 0;
   }
 }
@@ -231,7 +232,8 @@ export async function pushRankUpdatesAfterTicketCancel(
     );
     await finishBatch(db, batch);
     return sent;
-  } catch {
+  } catch (err) {
+    console.error("[pushRankUpdatesAfterTicketCancel]", entryId, err);
     return 0;
   }
 }
@@ -267,7 +269,8 @@ export async function pushRankUpdatesAfterSelfCancel(
     );
     await finishBatch(db, batch);
     return sent;
-  } catch {
+  } catch (err) {
+    console.error("[pushRankUpdatesAfterSelfCancel]", entryId, err);
     return 0;
   }
 }
@@ -302,7 +305,8 @@ export async function pushToWaitlistEntry(
     await finishBatch(supabase, batch);
 
     return sent;
-  } catch {
+  } catch (err) {
+    console.error("[pushToWaitlistEntry]", entryId, err);
     return 0;
   }
 }
