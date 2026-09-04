@@ -1,0 +1,31 @@
+name: Canary ticket verification (manual, read-only)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Playwright
+        run: |
+          npm init -y >/dev/null 2>&1
+          npm install playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Run canary ticket verification
+        run: node scripts/canary-verify/verify.mjs
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: canary-verify-artifacts
+          path: artifacts/
+          retention-days: 7
