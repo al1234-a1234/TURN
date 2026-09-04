@@ -5,7 +5,7 @@ import { IconHourglass, IconSparkle } from "@/components/icons";
 import { confirmAttendance, cancelByTicket } from "./actions";
 import { createClient } from "@/lib/supabase/client";
 import { readLastKnownPosition, writeLastKnownPosition } from "@/lib/ticket-delay";
-import { toAr, peopleAhead } from "@/lib/format";
+import { toAr, peopleAhead, saudiMobile } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
 
@@ -32,9 +32,10 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
   const lang = useLang();
   const [row, setRow] = useState<Row>(initial);
   const [askCancel, setAskCancel] = useState(false);
+  const [cancelPhone, setCancelPhone] = useState("");
   const [actErr, setActErr] = useState<string | null>(null);
   const [pending, start] = useTransition();
-  // تراجع الموضع (رقمٌ أكبر ممّا كان — عادةً تبديلٌ من الاستقبال) — تظهر
+  // تراجع الموضع (رقمٌ أكبر ممّا كان — عادةً‏ تبديلٌ من الاستقبال) — تظهر
   // استطلاعًا واحدًا فقط ثم تختفي؛ نفس منطق queue-ticket.tsx ونفس مفتاح
   // التخزين (qpos:<entryId>)، فتذكرةٌ واحدة تُقارَن بنفس الأساس بغضّ النظر
   // عن أيّ الصفحتين فتحها العميل.
@@ -83,9 +84,9 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
     );
   }
 
-  // ملغى: نصٌّ مستقلّ عن «منتهي الصلاحية»/«لم يحضر» — كانا يشتركان بعبارةٍ
+  // ملغى: نصٌّ مستقلٌّ عن «منتهي الصلاحية»/«لم يحضر» — كانا يشتركان بعبارةٍ
   // عامّة واحدة («انتهى هذا الدور»)، وفُصلا هنا عمدًا كي يحمل الإلغاء
-  // صياغته الخاصّة (نفس نصّ /r/[slug]/queue-ticket.tsx) بلا مسّ الحالتين
+  // صياغته الخاصّة (نفس نص /r/[slug]/queue-ticket.tsx) بلا مسّ الحالتين
   // الأخريين.
   if (row.status === "cancelled") {
     return (
@@ -168,13 +169,26 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
         ) : (
           <div className="rounded-2xl p-3" style={{ background: "var(--surface-2)", border: "1px solid rgba(102,28,10,0.16)" }}>
             <p className="mb-2.5 text-sm font-bold text-[color:var(--ink)]">{tr(lang, "متأكّد أنك تريد إلغاء دورك؟", "Cancel your turn?")}</p>
+            {/* رابط التذكرة نفسه لا يثبت الهوية — قد يُعاد توجيهه — فنطلب
+                رقم الجوّال المسجّل به الدور كتحقّقٍ قبل الإلغاء. */}
+            <label htmlFor="cancel-phone" className="mb-1 block text-xs font-bold text-[color:var(--muted)]">
+              {tr(lang, "أدخل رقم جوّالك للتأكيد", "Enter your mobile number to confirm")}
+            </label>
+            <input
+              id="cancel-phone" dir="ltr" inputMode="numeric" autoComplete="tel"
+              value={cancelPhone} onChange={(e) => setCancelPhone(e.target.value)}
+              placeholder="05XXXXXXXX"
+              className="field-input mb-2.5 text-left"
+            />
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
-                disabled={pending}
+                disabled={pending || !saudiMobile(cancelPhone)}
                 onClick={() => start(async () => {
-                  if (await cancelByTicket(entryId)) { setActErr(null); setRow((r) => ({ ...r, status: "cancelled" })); }
-                  else setActErr(tr(lang, "تعذّر الإلغاء — ربما تغيّرت حالة دورك، حدّث الصفحة", "Couldn't cancel — your turn may have changed; refresh the page"));
+                  const phone = saudiMobile(cancelPhone);
+                  if (!phone) { setActErr(tr(lang, "رقم الجوّال غير صحيح.", "Invalid mobile number.")); return; }
+                  if (await cancelByTicket(entryId, phone)) { setActErr(null); setRow((r) => ({ ...r, status: "cancelled" })); }
+                  else setActErr(tr(lang, "تعذّر الإلغاء — تأكّد من الرقم أو أن حالة دورك لم تتغيّر، ثم حدّث الصفحة", "Couldn't cancel — check the number, or your turn may have changed; refresh the page"));
                 })}
                 className="rounded-xl px-3 py-2.5 text-sm font-extrabold text-cream-100 transition active:scale-[0.97] disabled:opacity-60"
                 style={{ background: "var(--brand-solid)" }}
@@ -184,7 +198,7 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
               <button
                 type="button"
                 disabled={pending}
-                onClick={() => setAskCancel(false)}
+                onClick={() => { setAskCancel(false); setCancelPhone(""); }}
                 className="rounded-xl border px-3 py-2.5 text-sm font-bold text-[color:var(--ink)] transition disabled:opacity-60"
                 style={{ borderColor: "rgba(102,28,10,0.20)", background: "var(--surface)" }}
               >
