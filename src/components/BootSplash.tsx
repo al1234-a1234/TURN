@@ -33,9 +33,7 @@ e.classList.add("es-out");
 e.style.pointerEvents="none";
 setTimeout(function(){e.style.display="none"},600);
 }
-var seen=document.cookie.indexOf("es8=1")!==-1;
-if(seen){e.style.display="none";e.style.pointerEvents="none";return}
-document.cookie="es8=1;path=/;SameSite=Lax";
+if(history.length>1){e.style.display="none";e.style.pointerEvents="none";return}
 var app=matchMedia("(display-mode:standalone)").matches||navigator.standalone;
 var t=Date.now(),m=app?2400:1900,d=false;
 function h(){if(d)return;d=true;setTimeout(hide,Math.max(0,m-(Date.now()-t)))}
