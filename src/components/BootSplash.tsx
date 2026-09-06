@@ -28,23 +28,20 @@ const JS = `(function(){
 try{
 var e=document.getElementById("eight-splash");
 if(!e)return;
-var app=matchMedia("(display-mode:standalone)").matches||navigator.standalone;
 function hide(){
 e.classList.add("es-out");
 e.style.pointerEvents="none";
 setTimeout(function(){e.style.display="none"},600);
 }
-var seen=false;
-try{seen=sessionStorage.getItem("es8")==="1"}catch(x){}
+var seen=document.cookie.indexOf("es8=1")!==-1;
 if(seen){e.style.display="none";e.style.pointerEvents="none";return}
-try{sessionStorage.setItem("es8","1")}catch(x){}
+document.cookie="es8=1;path=/;SameSite=Lax";
+var app=matchMedia("(display-mode:standalone)").matches||navigator.standalone;
 var t=Date.now(),m=app?2400:1900,d=false;
 function h(){if(d)return;d=true;setTimeout(hide,Math.max(0,m-(Date.now()-t)))}
 if(document.readyState==="complete")h();else addEventListener("load",h);
 setTimeout(h,7000);
 setTimeout(hide,9000);
-addEventListener("pageshow",function(ev){if(ev.persisted)hide()});
-document.addEventListener("visibilitychange",function(){if(document.hidden)hide()});
 window.EIGHT_SPLASH={hide:h}
 }catch(err){var el=document.getElementById("eight-splash");if(el){el.style.cssText="display:none!important"}}
 })();`;

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans_Arabic, DM_Serif_Display } from "next/font/google";
 import "./globals.css";
 import { LangProvider } from "@/components/lang-provider";
+import BootSplash from "@/components/BootSplash";
 
 // خط الشعار والأرقام اللاتينية — الرقم ٨ في الشارة.
 // يُحمَّل عبر next/font لا عبر <link>: بلا طلب خارجي وبلا قفزة تخطيط.
@@ -147,6 +148,7 @@ export default function RootLayout({
       className={`${plexArabic.variable} ${dmSerif.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
+        <BootSplash />
         <LangProvider>{children}</LangProvider>
       </body>
     </html>
