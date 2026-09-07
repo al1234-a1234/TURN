@@ -14,7 +14,7 @@ import { staffHasPermission } from "@/lib/features";
 import { toAr } from "@/lib/format";
 import { tr, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
-import { riyadhDayStart, isWithinOpeningHours, fmtDate } from "@/lib/dates";
+import { riyadhDayStart, isWithinOpeningHours, fmtDate, riyadhISODate } from "@/lib/dates";
 import { zoneLabel } from "@/lib/zones";
 import { SwapSelectionProvider, SwapError } from "./swap-selection";
 import { ScreenGuide } from "@/components/screen-guide";
@@ -66,6 +66,11 @@ export default async function ReceptionPage({
     ? { from: riyadhDayStart(logOffset).toISOString(), to: riyadhDayStart(logOffset - 1).toISOString() }
     : null;
   const logDateLabel = logRange ? fmtDate(logRange.from, lang) : null;
+  // لاختيار تاريخٍ مباشرةً (input[type=date]) بدل التنقّل يومًا يومًا فقط —
+  // كلاهما يوصل لنفس logOffset في النهاية، فالمقارنة تاريخٌ مقابل تاريخ لا
+  // توقيتًا كاملًا (بلا تعقيد مناطق زمنيّة على العميل).
+  const logDateISO = riyadhISODate(riyadhDayStart(logOffset));
+  const todayISO = riyadhISODate();
 
   const startToday = riyadhDayStart().toISOString();
 
@@ -146,6 +151,9 @@ export default async function ReceptionPage({
     // العميل الدائمة عبر كل زياراته، مقيّدة بصلاحية «العملاء»). هذي تظهر
     // لكل الاستقبال بلا صلاحية إضافية (0202).
     visitNote: (q as { visit_note?: string | null }).visit_note ?? null,
+    // آخر من بُدِّل معه هذا الدور — على البطاقة مباشرةً، بلا رجوعٍ لسجلّ
+    // اليوم لمعرفته. ثابتٌ ما دام الدور في الطابور، لا نافذة زمنيّة (0204).
+    lastSwapName: (q as { last_swap_name?: string | null }).last_swap_name ?? null,
   }));
 
   // شارة الهدية على بطاقة الدور أُزيلت بقرار المالك (تنظيف الملصقات). واعتماد
@@ -211,6 +219,16 @@ export default async function ReceptionPage({
           <p className="mt-0.5 text-xs text-[color:var(--muted)]">
             {toAr(q.party_size)} {tr(lang, "أشخاص", "guests")} · ⏱ {toAr(waited)} {tr(lang, "دقيقة", "min")}{q.status === "notified" ? tr(lang, " · أُشعِر ✓", " · Notified ✓") : ""}
           </p>
+          {/* من بُدِّل موضعه معه — على البطاقة نفسها لا في سجلّ اليوم وحده،
+              فلا يحتاج المضيف الرجوع للسجل ليعرف. يظهر لكل من يرى الطابور
+              (بلا صلاحية «العملاء»)، وثابتٌ ما دام الدور هنا (0204/0205). */}
+          {q.lastSwapName && (
+            <span className="mt-1 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
+              style={{ background: "var(--surface-2)", color: "var(--brand-d)" }}>
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "var(--brand-d)" }} />
+              {tr(lang, `بدّل مع ${q.lastSwapName}`, `swapped with ${q.lastSwapName}`)}
+            </span>
+          )}
           {/* سياق العميل — يظهر لمن يملك صلاحية «العملاء» فقط: ملاحظة خاصة
               (حساسية طعام، تفضيل) قد تحمل معلومة شخصية لا تخصّ كل مضيف */}
           {canViewCustomers && (q.isVip || q.isBlocked || q.noShows > 0 || q.note) && (
@@ -451,6 +469,8 @@ export default async function ReceptionPage({
             branchId={activeBranch.id}
             offset={logOffset}
             dateLabel={logDateLabel}
+            dateISO={logDateISO}
+            todayISO={todayISO}
           />
         </>
       ) : (

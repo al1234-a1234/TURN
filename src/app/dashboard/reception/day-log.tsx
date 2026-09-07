@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { restoreQueueEntry } from "./day-log-actions";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
@@ -80,13 +81,20 @@ export function DayLog({
   branchId,
   offset,
   dateLabel,
+  dateISO,
+  todayISO,
 }: {
   rows: DayLogRow[];
   branchId: string;
   offset: number;
   dateLabel: string | null;
+  /** تاريخ اليوم المعروض حاليًا (yyyy-mm-dd بتوقيت الرياض) — قيمة أولية لحقل التاريخ. */
+  dateISO: string;
+  /** تاريخ اليوم الفعليّ (yyyy-mm-dd) — سقف الاختيار، لا تاريخ مستقبليّ. */
+  todayISO: string;
 }) {
   const lang = useLang();
+  const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -110,8 +118,18 @@ export function DayLog({
 
   const hrefFor = (o: number) => `?branch=${branchId}${o > 0 ? `&logOffset=${o}` : ""}`;
 
+  // اختيار تاريخٍ مباشرةً بدل النقر يومًا يومًا للرجوع أسابيع — فرق تاريخين
+  // مكتوبين (yyyy-mm-dd) لا فرق توقيتٍ كامل، فبلا أي تعقيد مناطق زمنيّة هنا.
+  function pickDate(picked: string) {
+    if (!picked) return;
+    const [py, pm, pd] = picked.split("-").map(Number);
+    const [ty, tm, td] = todayISO.split("-").map(Number);
+    const diffDays = Math.round((Date.UTC(ty, tm - 1, td) - Date.UTC(py, pm - 1, pd)) / 86_400_000);
+    router.push(hrefFor(Math.max(0, diffDays)));
+  }
+
   const Nav = () => (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <Link
         href={hrefFor(offset + 1)}
         className="rounded-full px-2.5 py-1 text-xs font-extrabold transition"
@@ -133,6 +151,15 @@ export function DayLog({
           {tr(lang, "أحدث ▸", "Newer ▸")}
         </Link>
       )}
+      <input
+        type="date"
+        value={dateISO}
+        max={todayISO}
+        onChange={(e) => pickDate(e.target.value)}
+        aria-label={tr(lang, "اختر تاريخًا", "Pick a date")}
+        className="rounded-full border border-[var(--hairline)] px-2 py-1 text-xs font-extrabold outline-none"
+        style={{ background: "var(--surface-2)", color: "var(--brand-d)" }}
+      />
     </div>
   );
 

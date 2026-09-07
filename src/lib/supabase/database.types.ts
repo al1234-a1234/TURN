@@ -2147,6 +2147,7 @@ export type Database = {
           is_blocked: boolean
           is_vip: boolean
           joined_at: string
+          last_swap_name: string
           no_shows: number
           note: string
           party_size: number
