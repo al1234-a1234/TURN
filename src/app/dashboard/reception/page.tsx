@@ -199,7 +199,7 @@ export default async function ReceptionPage({
     const cust = Array.isArray(q.customers) ? q.customers[0] : q.customers;
     const waited = minutesSince(q.joined_at);
     return (
-      <li className="soft-card relative flex items-center gap-3 p-3.5">
+      <li className="soft-card relative flex flex-col gap-2 p-3.5">
         {/* من بُدِّل موضعه معه — شارة زاوية لا تدفع بقيّة البطاقة لأسفل
             (موضعٌ مطلق فوق يسار البطاقة تحديدًا، بلا أثر على ارتفاعها).
             تظهر لكل من يرى الطابور، وثابتة ما دام الدور هنا (0204/0205). */}
@@ -212,6 +212,7 @@ export default async function ReceptionPage({
             {tr(lang, `بدّل مع ${q.lastSwapName}`, `swapped with ${q.lastSwapName}`)}
           </span>
         )}
+        <div className="flex items-center gap-3">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-xl font-bold text-cream-100" style={{ background: "var(--brand-solid)" }}>
           {toAr(rank)}
         </span>
@@ -260,9 +261,6 @@ export default async function ReceptionPage({
               )}
             </div>
           )}
-          {/* ملاحظة الاستقبال على هذا الدور — لكل من يفتح شاشة الاستقبال، بلا
-              صلاحية إضافية (بعكس q.note أعلاه) */}
-          <NoteEditor id={q.id} initialNote={q.visitNote} />
           {q.distance_m != null && (
             <span className="mt-1 me-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
               style={{ background: "var(--surface-2)", border: "1px solid rgba(102,28,10,0.14)", color: q.distance_m > 5000 ? "var(--muted)" : "var(--brand-d)" }}>
@@ -280,6 +278,12 @@ export default async function ReceptionPage({
           )}
         </div>
         <QueueActions id={q.id} name={cust?.full_name ?? tr(lang, "عميلنا", "our guest")} phone={cust?.phone ?? ""} restaurant={restaurant.name} position={rank} zone={q.zone} />
+        </div>
+        {/* ملاحظة الاستقبال — صفٌّ بعرض البطاقة كاملةً لا داخل عمود المحتوى
+            الضيّق (كان محشورًا بين رقم الترتيب وأزرار الإجراءات فيقصّ أي
+            نصّ طويل بعد أحرفٍ قليلة). لكل من يفتح شاشة الاستقبال، بلا
+            صلاحية إضافية (بعكس q.note أعلاه). */}
+        <NoteEditor id={q.id} initialNote={q.visitNote} />
       </li>
     );
   };
