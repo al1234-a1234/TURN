@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { restoreQueueEntry } from "./day-log-actions";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
@@ -34,6 +35,8 @@ export type DayLogRow = {
   at: string;
   customer_name: string | null;
   actor_name: string | null;
+  /** اسم مقابل التبديل (kind === "swapped" فقط) — من detail الآن، لا يعود بطاقةً واحدة تمثّل الطرفين. */
+  counterpart_name: string | null;
   restorable: boolean;
 };
 
@@ -45,6 +48,7 @@ const KIND_AR: Record<string, string> = {
   no_show: "لم يحضر",
   restored: "أُرجع",
   moved: "حُرّك",
+  swapped: "بُدِّل موضعه",
 };
 const KIND_EN: Record<string, string> = {
   notified: "Notified",
@@ -54,17 +58,34 @@ const KIND_EN: Record<string, string> = {
   no_show: "No-show",
   restored: "Restored",
   moved: "Moved",
+  swapped: "Position swapped",
 };
 
 /** لونٌ يفرّق الفعل بنظرة: الإزالة تنبيه، الجلوس إنجاز، الإرجاع تصحيح. */
 function toneOf(kind: string): string {
   if (kind === "seated") return "var(--brand-solid)";
   if (kind === "cancelled" || kind === "expired" || kind === "no_show") return "var(--st-closed)";
-  if (kind === "restored" || kind === "moved") return "var(--brand-d)";
+  if (kind === "restored" || kind === "moved" || kind === "swapped") return "var(--brand-d)";
   return "var(--muted)";
 }
 
-export function DayLog({ rows }: { rows: DayLogRow[] }) {
+/**
+ * تصفّح تاريخيّ فوق نفس السجل: offset=0 هي الشاشة الحيّة (نافذة ٨ ساعات
+ * متحرّكة، سلوكها الأصليّ بلا أي تغيير)، وoffset≥1 يوم تقويميّ كامل
+ * (بتوقيت الرياض) قبل اليوم بهذا العدد — يُحسب في page.tsx ويُمرَّر هنا
+ * جاهزًا (dateLabel) كي لا يتكرّر منطق التاريخ في مكوّنٍ عرضيّ.
+ */
+export function DayLog({
+  rows,
+  branchId,
+  offset,
+  dateLabel,
+}: {
+  rows: DayLogRow[];
+  branchId: string;
+  offset: number;
+  dateLabel: string | null;
+}) {
   const lang = useLang();
   const [expanded, setExpanded] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
@@ -87,14 +108,47 @@ export function DayLog({ rows }: { rows: DayLogRow[] }) {
     });
   }
 
+  const hrefFor = (o: number) => `?branch=${branchId}${o > 0 ? `&logOffset=${o}` : ""}`;
+
+  const Nav = () => (
+    <div className="flex items-center gap-2">
+      <Link
+        href={hrefFor(offset + 1)}
+        className="rounded-full px-2.5 py-1 text-xs font-extrabold transition"
+        style={{ background: "var(--surface-2)", color: "var(--brand-d)" }}
+        aria-label={tr(lang, "اليوم السابق", "Previous day")}
+      >
+        {tr(lang, "◂ أقدم", "◂ Older")}
+      </Link>
+      <span className="text-xs font-bold text-[color:var(--muted)]">
+        {offset === 0 ? tr(lang, "حركة الجلسة الحاليّة", "Current session") : dateLabel}
+      </span>
+      {offset > 0 && (
+        <Link
+          href={hrefFor(offset - 1)}
+          className="rounded-full px-2.5 py-1 text-xs font-extrabold transition"
+          style={{ background: "var(--surface-2)", color: "var(--brand-d)" }}
+          aria-label={tr(lang, "اليوم التالي", "Next day")}
+        >
+          {tr(lang, "أحدث ▸", "Newer ▸")}
+        </Link>
+      )}
+    </div>
+  );
+
   if (!rows.length) {
     return (
       <div className="soft-card mt-6 p-5">
-        <h3 className="mb-1 font-display text-lg font-bold text-[color:var(--ink)]">
-          {tr(lang, "سجلّ اليوم", "Today's log")}
-        </h3>
+        <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
+          <h3 className="font-display text-lg font-bold text-[color:var(--ink)]">
+            {tr(lang, "سجلّ اليوم", "Today's log")}
+          </h3>
+          <Nav />
+        </div>
         <p className="text-sm text-[color:var(--muted)]">
-          {tr(lang, "لا حركة بعد في هذه الجلسة.", "No activity yet this session.")}
+          {offset === 0
+            ? tr(lang, "لا حركة بعد في هذه الجلسة.", "No activity yet this session.")
+            : tr(lang, "لا حركة مسجَّلة في هذا اليوم.", "No activity recorded that day.")}
         </p>
       </div>
     );
@@ -102,13 +156,11 @@ export function DayLog({ rows }: { rows: DayLogRow[] }) {
 
   return (
     <div className="soft-card mt-6 p-5">
-      <div className="mb-3 flex items-baseline justify-between">
+      <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="font-display text-lg font-bold text-[color:var(--ink)]">
           {tr(lang, "سجلّ اليوم", "Today's log")}
         </h3>
-        <span className="text-xs text-[color:var(--muted)]">
-          {tr(lang, "حركة الجلسة الحاليّة", "Current session")}
-        </span>
+        <Nav />
       </div>
 
       {err && (
@@ -132,9 +184,12 @@ export function DayLog({ rows }: { rows: DayLogRow[] }) {
               <span className="text-sm" style={{ color: toneOf(r.kind) }}>{label}</span>
 
               {/* من رقمٍ إلى رقم — رتبٌ مشتقّة لا العمود الخام */}
-              {r.kind === "moved" && r.from_rank != null && r.to_rank != null ? (
+              {(r.kind === "moved" || r.kind === "swapped") && r.from_rank != null && r.to_rank != null ? (
                 <span className="text-sm text-[color:var(--muted)]">
                   {tr(lang, `من ${toAr(r.from_rank)} إلى ${toAr(r.to_rank)}`, `#${r.from_rank} → #${r.to_rank}`)}
+                  {r.kind === "swapped" && r.counterpart_name && (
+                    <> · {tr(lang, `تبادل مع ${r.counterpart_name}`, `swapped with ${r.counterpart_name}`)}</>
+                  )}
                 </span>
               ) : r.from_rank != null ? (
                 <span className="text-sm text-[color:var(--muted)]">

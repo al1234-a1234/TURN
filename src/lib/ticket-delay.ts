@@ -29,3 +29,33 @@ export function writeLastKnownPosition(entryId: string, position: number) {
     /* وضع خاص أو تخزين ممتلئ — لا يكسر الاستطلاع */
   }
 }
+
+/**
+ * مدّة ظهور تنبيه «تراجع الموضع» على الشاشة — كانت مربوطةً بدورة الاستطلاع
+ * نفسها (تظهر لحظة اكتشاف التراجع، وتختفي عند أول استطلاعٍ تالٍ) فيراها
+ * العميل القريب من الأول (استطلاعٌ كل ١٠ث) ومضةً لا يتّسع وقتها للقراءة.
+ * الآن وقت الاكتشاف يُختم بطابعٍ زمني (`markDelayDetected`) ويبقى التنبيه
+ * ظاهرًا طالما لم تنقضِ هذي المدّة، بصرف النظر عن عدد الاستطلاعات بينها.
+ */
+const DELAY_BANNER_MS = 120_000;
+
+export function markDelayDetected(entryId: string) {
+  try {
+    sessionStorage.setItem(`qdelay:${entryId}`, String(Date.now()));
+  } catch {
+    /* وضع خاص أو تخزين ممتلئ — لا يكسر الاستطلاع */
+  }
+}
+
+export function isDelayRecent(entryId: string): boolean {
+  try {
+    const raw = sessionStorage.getItem(`qdelay:${entryId}`);
+    if (!raw) return false;
+    const t = Number(raw);
+    return Number.isFinite(t) && Date.now() - t < DELAY_BANNER_MS;
+  } catch {
+    return false;
+  }
+}
+
+export { DELAY_BANNER_MS };

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 import { IconHourglass, IconSparkle } from "@/components/icons";
 import { confirmAttendance, cancelByTicket } from "./actions";
 import { createClient } from "@/lib/supabase/client";
-import { readLastKnownPosition, writeLastKnownPosition } from "@/lib/ticket-delay";
+import { readLastKnownPosition, writeLastKnownPosition, markDelayDetected, isDelayRecent, DELAY_BANNER_MS } from "@/lib/ticket-delay";
 import { toAr, peopleAhead, saudiMobile } from "@/lib/format";
 import { tr } from "@/lib/i18n";
 import { useLang } from "@/components/lang-provider";
@@ -50,11 +50,20 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
     const r = (Array.isArray(data) ? data[0] : data) as Row | undefined;
     if (!r) return { kind: "gone" };
     const prevKnownPos = readLastKnownPosition(entryId);
-    setDelayed(prevKnownPos != null && r.position > prevKnownPos);
+    if (prevKnownPos != null && r.position > prevKnownPos) markDelayDetected(entryId);
     writeLastKnownPosition(entryId, r.position);
+    setDelayed(isDelayRecent(entryId));
     setRow(r);
     return { kind: "ok", row: r };
   }, [entryId]);
+
+  // إخفاءٌ مضمون عند انقضاء المدّة، بصرف النظر عن توقيت الاستطلاع التالي
+  // (قد يبعد حتى دقيقة لمن هو آخر الطابور).
+  useEffect(() => {
+    if (!delayed) return;
+    const t = setTimeout(() => setDelayed(isDelayRecent(entryId)), DELAY_BANNER_MS);
+    return () => clearTimeout(t);
+  }, [delayed, entryId]);
 
   // استطلاع متكيّف: يتوقّف عند الخمول وعند الحالة النهائية — لا عند خطأ عابر
   useEffect(() => {
@@ -110,7 +119,7 @@ export function TicketView({ entryId, initial }: { entryId: string; initial: Row
 
   return (
     <div className="rq-card flex flex-col items-center gap-5 p-8 text-center">
-      {/* تراجع الموضع — تظهر استطلاعًا واحدًا فقط (انظر تعليل `delayed` أعلاه) */}
+      {/* تراجع الموضع — تبقى مدّة ثابتة (انظر تعليل `delayed` أعلاه) */}
       {delayed && (
         <p
           className="w-full rounded-2xl px-4 py-3 text-sm font-bold"

@@ -84,3 +84,32 @@ export async function updateWaitlistStatus(id: string, action: Action): Promise<
   }
   return changed;
 }
+
+/**
+ * ملاحظة الاستقبال الخاصة بهذا الدور تحديدًا — غير ملاحظة العميل الدائمة
+ * (customer_restaurant.note). لا تصل الضيف مطلقًا؛ عمودٌ كان موجودًا في
+ * القاعدة (waitlist_entries.notes) بلا أي استخدام قبل هذا.
+ */
+export async function updateWaitlistNote(id: string, note: string | null): Promise<boolean> {
+  const caller = await requirePerm("waitlist");
+  if (!caller) return false;
+
+  const branchIds = await callerBranchIds(caller);
+  if (branchIds.length === 0) return false;
+
+  const patch: TablesUpdate<"waitlist_entries"> = { notes: note?.trim() || null };
+  const { data: updated, error } = await caller.supabase
+    .from("waitlist_entries")
+    .update(patch)
+    .eq("id", id)
+    .in("branch_id", branchIds)
+    .select("id");
+
+  if (error) {
+    console.error("[updateWaitlistNote]", error.message);
+    return false;
+  }
+
+  revalidatePath("/dashboard/reception");
+  return Boolean(updated?.[0]);
+}

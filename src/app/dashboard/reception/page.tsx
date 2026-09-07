@@ -7,13 +7,14 @@ import { AutoRefresh } from "./auto-refresh";
 import { BranchTabs } from "./branch-tabs";
 import { StatusToggle } from "./status-toggle";
 import { DayLog, type DayLogRow } from "./day-log";
+import { NoteEditor } from "./note-editor";
 import { ReservationActions } from "../reservations/reservation-actions";
 import { loadOwner, scopeBranchIds } from "../owner-context";
 import { staffHasPermission } from "@/lib/features";
 import { toAr } from "@/lib/format";
 import { tr, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
-import { riyadhDayStart, isWithinOpeningHours } from "@/lib/dates";
+import { riyadhDayStart, isWithinOpeningHours, fmtDate } from "@/lib/dates";
 import { zoneLabel } from "@/lib/zones";
 import { SwapSelectionProvider, SwapError } from "./swap-selection";
 import { ScreenGuide } from "@/components/screen-guide";
@@ -28,7 +29,7 @@ function minutesSince(iso: string): number {
 export default async function ReceptionPage({
   searchParams,
 }: {
-  searchParams: Promise<{ branch?: string }>;
+  searchParams: Promise<{ branch?: string; logOffset?: string }>;
 }) {
   const lang = await getLang();
   const load = await loadOwner();
@@ -50,9 +51,21 @@ export default async function ReceptionPage({
   const multi = branchList.length > 1;
 
   // فرع مختار — كل فرع قسم مستقل تمامًا (نمط ريكيو). الاستقبال يعمل على فرع واحد فقط.
-  const requested = (await searchParams).branch;
+  const sp = await searchParams;
+  const requested = sp.branch;
   const activeBranch =
     branchList.find((b) => b.id === requested) ?? branchList[0] ?? null;
+
+  // تصفّح سجلّ اليوم بالتاريخ: logOffset=0 (أو غائب) هو الشاشة الحيّة
+  // (نافذة ٨ ساعات متحرّكة، سلوكها الأصليّ بلا أي تغيير) — logOffset=1
+  // يعني «أمس» بتوقيت الرياض كيومٍ تقويميّ كامل، وهكذا رجوعًا. لا حدّ أعلى
+  // مصطنعًا (طلب المالك صراحةً: سجلٌّ محفوظ يُرجَع إليه لسنين لو احتجت) —
+  // الحدّ الوحيد دفاعٌ من مدخلٍ عابث لا قرارُ منتج.
+  const logOffset = Math.max(0, Math.min(36500, Number(sp.logOffset) || 0));
+  const logRange = logOffset > 0
+    ? { from: riyadhDayStart(logOffset).toISOString(), to: riyadhDayStart(logOffset - 1).toISOString() }
+    : null;
+  const logDateLabel = logRange ? fmtDate(logRange.from, lang) : null;
 
   const startToday = riyadhDayStart().toISOString();
 
@@ -92,9 +105,18 @@ export default async function ReceptionPage({
         supabase.rpc("queue_version", { p_branch_id: activeBranch.id }),
         // سجلّ اليوم يسافر مع الدفعة نفسها — لا رحلةً سابعة زيادةً على كل
         // تحميل، ولا N+1: نداءٌ واحد يعيد الحركة كاملةً بأسمائها ومنفّذيها.
-        // ونافذته متدحرجة (٨ ساعات) لا تاريخٌ تقويميّ — عطل «اليوم التقويميّ»
-        // وقع مرّتين في هذا المشروع (0165، 0166) ولا يُكرَّر في جدولٍ جديد.
-        supabase.rpc("branch_day_log", { p_branch_id: activeBranch.id, p_limit: 50 }),
+        // الشاشة الحيّة (logOffset=0) تبقى بنافذتها المتدحرجة (٨ ساعات) بلا
+        // أي تغيير — عطل «اليوم التقويميّ» وقع مرّتين هنا (0165، 0166) ولا
+        // يُكرَّر لهذا المسار. logOffset≥1 يمرّر يومًا تقويميًّا صريحًا
+        // (0203) فيستعلم عن ذلك اليوم بالذات لا النافذة المتحرّكة.
+        logRange
+          ? supabase.rpc("branch_day_log", {
+              p_branch_id: activeBranch.id,
+              p_limit: 500,
+              p_from: logRange.from,
+              p_to: logRange.to,
+            })
+          : supabase.rpc("branch_day_log", { p_branch_id: activeBranch.id, p_limit: 50 }),
       ])
     : [{ data: [], error: null }, { count: 0, error: null }, { data: null, error: null }, { data: [], error: null }, { data: [], error: null }, { data: null, error: null }, { data: [], error: null }];
 
@@ -120,6 +142,10 @@ export default async function ReceptionPage({
     isBlocked: (q as { is_blocked?: boolean }).is_blocked ?? false,
     noShows: (q as { no_shows?: number }).no_shows ?? 0,
     note: (q as { note?: string | null }).note ?? null,
+    // ملاحظة الاستقبال على هذا الدور تحديدًا — غير `note` أعلاه (ملاحظة
+    // العميل الدائمة عبر كل زياراته، مقيّدة بصلاحية «العملاء»). هذي تظهر
+    // لكل الاستقبال بلا صلاحية إضافية (0202).
+    visitNote: (q as { visit_note?: string | null }).visit_note ?? null,
   }));
 
   // شارة الهدية على بطاقة الدور أُزيلت بقرار المالك (تنظيف الملصقات). واعتماد
@@ -214,6 +240,9 @@ export default async function ReceptionPage({
               )}
             </div>
           )}
+          {/* ملاحظة الاستقبال على هذا الدور — لكل من يفتح شاشة الاستقبال، بلا
+              صلاحية إضافية (بعكس q.note أعلاه) */}
+          <NoteEditor id={q.id} initialNote={q.visitNote} />
           {q.distance_m != null && (
             <span className="mt-1 me-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
               style={{ background: "var(--surface-2)", border: "1px solid rgba(102,28,10,0.14)", color: q.distance_m > 5000 ? "var(--muted)" : "var(--brand-d)" }}>
@@ -415,8 +444,14 @@ export default async function ReceptionPage({
             )}
           </SwapSelectionProvider>
 
-          {/* سجلّ اليوم أسفل الطابور — شاشة التصحيح التي يعيش فيها زرّ الإرجاع */}
-          <DayLog rows={(dayLogRes?.data ?? []) as DayLogRow[]} />
+          {/* سجلّ اليوم أسفل الطابور — شاشة التصحيح التي يعيش فيها زرّ الإرجاع،
+              وقابلٌ الآن للتصفّح بالتاريخ (logOffset) فوق نفس المكوّن (0203) */}
+          <DayLog
+            rows={(dayLogRes?.data ?? []) as DayLogRow[]}
+            branchId={activeBranch.id}
+            offset={logOffset}
+            dateLabel={logDateLabel}
+          />
         </>
       ) : (
         <div className="soft-card py-12 text-center text-sm text-[color:var(--muted)]">

@@ -1608,10 +1608,11 @@ export type Database = {
         }[]
       }
       branch_day_log: {
-        Args: { p_branch_id: string; p_limit?: number }
+        Args: { p_branch_id: string; p_limit?: number; p_from?: string; p_to?: string }
         Returns: {
           actor_name: string
           at: string
+          counterpart_name: string
           customer_name: string
           entry_id: string
           event_id: string
@@ -2152,6 +2153,7 @@ export type Database = {
           phone: string
           position: number
           status: Database["public"]["Enums"]["waitlist_status"]
+          visit_note: string
           zone: string
         }[]
       }

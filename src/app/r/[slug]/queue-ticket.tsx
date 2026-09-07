@@ -10,7 +10,7 @@ import {
   subscribeToPush,
   type PushSupport,
 } from "@/lib/push-client";
-import { readLastKnownPosition, writeLastKnownPosition } from "@/lib/ticket-delay";
+import { readLastKnownPosition, writeLastKnownPosition, markDelayDetected, isDelayRecent, DELAY_BANNER_MS } from "@/lib/ticket-delay";
 import { IconArrowGo } from "@/components/icons";
 import { toAr, peopleAhead } from "@/lib/format";
 import { tr } from "@/lib/i18n";
@@ -76,9 +76,16 @@ export function QueueTicket({
   // مسترجَعة من التخزين تبدأ بأصفار — لا نعرض «أنت التالي» الكاذبة قبل أول نبضة
   const [hasLive, setHasLive] = useState(!restored);
   // تراجع الموضع (رقمٌ أكبر ممّا كان) — عادةً بسبب تبديل الاستقبال لدورين.
-  // تظهر لاستطلاعٍ واحد فقط: تُعاد حسابها كل تِكّة بمقارنة القيمة المخزّنة
-  // بالقيمة الجديدة، فتختفي تلقائيًّا في التِكّة التالية ما لم يتكرّر التراجع.
+  // تبقى ظاهرةً مدّة ثابتة (`DELAY_BANNER_MS`، انظر lib/ticket-delay.ts) من
+  // لحظة اكتشافها، لا لتِكّة استطلاعٍ واحدة فقط — من هو قريب الأول يستطلع
+  // كل بضع ثوانٍ فكانت تختفي قبل أن يتّسع وقته لقراءتها.
   const [delayed, setDelayed] = useState(false);
+
+  useEffect(() => {
+    if (!delayed || !entryId) return;
+    const t = setTimeout(() => setDelayed(isDelayRecent(entryId)), DELAY_BANNER_MS);
+    return () => clearTimeout(t);
+  }, [delayed, entryId]);
 
   // آخر إشعار أُطلق (منعًا للتكرار): 'notified' | 'next' | 'seated'
   const alertedRef = useRef<string>("");
@@ -178,8 +185,9 @@ export function QueueTicket({
         // لا الحالة بالذاكرة وحدها، فتُكتشف حتى لو غاب العميل عن الصفحة
         // لحظة التبديل ثم عاد إليها لاحقًا.
         const prevKnownPos = readLastKnownPosition(entryId);
-        setDelayed(prevKnownPos != null && row.position > prevKnownPos);
+        if (prevKnownPos != null && row.position > prevKnownPos) markDelayDetected(entryId);
         writeLastKnownPosition(entryId, row.position);
+        setDelayed(isDelayRecent(entryId));
         setPos(row.position);
         setAhead(row.ahead);
         setLiveTotal(row.total ?? 0);
@@ -326,7 +334,7 @@ export function QueueTicket({
   return (
     <div className="rq-card flex flex-col items-center gap-5 p-8 text-center">
       {/* تراجع الموضع (رقمٌ أكبر ممّا كان — عادةً تبديلٌ من الاستقبال) —
-          تظهر استطلاعًا واحدًا فقط ثم تختفي (انظر تعليل `delayed` أعلاه). */}
+          تبقى مدّة ثابتة ثم تختفي (انظر تعليل `delayed` أعلاه). */}
       {delayed && (
         <p
           className="w-full rounded-2xl px-4 py-3 text-sm font-bold"
