@@ -199,7 +199,19 @@ export default async function ReceptionPage({
     const cust = Array.isArray(q.customers) ? q.customers[0] : q.customers;
     const waited = minutesSince(q.joined_at);
     return (
-      <li className="soft-card flex items-center gap-3 p-3.5">
+      <li className="soft-card relative flex items-center gap-3 p-3.5">
+        {/* من بُدِّل موضعه معه — شارة زاوية لا تدفع بقيّة البطاقة لأسفل
+            (موضعٌ مطلق فوق يسار البطاقة تحديدًا، بلا أثر على ارتفاعها).
+            تظهر لكل من يرى الطابور، وثابتة ما دام الدور هنا (0204/0205). */}
+        {q.lastSwapName && (
+          <span
+            className="absolute left-2 top-2 z-10 max-w-[45%] truncate whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-extrabold"
+            style={{ background: "var(--surface-2)", color: "var(--brand-d)" }}
+            title={tr(lang, `بدّل مع ${q.lastSwapName}`, `swapped with ${q.lastSwapName}`)}
+          >
+            {tr(lang, `بدّل مع ${q.lastSwapName}`, `swapped with ${q.lastSwapName}`)}
+          </span>
+        )}
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-display text-xl font-bold text-cream-100" style={{ background: "var(--brand-solid)" }}>
           {toAr(rank)}
         </span>
@@ -219,16 +231,6 @@ export default async function ReceptionPage({
           <p className="mt-0.5 text-xs text-[color:var(--muted)]">
             {toAr(q.party_size)} {tr(lang, "أشخاص", "guests")} · ⏱ {toAr(waited)} {tr(lang, "دقيقة", "min")}{q.status === "notified" ? tr(lang, " · أُشعِر ✓", " · Notified ✓") : ""}
           </p>
-          {/* من بُدِّل موضعه معه — على البطاقة نفسها لا في سجلّ اليوم وحده،
-              فلا يحتاج المضيف الرجوع للسجل ليعرف. يظهر لكل من يرى الطابور
-              (بلا صلاحية «العملاء»)، وثابتٌ ما دام الدور هنا (0204/0205). */}
-          {q.lastSwapName && (
-            <span className="mt-1 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-extrabold"
-              style={{ background: "var(--surface-2)", color: "var(--brand-d)" }}>
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: "var(--brand-d)" }} />
-              {tr(lang, `بدّل مع ${q.lastSwapName}`, `swapped with ${q.lastSwapName}`)}
-            </span>
-          )}
           {/* سياق العميل — يظهر لمن يملك صلاحية «العملاء» فقط: ملاحظة خاصة
               (حساسية طعام، تفضيل) قد تحمل معلومة شخصية لا تخصّ كل مضيف */}
           {canViewCustomers && (q.isVip || q.isBlocked || q.noShows > 0 || q.note) && (

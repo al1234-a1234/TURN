@@ -32,8 +32,8 @@ export function NoteEditor({ id, initialNote }: { id: string; initialNote: strin
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-1.5 block w-full whitespace-pre-line text-start text-xs font-bold leading-snug transition"
-        style={{ color: saved ? "var(--brand-d)" : "var(--muted)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}
+        className="mt-1 block w-full truncate text-start text-xs font-bold transition"
+        style={{ color: saved ? "var(--brand-d)" : "var(--muted)" }}
         title={saved || tr(lang, "إضافة ملاحظة استقبال", "Add a reception note")}
       >
         {saved ? `☎️ ${saved}` : `+ ${tr(lang, "ملاحظة استقبال", "Reception note")}`}
@@ -42,21 +42,17 @@ export function NoteEditor({ id, initialNote }: { id: string; initialNote: strin
   }
 
   return (
-    <div className="mt-1.5 flex flex-col items-stretch gap-1.5">
-      <textarea
+    <div className="mt-1 flex items-center gap-1.5">
+      <input
         autoFocus
-        rows={2}
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); save(); }
-          if (e.key === "Escape") { setValue(saved); setOpen(false); }
-        }}
+        onKeyDown={(e) => { if (e.key === "Enter") save(); if (e.key === "Escape") { setValue(saved); setOpen(false); } }}
         onBlur={save}
         disabled={pending}
-        placeholder={tr(lang, "مثلاً: اتصلنا عليه، يبي نص ساعة", "e.g. called him, wants 30 more minutes")}
-        maxLength={280}
-        className="w-full resize-none rounded-xl border border-[var(--hairline)] px-3 py-2 text-sm font-bold leading-snug outline-none"
+        placeholder={tr(lang, "مثلاً: اتصلنا عليه، يبي نص ساعة", "e.g. called, wants 30 min")}
+        maxLength={200}
+        className="w-full rounded-lg border border-[var(--hairline)] px-2 py-1 text-xs font-bold outline-none"
         style={{ background: "var(--surface-2)", color: "var(--ink)" }}
       />
     </div>
