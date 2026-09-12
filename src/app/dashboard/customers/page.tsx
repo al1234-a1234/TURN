@@ -95,7 +95,6 @@ export default async function CustomersPage({
   const segCounts = Object.fromEntries(SEGMENTS.map((s) => [s, list.filter((p) => matches(p, s)).length])) as Record<Segment, number>;
   if (seg !== "all") list = list.filter((p) => matches(p, seg));
 
-  const vips = segCounts.vip;
   const totalVisits = list.reduce((a, p) => a + p.visits, 0);
   const avgVisits = list.length ? Math.round((totalVisits / list.length) * 10) / 10 : 0;
   // عدّادات الحملة الفعلية من القاعدة — الحملة تُرسَل للشريحة كاملة في
@@ -111,11 +110,16 @@ export default async function CustomersPage({
   ]);
   const campaignCounts = {
     all: allCount.count ?? segCounts.all,
-    vip: vipCount.count ?? vips,
+    vip: vipCount.count ?? segCounts.vip,
     returning: returningCount.count ?? 0,
     new: newCount.count ?? 0,
     dormant: dormantCount.count ?? 0,
   };
+  // نفس السبب: شريحتا «الكل» و«VIP» المعروضتان أعلى الصفحة وفي شرائح
+  // الفلترة كانتا تُشتقّان من طول قائمة الـ٥٠٠ المعروضة، فمطعمٌ يفوق
+  // عملاؤه ٥٠٠ كان يرى عددًا ثابتًا لا يتحرّك مهما كبر عدده الحقيقي.
+  segCounts.all = campaignCounts.all;
+  segCounts.vip = campaignCounts.vip;
 
   // شرائح المالك المخصّصة بعدّاداتها — العضوية تُحسب في القاعدة لحظةَ الاستعلام
   const { data: segRows, error: segError } = await supabase.rpc("customer_segments_with_counts", {
@@ -140,7 +144,7 @@ export default async function CustomersPage({
         />
         <div className="grid grid-cols-3 gap-3">
           <Kpi label={tr(lang, "عملاؤك", "Your customers")} value={toAr(segCounts.all)} tone="var(--brand-d)" />
-          <Kpi label={tr(lang, "مميّزون (VIP)", "VIPs")} value={toAr(vips)} tone="var(--st-open)" />
+          <Kpi label={tr(lang, "مميّزون (VIP)", "VIPs")} value={toAr(segCounts.vip)} tone="var(--st-open)" />
           <Kpi label={tr(lang, "متوسط الزيارات", "Avg. visits")} value={toAr(avgVisits)} tone="var(--st-full)" />
         </div>
 

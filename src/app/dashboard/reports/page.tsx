@@ -101,18 +101,19 @@ export default async function ReportsPage({
     ? await supabase.from("branch_zones").select("key, name").in("branch_id", branchIds).order("sort_order")
     : { data: [] as { key: string; name: string }[] };
 
-  const [rev, profiles, analytics] = await Promise.all([
+  const [rev, totalCustomersRes, returningCustomersRes, analytics] = await Promise.all([
     supabase.from("reviews").select("rating").eq("restaurant_id", restaurant.id),
     // التقارير محروسة بصلاحية «التحليلات»، وأرقام العملاء محروسة بصلاحية
     // «العملاء» — وهما لا تتلازمان. من يملك الأولى دون الثانية كان سيرى صفرًا
     // يقرؤه «لا عملاء لنا»، فنسأل قبل الجلب ونكتب السبب مكان الرقم.
+    // count رأسي بلا صفوف — لا صفوف profiles ثم .length: تلك كانت تُحدَّ ضمنيًّا
+    // بسقف الاستعلام الافتراضي (١٠٠٠ صفٍّ) فتكذب على مطعمٍ يفوقه.
     canCustomers
-      ? supabase
-          .from("customer_restaurant")
-          // !inner: يقصر العملاء على من زار فروع المتصل (لا أرقام العلامة كلها)
-          .select("visits, customers!inner(id)")
-          .eq("restaurant_id", restaurant.id)
-      : Promise.resolve({ data: [] as { visits: number }[] }),
+      ? supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id)
+      : Promise.resolve({ count: 0 }),
+    canCustomers
+      ? supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).gte("visits", 2)
+      : Promise.resolve({ count: 0 }),
     branchIds.length
       ? supabase
           .from("waitlist_entries")
@@ -132,9 +133,8 @@ export default async function ReportsPage({
     : 0;
 
   // ===== العملاء =====
-  const profRows = (profiles.data ?? []) as { visits: number }[];
-  const totalCustomers = profRows.length;
-  const returning = profRows.filter((p) => p.visits >= 2).length;
+  const totalCustomers = totalCustomersRes.count ?? 0;
+  const returning = returningCustomersRes.count ?? 0;
   const returningPct = totalCustomers ? Math.round((returning / totalCustomers) * 100) : 0;
 
   // ===== الطابور والتحليلات (ضمن الفترة) =====

@@ -38,16 +38,19 @@ export default async function OverviewPage() {
   const startToday = riyadhDayStart();
   const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
 
-  const [rev, profiles, analytics, insightsRes, liveRes] = await Promise.all([
+  const [rev, profiles, analytics, insightsRes, liveRes, totalCustomersRes, returningCustomersRes, vipCustomersRes] = await Promise.all([
     supabase.from("reviews").select("rating").eq("restaurant_id", restaurant.id),
     canCustomers
       ? supabase
           .from("customer_restaurant")
           // !inner: RLS على customers يقصر النتيجة على من زار فروع المتصل،
           // فلا تختلط أرقام العلامة بأرقام الفرع ولا تظهر أسماء فارغة
+          // limit(5): كل ما نستعمله من هذا الاستعلام هو أعلى ٥ زوّار — الإجماليات
+          // تُشتقّ من عدّاتٍ دقيقة تحته لا من طول هذه المصفوفة
           .select("visits, is_vip, customers!inner(full_name)")
           .eq("restaurant_id", restaurant.id)
           .order("visits", { ascending: false })
+          .limit(5)
       : Promise.resolve({ data: [] as { visits: number; is_vip: boolean; customers: { full_name: string } | { full_name: string }[] | null }[] }),
     branchIds.length
       ? supabase.from("waitlist_entries").select("joined_at, seated_at, status, zone, party_size").in("branch_id", branchIds).gte("joined_at", since30)
@@ -57,6 +60,18 @@ export default async function OverviewPage() {
     branchIds.length
       ? supabase.from("waitlist_entries").select("zone").in("branch_id", branchIds).in("status", ["waiting", "notified"])
       : Promise.resolve({ data: [] as { zone: string }[] }),
+    // ثلاثة عدّاداتٍ دقيقة (count رأسي بلا صفوف) لإجماليات العملاء: مطعمٌ
+    // عدد عملائه يفوق سقف الاستعلام الافتراضي (١٠٠٠ صفٍّ) كان يرى «١٠٠٠ عميل»
+    // ثابتة مهما كان العدد الحقيقي — لأن الإجمالي كان طول مصفوفةٍ محدودة ضمنيًّا لا عدّادًا حقيقيًّا
+    canCustomers
+      ? supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id)
+      : Promise.resolve({ count: 0 }),
+    canCustomers
+      ? supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).gte("visits", 2)
+      : Promise.resolve({ count: 0 }),
+    canCustomers
+      ? supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).eq("is_vip", true)
+      : Promise.resolve({ count: 0 }),
   ]);
 
   const insights = (insightsRes.data ?? []) as { id: string; kind: string; title: string; body: string | null; data: { customer_id?: string } | null; created_at: string }[];
@@ -66,11 +81,11 @@ export default async function OverviewPage() {
 
   // ===== العملاء =====
   const profRows = (profiles.data ?? []) as { visits: number; is_vip: boolean; customers: { full_name: string } | { full_name: string }[] | null }[];
-  const totalCustomers = profRows.length;
-  const returning = profRows.filter((p) => p.visits >= 2).length;
+  const totalCustomers = totalCustomersRes.count ?? 0;
+  const returning = returningCustomersRes.count ?? 0;
   const returningPct = totalCustomers ? Math.round((returning / totalCustomers) * 100) : 0;
-  const vips = profRows.filter((p) => p.is_vip).length;
-  const topCustomers = profRows.slice(0, 5);
+  const vips = vipCustomersRes.count ?? 0;
+  const topCustomers = profRows;
 
   // ===== الطابور والتحليلات (30 يوم) =====
   const rows = (analytics.data ?? []) as { joined_at: string; seated_at: string | null; status: string; zone: string; party_size: number }[];
