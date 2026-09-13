@@ -32,10 +32,12 @@ const SEG_LABEL: Record<Segment, { ar: string; en: string }> = {
   blocked: { ar: "محظورون", en: "Blocked" },
 };
 
+const PAGE_SIZE = 500;
+
 export default async function CustomersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; seg?: string }>;
+  searchParams: Promise<{ q?: string; seg?: string; page?: string }>;
 }) {
   const lang = await getLang();
   const load = await loadOwner();
@@ -49,23 +51,43 @@ export default async function CustomersPage({
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
   const seg: Segment = (SEGMENTS as readonly string[]).includes(sp.seg ?? "") ? (sp.seg as Segment) : "all";
+  // صفحاتٌ حقيقية بدل قصّة الـ٥٠٠: مطعمٌ عدد عملائه يفوقها كان لا يملك طريقةً
+  // للوصول لمن بعدها بالتصفّح (البحث وحده كان ينفذ إلى القاعدة كاملةً).
+  const page = Math.max(1, Number(sp.page ?? "1") || 1);
 
-  // البحث يُنفَّذ في القاعدة (لا في الذاكرة): اسم أو رقم — الرقم يُطبَّع أولًا
-  let query = supabase
+  // البحث يُنفَّذ في القاعدة (لا في الذاكرة): اسم أو رقم — الرقم يُطبَّع أولًا.
+  // مبنيٌّ كنصٍّ لا كسلسلة استدعاءات لأننا نحتاجه مرّتين: عدًّا دقيقًا
+  // للصفحات، وجلبًا لصفّ الصفحة الحالية — والقاعدة لا تُرجع الاثنين معًا.
+  const digits = normalizePhone(q);
+  const searchOr = q
+    ? [`full_name.ilike.%${q.replace(/[%,()]/g, "")}%`, ...(digits.length >= 3 ? [`phone.like.%${digits}%`] : [])].join(",")
+    : null;
+
+  let countQuery = supabase
+    .from("customer_restaurant")
+    .select("customer_id, customers!inner(full_name)", { count: "exact", head: true })
+    .eq("restaurant_id", restaurant.id);
+  if (searchOr) countQuery = countQuery.or(searchOr, { referencedTable: "customers" });
+
+  let rowsQuery = supabase
     .from("customer_restaurant")
     .select("*, customers!inner(full_name, phone)")
     .eq("restaurant_id", restaurant.id);
-  if (q) {
-    const digits = normalizePhone(q);
-    const parts = [`full_name.ilike.%${q.replace(/[%,()]/g, "")}%`];
-    if (digits.length >= 3) parts.push(`phone.like.%${digits}%`);
-    query = query.or(parts.join(","), { referencedTable: "customers" });
-  }
-  const { data } = await query
-    .order("is_vip", { ascending: false })
-    .order("visits", { ascending: false })
-    .limit(500);
+  if (searchOr) rowsQuery = rowsQuery.or(searchOr, { referencedTable: "customers" });
+
+  const [{ count: matchCount }, { data }] = await Promise.all([
+    countQuery,
+    rowsQuery
+      .order("is_vip", { ascending: false })
+      .order("visits", { ascending: false })
+      // فارزٌ حاسم: تعادل الزيارات كثيرٌ (آلاف على نفس الرقم)، وبلا معيارٍ
+      // ثابتٍ أخير يتكرّر عميلٌ ويغيب آخر بين صفحتين
+      .order("customer_id", { ascending: true })
+      .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1),
+  ]);
   let list = (data ?? []) as Profile[];
+  const totalMatches = matchCount ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalMatches / PAGE_SIZE));
 
   // من لديهم هدايا فعّالة (لشريحة «لهم هدايا»)
   const { data: activeRewards } = await supabase
@@ -130,6 +152,8 @@ export default async function CustomersPage({
   const customSegments = ((segRows ?? []) as CustomSegment[]);
 
   const hrefFor = (s: Segment) => `/dashboard/customers?seg=${s}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
+  const hrefForPage = (p: number) =>
+    `/dashboard/customers?page=${p}${seg !== "all" ? `&seg=${seg}` : ""}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
 
   return (
     <div className="space-y-6">
@@ -252,6 +276,27 @@ export default async function CustomersPage({
               );
             })}
           </ul>
+        )}
+
+        {/* تنقّلٌ بين الصفحات: يظهر فقط في شريحة «الكل» بلا فلترةٍ محليّة،
+            لأنّ شرائح مثل «مميّزون» تُصفَّى في الذاكرة على صفٍّ واحد جُلب
+            من القاعدة، فترقيمها المستقل يحتاج استعلامًا مختلفًا لا يوجد بعد. */}
+        {seg === "all" && totalPages > 1 && (
+          <div className="flex items-center justify-between gap-2 pt-1">
+            {page > 1 ? (
+              <Link href={hrefForPage(page - 1)} className="btn btn-secondary px-4 text-sm">
+                {tr(lang, "→ أحدث", "→ Previous")}
+              </Link>
+            ) : <span />}
+            <span className="text-xs font-bold text-[color:var(--muted)]">
+              {tr(lang, `صفحة ${toAr(page)} من ${toAr(totalPages)}`, `Page ${page} of ${totalPages}`)}
+            </span>
+            {page < totalPages ? (
+              <Link href={hrefForPage(page + 1)} className="btn btn-secondary px-4 text-sm">
+                {tr(lang, "أقدم ←", "Next ←")}
+              </Link>
+            ) : <span />}
+          </div>
         )}
     </div>
   );
