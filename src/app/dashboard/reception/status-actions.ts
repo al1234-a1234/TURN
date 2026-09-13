@@ -76,7 +76,7 @@ export async function setBranchJoinFrozen(
   const { data, error } = await caller.supabase.rpc("set_branch_join_frozen", {
     p_branch_id: branchId,
     p_frozen: frozen,
-    p_reason: frozen ? (reason ?? null) : null,
+    p_reason: frozen ? reason : undefined,
   });
   // `false` = «لا حقّ لك على هذا الفرع» — لا تُبتلع كي لا تكذب الواجهة.
   if (error || data !== true) return false;

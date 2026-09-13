@@ -532,6 +532,42 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_snapshot: {
+        Row: {
+          day_key: string
+          id: number
+          parts: number | null
+          payload: Json
+          report_text: string | null
+          send_note: string | null
+          send_status: string | null
+          sent_at: string | null
+          taken_at: string
+        }
+        Insert: {
+          day_key: string
+          id?: number
+          parts?: number | null
+          payload: Json
+          report_text?: string | null
+          send_note?: string | null
+          send_status?: string | null
+          sent_at?: string | null
+          taken_at?: string
+        }
+        Update: {
+          day_key?: string
+          id?: number
+          parts?: number | null
+          payload?: Json
+          report_text?: string | null
+          send_note?: string | null
+          send_status?: string | null
+          sent_at?: string | null
+          taken_at?: string
+        }
+        Relationships: []
+      }
       daily_stats: {
         Row: {
           avg_wait_seconds: number
@@ -575,6 +611,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "daily_stats_branch_id_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      failure_events: {
+        Row: {
+          at: string
+          branch_id: string | null
+          code: string | null
+          detail: Json
+          id: number
+          kind: string
+          path: string | null
+        }
+        Insert: {
+          at?: string
+          branch_id?: string | null
+          code?: string | null
+          detail?: Json
+          id?: number
+          kind: string
+          path?: string | null
+        }
+        Update: {
+          at?: string
+          branch_id?: string | null
+          code?: string | null
+          detail?: Json
+          id?: number
+          kind?: string
+          path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "failure_events_branch_id_fkey"
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
@@ -1422,6 +1496,7 @@ export type Database = {
           party_size: number
           position: number | null
           quoted_wait_min: number | null
+          restored_from: string | null
           seated_at: string | null
           status: Database["public"]["Enums"]["waitlist_status"]
           table_id: string | null
@@ -1441,6 +1516,7 @@ export type Database = {
           party_size: number
           position?: number | null
           quoted_wait_min?: number | null
+          restored_from?: string | null
           seated_at?: string | null
           status?: Database["public"]["Enums"]["waitlist_status"]
           table_id?: string | null
@@ -1460,6 +1536,7 @@ export type Database = {
           party_size?: number
           position?: number | null
           quoted_wait_min?: number | null
+          restored_from?: string | null
           seated_at?: string | null
           status?: Database["public"]["Enums"]["waitlist_status"]
           table_id?: string | null
@@ -1608,7 +1685,12 @@ export type Database = {
         }[]
       }
       branch_day_log: {
-        Args: { p_branch_id: string; p_limit?: number; p_from?: string; p_to?: string }
+        Args: {
+          p_branch_id: string
+          p_from?: string
+          p_limit?: number
+          p_to?: string
+        }
         Returns: {
           actor_name: string
           at: string
@@ -1631,10 +1713,12 @@ export type Database = {
         Args: { p_dow: number; p_hours: Json }
         Returns: number
       }
-      bytea_to_text: { Args: { data: string }; Returns: string }
       caller_branch_id: { Args: { rest_id: string }; Returns: string }
       can_access_branch: { Args: { b_id: string }; Returns: boolean }
-      cancel_by_ticket: { Args: { p_entry_id: string }; Returns: boolean }
+      cancel_by_ticket: {
+        Args: { p_entry_id: string; p_phone?: string }
+        Returns: boolean
+      }
       cancel_reservation_guest: {
         Args: { p_id: string; p_phone: string }
         Returns: boolean
@@ -1644,6 +1728,7 @@ export type Database = {
         Returns: boolean
       }
       check_domain_expiry: { Args: never; Returns: undefined }
+      check_permission_drift: { Args: never; Returns: Json }
       check_platform_health: { Args: never; Returns: Json }
       check_rate: {
         Args: { p_key: string; p_max: number; p_window: string }
@@ -1677,6 +1762,32 @@ export type Database = {
           sort_order: number
         }[]
       }
+      customers_page_counts: {
+        Args: { p_dormant_since: string; p_restaurant_id: string }
+        Returns: {
+          all_count: number
+          dormant_count: number
+          new_count: number
+          returning_count: number
+          vip_count: number
+        }[]
+      }
+      customers_search_count: {
+        Args: { p_digits?: string; p_query?: string; p_restaurant_id: string }
+        Returns: number
+      }
+      daily_report_text: {
+        Args: { p_hist?: Json; p_prev: Json; p_today: Json }
+        Returns: string[]
+      }
+      dashboard_customer_kpis: {
+        Args: { p_restaurant_id: string }
+        Returns: {
+          returning_customers: number
+          total: number
+          vip: number
+        }[]
+      }
       delete_dead_push_subscription: {
         Args: { p_endpoint: string }
         Returns: undefined
@@ -1685,6 +1796,7 @@ export type Database = {
         Args: { p_endpoint: string }
         Returns: undefined
       }
+      effective_entry_id: { Args: { p_entry_id: string }; Returns: string }
       expire_stale_waitlist: { Args: never; Returns: number }
       gen_claim_code: { Args: never; Returns: string }
       get_customer_rewards: {
@@ -1762,131 +1874,6 @@ export type Database = {
       }
       health_snapshot: { Args: never; Returns: Json }
       hours_have_bad_window: { Args: { p_hours: Json }; Returns: boolean }
-      http: {
-        Args: { request: Database["public"]["CompositeTypes"]["http_request"] }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-        SetofOptions: {
-          from: "http_request"
-          to: "http_response"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      http_delete:
-        | {
-            Args: { uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: { content: string; content_type: string; uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-      http_get:
-        | {
-            Args: { uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: { data: Json; uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-      http_head: {
-        Args: { uri: string }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-        SetofOptions: {
-          from: "*"
-          to: "http_response"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      http_header: {
-        Args: { field: string; value: string }
-        Returns: Database["public"]["CompositeTypes"]["http_header"]
-        SetofOptions: {
-          from: "*"
-          to: "http_header"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      http_list_curlopt: {
-        Args: never
-        Returns: {
-          curlopt: string
-          value: string
-        }[]
-      }
-      http_patch: {
-        Args: { content: string; content_type: string; uri: string }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-        SetofOptions: {
-          from: "*"
-          to: "http_response"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      http_post:
-        | {
-            Args: { content: string; content_type: string; uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-        | {
-            Args: { data: Json; uri: string }
-            Returns: Database["public"]["CompositeTypes"]["http_response"]
-            SetofOptions: {
-              from: "*"
-              to: "http_response"
-              isOneToOne: true
-              isSetofReturn: false
-            }
-          }
-      http_put: {
-        Args: { content: string; content_type: string; uri: string }
-        Returns: Database["public"]["CompositeTypes"]["http_response"]
-        SetofOptions: {
-          from: "*"
-          to: "http_response"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      http_reset_curlopt: { Args: never; Returns: boolean }
-      http_set_curlopt: {
-        Args: { curlopt: string; value: string }
-        Returns: boolean
-      }
       is_brand_manager: { Args: { rest_id: string }; Returns: boolean }
       is_manager_of: { Args: { rest_id: string }; Returns: boolean }
       is_platform_admin: { Args: never; Returns: boolean }
@@ -1906,6 +1893,16 @@ export type Database = {
       }
       log_client_error: {
         Args: { p_message: string; p_path: string; p_ua: string }
+        Returns: undefined
+      }
+      log_failure_event: {
+        Args: {
+          p_branch_id?: string
+          p_code?: string
+          p_detail?: Json
+          p_kind: string
+          p_path?: string
+        }
         Returns: undefined
       }
       log_push_sends: { Args: { p_rows: Json }; Returns: number }
@@ -1942,6 +1939,7 @@ export type Database = {
         }
         Returns: string
       }
+      prune_canary_artifacts: { Args: never; Returns: Json }
       prune_queue_events: { Args: never; Returns: number }
       push_subs_for_entry: {
         Args: { p_entry_id: string }
@@ -1994,6 +1992,15 @@ export type Database = {
       redeem_customer_reward: {
         Args: { p_phone: string; p_reward_id: string }
         Returns: boolean
+      }
+      report_flags: { Args: { v: Json }; Returns: Json }
+      report_since_label: {
+        Args: { p_hist: Json; p_key: string }
+        Returns: string
+      }
+      report_window_change: {
+        Args: { p_hist: Json; p_key: string; p_today: Json }
+        Returns: string
       }
       reservation_slots: {
         Args: {
@@ -2059,6 +2066,7 @@ export type Database = {
       }
       run_daily_digest: { Args: never; Returns: number }
       run_daily_heartbeat: { Args: never; Returns: undefined }
+      run_pii_retention: { Args: never; Returns: Json }
       run_retention: { Args: never; Returns: undefined }
       run_weekly_digest: { Args: never; Returns: number }
       save_push_subscription: {
@@ -2077,6 +2085,7 @@ export type Database = {
           customer_id: string
         }[]
       }
+      send_daily_report: { Args: never; Returns: Json }
       send_platform_alerts: { Args: never; Returns: undefined }
       send_platform_status_digest: {
         Args: { p_full?: boolean }
@@ -2084,7 +2093,7 @@ export type Database = {
       }
       service_role_probe: { Args: never; Returns: boolean }
       set_branch_join_frozen: {
-        Args: { p_branch_id: string; p_frozen: boolean; p_reason?: string | null }
+        Args: { p_branch_id: string; p_frozen: boolean; p_reason?: string }
         Returns: boolean
       }
       set_branch_queue_paused: {
@@ -2123,6 +2132,7 @@ export type Database = {
         Args: { p_granted: boolean; p_perm: string; p_staff_id: string }
         Returns: undefined
       }
+      snapshot_payload: { Args: never; Returns: Json }
       staff_add_walkin: {
         Args: {
           p_branch_id: string
@@ -2192,7 +2202,12 @@ export type Database = {
         }
         Returns: Json
       }
+      swap_queue_positions: {
+        Args: { p_a: string; p_b: string }
+        Returns: Json
+      }
       sweep_alert_outbox: { Args: never; Returns: number }
+      take_daily_snapshot: { Args: never; Returns: number }
       telegram_apply_branch_lockdown_cleanup: {
         Args: { p_chat_id: string }
         Returns: string
@@ -2205,7 +2220,6 @@ export type Database = {
         Args: { p_arg?: string; p_chat_id: string; p_cmd: string }
         Returns: string
       }
-      text_to_bytea: { Args: { data: string }; Returns: string }
       tv_queue: {
         Args: { p_branch_id: string }
         Returns: {
@@ -2220,20 +2234,6 @@ export type Database = {
           zone: string
         }[]
       }
-      urlencode:
-        | { Args: { data: Json }; Returns: string }
-        | {
-            Args: { string: string }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.urlencode(string => bytea), public.urlencode(string => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
-        | {
-            Args: { string: string }
-            Returns: {
-              error: true
-            } & "Could not choose the best candidate function between: public.urlencode(string => bytea), public.urlencode(string => varchar). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
-          }
       valid_branch_zone: {
         Args: { p_branch_id: string; p_zone: string }
         Returns: string
@@ -2306,23 +2306,7 @@ export type Database = {
         | "expired"
     }
     CompositeTypes: {
-      http_header: {
-        field: string | null
-        value: string | null
-      }
-      http_request: {
-        method: unknown
-        uri: string | null
-        headers: Database["public"]["CompositeTypes"]["http_header"][] | null
-        content_type: string | null
-        content: string | null
-      }
-      http_response: {
-        status: number | null
-        content_type: string | null
-        headers: Database["public"]["CompositeTypes"]["http_header"][] | null
-        content: string | null
-      }
+      [_ in never]: never
     }
   }
 }
@@ -2335,12 +2319,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2364,11 +2348,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2389,11 +2373,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2414,11 +2398,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2431,11 +2415,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

@@ -63,20 +63,21 @@ export default async function CustomersPage({
     ? [`full_name.ilike.%${q.replace(/[%,()]/g, "")}%`, ...(digits.length >= 3 ? [`phone.like.%${digits}%`] : [])].join(",")
     : null;
 
-  let countQuery = supabase
-    .from("customer_restaurant")
-    .select("customer_id, customers!inner(full_name)", { count: "exact", head: true })
-    .eq("restaurant_id", restaurant.id);
-  if (searchOr) countQuery = countQuery.or(searchOr, { referencedTable: "customers" });
-
   let rowsQuery = supabase
     .from("customer_restaurant")
     .select("*, customers!inner(full_name, phone)")
     .eq("restaurant_id", restaurant.id);
   if (searchOr) rowsQuery = rowsQuery.or(searchOr, { referencedTable: "customers" });
 
-  const [{ count: matchCount }, { data }] = await Promise.all([
-    countQuery,
+  // عدّ صفحات المطابقات عبر RPC (0209) لا HEAD count(exact) مباشر — نفس
+  // علّة 0208: يمرّ بـRLS فيستدعي staff_has_perm لكل صفٍّ ويتجمّد لمطعمٍ
+  // بحجم Eficto.
+  const [{ data: matchCount }, { data }] = await Promise.all([
+    supabase.rpc("customers_search_count", {
+      p_restaurant_id: restaurant.id,
+      p_query: q || undefined,
+      p_digits: digits.length >= 3 ? digits : undefined,
+    }),
     rowsQuery
       .order("is_vip", { ascending: false })
       .order("visits", { ascending: false })
@@ -121,21 +122,18 @@ export default async function CustomersPage({
   const avgVisits = list.length ? Math.round((totalVisits / list.length) * 10) / 10 : 0;
   // عدّادات الحملة الفعلية من القاعدة — الحملة تُرسَل للشريحة كاملة في
   // الخادم، وكان العدّ من شريحة الـ٥٠٠ المعروضة فقط: مالكٌ عنده ٣٠٠٠ عميل
-  // يقرأ «ستصل ٥٠٠» ثم تصل ٣٠٠٠ هدية ممولة. count رأسي رخيص بلا صفوف.
+  // يقرأ «ستصل ٥٠٠» ثم تصل ٣٠٠٠ هدية ممولة. عبر RPC (0208) بمسحةٍ واحدة
+  // لا خمس HEAD count منفصلة — تلك كانت تمرّ بـRLS فتتجمّد لمطعمٍ ضخم.
   const dormantSince = new Date(cutoff30).toISOString();
-  const [allCount, vipCount, returningCount, newCount, dormantCount] = await Promise.all([
-    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id),
-    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).eq("is_blocked", false).eq("is_vip", true),
-    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).eq("is_blocked", false).gte("visits", 2),
-    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).eq("is_blocked", false).lte("visits", 1),
-    supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).eq("is_blocked", false).lt("last_visit", dormantSince),
-  ]);
+  const { data: pageCounts } = await supabase
+    .rpc("customers_page_counts", { p_restaurant_id: restaurant.id, p_dormant_since: dormantSince })
+    .maybeSingle();
   const campaignCounts = {
-    all: allCount.count ?? segCounts.all,
-    vip: vipCount.count ?? segCounts.vip,
-    returning: returningCount.count ?? 0,
-    new: newCount.count ?? 0,
-    dormant: dormantCount.count ?? 0,
+    all: pageCounts?.all_count ?? segCounts.all,
+    vip: pageCounts?.vip_count ?? segCounts.vip,
+    returning: pageCounts?.returning_count ?? 0,
+    new: pageCounts?.new_count ?? 0,
+    dormant: pageCounts?.dormant_count ?? 0,
   };
   // نفس السبب: شريحتا «الكل» و«VIP» المعروضتان أعلى الصفحة وفي شرائح
   // الفلترة كانتا تُشتقّان من طول قائمة الـ٥٠٠ المعروضة، فمطعمٌ يفوق

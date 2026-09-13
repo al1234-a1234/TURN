@@ -38,7 +38,7 @@ export default async function OverviewPage() {
   const startToday = riyadhDayStart();
   const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
 
-  const [rev, profiles, analytics, insightsRes, liveRes, totalCustomersRes, returningCustomersRes, vipCustomersRes] = await Promise.all([
+  const [rev, profiles, analytics, insightsRes, liveRes, kpisRes] = await Promise.all([
     supabase.from("reviews").select("rating").eq("restaurant_id", restaurant.id),
     canCustomers
       ? supabase
@@ -46,7 +46,7 @@ export default async function OverviewPage() {
           // !inner: RLS على customers يقصر النتيجة على من زار فروع المتصل،
           // فلا تختلط أرقام العلامة بأرقام الفرع ولا تظهر أسماء فارغة
           // limit(5): كل ما نستعمله من هذا الاستعلام هو أعلى ٥ زوّار — الإجماليات
-          // تُشتقّ من عدّاتٍ دقيقة تحته لا من طول هذه المصفوفة
+          // تُشتقّ من دالّة RPC تحته لا من طول هذه المصفوفة
           .select("visits, is_vip, customers!inner(full_name)")
           .eq("restaurant_id", restaurant.id)
           .order("visits", { ascending: false })
@@ -60,18 +60,14 @@ export default async function OverviewPage() {
     branchIds.length
       ? supabase.from("waitlist_entries").select("zone").in("branch_id", branchIds).in("status", ["waiting", "notified"])
       : Promise.resolve({ data: [] as { zone: string }[] }),
-    // ثلاثة عدّاداتٍ دقيقة (count رأسي بلا صفوف) لإجماليات العملاء: مطعمٌ
-    // عدد عملائه يفوق سقف الاستعلام الافتراضي (١٠٠٠ صفٍّ) كان يرى «١٠٠٠ عميل»
-    // ثابتة مهما كان العدد الحقيقي — لأن الإجمالي كان طول مصفوفةٍ محدودة ضمنيًّا لا عدّادًا حقيقيًّا
+    // إجماليات العملاء عبر RPC (0208) لا HEAD count(exact) مباشر: ذاك كان يمرّ
+    // بسياسة RLS التي تستدعي staff_has_perm لكل صفّ — لمطعمٍ بحجم Eficto
+    // (١٢ ألف+) قِست ٥.٣ ثانية للعدّ الواحد، تتجاوز مهلة الاستضافة وترجع 500،
+    // فتقرأ اللوحة «صفر عملاء» رغم صحّة البيانات. الدالّة تتجاوز RLS وتفحص
+    // الصلاحية مرّةً واحدة بوسيطٍ ثابت — أقلّ من ١٠ملّي‌ثانية لأي عدد عملاء.
     canCustomers
-      ? supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id)
-      : Promise.resolve({ count: 0 }),
-    canCustomers
-      ? supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).gte("visits", 2)
-      : Promise.resolve({ count: 0 }),
-    canCustomers
-      ? supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).eq("is_vip", true)
-      : Promise.resolve({ count: 0 }),
+      ? supabase.rpc("dashboard_customer_kpis", { p_restaurant_id: restaurant.id }).maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
 
   const insights = (insightsRes.data ?? []) as { id: string; kind: string; title: string; body: string | null; data: { customer_id?: string } | null; created_at: string }[];
@@ -81,10 +77,10 @@ export default async function OverviewPage() {
 
   // ===== العملاء =====
   const profRows = (profiles.data ?? []) as { visits: number; is_vip: boolean; customers: { full_name: string } | { full_name: string }[] | null }[];
-  const totalCustomers = totalCustomersRes.count ?? 0;
-  const returning = returningCustomersRes.count ?? 0;
+  const totalCustomers = kpisRes.data?.total ?? 0;
+  const returning = kpisRes.data?.returning_customers ?? 0;
   const returningPct = totalCustomers ? Math.round((returning / totalCustomers) * 100) : 0;
-  const vips = vipCustomersRes.count ?? 0;
+  const vips = kpisRes.data?.vip ?? 0;
   const topCustomers = profRows;
 
   // ===== الطابور والتحليلات (30 يوم) =====
