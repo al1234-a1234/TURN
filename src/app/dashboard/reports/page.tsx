@@ -101,19 +101,19 @@ export default async function ReportsPage({
     ? await supabase.from("branch_zones").select("key, name").in("branch_id", branchIds).order("sort_order")
     : { data: [] as { key: string; name: string }[] };
 
-  const [rev, totalCustomersRes, returningCustomersRes, analytics] = await Promise.all([
-    supabase.from("reviews").select("rating").eq("restaurant_id", restaurant.id),
+  const [rev, kpisRes, analytics] = await Promise.all([
+    // عبر RPC (0211) لا select("rating") بلا حدّ: سياسة reviews تستدعي
+    // is_staff_of(restaurant_id) بعمود الصفّ لا بثابت، فتتكرّر لكل صفّ
+    supabase.rpc("reviews_summary", { p_restaurant_id: restaurant.id }).maybeSingle(),
     // التقارير محروسة بصلاحية «التحليلات»، وأرقام العملاء محروسة بصلاحية
     // «العملاء» — وهما لا تتلازمان. من يملك الأولى دون الثانية كان سيرى صفرًا
     // يقرؤه «لا عملاء لنا»، فنسأل قبل الجلب ونكتب السبب مكان الرقم.
-    // count رأسي بلا صفوف — لا صفوف profiles ثم .length: تلك كانت تُحدَّ ضمنيًّا
-    // بسقف الاستعلام الافتراضي (١٠٠٠ صفٍّ) فتكذب على مطعمٍ يفوقه.
+    // عبر RPC (0208) لا HEAD count(exact) مباشر: ذاك كان يمرّ بسياسة RLS
+    // التي تستدعي staff_has_perm لكل صفّ — ٥.٣ ثانية لمطعمٍ بحجم Eficto،
+    // تتجاوز مهلة الاستضافة وترجع 500.
     canCustomers
-      ? supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id)
-      : Promise.resolve({ count: 0 }),
-    canCustomers
-      ? supabase.from("customer_restaurant").select("customer_id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).gte("visits", 2)
-      : Promise.resolve({ count: 0 }),
+      ? supabase.rpc("dashboard_customer_kpis", { p_restaurant_id: restaurant.id }).maybeSingle()
+      : Promise.resolve({ data: null }),
     branchIds.length
       ? supabase
           .from("waitlist_entries")
@@ -127,14 +127,11 @@ export default async function ReportsPage({
   ]);
 
   // ===== التقييم =====
-  const ratings = (rev.data ?? []).map((r) => r.rating);
-  const avgRating = ratings.length
-    ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10
-    : 0;
+  const avgRating = rev.data?.avg_rating ?? 0;
 
   // ===== العملاء =====
-  const totalCustomers = totalCustomersRes.count ?? 0;
-  const returning = returningCustomersRes.count ?? 0;
+  const totalCustomers = kpisRes.data?.total ?? 0;
+  const returning = kpisRes.data?.returning_customers ?? 0;
   const returningPct = totalCustomers ? Math.round((returning / totalCustomers) * 100) : 0;
 
   // ===== الطابور والتحليلات (ضمن الفترة) =====
@@ -373,7 +370,7 @@ export default async function ReportsPage({
                : tr(lang, "لا تجليس مسجَّل في هذه الفترة", "No seatings in this period")} />
         <Kpi label={tr(lang, "متوسط المجموعة", "Average Party")} value={toAr(avgParty)} tone="var(--brand-d)" tint="rgba(120,30,12,0.05)" />
         <Kpi label={tr(lang, "أكثر الساعات ازدحامًا", "Busiest Hour")} value={busiestLabel} tone="var(--st-full)" tint="rgba(169,114,30,0.10)" />
-        <Kpi label={tr(lang, "متوسط التقييم", "Average Rating")} value={ratings.length ? `★ ${toAr(avgRating)}` : "—"} tone="var(--star)" tint="rgba(120,30,12,0.06)" />
+        <Kpi label={tr(lang, "متوسط التقييم", "Average Rating")} value={rev.data?.total ? `★ ${toAr(avgRating)}` : "—"} tone="var(--star)" tint="rgba(120,30,12,0.06)" />
         <Kpi label={tr(lang, "إجمالي العملاء", "Total Customers")}
              value={canCustomers ? toAr(totalCustomers) : tr(lang, "لا صلاحية", "No access")}
              tone="var(--brand-d)" tint="rgba(120,30,12,0.10)" />

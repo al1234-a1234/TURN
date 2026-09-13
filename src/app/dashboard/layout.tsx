@@ -53,19 +53,23 @@ export default async function DashboardLayout({ children }: { children: React.Re
     branchIds.length
       ? supabase.from("waitlist_entries").select("id", { count: "exact", head: true }).in("branch_id", branchIds).in("status", ["waiting", "notified"])
       : Promise.resolve({ count: 0 }),
-    supabase.from("customer_restaurant").select("customer_id, customers!inner(id)", { count: "exact", head: true }).eq("restaurant_id", restaurant.id),
+    // عبر RPC (0208) لا HEAD count(exact) مباشر — كانت تمرّ بـRLS فتستدعي
+    // staff_has_perm لكل صفٍّ، فتتجمّد لمطعمٍ بحجم Eficto وتُحسب بكل صفحة
+    // (هذه القائمة الجانبية تظهر في كل صفحات اللوحة).
+    supabase.rpc("dashboard_customer_kpis", { p_restaurant_id: restaurant.id }).maybeSingle(),
     branchIds.length
       ? supabase.from("reservations").select("id", { count: "exact", head: true }).in("branch_id", branchIds).in("status", ["pending", "confirmed"])
       : Promise.resolve({ count: 0 }),
-    supabase.from("reviews").select("id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id),
+    // عبر RPC (0211) لنفس السبب — سياسة reviews تستدعي is_staff_of بعمود الصفّ
+    supabase.rpc("reviews_summary", { p_restaurant_id: restaurant.id }).maybeSingle(),
     supabase.from("staff").select("id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).eq("is_active", true),
   ]);
 
   const counts = {
     reception: queueRes.count ?? 0,
-    customers: custRes.count ?? 0,
+    customers: custRes.data?.total ?? 0,
     reservations: resvRes.count ?? 0,
-    reviews: revRes.count ?? 0,
+    reviews: revRes.data?.total ?? 0,
     staff: staffRes.count ?? 0,
   };
 

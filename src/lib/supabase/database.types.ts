@@ -2018,6 +2018,13 @@ export type Database = {
       restore_queue_entry: { Args: { p_entry_id: string }; Returns: string }
       retire_dormant_customers: { Args: { p_months?: number }; Returns: number }
       retire_phone_lookup_log: { Args: never; Returns: number }
+      reviews_summary: {
+        Args: { p_restaurant_id: string }
+        Returns: {
+          avg_rating: number
+          total: number
+        }[]
+      }
       rewards_by_phone:
         | {
             Args: { p_phone: string }

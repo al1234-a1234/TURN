@@ -39,7 +39,9 @@ export default async function OverviewPage() {
   const since30 = new Date(Date.now() - 30 * 864e5).toISOString();
 
   const [rev, profiles, analytics, insightsRes, liveRes, kpisRes] = await Promise.all([
-    supabase.from("reviews").select("rating").eq("restaurant_id", restaurant.id),
+    // عبر RPC (0211) لا select("rating") بلا حدّ: نفس علّة العملاء بجدولٍ آخر —
+    // سياسة reviews تستدعي is_staff_of(restaurant_id) بعمود الصفّ لا بثابت
+    supabase.rpc("reviews_summary", { p_restaurant_id: restaurant.id }).maybeSingle(),
     canCustomers
       ? supabase
           .from("customer_restaurant")
@@ -72,8 +74,8 @@ export default async function OverviewPage() {
 
   const insights = (insightsRes.data ?? []) as { id: string; kind: string; title: string; body: string | null; data: { customer_id?: string } | null; created_at: string }[];
   // ===== التقييم =====
-  const ratings = (rev.data ?? []).map((r) => r.rating);
-  const avgRating = ratings.length ? Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10 : 0;
+  const ratingsCount = rev.data?.total ?? 0;
+  const avgRating = rev.data?.avg_rating ?? 0;
 
   // ===== العملاء =====
   const profRows = (profiles.data ?? []) as { visits: number; is_vip: boolean; customers: { full_name: string } | { full_name: string }[] | null }[];
@@ -140,7 +142,7 @@ export default async function OverviewPage() {
   // تنبيهات ذكية
   const alerts: { icon: string; text: string; tone: string }[] = [];
   if (queueCount >= 8) alerts.push({ icon: "🔥", text: tr(lang, `الطابور مزدحم الآن (${toAr(queueCount)} بالانتظار)`, `The queue is busy now (${toAr(queueCount)} waiting)`), tone: "var(--st-full)" });
-  if (ratings.length >= 3 && avgRating < 4) alerts.push({ icon: "⚠️", text: tr(lang, `متوسط التقييم منخفض (${toAr(avgRating)}) — راجع التقييمات`, `Average rating is low (${toAr(avgRating)}) — review your ratings`), tone: "var(--st-closed)" });
+  if (ratingsCount >= 3 && avgRating < 4) alerts.push({ icon: "⚠️", text: tr(lang, `متوسط التقييم منخفض (${toAr(avgRating)}) — راجع التقييمات`, `Average rating is low (${toAr(avgRating)}) — review your ratings`), tone: "var(--st-closed)" });
   if (noShowRate >= 20) alerts.push({ icon: "📉", text: tr(lang, `نسبة التغيّب مرتفعة (٪${toAr(noShowRate)})`, `No-show rate is high (${toAr(noShowRate)}%)`), tone: "var(--st-closed)" });
 
   return (
@@ -192,7 +194,7 @@ export default async function OverviewPage() {
 
       {/* المؤشرات (8) */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi label={tr(lang, "متوسط التقييم", "Average Rating")} value={ratings.length ? `★ ${toAr(avgRating)}` : "—"} tone="var(--star)" tint="rgba(120,30,12,0.06)" />
+        <Kpi label={tr(lang, "متوسط التقييم", "Average Rating")} value={ratingsCount ? `★ ${toAr(avgRating)}` : "—"} tone="var(--star)" tint="rgba(120,30,12,0.06)" />
         {/* الاسم يقول ما يُقاس: الفارق بين الانضمام وضغط الاستقبال زرَّ «جلس».
             و«متوسط الانتظار» كان يُقرأ «كم ينتظر ضيفي» وهو ليس ذلك.
             والوسيط بجانبه يكشف الالتواء: متوسّطٌ ضعفَ الوسيط يعني ذيلًا طويلًا
