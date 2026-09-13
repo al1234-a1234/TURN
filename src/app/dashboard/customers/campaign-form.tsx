@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { grantRewardToSegment, grantRewardToCustomSegment } from "./actions";
+import { grantRewardToSegment, grantRewardToCustomSegment, revokeCampaign } from "./actions";
 import type { CustomSegment } from "./segments-manager";
 import { toAr } from "@/lib/format";
 import { tr } from "@/lib/i18n";
@@ -19,6 +19,11 @@ export function CampaignForm({
   const lang = useLang();
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<"gift" | "discount">("gift");
+  // نتيجة آخر إرسال — تظهر شريط «تم الإرسال… تراجع» فورًا فوق النموذج،
+  // كي لا يضطرّ المالك يبحث عنها لاحقًا لو اكتشف غلطًا بعد لحظات.
+  const [sent, setSent] = useState<{ count: number; campaignId: string | null } | null>(null);
+  const [revoking, setRevoking] = useState(false);
+  const [revoked, setRevoked] = useState<number | null>(null);
   // مفتاح شريحة جاهزة أو معرّف شريحة مخصّصة — قيمة واحدة تمنع اختيارين متضاربين
   const [segment, setSegment] = useState<string>("vip");
   const custom = customSegments.find((s) => s.id === segment);
@@ -32,24 +37,64 @@ export function CampaignForm({
     { key: "dormant", ar: "غائبون", en: "Dormant" },
   ];
 
+  // شريط ما بعد الإرسال: يبقى ظاهرًا حتى لو أُغلق النموذج، لأن المالك قد
+  // يكتشف الغلط بعد إغلاقه لا أثناءه.
+  const sentBanner = sent && (
+    <div className="soft-card flex items-center justify-between gap-3 p-4">
+      <div>
+        <p className="font-bold text-[color:var(--ink)]">
+          {revoked !== null
+            ? tr(lang, `تراجعتَ عن ${toAr(revoked)} من أصل ${toAr(sent.count)}`, `Revoked ${toAr(revoked)} of ${toAr(sent.count)}`)
+            : tr(lang, `تم الإرسال إلى ${toAr(sent.count)} عميل`, `Sent to ${toAr(sent.count)} customers`)}
+        </p>
+        {revoked === null && (
+          <p className="mt-0.5 text-xs text-[color:var(--muted)]">
+            {tr(lang, "أرسلتها بالغلط؟ يمكنك التراجع عمّا لم يُستخدم منها بعد.", "Sent by mistake? You can undo whatever hasn't been used yet.")}
+          </p>
+        )}
+      </div>
+      {revoked === null && sent.campaignId && (
+        <button
+          type="button"
+          disabled={revoking}
+          onClick={async () => {
+            if (!sent.campaignId) return;
+            if (!confirm(tr(lang, "تراجع عن كل ما لم يُستخدم من هذه الحملة؟", "Undo everything unused from this campaign?"))) return;
+            setRevoking(true);
+            const n = await revokeCampaign(sent.campaignId);
+            setRevoked(n);
+            setRevoking(false);
+          }}
+          className="btn btn-secondary shrink-0 px-4 text-sm"
+        >
+          {revoking ? tr(lang, "جارٍ…", "Undoing…") : tr(lang, "تراجع", "Undo")}
+        </button>
+      )}
+    </div>
+  );
+
   if (!open) {
     return (
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="w-full rounded-2xl py-3 text-sm font-bold text-cream-100 transition active:scale-[0.99]"
-        style={{ background: "var(--brand-solid)" }}
-      >
-        {tr(lang, "📣 حملة مكافآت — أرسل هديّة/خصم لشريحة", "📣 Reward campaign — send a gift/discount to a segment")}
-      </button>
+      <div className="space-y-3">
+        {sentBanner}
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="w-full rounded-2xl py-3 text-sm font-bold text-cream-100 transition active:scale-[0.99]"
+          style={{ background: "var(--brand-solid)" }}
+        >
+          {tr(lang, "📣 حملة مكافآت — أرسل هديّة/خصم لشريحة", "📣 Reward campaign — send a gift/discount to a segment")}
+        </button>
+      </div>
     );
   }
 
   return (
     <form
       action={async (fd) => {
-        if (custom) await grantRewardToCustomSegment(fd);
-        else await grantRewardToSegment(fd);
+        const result = custom ? await grantRewardToCustomSegment(fd) : await grantRewardToSegment(fd);
+        setSent(result);
+        setRevoked(null);
         setOpen(false);
       }}
       className="soft-card space-y-3 p-4"

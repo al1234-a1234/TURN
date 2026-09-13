@@ -6,6 +6,7 @@ import { CustomerControls } from "./customer-controls";
 import { CampaignForm } from "./campaign-form";
 import { SegmentsManager, type CustomSegment } from "./segments-manager";
 import { WinbackForm } from "./winback-form";
+import { RecentCampaigns } from "./recent-campaigns";
 import { toAr, normalizePhone } from "@/lib/format";
 import { daysAgoLabel } from "@/lib/dates";
 import { tr, type Lang } from "@/lib/i18n";
@@ -85,12 +86,6 @@ export default async function CustomersPage({
   const totalMatches = matchCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalMatches / PAGE_SIZE));
 
-  // من لديهم هدايا فعّالة (لشريحة «لهم هدايا»)
-  const { data: activeRewards } = await supabase
-    .from("customer_rewards").select("customer_id")
-    .eq("restaurant_id", restaurant.id).eq("status", "active");
-  const giftedIds = new Set((activeRewards ?? []).map((r) => r.customer_id));
-
   const { data: winback } = await supabase
     .from("winback_settings")
     .select("is_active, title, value, value_kind, days_inactive")
@@ -101,7 +96,7 @@ export default async function CustomersPage({
   const matches = (p: Profile, s: Segment): boolean => {
     switch (s) {
       case "vip": return p.is_vip;
-      case "gifts": return giftedIds.has(p.customer_id);
+      case "gifts": return p.has_active_gift;
       case "noshow": return p.no_shows >= 2;
       case "inactive": return !!p.last_visit && new Date(p.last_visit).getTime() < cutoff30;
       case "blocked": return p.is_blocked;
@@ -109,32 +104,40 @@ export default async function CustomersPage({
     }
   };
 
-  // عدّادات الشرائح تُحسب على نتائج البحث الحالي (فتبقى متسقة مع ما يراه المستخدم)
-  const segCounts = Object.fromEntries(SEGMENTS.map((s) => [s, list.filter((p) => matches(p, s)).length])) as Record<Segment, number>;
   if (seg !== "all") list = list.filter((p) => matches(p, seg));
 
   const totalVisits = list.reduce((a, p) => a + p.visits, 0);
   const avgVisits = list.length ? Math.round((totalVisits / list.length) * 10) / 10 : 0;
-  // عدّادات الحملة الفعلية من القاعدة — الحملة تُرسَل للشريحة كاملة في
-  // الخادم، وكان العدّ من شريحة الـ٥٠٠ المعروضة فقط: مالكٌ عنده ٣٠٠٠ عميل
-  // يقرأ «ستصل ٥٠٠» ثم تصل ٣٠٠٠ هدية ممولة. عبر RPC (0208) بمسحةٍ واحدة
-  // لا خمس HEAD count منفصلة — تلك كانت تمرّ بـRLS فتتجمّد لمطعمٍ ضخم.
+  // عدّادات كل الشرائح من القاعدة مباشرةً — لا من طول قائمة الـ٥٠٠ المعروضة:
+  // مالكٌ عنده ٣٠٠٠ عميل كان يرى عددًا ثابتًا لكل شريحةٍ غير «الكل»/VIP مهما
+  // كبر عدده الحقيقي (لهم هدايا، متغيّبون، منقطعون، محظورون) — أرقامٌ خاطئة
+  // فعليًّا اليوم لأي مطعمٍ يفوق عملاؤه صفحة واحدة، لا مجرّد خطرٍ مستقبليّ.
   const dormantSince = new Date(cutoff30).toISOString();
   const { data: pageCounts } = await supabase
     .rpc("customers_page_counts", { p_restaurant_id: restaurant.id, p_dormant_since: dormantSince })
     .maybeSingle();
   const campaignCounts = {
-    all: pageCounts?.all_count ?? segCounts.all,
-    vip: pageCounts?.vip_count ?? segCounts.vip,
+    all: pageCounts?.all_count ?? 0,
+    vip: pageCounts?.vip_count ?? 0,
     returning: pageCounts?.returning_count ?? 0,
     new: pageCounts?.new_count ?? 0,
     dormant: pageCounts?.dormant_count ?? 0,
   };
-  // نفس السبب: شريحتا «الكل» و«VIP» المعروضتان أعلى الصفحة وفي شرائح
-  // الفلترة كانتا تُشتقّان من طول قائمة الـ٥٠٠ المعروضة، فمطعمٌ يفوق
-  // عملاؤه ٥٠٠ كان يرى عددًا ثابتًا لا يتحرّك مهما كبر عدده الحقيقي.
-  segCounts.all = campaignCounts.all;
-  segCounts.vip = campaignCounts.vip;
+  const segCounts: Record<Segment, number> = {
+    all: campaignCounts.all,
+    vip: campaignCounts.vip,
+    gifts: pageCounts?.gifts_count ?? 0,
+    noshow: pageCounts?.noshow_count ?? 0,
+    inactive: pageCounts?.dormant_count ?? 0,
+    blocked: pageCounts?.blocked_count ?? 0,
+  };
+
+  // سجلّ آخر الحملات (يدويّة أو الاسترجاع التلقائي الليلي) — للمراجعة والتراجع
+  const { data: campaignRows, error: campaignsError } = await supabase.rpc("reward_campaigns_recent", {
+    p_restaurant_id: restaurant.id,
+    p_limit: 15,
+  });
+  if (campaignsError) console.error("[CustomersPage] reward_campaigns_recent", campaignsError.message);
 
   // شرائح المالك المخصّصة بعدّاداتها — العضوية تُحسب في القاعدة لحظةَ الاستعلام
   const { data: segRows, error: segError } = await supabase.rpc("customer_segments_with_counts", {
@@ -215,6 +218,8 @@ export default async function CustomersPage({
 
         <CampaignForm counts={campaignCounts} customSegments={customSegments} />
 
+        <RecentCampaigns campaigns={campaignRows ?? []} />
+
         <WinbackForm initial={winback} />
 
         {list.length === 0 ? (
@@ -255,7 +260,7 @@ export default async function CustomersPage({
                         <p className="truncate font-bold text-brand-700 underline decoration-brand-700/40 decoration-2 underline-offset-4">{name}</p>
                         <span aria-hidden className="shrink-0 text-[11px] text-brand-700 opacity-70">↗</span>
                         {p.is_vip && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold" style={{ background: "rgba(120,30,12,0.10)", color: "var(--brand-solid)" }}>VIP</span>}
-                        {giftedIds.has(p.customer_id) && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold" style={{ background: "var(--brand-solid)", color: "var(--brand-ink)" }}>🎁 {tr(lang, "هدية فعّالة", "Active gift")}</span>}
+                        {p.has_active_gift && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold" style={{ background: "var(--brand-solid)", color: "var(--brand-ink)" }}>🎁 {tr(lang, "هدية فعّالة", "Active gift")}</span>}
                         {p.is_blocked && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold text-cream-100" style={{ background: "var(--st-closed)" }}>{tr(lang, "محظور", "Blocked")}</span>}
                       </div>
                       <p className="text-sm text-[color:var(--muted)]" dir="ltr">{p.phone ?? "—"}</p>

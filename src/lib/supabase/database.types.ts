@@ -395,6 +395,7 @@ export type Database = {
       customer_rewards: {
         Row: {
           armed_at: string | null
+          campaign_id: string | null
           code: string | null
           created_at: string
           created_by: string | null
@@ -412,6 +413,7 @@ export type Database = {
         }
         Insert: {
           armed_at?: string | null
+          campaign_id?: string | null
           code?: string | null
           created_at?: string
           created_by?: string | null
@@ -429,6 +431,7 @@ export type Database = {
         }
         Update: {
           armed_at?: string | null
+          campaign_id?: string | null
           code?: string | null
           created_at?: string
           created_by?: string | null
@@ -1766,8 +1769,11 @@ export type Database = {
         Args: { p_dormant_since: string; p_restaurant_id: string }
         Returns: {
           all_count: number
+          blocked_count: number
           dormant_count: number
+          gifts_count: number
           new_count: number
+          noshow_count: number
           returning_count: number
           vip_count: number
         }[]
@@ -1784,6 +1790,7 @@ export type Database = {
           customer_id: string
           first_seen: string
           full_name: string
+          has_active_gift: boolean
           is_blocked: boolean
           is_vip: boolean
           last_visit: string
@@ -1851,7 +1858,10 @@ export type Database = {
           p_value: number
           p_value_kind: string
         }
-        Returns: number
+        Returns: {
+          campaign_id: string
+          granted_count: number
+        }[]
       }
       grant_reward_to_segment: {
         Args: {
@@ -1865,7 +1875,10 @@ export type Database = {
           p_value: number
           p_value_kind: string
         }
-        Returns: number
+        Returns: {
+          campaign_id: string
+          granted_count: number
+        }[]
       }
       guest_status_by_phone:
         | {
@@ -2046,6 +2059,26 @@ export type Database = {
         Returns: {
           avg_rating: number
           total: number
+        }[]
+      }
+      revoke_campaign_rewards: {
+        Args: { p_campaign_id: string }
+        Returns: number
+      }
+      reward_campaigns_recent: {
+        Args: { p_limit?: number; p_restaurant_id: string }
+        Returns: {
+          active_count: number
+          campaign_id: string
+          created_at: string
+          expired_count: number
+          is_auto: boolean
+          kind: string
+          redeemed_count: number
+          title: string
+          total_count: number
+          value: number
+          value_kind: string
         }[]
       }
       rewards_by_phone:

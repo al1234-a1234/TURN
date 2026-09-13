@@ -85,13 +85,16 @@ export async function grantReward(formData: FormData): Promise<boolean> {
   return true;
 }
 
+/** نتيجة إرسال حملة: العدد الذي وصله، ومعرّف الدفعة للتراجع الفوري إن لزم. */
+export type CampaignResult = { count: number; campaignId: string | null };
+
 /** منح مكافأة لشريحة كاملة: الكل / VIP / عائدون / جدد / غائبون. */
-export async function grantRewardToSegment(formData: FormData) {
+export async function grantRewardToSegment(formData: FormData): Promise<CampaignResult> {
   const caller = await requirePerm("customers");
-  if (!caller) return;
+  if (!caller) return { count: 0, campaignId: null };
 
   const title = String(formData.get("title") ?? "").trim();
-  if (!title) return;
+  if (!title) return { count: 0, campaignId: null };
   const segment = String(formData.get("segment") ?? "all");
   const kind = String(formData.get("kind") ?? "gift") === "discount" ? "discount" : "gift";
   const valueRaw = String(formData.get("value") ?? "").trim();
@@ -103,8 +106,10 @@ export async function grantRewardToSegment(formData: FormData) {
   const days = daysRaw ? Math.max(1, Number(daysRaw)) : null;
   const expires_at = days ? new Date(Date.now() + days * 864e5).toISOString() : null;
 
-  // إدراج set-based لكل الشريحة بجملة واحدة (يتوسّع لأي عدد عملاء)
-  const { error } = await caller.supabase.rpc("grant_reward_to_segment", {
+  // إدراج set-based لكل الشريحة بجملة واحدة (يتوسّع لأي عدد عملاء) — تُرجع
+  // الآن معرّف الدفعة مع العدد (0216) كي يقدر المالك يتراجع عنها فورًا لو
+  // أرسلها بالغلط، بدل ما تختلط بهدايا فرديّة لا رابط يجمعها.
+  const { data, error } = await caller.supabase.rpc("grant_reward_to_segment", {
     p_restaurant_id: caller.restaurantId,
     p_segment: segment,
     p_kind: kind,
@@ -121,10 +126,12 @@ export async function grantRewardToSegment(formData: FormData) {
   // أن الحملة انطلقت فلا يعيدها، والشريحة كلها بلا هدية.
   if (error) {
     console.error("[grantRewardToSegment]", error.message);
-    return;
+    return { count: 0, campaignId: null };
   }
 
   revalidatePath("/dashboard/customers");
+  const row = data?.[0];
+  return { count: row?.granted_count ?? 0, campaignId: row?.campaign_id ?? null };
 }
 
 /**
@@ -188,14 +195,14 @@ export async function deleteSegment(formData: FormData) {
   revalidatePath("/dashboard/customers");
 }
 
-/** منح مكافأة لشريحة مخصّصة — يعيد عدد من وصلتهم فعلًا. */
-export async function grantRewardToCustomSegment(formData: FormData): Promise<number> {
+/** منح مكافأة لشريحة مخصّصة — يعيد العدد ومعرّف الدفعة (للتراجع الفوري). */
+export async function grantRewardToCustomSegment(formData: FormData): Promise<CampaignResult> {
   const caller = await requirePerm("customers");
-  if (!caller) return 0;
+  if (!caller) return { count: 0, campaignId: null };
 
   const segmentId = String(formData.get("segment_id") ?? "");
   const title = String(formData.get("title") ?? "").trim();
-  if (!segmentId || !title) return 0;
+  if (!segmentId || !title) return { count: 0, campaignId: null };
 
   const kind = String(formData.get("kind") ?? "gift") === "discount" ? "discount" : "gift";
   const valueRaw = String(formData.get("value") ?? "").trim();
@@ -223,6 +230,27 @@ export async function grantRewardToCustomSegment(formData: FormData): Promise<nu
   // كما في grantRewardToSegment: نجاحٌ وهمي يجعل المالك لا يعيد الحملة أبدًا
   if (error) {
     console.error("[grantRewardToCustomSegment]", error.message);
+    return { count: 0, campaignId: null };
+  }
+
+  revalidatePath("/dashboard/customers");
+  const row = data?.[0];
+  return { count: row?.granted_count ?? 0, campaignId: row?.campaign_id ?? null };
+}
+
+/**
+ * التراجع عن حملةٍ كاملة (يدويّة أو تلقائية): يُنهي كل ما لم يُصرف بعد،
+ * ولا يمسّ ما استخدمه العميل بالفعل — فمن استعمل هديّته لا نخذله.
+ */
+export async function revokeCampaign(campaignId: string): Promise<number> {
+  const caller = await requirePerm("customers");
+  if (!caller || !campaignId) return 0;
+
+  const { data, error } = await caller.supabase.rpc("revoke_campaign_rewards", {
+    p_campaign_id: campaignId,
+  });
+  if (error) {
+    console.error("[revokeCampaign]", error.message);
     return 0;
   }
 
