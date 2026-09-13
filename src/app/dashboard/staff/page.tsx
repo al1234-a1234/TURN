@@ -67,14 +67,12 @@ export default async function StaffPage() {
   // إدارة الفريق للمالك/المدير فقط
   if (!staffHasPermission(role, permissions, "team")) redirect("/dashboard");
 
+  // عبر RPC (0219) لا استعلام مباشر — staff_has_perm(restaurant_id,'team')
+  // كان يُفحص لكل موظّفٍ بدل مرّة واحدة، بلا أثرٍ على فريقٍ صغير لكنه نفس
+  // فخّ RLS اللي أبطأ قائمة العملاء لمطعمٍ كبير.
   const [{ data: branchRows }, { data }] = await Promise.all([
     supabase.from("branches").select("id, name").eq("restaurant_id", restaurant.id).eq("is_active", true).order("created_at"),
-    supabase
-      .from("staff")
-      .select("id, name, role, permissions, is_active, branch_id")
-      .eq("restaurant_id", restaurant.id)
-      .eq("is_active", true)
-      .order("role"),
+    supabase.rpc("staff_team_rows", { p_restaurant_id: restaurant.id }),
   ]);
 
   const team = (data ?? []) as StaffRow[];

@@ -2196,6 +2196,7 @@ export type Database = {
         Returns: undefined
       }
       snapshot_payload: { Args: never; Returns: Json }
+      staff_active_count: { Args: { p_restaurant_id: string }; Returns: number }
       staff_add_walkin: {
         Args: {
           p_branch_id: string
@@ -2256,6 +2257,17 @@ export type Database = {
         }[]
       }
       staff_redeem_reward: { Args: { p_reward_id: string }; Returns: boolean }
+      staff_team_rows: {
+        Args: { p_restaurant_id: string }
+        Returns: {
+          branch_id: string
+          id: string
+          is_active: boolean
+          name: string
+          permissions: Json
+          role: Database["public"]["Enums"]["user_role"]
+        }[]
+      }
       submit_review: {
         Args: {
           p_comment?: string

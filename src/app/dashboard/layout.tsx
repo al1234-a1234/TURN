@@ -62,7 +62,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
       : Promise.resolve({ count: 0 }),
     // عبر RPC (0211) لنفس السبب — سياسة reviews تستدعي is_staff_of بعمود الصفّ
     supabase.rpc("reviews_summary", { p_restaurant_id: restaurant.id }).maybeSingle(),
-    supabase.from("staff").select("id", { count: "exact", head: true }).eq("restaurant_id", restaurant.id).eq("is_active", true),
+    // عبر RPC (0219) لنفس السبب — staff_has_perm(restaurant_id,'team') يُفحص
+    // لكل موظّفٍ بدل مرّة واحدة، وهذا العدّاد يُحسب بكل صفحة من اللوحة
+    supabase.rpc("staff_active_count", { p_restaurant_id: restaurant.id }),
   ]);
 
   const counts = {
@@ -70,7 +72,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     customers: custRes.data?.total ?? 0,
     reservations: resvRes.count ?? 0,
     reviews: revRes.data?.total ?? 0,
-    staff: staffRes.count ?? 0,
+    staff: staffRes.data ?? 0,
   };
 
   return (
