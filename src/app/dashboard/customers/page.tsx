@@ -13,9 +13,7 @@ import { getLang } from "@/lib/i18n-server";
 import { ScreenGuide } from "@/components/screen-guide";
 import type { Database } from "@/lib/supabase/database.types";
 
-type Profile = Database["public"]["Tables"]["customer_restaurant"]["Row"] & {
-  customers: { full_name: string; phone: string } | { full_name: string; phone: string }[] | null;
-};
+type Profile = Database["public"]["Functions"]["customers_page_rows"]["Returns"][number];
 
 
 // الشرائح المتاحة للفلترة — تجيب على أسئلة المالك الفعلية:
@@ -63,29 +61,26 @@ export default async function CustomersPage({
     ? [`full_name.ilike.%${q.replace(/[%,()]/g, "")}%`, ...(digits.length >= 3 ? [`phone.like.%${digits}%`] : [])].join(",")
     : null;
 
-  let rowsQuery = supabase
-    .from("customer_restaurant")
-    .select("*, customers!inner(full_name, phone)")
-    .eq("restaurant_id", restaurant.id);
-  if (searchOr) rowsQuery = rowsQuery.or(searchOr, { referencedTable: "customers" });
-
-  // عدّ صفحات المطابقات عبر RPC (0209) لا HEAD count(exact) مباشر — نفس
-  // علّة 0208: يمرّ بـRLS فيستدعي staff_has_perm لكل صفٍّ ويتجمّد لمطعمٍ
-  // بحجم Eficto.
-  const [{ data: matchCount }, { data }] = await Promise.all([
+  // عدّ الصفحات وجلب صفوفها عبر RPC (0209, 0213) لا استعلامٍ مباشر على
+  // customer_restaurant: ذاك كان يمرّ بـRLS مضاعَفًا (الجدول نفسه + جدول
+  // customers المرتبط)، وقِسته فعليًّا بهويّة staff حقيقية — ١٥.٢ ثانية
+  // لصفحةٍ واحدة من ٥٠٠ صفّ لمطعمٍ بحجم Eficto. هذا يتجاوز أي مهلة معقولة
+  // فتفشل الصفحة أحيانًا (توقيتٌ حظّي) وتُقرأ الفشلة الصامتة «صفر عملاء».
+  const [{ data: matchCount }, { data, error: rowsError }] = await Promise.all([
     supabase.rpc("customers_search_count", {
       p_restaurant_id: restaurant.id,
       p_query: q || undefined,
       p_digits: digits.length >= 3 ? digits : undefined,
     }),
-    rowsQuery
-      .order("is_vip", { ascending: false })
-      .order("visits", { ascending: false })
-      // فارزٌ حاسم: تعادل الزيارات كثيرٌ (آلاف على نفس الرقم)، وبلا معيارٍ
-      // ثابتٍ أخير يتكرّر عميلٌ ويغيب آخر بين صفحتين
-      .order("customer_id", { ascending: true })
-      .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1),
+    supabase.rpc("customers_page_rows", {
+      p_restaurant_id: restaurant.id,
+      p_query: q || undefined,
+      p_digits: digits.length >= 3 ? digits : undefined,
+      p_limit: PAGE_SIZE,
+      p_offset: (page - 1) * PAGE_SIZE,
+    }),
   ]);
+  if (rowsError) console.error("[CustomersPage] customers_page_rows", rowsError.message);
   let list = (data ?? []) as Profile[];
   const totalMatches = matchCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalMatches / PAGE_SIZE));
@@ -215,12 +210,19 @@ export default async function CustomersPage({
 
         {list.length === 0 ? (
           <div className="soft-card py-10 text-center">
-            <p className="text-2xl">👥</p>
+            {/* خطأ الجلب له رسالته الخاصة، لا "لا يوجد عملاء بعد" — تلك كذبة
+                حين يكون السبب فشل استعلامٍ لا غياب بيانات (كما حدث فعليًّا
+                هذه الليلة قبل 0213) */}
+            <p className="text-2xl">{rowsError ? "⚠️" : "👥"}</p>
             <p className="mt-2 font-bold text-[color:var(--ink)]">
-              {q || seg !== "all" ? tr(lang, "لا نتائج مطابقة", "No matching results") : tr(lang, "لا يوجد عملاء بعد", "No customers yet")}
+              {rowsError
+                ? tr(lang, "تعذّر تحميل العملاء", "Couldn't load customers")
+                : q || seg !== "all" ? tr(lang, "لا نتائج مطابقة", "No matching results") : tr(lang, "لا يوجد عملاء بعد", "No customers yet")}
             </p>
             <p className="mt-1 text-sm text-[color:var(--muted)]">
-              {q || seg !== "all"
+              {rowsError
+                ? tr(lang, "حدث خطأ مؤقّت — أعد تحميل الصفحة.", "A temporary error occurred — reload the page.")
+                : q || seg !== "all"
                 ? tr(lang, "جرّب بحثًا آخر أو شريحة أخرى.", "Try another search or segment.")
                 : tr(lang, "تظهر الملفّات تلقائيًا عند إجلاس العملاء من الطابور.", "Profiles appear automatically when customers are seated from the queue.")}
             </p>
@@ -228,8 +230,7 @@ export default async function CustomersPage({
         ) : (
           <ul className="space-y-3">
             {list.map((p) => {
-              const c = Array.isArray(p.customers) ? p.customers[0] : p.customers;
-              const name = c?.full_name ?? tr(lang, "عميل", "Customer");
+              const name = p.full_name ?? tr(lang, "عميل", "Customer");
               return (
                 <li key={p.customer_id} className="soft-card p-4">
                   <Link href={`/dashboard/customers/${p.customer_id}`} className="flex items-center gap-3">
@@ -248,7 +249,7 @@ export default async function CustomersPage({
                         {giftedIds.has(p.customer_id) && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold" style={{ background: "var(--brand-solid)", color: "var(--brand-ink)" }}>🎁 {tr(lang, "هدية فعّالة", "Active gift")}</span>}
                         {p.is_blocked && <span className="rounded-full px-2 py-0.5 text-[10px] font-extrabold text-cream-100" style={{ background: "var(--st-closed)" }}>{tr(lang, "محظور", "Blocked")}</span>}
                       </div>
-                      <p className="text-sm text-[color:var(--muted)]" dir="ltr">{c?.phone ?? "—"}</p>
+                      <p className="text-sm text-[color:var(--muted)]" dir="ltr">{p.phone ?? "—"}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-[color:var(--muted)]">
                         <span>{tr(lang, `${toAr(p.visits)} زيارة`, `${toAr(p.visits)} visits`)}</span>
                         <span>· {tr(lang, `آخر زيارة ${daysAgoLabel(p.last_visit, "ar")}`, `Last visit ${daysAgoLabel(p.last_visit, "en")}`)}</span>

@@ -1772,6 +1772,29 @@ export type Database = {
           vip_count: number
         }[]
       }
+      customers_page_rows: {
+        Args: {
+          p_digits?: string
+          p_limit?: number
+          p_offset?: number
+          p_query?: string
+          p_restaurant_id: string
+        }
+        Returns: {
+          customer_id: string
+          first_seen: string
+          full_name: string
+          is_blocked: boolean
+          is_vip: boolean
+          last_visit: string
+          no_shows: number
+          note: string
+          phone: string
+          tags: string[]
+          updated_at: string
+          visits: number
+        }[]
+      }
       customers_search_count: {
         Args: { p_digits?: string; p_query?: string; p_restaurant_id: string }
         Returns: number
