@@ -8,7 +8,7 @@ import { SegmentsManager, type CustomSegment } from "./segments-manager";
 import { WinbackForm } from "./winback-form";
 import { toAr, normalizePhone } from "@/lib/format";
 import { daysAgoLabel } from "@/lib/dates";
-import { tr } from "@/lib/i18n";
+import { tr, type Lang } from "@/lib/i18n";
 import { getLang } from "@/lib/i18n-server";
 import { ScreenGuide } from "@/components/screen-guide";
 import type { Database } from "@/lib/supabase/database.types";
@@ -148,6 +148,12 @@ export default async function CustomersPage({
   const hrefForPage = (p: number) =>
     `/dashboard/customers?page=${p}${seg !== "all" ? `&seg=${seg}` : ""}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
 
+  // يظهر فوق الصفحة مباشرةً بلا تمرير: الشكوى الأصلية كانت أنّ الانتقال
+  // بين الصفحات ينقل المستخدم لأعلى صفحةٍ جديدة، فيضطرّ للتمرير طول
+  // الصفحة (البطاقات، البحث، الشرائح، الحملة، الاسترجاع، ثم القائمة كاملةً)
+  // كل مرّةٍ ليصل لزرّ التالي/السابق مجدّدًا.
+  const showPager = seg === "all" && totalPages > 1;
+
   return (
     <div className="space-y-6">
         <ScreenGuide
@@ -159,6 +165,9 @@ export default async function CustomersPage({
             tr(lang, "هديّة الاسترجاع تعمل وحدها ليلًا لمن غاب مدّةً تحدّدها.", "The win-back gift runs nightly on its own for whoever has been away as long as you set."),
           ]}
         />
+
+        {showPager && <PageNav lang={lang} page={page} totalPages={totalPages} hrefForPage={hrefForPage} sticky />}
+
         <div className="grid grid-cols-3 gap-3">
           <Kpi label={tr(lang, "عملاؤك", "Your customers")} value={toAr(segCounts.all)} tone="var(--brand-d)" />
           <Kpi label={tr(lang, "مميّزون (VIP)", "VIPs")} value={toAr(segCounts.vip)} tone="var(--st-open)" />
@@ -277,26 +286,9 @@ export default async function CustomersPage({
           </ul>
         )}
 
-        {/* تنقّلٌ بين الصفحات: يظهر فقط في شريحة «الكل» بلا فلترةٍ محليّة،
-            لأنّ شرائح مثل «مميّزون» تُصفَّى في الذاكرة على صفٍّ واحد جُلب
-            من القاعدة، فترقيمها المستقل يحتاج استعلامًا مختلفًا لا يوجد بعد. */}
-        {seg === "all" && totalPages > 1 && (
-          <div className="flex items-center justify-between gap-2 pt-1">
-            {page > 1 ? (
-              <Link href={hrefForPage(page - 1)} className="btn btn-secondary px-4 text-sm">
-                {tr(lang, "→ أحدث", "→ Previous")}
-              </Link>
-            ) : <span />}
-            <span className="text-xs font-bold text-[color:var(--muted)]">
-              {tr(lang, `صفحة ${toAr(page)} من ${toAr(totalPages)}`, `Page ${page} of ${totalPages}`)}
-            </span>
-            {page < totalPages ? (
-              <Link href={hrefForPage(page + 1)} className="btn btn-secondary px-4 text-sm">
-                {tr(lang, "أقدم ←", "Next ←")}
-              </Link>
-            ) : <span />}
-          </div>
-        )}
+        {/* نسخةٌ ثانية أسفل القائمة لمن يقرأها كاملةً حتى آخرها — لكنها لم تعد
+            الطريقة الوحيدة، فالنسخة الأولى أعلى الصفحة تغني عن التمرير كل مرّة. */}
+        {showPager && <PageNav lang={lang} page={page} totalPages={totalPages} hrefForPage={hrefForPage} />}
     </div>
   );
 }
@@ -306,6 +298,41 @@ function Kpi({ label, value, tone }: { label: string; value: string; tone: strin
     <div className="soft-card p-4 text-center">
       <p className="font-display text-2xl font-bold leading-none" style={{ color: tone }}>{value}</p>
       <p className="mt-1.5 text-[11px] font-bold text-[color:var(--muted)]">{label}</p>
+    </div>
+  );
+}
+
+function PageNav({
+  lang,
+  page,
+  totalPages,
+  hrefForPage,
+  sticky,
+}: {
+  lang: Lang;
+  page: number;
+  totalPages: number;
+  hrefForPage: (p: number) => string;
+  sticky?: boolean;
+}) {
+  return (
+    <div
+      className={`soft-card flex items-center justify-between gap-2 px-3 py-2.5 ${sticky ? "sticky top-2 z-10" : ""}`}
+      style={sticky ? { boxShadow: "0 10px 24px -16px rgba(102,28,10,0.35)" } : undefined}
+    >
+      {page > 1 ? (
+        <Link href={hrefForPage(page - 1)} className="btn btn-secondary px-4 text-sm">
+          {tr(lang, "→ أحدث", "→ Newer")}
+        </Link>
+      ) : <span />}
+      <span className="text-xs font-bold text-[color:var(--muted)]">
+        {tr(lang, `صفحة ${toAr(page)} من ${toAr(totalPages)}`, `Page ${page} of ${totalPages}`)}
+      </span>
+      {page < totalPages ? (
+        <Link href={hrefForPage(page + 1)} className="btn btn-secondary px-4 text-sm">
+          {tr(lang, "أقدم ←", "Older ←")}
+        </Link>
+      ) : <span />}
     </div>
   );
 }
